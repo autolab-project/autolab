@@ -5,23 +5,13 @@ Created on Thu Jun 13 10:25:49 2019
 @author: quentin.chateiller
 """
 
-import os 
 import threading
 import inspect
 
 from . import drivers
 
 
-#def dict_to_str(dictionary, ident = ''):
-#    """ Recursively prints nested dictionaries."""
-#    txt = ''
-#    for key, value in dictionary.items():
-#        txt+=ident+f'- {key}\n'
-#        if value != {} :
-#            txt+=dict_to_str(value, ident+'    ')
-#    return txt
-#
-#
+
 
     
 
