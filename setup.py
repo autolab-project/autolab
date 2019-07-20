@@ -16,7 +16,6 @@ setup(
     author = 'Quentin Chateiller',
     author_email = 'q.chateiller@gmail.com',
     url = 'https://github.com/qcha41/usit',
-    download_url = 'https://github.com/qcha41/usit/usit/0.1',
+    download_url = 'https://github.com/qcha41/usit/archive/0.1.tar.gz',
     keywords = ['Universal','Scanning','Interface','automation','scientific','laboratory','experiments','measures'],
-    classifiers = [],
 )
