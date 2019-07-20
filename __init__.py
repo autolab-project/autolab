@@ -6,4 +6,4 @@ Created on Fri May 17 15:04:04 2019
 """
 
 
-from devices.devices import deviceManager as devices
+from .devices.devices import deviceManager as devices
