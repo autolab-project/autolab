@@ -36,7 +36,7 @@ In USIT, three objects are used to model completely a device : the Variables, th
 - An Action is basically a function in the driver that performs a particular action in the device, for instance making a stage going home. In USIT, an Action is defined by this function.  
 - For a simple device, a Module represent the device itself, and has its own Variables and Actions in USIT. It can also have some sub-modules: in case that the device is a controller in which several sub-devices can be plug or connected (for instance a power meter with several inputs, a motion controller with different stages,..), each sub-devices is also considered as a Module in USIT, which are themselves linked to a parent Module.
 
-For instance:
+Example of the modules architecture:
 ```
 Module "yenista_tunics"
    |-- Variable "wavelength"     (float, get and set functions)
@@ -64,7 +64,7 @@ Before starting to use USIT, you have to configure paths in the file config.ini 
 - DriversPath : path to your drivers folder. The needed driver folder architecture is specified in the toniq GitHub repository : https://github.com/bgarbin/toniq  
 - DevicesIndexPath : path to the device configuration file. This file must contains informations about the devices locally connected, their driver, and all required information (arguments) to instantiate the driver.
 
-Example :
+Example of config.ini:
 ```
 [paths]
 DriversPath = C:\Users\qchat\Documents\GitHub\toniq
@@ -74,7 +74,7 @@ DevicesIndexPath = C:\Users\qchat\Documents\GitHub\local_config\devices_index.in
 ### Device index (devices_index.ini for instance)
 This .ini file is structured with several sections, each of them representing a physical device. The name of each sections has to be unique, and will be used in USIT to communicate with the device. In each sections, the keyword "driver" is required and must be equal to which has to refer to a correct driver name in the driver folder path specified (DriversPath) in the configuration file. Any other (keyword,value) couple (address, port, ...) of the section will be sent to the driver as kwargs in the init function of the Device class (see below).
 
-Example:
+Example of devices_index.ini:
 ```
 [ltb1]
 driver = exfo_ltb1
@@ -102,7 +102,7 @@ Driver folder whose the path has been provided in the file drivers_path.txt need
 - A driver script, which the exact same name as the folder : "\<manufacturer\>\_\<model\>.py" for instance
 - A usit configuration script, name "usit_config.py", which allow USIT to understand how your driver is structured in terms of Modules, Variables and Actions.
 
-Example:
+Example of drivers folder architecture:
 
 ```
 -- toniq 
@@ -118,7 +118,7 @@ Example:
 ### driver.py
 USIT need a minimal driver structure. A class "Device" has to be present in each python driver script with an \_\_init\_\_ function that requires the address (str) of the device as first argument. This address will be supplied by USIT during the instantiation (based on the information located in the file devices_index.txt). Based on the provided address, this \_\_init\_\_ function also have to establish directly a connection with the device, and hold it. This class "Device" should have a function "close" to close properly the connection to the device. 
 
-Example :
+Example of a driver script :
 ```
 import visa
 
@@ -141,7 +141,7 @@ class Device():
 ### usit_config.py
 In this file, the user has to write a "configure" function that will be called by USIT to modelize the device. This function has to take two arguements : a raw instance of the "Device" class located in the driver script (device newly connected), and an instance of an empty and raw USIT Module object. The purpose of this function is to configure this Module object by creating Variables, Actions, (sub-Modules) and configure them with the driver instance functions.
 
-Example :
+Example of usit_config.py :
 ```
 def configure(devDriver,devUsit):
    
