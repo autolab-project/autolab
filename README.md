@@ -118,6 +118,22 @@ USIT need a minimal driver structure. A class "Device" has to be present in each
 
 Example :
 ```
+import visa
+
+class Device():
+    
+    def __init__(self,address):
+        
+        self.ADDRESS = address
+        self.TIMEOUT = 1000 #ms
+        
+        rm = visa.ResourceManager()
+        self.controller = rm.open_resource(self.ADDRESS)
+        self.controller.timeout = self.TIMEOUT
+        
+    def close(self):
+        try : self.controller.close()
+        except : pass
 ```
 
 
