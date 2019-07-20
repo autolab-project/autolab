@@ -7,83 +7,22 @@ Created on Thu Jun 13 10:25:49 2019
 
 import os 
 import threading
-import importlib
 import inspect
 
+from . import drivers
 
 
-def dict_to_str(dictionary, ident = ''):
-    """ Recursively prints nested dictionaries."""
-    txt = ''
-    for key, value in dictionary.items():
-        txt+=ident+f'- {key}\n'
-        if value != {} :
-            txt+=dict_to_str(value, ident+'    ')
-    return txt
+#def dict_to_str(dictionary, ident = ''):
+#    """ Recursively prints nested dictionaries."""
+#    txt = ''
+#    for key, value in dictionary.items():
+#        txt+=ident+f'- {key}\n'
+#        if value != {} :
+#            txt+=dict_to_str(value, ident+'    ')
+#    return txt
+#
+#
 
-            
-
-
-
-
-def isDeviceFolder(path) :
-    
-    """ Test if the provided path is a correct driver path """
-    
-    try : 
-        
-        # The provided path has to be a folder
-        assert os.path.isdir(path), "Not a folder"
-        
-        # Which contains at least 2 python script : 
-        # - the driver itself with the same name as the folder
-        # - the configuration script usit_config.py
-        basename = os.path.basename(path)
-        for fileName in [basename + ".py","usit_config.py"] : assert fileName in os.listdir(path), f"No {fileName} file"
-    
-        return True
-    
-    except Exception as e :
-        return False
-    
-def getLibrary(path):
-    assert os.path.isfile(path)
-    basename = os.path.basename(path)
-    spec = importlib.util.spec_from_file_location(basename, path)
-    lib = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(lib)
-    return lib
-    
-    
-def getDeviceClass(DRIVERPATH,name):
-    path = os.path.join(DRIVERPATH,name,name+".py")
-    assert os.path.exists(path), "This is not a correct device folder structure"
-    lib = getLibrary(path)
-    assert hasattr(lib,'Device'), "There is no class 'Device' in the driver script"
-    assert inspect.isclass(lib.Device), "The object 'Device' is not a class in the driver script"
-    return lib.Device
-    
-def getConfigFunc(DRIVERPATH,name):
-    path = os.path.join(DRIVERPATH,name,'usit_config.py')
-    assert os.path.exists(path), "This is not a correct device folder (no file usit_config.py)"
-    lib = getLibrary(path)
-    assert hasattr(lib,'configure'), "There is no function 'configure' in the script usit_config.py"
-    assert inspect.isfunction(lib.configure), "The object 'configure' is not a function in the script usit_config.py"
-    return lib.configure
-    
-    
-def loadDriversPath():
-    
-    """ Returns the path located in the configuration file "drivers_path.txt" """
-    
-    currentPath = os.path.realpath(__file__)
-    filePath = os.path.join(os.path.dirname(os.path.dirname(currentPath)),"drivers_path.txt")
-    assert os.path.exists(filePath), "Missing drivers_path.txt configiguration file"
-    with open(filePath,"r") as fileHandle :
-        driversPath = fileHandle.read().strip('\n')
-    driversPath = os.path.realpath(driversPath)
-    assert os.path.exists(driversPath), "Path provided in drivers_path.txt doesn't exist"
-    return driversPath
     
 
 class DeviceManager() :
@@ -92,42 +31,51 @@ class DeviceManager() :
     
     def __init__(self):
 
-        self.DRIVERPATH = loadDriversPath()
         self._dev = {}
         
-        
-    def list_devices(self):
-        return [ a for a in os.listdir(self.DRIVERPATH) if isDeviceFolder(os.path.join(self.DRIVERPATH,a)) ]
+    def get_available_devices(self):
+        return list(drivers.get_devices())
+    
+    def get_loaded_devices(self):
+        return list(self._dev.keys())
+    
+    
+    # REPRESENTATION
+    # =========================================================================
     
     def _getDetails(self):
         txt = "Availables devices:\n"
-        for name in self.list_devices():
+        for name in self.get_available_devices():
             txt += f" - {name}"
-            if name in self._dev.keys() : txt += ' [loaded]'
+            if name in self.get_loaded_devices() : txt += ' [loaded]'
             txt += "\n"
         return txt
-        
+    
     def __str__(self):
         return self._getDetails()
     
     def __repr__(self):
         return self._getDetails()
+    
+    
+    
+    # GET AND CLOSE DEVICE
+    # =========================================================================
 
     def __getattr__(self,name):
-        if name in self._dev.keys(): return self._dev[name]
-        else :
-            assert name in self.list_devices(), f"No driver with name {name}"
-            instance = getDeviceClass(self.DRIVERPATH,name)()
+        if name in self._dev.keys(): # The device is already loaded
+            return self._dev[name]
+        else : # Loading of the device
+            assert name in self.get_available_devices(), f"No device with name {name} in the index"
+            instance,configFunc = drivers.getDeviceMaterial(name)
             device = Device(name,instance,self)
-            configFunc = getConfigFunc(self.DRIVERPATH,name)
             configFunc(instance,device)
             self._dev[name] = device
             return self._dev[name]
-        
        
     def close_all(self):
-        for dev_loc in self.get_loaded_devices() :
-            self.close(dev_loc)
+        for devName in self.get_loaded_devices() :
+            self._dev[devName].close()
         
         
         
