@@ -10,12 +10,13 @@ from distutils.core import setup
 setup(
     name = 'usit',
     packages = ['usit'],
+    data_files = [('usit', ['config/*'])],
     version = '0.1',  # Ideally should be same as your GitHub release tag varsion
     description = 'Universal Scanning Interface : Python automation package for scientific laboratory experiments',
     author = 'Quentin Chateiller',
     author_email = 'q.chateiller@gmail.com',
     url = 'https://github.com/qcha41/usit',
-    download_url = 'https://github.com/qcha41/usit/0.1',
+    download_url = 'https://github.com/qcha41/usit/usit/0.1',
     keywords = ['Universal','Scanning','Interface','automation','scientific','laboratory','experiments','measures'],
     classifiers = [],
 )
