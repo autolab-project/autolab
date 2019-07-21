@@ -17,14 +17,14 @@ import usit
 # Local config.ini file not found, duplicated from package in the local folder.
 ```
 
-At the first time, you may also have additional message saying that your config.ini file is not well configure. Indeed, in order to access your devices with USIT, you need to indicate to the package some informations about the location of your drivers and your local device configuration. To do that, you need to update the config.ini that has been created in your home directory (see instructions below). Once this is done, you can continue.
+At the first time, you may also have an additional message saying that your config.ini file is not well configured. Indeed, in order to access your devices with USIT, you need to indicate to the package some informations about the location of your drivers and your local device configuration. To do that, you need to update the config.ini that has been created in your home directory (see instructions below). Once this is done, you can continue.
 
 To see what are the available devices, just access the 'devices' attribute of USIT:
 ```python
 usit.devices           # or
 print(usit.devices.get_available_devices())
 ```
-As you will see after during the update of the config.ini file, this list corresponds to the devices list have configured in an Device Index configuration file. To access one particular device, just access the corresponding attribute from 'devices'. The connection to your device is then established the first time you call it from 'devices'. Further calls to it will use the Device instance created at the first call.
+This list corresponds to the devices list have configured in an Device Index configuration file (see after). To access one particular device, just access the corresponding attribute from 'devices'. The connection to your device is then established the first time you call it from 'devices'. Further calls to it will use the Device instance created at the first call.
 ```python
 usit.devices.tunics1
 ```
@@ -40,9 +40,9 @@ usit.devices.stage.goHome.do()
 ___
 
 In USIT, three objects are used to model completely a device : the Variables, the Actions, and the Modules.  
-- A Variable is a physical quantity that can measured on your device. It can be also editable, have a unit, etc. (for instance the wavelength of a light source, or the power of a power meter). In USIT, a Variable is then defined by its type (int, float, bool,...) and the function in the associated driver that allows to interact with it.  
+- A Variable is a physical quantity that can be measured on your device. It can be also editable, have a unit, etc. (for instance the wavelength of a light source, or the power of a power meter). In USIT, a Variable is then defined by its type (int, float, bool,...) and the functions in the associated driver that allows to interact with it.  
 - An Action is basically a function in the driver that performs a particular action in the device, for instance making a stage going home. In USIT, an Action is defined by this function.  
-- For a simple device, a Module represent the device itself, and has its own Variables and Actions in USIT. It can also have some sub-modules: in case that the device is a controller in which several sub-devices can be plug or connected (for instance a power meter with several inputs, a motion controller with different stages,..), each sub-devices is also considered as a Module in USIT, which are themselves linked to a parent Module.
+- For a simple device, a Module represent the device itself, and has its own Variables and Actions in USIT. It can also have some sub-modules: in case that the device is a controller in which several sub-devices can be plugged or connected (for instance a power meter with several inputs, a motion controller with different stages,..), each sub-devices is also considered as a Module in USIT, which are themselves linked to a parent Module.
 
 Example of the modules architecture:
 ```
@@ -64,7 +64,7 @@ Module "signalrecovery_lockin"
    |-- Variable "amplitude"         (float, only get function)
 ```
 
-During the instantiation of a device, a empty Module object is created in USIT, and represent at first the device itself. The above modelization is then carried out using a python script "usit_config.py" that has to be present in the driver folder, as explained below.
+During the instantiation of a driver, an empty Module object is created in USIT, and represent at first the general device. The above modelization is then carried out using a python script "usit_config.py", as explained below.
 
 
 ## USIT configuration
@@ -73,13 +73,13 @@ ___
 To work properly, you need to setup a few things :
 1. Have a drivers folder on your computer
 2. Create a Device Index file
-3. Setting USIT's config.ini file
+3. Update a USIT config.ini file
 
 ### 1) Drivers folder
 
-The drivers folder is the folder that contains all the drivers that USIT will use. It has a minimum required structure. Inside this main folder, each different driver need its own sub-folder. Ideally, the name of the sub-folder should be of the form "\<manufacturer\>\_\<model\>". Then, inside this driver sub-folder, USIT requires at least two pyhon scripts:  
+The drivers folder is the folder that contains all the drivers that USIT will use. It has a minimum required structure. Inside this main folder, each different driver need its own sub-folder. Ideally, the name of the sub-folder should be of the form "\<manufacturer\>\_\<model\>". Then, inside this driver sub-folder, USIT requires at least two python scripts:  
 - A driver script, which has the exact same name as the folder ("\<manufacturer\>\_\<model\>.py" for instance)
-- A USIT configuration script, named "usit_config.py", which allow the package to understand how your driver is structured in terms of Modules, Variables and Actions.
+- A USIT configuration script, named "usit_config.py", which allows the package to understand how your driver is structured in terms of Modules, Variables and Actions.
 
 Example of drivers folder architecture:
 
@@ -96,7 +96,7 @@ Example of drivers folder architecture:
 Note that our team is providing a lot of different drivers following this structure on our GitHub repository: https://github.com/bgarbin/toniq
 
 #### "driver.py" script
-USIT need a minimal driver structure. A class "Device" has to be present in each python driver script with an \_\_init\_\_ function with only optional arguments (address, port, ...). These keywords arguments (kwargs) will be supplied by USIT during the instantiation of the driver, based on the information located in the Device Index file (see below). When instantiated, this class Device have to establish directly a connection with the device (with informations passed through the optional arguments of the \_\_init\_\_ function), and hold it. This class "Device" should also have a function "close" to close properly the connection to the device. 
+USIT need a minimal driver structure. A class "Device" has to be present in each python driver script with an \_\_init\_\_ function with only optional arguments (address, port, ...). These keywords arguments (kwargs) will be supplied by USIT during the instantiation of the driver, based on the information located in the Device Index file (see below). When instantiated, this class Device has to establish directly a connection with the device (with informations passed through the optional arguments of the \_\_init\_\_ function), and hold it. This class "Device" should also have a function "close" to close properly the connection to the device. 
 
 Example of a driver script :
 ```python
@@ -159,7 +159,7 @@ def configure(devDriver,devUsit):
 
 ### 2) Device Index file 
 
-The Device Index configuration file contains the representation of the devices that are connected to your computer. It contains their name, the driver they need, the local connection informations (address, port, ...). The file need an .ini extenstion (e.g devices_index.ini) and can be located at any place in your computer (near your drivers folder for instance). This file is structured with several sections, each of them representing a physical device. The name of each sections corresponds to the name that will be used in USIT to communicate with the device, so it has to be unique. In each sections, the keyword "driver" is required and must indicate the name of a driver located in the drivers folder. Any other (keyword,value) pair (connection informations...) in the section will be sent as kwargs when instantiating the class Device of a driver.
+The Device Index configuration file contains the representation of the devices that are connected to your computer. It contains their name, the driver they need, their local connection informations (address, port, ...). The file need an .ini extention (e.g devices_index.ini) and can be located at any place in your computer (near your drivers folder for instance). This file is structured with several sections, each of them representing a physical device. The name of each sections corresponds to the name that will be used in USIT to communicate with the device, so it has to be unique. In each sections, the keyword "driver" is required and must indicate the name of a driver located in the drivers folder. Any other (keyword,value) pair (connection informations...) in the section will be sent as kwargs when instantiating the class Device of a driver.
 
 Note that you can configure several devices using the same driver (in case several identical devices are connected to your computer).
 
@@ -198,3 +198,7 @@ Example of config.ini:
 DriversPath = C:\Users\qchat\Documents\GitHub\toniq
 DevicesIndexPath = C:\Users\qchat\Documents\GitHub\local_config\devices_index.ini
 ```
+
+Remarks:
+- If you accidentally remove the config.ini file or the 'usit' folder from your home directory, they will be re-generated when importing usit again (but with default values).
+- The values of an existing config.ini file will never be modified by USIT, so you won't have to modify it after update of this package.
