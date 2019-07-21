@@ -1,26 +1,34 @@
-# Usit
-Universal Scanning Interface : python automation package for scientific experiments
+# USIT : Universal Scanning Interface 
 
-by Quentin Chateiller, C2N (Center for Nanosciences and Nanotechnlogies), Palaiseau, France
+Python automation package for scientific experiments.
+By Quentin Chateiller, PhD student at C2N (Center for Nanosciences and Nanotechnlogies, Palaiseau, France) in the ToniQ (Sandwich) group.
 
+The purpose of this package it to provide easy and efficient tools to deal with your scientific instruments, and to run automated experiments with them.
 
-## Quick start :
-(To get a fine understanding of this quick start, you will have to read also the other parts of this readme file.)
+## Quick start
+___
 
-First of all make sure that the directory usit is in your python path.  
-Open a Python terminal and import usit and check what are the availables devices:
-```
+After installing this package, import it in a python console. To work properly, USIT need to store configuration files in your computer. A local folder 'usit' will be created in your home directory the first time you import USIT (or if you deleted it), and place a configuration file inside :
+
+```python
 import usit
-print(usit.devices)
+# It will output the fist time:
+# USIT local folder created : <your_user_path>
+# Local config.ini file not found, duplicated from package in the local folder.
+```
+
+At the first time, you may also have additional message saying that your config.ini file is not well configure. Indeed, in order to access your devices with USIT, you need to indicate to the package some informations about the location of your drivers and your local device configuration. To do that, you need to update the config.ini that has been created in your home directory (see instructions below). Once this is done, you can continue.
+
+To see what are the available devices, just access the 'devices' attribute of USIT:
+```python
+usit.devices           # or
 print(usit.devices.get_available_devices())
 ```
-This is a list of the devices found in the devices_index.txt, whose the driver name refers to a valid driver structure.
-The connection to your device is established the first time you call it:
-```
+As you will see after during the update of the config.ini file, this list corresponds to the devices list have configured in an Device Index configuration file. To access one particular device, just access the corresponding attribute from 'devices'. The connection to your device is then established the first time you call it from 'devices'. Further calls to it will use the Device instance created at the first call.
+```python
 usit.devices.tunics1
 ```
-Any further call to the device use the instantiation created at the first call.
-Then access your variables, actions, sub-modules in this way:
+Finally, you can access your variables, actions, sub-modules in this way:
 ```
 usit.devices.tunics1.wavelength.set(1550)
 wl = usit.devices.ltb1.power.get()
@@ -28,8 +36,8 @@ usit.devices.stage.goHome.do()
 ```
 
 
-
-## Device modelization :
+## Device modelization
+___
 
 In USIT, three objects are used to model completely a device : the Variables, the Actions, and the Modules.  
 - A Variable is a physical quantity that can measured on your device. It can be also editable, have a unit, etc. (for instance the wavelength of a light source, or the power of a power meter). In USIT, a Variable is then defined by its type (int, float, bool,...) and the function in the associated driver that allows to interact with it.  
@@ -59,53 +67,24 @@ Module "signalrecovery_lockin"
 During the instantiation of a device, a empty Module object is created in USIT, and represent at first the device itself. The above modelization is then carried out using a python script "usit_config.py" that has to be present in the driver folder, as explained below.
 
 
-## Configuration :
-Before starting to use USIT, you have to configure paths in the file config.ini located in the folder config of this package.  
-- DriversPath : path to your drivers folder. The needed driver folder architecture is specified in the toniq GitHub repository : https://github.com/bgarbin/toniq  
-- DevicesIndexPath : path to the device configuration file. This file must contains informations about the devices locally connected, their driver, and all required information (arguments) to instantiate the driver.
+## USIT configuration
+___
 
-Example of config.ini:
-```
-[paths]
-DriversPath = C:\Users\qchat\Documents\GitHub\toniq
-DevicesIndexPath = C:\Users\qchat\Documents\GitHub\local_config\devices_index.ini
-```
+To work properly, you need to setup a few things :
+1. Have a drivers folder on your computer
+2. Create a Device Index file
+3. Setting USIT's config.ini file
 
-### Device index (devices_index.ini for instance)
-This .ini file is structured with several sections, each of them representing a physical device. The name of each sections has to be unique, and will be used in USIT to communicate with the device. In each sections, the keyword "driver" is required and must be equal to which has to refer to a correct driver name in the driver folder path specified (DriversPath) in the configuration file. Any other (keyword,value) couple (address, port, ...) of the section will be sent to the driver as kwargs in the init function of the Device class (see below).
+### 1) Drivers folder
 
-Example of devices_index.ini:
-```
-[ltb1]
-driver = exfo_ltb1
-address = 192.168.0.97
-port = 5024
-
-[osics]
-driver = yenista_osics
-address = GPIB0::15::INSTR
-
-[tunics1]
-driver = yenista_tunics
-address = GPIB0::10::INSTR
-
-[tunics2]
-driver = yenista_tunics
-address = GPIB0::9::INSTR
-```
-
-
-
-## Driver structure :
-
-Driver folder whose the path has been provided in the file drivers_path.txt need a minimum following structure. Each driver need its own folder. In the toniq repository, each folder name has the form "\<manufacturer\>\_\<model\>". In this driver folder, USIT requires at least two pyhon scripts:
-- A driver script, which the exact same name as the folder : "\<manufacturer\>\_\<model\>.py" for instance
-- A usit configuration script, name "usit_config.py", which allow USIT to understand how your driver is structured in terms of Modules, Variables and Actions.
+The drivers folder is the folder that contains all the drivers that USIT will use. It has a minimum required structure. Inside this main folder, each different driver need its own sub-folder. Ideally, the name of the sub-folder should be of the form "\<manufacturer\>\_\<model\>". Then, inside this driver sub-folder, USIT requires at least two pyhon scripts:  
+- A driver script, which has the exact same name as the folder ("\<manufacturer\>\_\<model\>.py" for instance)
+- A USIT configuration script, named "usit_config.py", which allow the package to understand how your driver is structured in terms of Modules, Variables and Actions.
 
 Example of drivers folder architecture:
 
 ```
--- toniq 
+-- drivers 
    |-- yenista_tunics
        |-- yenista_tunics.py
        |-- usit.config.py
@@ -114,12 +93,13 @@ Example of drivers folder architecture:
        |-- usit.config.py
 ```
 
+Note that our team is providing a lot of different drivers following this structure on our GitHub repository: https://github.com/bgarbin/toniq
 
-### driver.py
-USIT need a minimal driver structure. A class "Device" has to be present in each python driver script with an \_\_init\_\_ function that requires the address (str) of the device as first argument. This address will be supplied by USIT during the instantiation (based on the information located in the file devices_index.txt). Based on the provided address, this \_\_init\_\_ function also have to establish directly a connection with the device, and hold it. This class "Device" should have a function "close" to close properly the connection to the device. 
+#### "driver.py" script
+USIT need a minimal driver structure. A class "Device" has to be present in each python driver script with an \_\_init\_\_ function with only optional arguments (address, port, ...). These keywords arguments (kwargs) will be supplied by USIT during the instantiation of the driver, based on the information located in the Device Index file (see below). When instantiated, this class Device have to establish directly a connection with the device (with informations passed through the optional arguments of the \_\_init\_\_ function), and hold it. This class "Device" should also have a function "close" to close properly the connection to the device. 
 
 Example of a driver script :
-```
+```python
 import visa
 
 class Device():
@@ -138,11 +118,11 @@ class Device():
 ```
 
 
-### usit_config.py
-In this file, the user has to write a "configure" function that will be called by USIT to modelize the device. This function has to take two arguements : a raw instance of the "Device" class located in the driver script (device newly connected), and an instance of an empty and raw USIT Module object. The purpose of this function is to configure this Module object by creating Variables, Actions, (sub-Modules) and configure them with the driver instance functions.
+#### usit_config.py script
+In this file, the user has to write a "configure" function that will be called after the instantiation of the driver, to model the device in USIT. This function has to take two arguments : a instance of the previous "Device" class just after its instantiation, and an instance of an empty and raw USIT Module object. The purpose of this function is to configure this Module by creating and associating Variables, Actions, (sub-Modules), and configure them with the functions of the Device object.
 
 Example of usit_config.py :
-```
+```python
 def configure(devDriver,devUsit):
    
     devUsit.addVariable('amplitude',float,
@@ -153,7 +133,7 @@ def configure(devDriver,devUsit):
     devUsit.addAction('sth',
                         function=devDriver.doSth)
 ```
-```
+```python
 def configure(devDriver,devUsit):
     
     sld = devUsit.addSubDevice('sld')    
@@ -177,6 +157,44 @@ def configure(devDriver,devUsit):
     
 ```  
 
+### 2) Device Index file 
+
+The Device Index configuration file contains the representation of the devices that are connected to your computer. It contains their name, the driver they need, the local connection informations (address, port, ...). The file need an .ini extenstion (e.g devices_index.ini) and can be located at any place in your computer (near your drivers folder for instance). This file is structured with several sections, each of them representing a physical device. The name of each sections corresponds to the name that will be used in USIT to communicate with the device, so it has to be unique. In each sections, the keyword "driver" is required and must indicate the name of a driver located in the drivers folder. Any other (keyword,value) pair (connection informations...) in the section will be sent as kwargs when instantiating the class Device of a driver.
+
+Note that you can configure several devices using the same driver (in case several identical devices are connected to your computer).
+
+Example of devices_index.ini:
+```
+[ltb1]
+driver = exfo_ltb1
+address = 192.168.0.97
+port = 5024
+
+[osics]
+driver = yenista_osics
+address = GPIB0::15::INSTR
+
+[tunics1]
+driver = yenista_tunics
+address = GPIB0::10::INSTR
+
+[tunics2]
+driver = yenista_tunics
+address = GPIB0::9::INSTR
+```
 
 
+### 3) USIT configuration file
 
+As presented in the Quick Start section of the readme, USIT need to know about your devices and your drivers. At the first import of USIT in a Python console, a config.ini file is generated in your home directory, but contains default values which are likely to be wrong for you. You then have to update this config.ini file.  
+
+In this configuration file, two paths have to be provided:
+- DriversPath : this is the path to your drivers folder (see step 1).
+- DevicesIndexPath : this is the path to the device configuration file (see step 2).
+
+Example of config.ini:
+```
+[paths]
+DriversPath = C:\Users\qchat\Documents\GitHub\toniq
+DevicesIndexPath = C:\Users\qchat\Documents\GitHub\local_config\devices_index.ini
+```
