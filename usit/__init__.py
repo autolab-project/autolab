@@ -11,4 +11,4 @@ from .config import config as _config
 if _config.checkConfig() is True :
     _config = _config.getConfig()
     from .devices.devices import deviceManager as devices
-    
+    from .recorder_old.recorder import Recorder, Recorder_V2
