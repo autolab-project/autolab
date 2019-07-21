@@ -1,9 +1,12 @@
 # USIT : Universal Scanning Interface 
 
-Python automation package for scientific experiments.
-By Quentin Chateiller, PhD student at C2N (Center for Nanosciences and Nanotechnlogies, Palaiseau, France) in the ToniQ (Sandwich) group.
+__Python package for scientific experiments automation__
 
-The purpose of this package it to provide easy and efficient tools to deal with your scientific instruments, and to run automated experiments with them.
+Created by Quentin Chateiller, PhD student at C2N (Center for Nanosciences and Nanotechnologies, Palaiseau, France) in the ToniQ (Sandwich) group.
+
+The purpose of this package it to provide easy and efficient tools to deal with your scientific instruments, and to run automated experiments with them. 
+
+Package development ongoing, some features are still not present yet.
 
 ## Quick start
 ___
