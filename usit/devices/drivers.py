@@ -5,22 +5,11 @@ Created on Sat Jul 20 10:02:22 2019
 @author: qchat
 """
 
-from usit import _LIBPATH
 import os
 import importlib
 import inspect
 import configparser
-import copy
-
-def loadConfig(filePath):
-    
-    """ Loads the content of the config.ini file """
-    
-    config = configparser.ConfigParser()
-    config.read(filePath)
-    assert os.path.exists(config['paths']['DriversPath']), "The DriversPath provided in the config.ini file doesn't exists"
-    assert os.path.exists(config['paths']['DevicesIndexPath']), "The DeviceIndexPath provided in the config.ini file doesn't exists"      
-    return config
+import usit
 
 
 def getDevicesIndex(filePath):
@@ -35,28 +24,22 @@ def getDevicesIndex(filePath):
     
     for name in index.sections() :
         assert 'driver' in index[name].keys(), f"DeviceIndex .ini file: Device '{name}' has no driver provided"
-        assert isDriver(index[name]['driver']), f"DeviceIndex .ini file: Driver of device '{name}' is unusable, check the structure"
+        assert driverExists(index[name]['driver']), f"DeviceIndex .ini file: Driver of device '{name}' is unusable, check the structure"
         
     return index
 
 
-
-
-
-
-
-
-def isDriver(driver_name) :
+def driverExists(driver_name) :
     
     """ Test if the provided name corresponds to a correct driver folder """
     
     try : 
         
-        # The provided path has to be a folder
+        # Is a folder with that name present in the drivers folder ?
         path = os.path.join(DRIVERS_PATH,driver_name)
         assert os.path.isdir(path), "Not a folder"
         
-        # Which contains at least 2 python script : 
+        # Does it contains at least 2 python script : 
         # - the driver itself with the same name as the folder
         # - the configuration script usit_config.py
         basename = os.path.basename(path)
@@ -64,7 +47,7 @@ def isDriver(driver_name) :
     
         return True
     
-    except Exception as e :
+    except :
         return False
     
     
@@ -120,9 +103,7 @@ def get_devices():
     return list(DEVICES_INDEX.sections())
 
 
-CONFIGFILE_PATH = os.path.join(os.path.dirname(_LIBPATH),'config','config.ini')
-assert os.path.exists(CONFIGFILE_PATH)
-config = loadConfig(CONFIGFILE_PATH)
+config = usit._config
 DRIVERS_PATH = config['paths']['DriversPath']
 DEVICES_INDEX = getDevicesIndex(config['paths']['DevicesIndexPath'])
     

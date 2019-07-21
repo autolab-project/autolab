@@ -12,19 +12,20 @@ with open("README.md", "r") as fh:
 
 setup(
     name = 'usit',
-    version = '0.1',  # Ideally should be same as your GitHub release tag varsion
+    version = '0.2-4',  # Ideally should be same as your GitHub release tag varsion
     author = 'Quentin Chateiller',
     author_email = 'q.chateiller@gmail.com',
     description = 'Universal Scanning Interface : Python automation package for scientific laboratory experiments',
     long_description = long_description,
     long_description_content_type="text/markdown",
-    url = 'https://github.com/qcha41/usit'
+    url = 'https://github.com/qcha41/usit',
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    include_package_data=True
+    include_package_data=True,
+    package_data={'': ['*.ini']},# If any package contains *.ini files, include them:
     keywords = ['Universal','Scanning','Interface','automation','scientific','laboratory','experiments','measures']
 )
 
