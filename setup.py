@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name = 'usit',
-    version = '0.2-4',  # Ideally should be same as your GitHub release tag varsion
+    version = '0.2-5',  # Ideally should be same as your GitHub release tag varsion
     author = 'Quentin Chateiller',
     author_email = 'q.chateiller@gmail.com',
     description = 'Universal Scanning Interface : Python automation package for scientific laboratory experiments',
