@@ -133,7 +133,7 @@ class Device():
 ```
 
 
-#### usit_config.py script
+#### 1) *usit_config.py* script
 In this file, the user has to write a `configure` function that will be called after the instantiation of the driver, to model the device in USIT. This function has to take two arguments : a instance of the previous `Device` class just after its instantiation, and an instance of an empty and raw USIT Module object. The purpose of this function is to configure this Module by creating and associating `Variables`, `Actions`, `Modules`, and configure them with the functions of the `Device` object.
 
 Example of *usit_config.py* :
@@ -172,7 +172,7 @@ def configure(devDriver,devUsit):
     
 ```  
 
-### 2) Device Index file 
+### 2) *Device Index* file 
 
 The Device Index configuration file contains the representation of the devices that are connected to your computer. It contains their name, the driver they need, their local connection informations (address, port, ...). The file need an .ini extention (e.g *devices_index.ini*) and can be located at any place in your computer (near your drivers folder for instance). This file is structured with several sections, each of them representing a physical device. The name of each sections corresponds to the name that will be used in USIT to communicate with the device, so it has to be unique. In each sections, the keyword `driver` is required and must indicate the name of a driver located in the drivers folder. Any other (keyword,value) pair (connection informations...) in the section will be sent as kwargs when instantiating the class `Device` of a driver.
 
