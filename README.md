@@ -16,8 +16,8 @@ After installing this package, import it in a python console. To work properly, 
 ```python
 import usit
 # It will output the fist time:
-# USIT local folder created : <your_user_path>
-# Local config.ini file not found, duplicated from package in the local folder.
+# WARNING: USIT local folder created : <your_user_path>
+# WARNING: Local config.ini file not found, duplicated from package in the local folder.
 ```
 
 At the first time, you may also have an additional message saying that your *config.ini* file is not well configured. Indeed, in order to access your devices with USIT, you need to indicate to the package some informations about the location of your drivers and your local device configuration. To do that, you need to update the config.ini that has been created in your home directory (see instructions below). Once this is done, you can continue.
@@ -35,19 +35,28 @@ Now that you accessed a first time your device, a `[loaded]` flag is appended ne
 
 Finally, you can access your variables, actions, sub-modules in this way:
 ```
-usit.devices.tunics1.wavelength.set(1550)
-wl = usit.devices.ltb1.power.get()
-usit.devices.stage.goHome.do()
+usit.devices.tunics1.wavelength(1550)        # Setting the wavelength at 1550 nm
+wl = usit.devices.tunics1.wavelength()       # Asking the current wavelength
+wl = usit.devices.ltb1.power()               # Asking the current power
+usit.devices.stage.goHome()                  # Make a stage going home
 ```
 
-To close properly the connection to your device, simply execute the function `close` of the device: 
+To close properly the connection to a particular device, simply execute its `close` function: 
 ```python
 usit.devices.tunics1.close()
 ```
-Note that if you stored the object `usit.devices.tunics1` previously in a variable, this object is no longer usable, you need a new one from `usit.devices`. To close properly every connected devices, use the function `close_all` of the `usit.devices` object:
+To close every connected (loaded) devices, use the function `close_all` of the `usit.devices` object:
 ```python
 usit.devices.close_all()
 ```
+To get your connection back, get the corresponding attribute of your devices from `usit.devices` like before.
+To reset the connection to a particular device (close and load again), use the `reload` function of your device:
+```python
+usit.devices.tunics1.reload()
+```
+
+Note that if you previously stored a Variable, an Action or a sub-Module of the device `usit.devices.tunics1`, this object will be no longer usable if you close or reload the device. In that case, always get new sub-objects directly from the `usit.devices.tunics1` object. 
+
 
 
 
@@ -55,28 +64,28 @@ usit.devices.close_all()
 ___
 
 In USIT, three objects are used to model completely a device : the Variables, the Actions, and the Modules.  
-- A Variable is a physical quantity that can be measured on your device. It can be also editable, have a unit, etc. (for instance the wavelength of a light source, or the power of a power meter). In USIT, a Variable is then defined by its type (int, float, bool,...) and the functions in the associated driver that allows to interact with it.  
+- A Variable is a physical quantity that can be measured on your device. It can be also editable, have a unit, etc. (for instance the wavelength of a light source, or the power of a power meter). In USIT, a Variable is then defined among other things by the functions in the associated driver that allows to interact with it.  
 - An Action is basically a function in the driver that performs a particular action in the device, for instance making a stage going home. In USIT, an Action is defined by this function.  
 - For a simple device, a Module represent the device itself, and has its own Variables and Actions in USIT. It can also have some sub-modules: in case that the device is a controller in which several sub-devices can be plugged or connected (for instance a power meter with several inputs, a motion controller with different stages,..), each sub-devices is also considered as a Module in USIT, which are themselves linked to a parent Module.
 
 Example of the modules architecture:
 ```
 Module "yenista_tunics"
-   |-- Variable "wavelength"     (float, get and set functions)
-   |-- Variable "power"          (float, get and set functions)
+   |-- Variable "wavelength"     (get and set functions)
+   |-- Variable "power"          (get and set functions)
    |-- Action "turn_off"         (do function)
    
 Module "yenista_osics"
    |-- Module "sld"
-       |-- Variable "power"      (float, get and set functions)
-       |-- Variable "output"     (bool, get and set functions)
+       |-- Variable "power"      (get and set functions)
+       |-- Variable "output"     (get and set functions)
    |-- Module "t100"
-       |-- Variable "power"      (float, get and set functions)
-       |-- Variable "output"     (bool, get and set functions)
+       |-- Variable "power"      (get and set functions)
+       |-- Variable "output"     (get and set functions)
 
 Module "signalrecovery_lockin"
-   |-- Variable "time_constant"     (float, get and set functions)
-   |-- Variable "amplitude"         (float, only get function)
+   |-- Variable "time_constant"     (get and set functions)
+   |-- Variable "amplitude"         (only get function)
 ```
 
 During the instantiation of a driver, an empty Module object is created in USIT, and represent at first the general device. The above modelization is then carried out using a python script *usit_config.py*, as explained below.
@@ -134,13 +143,13 @@ class Device():
 
 
 #### 1) *usit_config.py* script
-In this file, the user has to write a `configure` function that will be called after the instantiation of the driver, to model the device in USIT. This function has to take two arguments : a instance of the previous `Device` class just after its instantiation, and an instance of an empty and raw USIT Module object. The purpose of this function is to configure this Module by creating and associating `Variables`, `Actions`, `Modules`, and configure them with the functions of the `Device` object.
+In this file, the user has to write a `configure` function that will be called after the instantiation of the driver, to model the device in USIT. This function has to take two arguments : a instance of the previous `Device` class just after its instantiation, and an instance of an empty and raw USIT Module object. The purpose of this function is to configure this Module by creating and associating `Variables`, `Actions`, `Modules`, and configure them with the functions of the `Device` object, following this example:
 
 Example of *usit_config.py* :
 ```python
 def configure(devDriver,devUsit):
    
-    devUsit.addVariable('amplitude',float,
+    devUsit.addVariable('amplitude',
                         getFunction=devDriver.getAmplitude,
                         setFunction=devDriver.setAmplitude,
                         unit='V')
@@ -153,20 +162,20 @@ def configure(devDriver,devUsit):
     
     sld = devUsit.addSubDevice('sld')    
     
-    sld.addVariable('wavelength',float,
+    sld.addVariable('wavelength',
                         setFunction=devDriver.sld.setWavelength)
     
-    sld.addVariable('power',float,
+    sld.addVariable('power',
                         setFunction=devDriver.sld.setPower,
                         getFunction=devDriver.sld.getPower)
     
     t100 = devUsit.addSubDevice('t100')
 
-    t100.addVariable('wavelength',float,
+    t100.addVariable('wavelength',
                         setFunction=devDriver.t100.setWavelength,
                         getFunction=devDriver.t100.getWavelength)
     
-    t100.addVariable('frequency',float,
+    t100.addVariable('frequency',
                         setFunction=devDriver.t100.setFrequency,
                         getFunction=devDriver.t100.getFrequency)
     
