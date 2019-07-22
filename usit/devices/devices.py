@@ -7,6 +7,8 @@ Created on Thu Jun 13 10:25:49 2019
 
 import threading
 import inspect
+import pandas as pd
+import numpy as np
 
 from . import drivers
 
@@ -224,7 +226,9 @@ class Variable:
         assert isinstance(name,str), f"Variable names have to be str values"        
         self._name = name
         
-        types = [int,float,bool]
+        if valueType == 'dataframe' : valueType = pd.DataFrame
+        elif valueType == 'numpy_array' : valueType = type(np.array(0))
+        types = [int,float,bool,pd.DataFrame,type(np.array(0))]
         assert valueType in types, f"Variable {self._name} : {valueType} is not supported. Please use one of the following class: {types}"
         self._pty = {'type':valueType}
         
