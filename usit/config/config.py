@@ -26,17 +26,17 @@ def checkConfig():
     # LOCAL FOLDER
     if os.path.exists(localFolderPath) is False :
         os.mkdir(localFolderPath)
-        print(f'USIT local folder created : {localFolderPath}')
+        print(f'WARNING: USIT local folder created : {localFolderPath}')
     
     # LOCAL CONFIG
     if os.path.exists(localConfigPath) is False :
         shutil.copyfile(packageConfigPath,localConfigPath)
-        print(f'Local config.ini file not found, duplicated from package in the local folder.')
+        print(f'WARNING: Local config.ini file not found, duplicated from package in the local folder.')
         
     # CHECK CONFIG
     config = getConfig()
     try :
-        txt = 'config.ini file: '
+        txt = 'WARNING config.ini file: '
         assert 'paths' in config.sections(), txt+"Missing section 'paths'."
         assert 'driverspath' in config['paths'], txt+"Missing parameter 'driverspath' in section 'paths."
         assert 'devicesindexpath' in config['paths'], txt+"Missing parameter 'deviceindexpath' in section 'paths'."
