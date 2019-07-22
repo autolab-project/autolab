@@ -212,7 +212,11 @@ class Device(Module):
         self._lock.acquire()
         
     def _release(self):
-        self._lock.release()          
+        self._lock.release()   
+        
+    def reload(self):
+        self.close()
+        self._manager._load(self._name)
 
           
         
