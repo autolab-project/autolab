@@ -7,8 +7,6 @@ Created on Thu Jun 13 10:25:49 2019
 
 import threading
 import inspect
-import pandas as pd
-import numpy as np
 
 from . import drivers
 
@@ -22,15 +20,22 @@ class DeviceManager() :
     """ This class manage the different devices """
     
     def __init__(self):
-
+        
         self._dev = {}
+
+        for name in list(drivers.get_devices()) :
+            self._dev[name] = Device(self,name)
         
     def get_available_devices(self):
-        return list(drivers.get_devices())
-    
-    def get_loaded_devices(self):
         return list(self._dev.keys())
     
+    def get_loaded_devices(self):
+        return [ name for name in self.get_available_devices() if self._isLoaded(name) ]
+    
+    def _isLoaded(self,name):
+        return self._dev[name]._instance is not None
+        
+        
     
     # REPRESENTATION
     # =========================================================================
@@ -39,7 +44,7 @@ class DeviceManager() :
         txt = "Availables devices:\n"
         for name in self.get_available_devices():
             txt += f" - {name}"
-            if name in self.get_loaded_devices() : txt += ' [loaded]'
+            if self._isLoaded(name) : txt += ' [loaded]'
             txt += "\n"
         return txt
     
@@ -55,21 +60,21 @@ class DeviceManager() :
     # =========================================================================
 
     def __getattr__(self,name):
-        if name in self._dev.keys(): # The device is already loaded
-            return self._dev[name]
-        else : # Loading of the device
-            assert name in self.get_available_devices(), f"No device with name {name} in the index"
-            instance,configFunc = drivers.getDeviceMaterial(name)
-            device = Device(name,instance,self)
-            configFunc(instance,device)
-            self._dev[name] = device
-            return self._dev[name]
+        assert name in self.get_available_devices(), f"No device with name {name} in the index"
+        if self._isLoaded(name) is False :
+            self._load(name)
+        return self._dev[name]
        
     def close_all(self):
         for devName in self.get_loaded_devices() :
             self._dev[devName].close()
         
-        
+    def _load(self,name):
+        instance,configFunc = drivers.getDeviceMaterial(name)
+        configFunc(instance,self._dev[name])
+        self._dev[name]._setInstance(instance)
+
+
         
         
 
@@ -77,23 +82,21 @@ class DeviceManager() :
         
 class Module():
     
-    def __init__(self,name,parent=None):
+    def __init__(self,parent,name):
         
         self._name = name
         self._parent = parent   
-        self._deleted = False
         self._mod = {}
         self._var = {}
         self._act = {}
 
-    def _delete(self):
-        for mod in self._mod.values() : mod._delete()
-        for var in self._var.values() : var._delete()
-        for act in self._act.values() : act._delete()
+    def _reset(self):
+        for mod in self._mod.values() : mod._reset()
+        for var in self._var.values() : var._reset()
+        for act in self._act.values() : act._reset()
         self._mod = {}
         self._var = {}
         self._act = {}
-        self._deleted = True
         
 
     def addModule(self,name):
@@ -111,9 +114,9 @@ class Module():
     
     
     
-    def addVariable(self,name,valueType,**kwargs):
+    def addVariable(self,name,**kwargs):
         assert name not in self._var.keys(), f"The variable '{name}' already exists in module {self._name}"
-        var = Variable(self,name,valueType,**kwargs)
+        var = Variable(self,name,**kwargs)
         self._var[name] = var
         return var
     
@@ -143,16 +146,12 @@ class Module():
     
 
     def __getattr__(self,attr):
-        assert self._deleted is False, f"This object cannot be used anymore"
         assert any(attr in x for x in [self._var.keys(),self._act.keys(),self._mod.keys()]), f"'{attr}' not found in module '{self._name}'"
         if attr in self._var.keys() : return self._var[attr]
         elif attr in self._act.keys() : return self._act[attr]
         elif attr in self._mod.keys() : return self._mod[attr]
         
-    def __repr__(self):
-        
-        assert self._deleted is False, f"This object cannot be used anymore"
-        
+    def __repr__(self):        
         display = f'Module {self._name}\n'
         
         devList = self.getModuleList()
@@ -192,23 +191,26 @@ class Module():
 
 class Device(Module):
     
-    def __init__(self,name,instance,manager):
+    def __init__(self,manager,name):
         
-        Module.__init__(self,name)
+        Module.__init__(self,None,name)
         self._name = name
         self._manager = manager
-        self._instance = instance
+        self._instance = None
         self._lock = threading.Lock()
         
+    def _setInstance(self,instance):
+        self._instance = instance
+                
     def close(self):
         try : self._instance.close()
         except : pass
-        self._delete()
-        del self._manager._dev[self._name]
-        
+        self._instance = None
+        self._reset()
         
     def _acquire(self):
         self._lock.acquire()
+        
     def _release(self):
         self._lock.release()          
 
@@ -219,18 +221,14 @@ class Device(Module):
         
 class Variable:
     
-    def __init__(self,module,name,valueType,**kwargs):
+    def __init__(self,module,name,**kwargs):
         
         self._module = module
         
         assert isinstance(name,str), f"Variable names have to be str values"        
         self._name = name
         
-        if valueType == 'dataframe' : valueType = pd.DataFrame
-        elif valueType == 'numpy_array' : valueType = type(np.array(0))
-        types = [int,float,bool,pd.DataFrame,type(np.array(0))]
-        assert valueType in types, f"Variable {self._name} : {valueType} is not supported. Please use one of the following class: {types}"
-        self._pty = {'type':valueType}
+        self._pty = {}
         
         for key,value in kwargs.items() :
             if key == 'setFunction' :
@@ -242,40 +240,41 @@ class Variable:
             self._pty[key] = value
             
         self._lock = threading.Lock()
-        self._deleted = False
         
-    def _delete(self):
-        self._deleted = True
+    def _reset(self):
+        self._pty = {}
         
     def __repr__(self):
-        assert self._deleted is False, f"This object cannot be used anymore"
         display = f'Variable {self._name}\n'
         for key,value in self._pty.items() :
             display+=f'{key} : {value}\n'
         return display
     
     def _getType(self):
-        return self._pty['type']
+        if 'type' in self._pty.keys() :
+            return self._pty['type']
     
     def _getName(self):
         return self._name
 
 
+    def __call__(self,value=None):
+        if value is None:
+            return self.get()
+        else : 
+            self.set(value)
+
     def get(self):
-        assert self._deleted is False, f"This object cannot be used anymore"
         assert 'getFunction' in self._pty.keys(), f"The variable {self._name} is not configured to be measurable"
         self._module._acquire()
         result = self._pty['getFunction']()
         self._module._release()
+        if 'type' not in self._pty.keys() : self._pty['type'] = type(result)
         return result
     
     
     def set(self,value):
-        assert self._deleted is False, f"This object cannot be used anymore"
         assert 'getFunction' in self._pty.keys(), f"The variable {self._name} is not configured to be set"
-        if isinstance(value,int) and self._pty['type']==float :
-            value = float(value)
-        assert isinstance(value,self._pty['type']), f"The variable {self._name} is configured to be of type {self._pty['type']}, not {type(value)}"
         self._module._acquire()
         self._pty['setFunction'](value)
         self._module._release()
@@ -302,21 +301,20 @@ class Action:
             self._pty[key] = value
             
         self._lock = threading.Lock()
-        self._deleted = False
         
-    def _delete(self):
-        self._deleted = True
+    def _reset(self):
+        self._pty = {}
         
     def __repr__(self):
-        assert self._deleted is False, f"This object cannot be used anymore"
         display = f'Action {self._name}\n'
         for key,value in self._pty.items() :
             display+=f'{key} : {value}\n'
         return display
     
+    def __call__(self):
+        self.do()
 
     def do(self):
-        assert self._deleted is False, f"This object cannot be used anymore"
         assert 'function' in self._pty.keys(), f"The action {self._name} is not configured to be actionable"
         self._module._acquire()
         self._pty['function']()
