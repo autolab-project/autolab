@@ -101,7 +101,7 @@ class Module():
 
     def addModule(self,name):
         assert name not in self._mod.keys(), f"The submodule '{name}' already exists in module {self._name}"
-        mod = Module(name,self)
+        mod = Module(self,name)
         self._mod[name] = mod
         return mod
     
