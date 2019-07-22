@@ -278,7 +278,7 @@ class Variable:
     
     
     def set(self,value):
-        assert 'getFunction' in self._pty.keys(), f"The variable {self._name} is not configured to be set"
+        assert 'setFunction' in self._pty.keys(), f"The variable {self._name} is not configured to be set"
         self._module._acquire()
         self._pty['setFunction'](value)
         self._module._release()
