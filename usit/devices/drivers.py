@@ -10,7 +10,7 @@ import importlib
 import inspect
 import configparser
 import usit
-
+import sys
 
 def getDevicesIndex(filePath):
     
@@ -51,15 +51,17 @@ def driverExists(driver_name) :
         return False
     
     
-def getLibrary(DRIVERS_PATH):
+def getLibrary(driver_path):
     
     """ Open the library located at the path provided """
     
-    assert os.path.isfile(DRIVERS_PATH)
-    basename = os.path.basename(DRIVERS_PATH)
-    spec = importlib.util.spec_from_file_location(basename, DRIVERS_PATH)
-    lib = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(lib)
+    folderPath = os.path.dirname(driver_path)
+    scriptName = os.path.splitext(os.path.basename(driver_path))[0]
+
+    sys.path.append(folderPath)
+    lib = __import__(scriptName)
+    sys.path.remove(folderPath)
+    
     return lib
     
 def getDeviceClass(driver_name):
