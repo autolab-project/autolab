@@ -55,12 +55,21 @@ def getLibrary(driver_path):
     
     """ Open the library located at the path provided """
     
-    folderPath = os.path.dirname(driver_path)
+    driverDir = os.path.dirname(driver_path)
     scriptName = os.path.splitext(os.path.basename(driver_path))[0]
-
-    sys.path.append(folderPath)
-    lib = __import__(scriptName)
-    sys.path.remove(folderPath)
+    
+    spec = importlib.util.spec_from_file_location(scriptName, driver_path)
+    lib = importlib.util.module_from_spec(spec)
+    
+    currDir = os.getcwd()
+    os.chdir(driverDir)
+    
+    try : 
+        spec.loader.exec_module(lib)
+    except :
+        print(f'Impossible to load {driver_path}')
+        
+    os.chdir(currDir)
     
     return lib
     
