@@ -19,7 +19,8 @@ class DriverManager() :
         return self.list()
         
     def list(self):
-        return [name for name in os.listdir(_DRIVERS_PATH) if f'{name}.py' in os.listdir(os.path.join(_DRIVERS_PATH,name))]
+        return [name for name in os.listdir(_DRIVERS_PATH) if os.path.isdir(os.path.join(_DRIVERS_PATH,name)) and
+                                                                f'{name}.py' in os.listdir(os.path.join(_DRIVERS_PATH,name))]
     
     def _loadDriver(self,name):
         assert name in self.list(), f"Impossible to find driver '{name}'"
