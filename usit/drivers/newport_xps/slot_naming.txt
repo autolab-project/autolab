@@ -1,0 +1,8 @@
+Slot naming
+===========
+
+Argument name: 'slot<num>' with num the slot number (not used)
+Value: comma-separated string '<module>,<module_id>,<name>,<config_folder_path>'
+
+Example:
+slot1 = 'nsr1,NSR1_TOC,tic,C:\Users\qchat\Documents\GitHub\local_config\NSR1_TIC_calib'

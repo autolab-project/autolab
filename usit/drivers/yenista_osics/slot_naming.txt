@@ -1,0 +1,8 @@
+Slot naming
+===========
+
+Argument name: 'slot<num>' with num the slot number
+Value: comma-separated string '<module>,<name>'
+
+Example:
+slot1 = 'sld,sld'
