@@ -56,7 +56,6 @@ class Device():
         print('DUMMY DEVICE CLOSED')
         
     def getPhase(self):
-        time.sleep(0.05)
         value = np.random.uniform(-1, 1)
         print('get phase',value)
         return value
