@@ -48,6 +48,9 @@
             <pointsize>9</pointsize>
            </font>
           </property>
+          <property name="toolTip">
+           <string>Pause delay between each measure</string>
+          </property>
          </widget>
         </item>
         <item row="1" column="0">
@@ -93,6 +96,9 @@
             <pointsize>9</pointsize>
            </font>
           </property>
+          <property name="toolTip">
+           <string>Size of the current window in seconds</string>
+          </property>
          </widget>
         </item>
        </layout>
@@ -117,6 +123,9 @@
           <pointsize>9</pointsize>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Pause (or resume) monitoring</string>
+        </property>
         <property name="text">
          <string>Pause</string>
         </property>
@@ -128,6 +137,9 @@
          <font>
           <pointsize>9</pointsize>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>Save data displayed</string>
         </property>
         <property name="text">
          <string>Save</string>

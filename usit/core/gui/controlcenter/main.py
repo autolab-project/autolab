@@ -48,9 +48,12 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         scanAction = self.menuBar.addAction('Open scanner')
         scanAction.triggered.connect(self.openScanner)
+        scanAction.setToolTip('Open the scanner in another window')  
+
         
         reportAction = self.menuBar.addAction('Report bugs / suggestions')
         reportAction.triggered.connect(usit.report)
+        reportAction.setToolTip('Open the issue webpage of this project on GitHub')  
         
 
         

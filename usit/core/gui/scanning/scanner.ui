@@ -70,6 +70,12 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Name of the parameter, as it will displayed in the data</string>
+          </property>
+          <property name="statusTip">
+           <string/>
+          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
           </property>
@@ -98,6 +104,12 @@
            <font>
             <pointsize>9</pointsize>
            </font>
+          </property>
+          <property name="toolTip">
+           <string>Address of the parameter</string>
+          </property>
+          <property name="whatsThis">
+           <string/>
           </property>
           <property name="text">
            <string>&lt;variable&gt;</string>
@@ -195,6 +207,12 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Recipe of the scan. It will be run for every value of the parameter. Right click to open options.</string>
+          </property>
+          <property name="whatsThis">
+           <string/>
+          </property>
           <column>
            <property name="text">
             <string notr="true">1</string>
@@ -229,7 +247,13 @@
         <item>
          <widget class="QPushButton" name="start_pushButton">
           <property name="toolTip">
-           <string>Start a scan according to the current scan configuration</string>
+           <string>Start (or stop) the scan</string>
+          </property>
+          <property name="statusTip">
+           <string/>
+          </property>
+          <property name="whatsThis">
+           <string/>
           </property>
           <property name="text">
            <string>Start</string>
@@ -247,7 +271,13 @@
            </font>
           </property>
           <property name="toolTip">
-           <string>Start a scan according to the current scan configuration</string>
+           <string>Pause (or resume) the scan</string>
+          </property>
+          <property name="statusTip">
+           <string/>
+          </property>
+          <property name="whatsThis">
+           <string/>
           </property>
           <property name="text">
            <string>Pause</string>
@@ -257,6 +287,9 @@
         <item>
          <widget class="QPushButton" name="clear_pushButton">
           <property name="toolTip">
+           <string>Clear any recorded data</string>
+          </property>
+          <property name="statusTip">
            <string/>
           </property>
           <property name="text">
@@ -267,6 +300,9 @@
         <item>
          <widget class="QPushButton" name="save_pushButton">
           <property name="toolTip">
+           <string>Save data of the last scan</string>
+          </property>
+          <property name="statusTip">
            <string/>
           </property>
           <property name="text">
@@ -287,7 +323,10 @@
            </sizepolicy>
           </property>
           <property name="toolTip">
-           <string>To enable an infinite scan loop</string>
+           <string>If checked, the scan will be executed endlessly</string>
+          </property>
+          <property name="statusTip">
+           <string/>
           </property>
           <property name="text">
            <string>Continuous</string>
@@ -320,6 +359,12 @@
             <width>16777215</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>Displays the progression of the scan</string>
+          </property>
+          <property name="statusTip">
+           <string/>
           </property>
           <property name="value">
            <number>0</number>
@@ -384,7 +429,10 @@
              </font>
             </property>
             <property name="toolTip">
-             <string>Zoom out</string>
+             <string>Move figure left</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>⇢</string>
@@ -405,7 +453,10 @@
              </font>
             </property>
             <property name="toolTip">
-             <string>Zoom out</string>
+             <string>Move figure down</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>⇡</string>
@@ -426,7 +477,10 @@
              </font>
             </property>
             <property name="toolTip">
-             <string>Zoom out</string>
+             <string>Move figure right</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>⇠</string>
@@ -447,7 +501,10 @@
              </font>
             </property>
             <property name="toolTip">
-             <string>Zoom out</string>
+             <string>Move figure up</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>⇣</string>
@@ -505,6 +562,12 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>Variable displayed in Y axis</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
            </widget>
           </item>
           <item row="2" column="1">
@@ -523,6 +586,9 @@
              </font>
             </property>
             <property name="toolTip">
+             <string>Number of visible traces</string>
+            </property>
+            <property name="statusTip">
              <string/>
             </property>
             <property name="text">
@@ -603,7 +669,10 @@
                </font>
               </property>
               <property name="toolTip">
-               <string>Zoom out</string>
+               <string>Unzoom X axis</string>
+              </property>
+              <property name="statusTip">
+               <string/>
               </property>
               <property name="text">
                <string>-</string>
@@ -624,7 +693,10 @@
                </font>
               </property>
               <property name="toolTip">
-               <string>Zoom in </string>
+               <string>Zoom X axis</string>
+              </property>
+              <property name="statusTip">
+               <string/>
               </property>
               <property name="text">
                <string>+</string>
@@ -636,7 +708,10 @@
           <item>
            <widget class="QCheckBox" name="logScale_x_checkBox">
             <property name="toolTip">
-             <string>Enable a log scan</string>
+             <string>Enable (disable) log scale on X axis</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>Log</string>
@@ -646,7 +721,10 @@
           <item>
            <widget class="QCheckBox" name="autoscale_x_checkBox">
             <property name="toolTip">
-             <string>Enable a log scan</string>
+             <string>Enable (disable) autoscale on X axis</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>Autoscale</string>
@@ -713,7 +791,10 @@
                </font>
               </property>
               <property name="toolTip">
-               <string>Zoom out</string>
+               <string>Unzoom Y axis</string>
+              </property>
+              <property name="statusTip">
+               <string/>
               </property>
               <property name="text">
                <string>-</string>
@@ -734,7 +815,10 @@
                </font>
               </property>
               <property name="toolTip">
-               <string>Zoom in </string>
+               <string>Zoom Y axis</string>
+              </property>
+              <property name="statusTip">
+               <string/>
               </property>
               <property name="text">
                <string>+</string>
@@ -746,7 +830,10 @@
           <item>
            <widget class="QCheckBox" name="logScale_y_checkBox">
             <property name="toolTip">
-             <string>Enable a log scan</string>
+             <string>Enable (disable) log scale on Y axis</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>Log</string>
@@ -756,7 +843,10 @@
           <item>
            <widget class="QCheckBox" name="autoscale_y_checkBox">
             <property name="toolTip">
-             <string>Enable a log scan</string>
+             <string>Enable (disable) autoscale on Y axis</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string>Autoscale</string>
@@ -797,6 +887,9 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="start_lineEdit">
             <property name="toolTip">
+             <string>Start value of the scan</string>
+            </property>
+            <property name="statusTip">
              <string/>
             </property>
             <property name="text">
@@ -845,6 +938,12 @@
           <item row="2" column="1">
            <widget class="QLineEdit" name="end_lineEdit">
             <property name="toolTip">
+             <string>End value of the scan</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="whatsThis">
              <string/>
             </property>
             <property name="text">
@@ -864,6 +963,12 @@
           </item>
           <item row="0" column="1">
            <widget class="QPushButton" name="fromFigure_pushButton">
+            <property name="toolTip">
+             <string>Take start and end value, and type of scale, from figure. </string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
             <property name="text">
              <string>From figure</string>
             </property>
@@ -930,6 +1035,12 @@
           <item row="1" column="2">
            <widget class="QLineEdit" name="width_lineEdit">
             <property name="toolTip">
+             <string>Scan width</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="whatsThis">
              <string/>
             </property>
             <property name="text">
@@ -943,6 +1054,9 @@
           <item row="0" column="2">
            <widget class="QLineEdit" name="mean_lineEdit">
             <property name="toolTip">
+             <string>Mean value of the scan</string>
+            </property>
+            <property name="statusTip">
              <string/>
             </property>
             <property name="text">
@@ -1010,6 +1124,9 @@
              </size>
             </property>
             <property name="toolTip">
+             <string>Number of points in the scan</string>
+            </property>
+            <property name="statusTip">
              <string/>
             </property>
             <property name="text">
@@ -1029,6 +1146,9 @@
              </size>
             </property>
             <property name="toolTip">
+             <string>Step between two points in the scan</string>
+            </property>
+            <property name="statusTip">
              <string/>
             </property>
             <property name="text">
@@ -1063,7 +1183,10 @@
           <item row="3" column="1">
            <widget class="QCheckBox" name="scanLog_checkBox">
             <property name="toolTip">
-             <string>Enable a log scan</string>
+             <string>Enable (disable) log scale for parameter values</string>
+            </property>
+            <property name="statusTip">
+             <string/>
             </property>
             <property name="text">
              <string/>
