@@ -123,7 +123,6 @@ class DeviceManager() :
         
         """ This function tries to load the devices with the following name """
         
-        instance,config_function = loadDevice(name)
-        config_function(instance,self._dev[name])
-        self._dev[name]._setInstance(instance)
+        instance = loadDevice(name)
+        self._dev[name].load(instance)
 
