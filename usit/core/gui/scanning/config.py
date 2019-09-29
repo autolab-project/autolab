@@ -310,10 +310,15 @@ class ConfigManager :
 
         if path != '' :
             usit.core.USER_LAST_CUSTOM_FOLDER_PATH = path
-            self.export(path)
             
-        self.gui.statusBar.showMessage(f"Current configuration successfully saved at {path}",5000)
-        
+            try : 
+                self.export(path)
+                self.gui.statusBar.showMessage(f"Current configuration successfully saved at {path}",5000)
+            except Exception as e :
+                self.gui.statusBar.showMessage(f"An error occured: {str(e)}",10000)
+                
+                
+         
     
     
     def export(self,path):
