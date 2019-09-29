@@ -115,8 +115,8 @@ class ControlCenter(QtWidgets.QMainWindow):
         try : 
             module = getattr(usit.devices,item.name)
             check = True
-        except : 
-            self.setStatus(f'An error occured when loading device {item.name}')
+        except Exception as e : 
+            self.setStatus(f'An error occured when loading device {item.name} : str({e})')
             
         # If success, load the entire module (submodules, variables, actions)
         if check is True : 
