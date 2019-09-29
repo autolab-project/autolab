@@ -422,9 +422,11 @@ def save(variable,result,path):
     
     if variable.type in [int,float,bool,str]:
         with open(path,'w') as f : f.write(str(result))
-    elif isinstance(result,np.ndarray) :
+    elif variable.type == bytes :
+        with open(path,'wb') as f : f.write(result)
+    elif variable.type == np.ndarray :
         np.savetxt(path,result)
-    elif isinstance(result, pd.DataFrame):
+    elif variable.type == pd.DataFrame :
         result.to_csv(path,index=False)
     else :
         raise ValueError("The variable {variable.name} of type {variable.type} cannot be saved.")        

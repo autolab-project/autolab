@@ -228,15 +228,16 @@ class Dataset():
             resultType = element.type
             
             # If the result is displayable (numerical), keep it in memory
-            if resultType in [np.ndarray,pd.DataFrame,str]:
+            if resultType in [int,float,bool]:
+               simpledata[resultName] = result
+                
+            # Else write it on a file, in a temp directory
+            else : 
                 folderPath = os.path.join(self.tempFolderPath,resultName)
                 if os.path.exists(folderPath) is False : os.mkdir(folderPath)
                 filePath = os.path.join(folderPath,f'{ID}.txt')
                 usit.core.devices.save(element,result,filePath)
                 
-            # Else write it on a file, in a temp directory
-            else : 
-                simpledata[resultName] = result
             
         # Store data in the dataset's dataframe
         self.data = self.data.append(simpledata,ignore_index=True)
