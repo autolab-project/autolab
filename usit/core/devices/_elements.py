@@ -12,6 +12,8 @@ import pandas as pd
 
 def getAddress(item):
     
+    """ Returns the address of the given element """
+    
     address = [item.name]
     parent = item._parent
     while parent is not None : 
@@ -33,52 +35,89 @@ class Module():
         self._mod = {}
         self._var = {}
         self._act = {}
-        
-        
-        
+
+
 
     def addModule(self,name):
+        
+        """ This function add a submodule to the current module """
+        
         assert name not in self._mod.keys(), f"The submodule '{name}' already exists in module {self.name}"
         mod = Module(self,name)
         self._mod[name] = mod
         return mod
     
+    
+    
     def getModule(self,name):
+        
+        """ Returns the submodule of the given name """
+        
         assert name in self._mod.keys(), f"The submodule '{name}' does not exist in module {self.name}"
         return self._mod[name]
     
+    
+    
     def getModuleList(self):
+        
+        """ Returns a list with the names of all existing submodules """
+        
         return list(self._mod.keys())
     
     
     
     def addVariable(self,name,varType,**kwargs):
+        
+        """ This function adds a variable to the current module """
+        
         assert name not in self._var.keys(), f"The variable '{name}' already exists in module {self.name}"
         var = Variable(self,name,varType,**kwargs)
         self._var[name] = var
         return var
     
+    
+    
     def getVariable(self,name):
+        
+        """ Returns the variable with the given name """
+        
         assert name in self._var.keys(), f"The variable '{name}' does not exist in module {self.name}"
         return self._var[name]
     
+    
+    
     def getVariableList(self):
+        
+        """ Returns a list with the names of all existing variables attached to this module """
+        
         return list(self._var.keys())
     
     
-    
-    
+
     def addAction(self,name,**kwargs):
+        
+        """ This function add an action to the current module """
+        
         assert name not in self._act.keys(), f"The action '{name}' already exists in device {self.name}"
         act = Action(self,name,**kwargs)
         self._act[name] = act
         return act
     
+    
+    
     def getAction(self,name):
+        
+        """ Returns the action with the given name """
+        
         assert name in self._dev.keys(), f"The action '{name}' does not exist in device {self.name}"
         return self._dev[name]
     
+    
+    
     def getActionList(self):
+        
+        """ Returns a list with the names of all existing actions attached to this module """
+        
         return list(self._act.keys())
     
     
@@ -90,7 +129,11 @@ class Module():
         elif attr in self._mod.keys() : return self._mod[attr]
         
         
+        
     def info(self):
+        
+        """ This function prints informations for the user about the availables 
+        submodules, variables and action attached to the current module """
         
         display = f'Module {self.name}\n'
         display += '-'*(len(display)-1)+'\n'
@@ -119,17 +162,30 @@ class Module():
         print(display)
         
         
+        
     def __dir__(self):
+        
         """ For auto-completion """
+        
         return self.getModuleList() + self.getVariableList() + self.getActionList() + ['info']
     
+    
+    
     def _acquire(self):
+        
+        """ Acquire the lock of the device """
+        
         self._parent._acquire()
         
     def _release(self):
+        
+        """ Release the lock of the device """
+
         self._parent._release()
 
 
+        
+        
         
 
 
@@ -145,33 +201,60 @@ class Device(Module):
         self._lock = threading.Lock()
         
         
-
         
     def _setInstance(self,instance):
+        
+        """ This function associated an instance to the current Device """
+        
         self._instance = instance
                 
+        
+        
     def close(self):
+        
+        """ This function close the connection of the current physical device """
+        
         try : self._instance.close()
         except : pass
         self._instance = None
         
         
+        
     def _acquire(self):
+        
+        """ Acquire the lock of the device """
+        
         self._lock.acquire()
         
+        
+        
     def _release(self):
+        
+        """ Release the lock of the device """
+        
         self._lock.release()   
         
+        
+        
     def reload(self):
+        
+        """ Close and setup a new connection to the physical device """
+        
         self.close()
         self._manager._load(self.name)
         
+        
+        
     def __dir__(self):
+        
         """ For auto-completion """
+        
         return  self.getModuleList() + self.getVariableList() + self.getActionList() + ['reload','close','info']
  
         
     
+
+
 
         
         
@@ -219,6 +302,9 @@ class Variable:
         
         
     def save(self,path):
+        
+        """ This function measure the variable and saves its value in the provided path """
+        
         assert self.readable, f"The variable {self.name} is not configured to be measurable"
         result = self()
         save(self,result,path)
@@ -226,6 +312,9 @@ class Variable:
         
         
     def info(self):
+        
+        """ This function prints informations for the user about the current variable """
+        
         display = f'Variable {self.name}\n'
         display += '-'*(len(display)-1)+'\n'
         if self.readable is True : display+=f'Readable ({self.readFunction.__name__})\n'
@@ -238,8 +327,9 @@ class Variable:
     
 
 
-
     def __call__(self,value=None):
+        
+        """ Measure or set the value of the variable """
                 
         self._parent._acquire()
         # GET FUNCTION
@@ -266,16 +356,9 @@ class Variable:
                 raise ValueError(f'An error occured while writing variable {self.name} : {str(e)}')
   
         
-def save(variable,result,path):
-    
-    if variable.type in [int,float,bool,str]:
-        with open(path,'w') as f : f.write(str(result))
-    elif isinstance(result,np.ndarray) :
-        np.savetxt(path,result)
-    elif isinstance(result, pd.DataFrame):
-        result.to_csv(path,index=False)
-    else :
-        raise ValueError("The variable {variable.name} of type {variable.type} cannot be saved.")        
+        
+
+        
         
         
 class Action:
@@ -301,17 +384,22 @@ class Action:
         self._lock = threading.Lock()
         
         
-
-        
         
     def info(self):
+        
+        """ This function prints informations for the user about the current variable """
+        
         display = f'Action {self.name}\n'        
         display += '-'*(len(display)-1)+'\n'
         if self.function is not None : display+=f'Function : {self.function.__name__}\n'
         print(display)
         
     
+    
     def __call__(self):
+        
+        """ Executes the action """
+        
         # DO FUNCTION
         try : 
             assert self.function is not None, f"The action {self.name} is not configured to be actionable"
@@ -323,3 +411,22 @@ class Action:
             raise ValueError(f'An error occured while executing action {self.name} : {str(e)}')
             
     
+        
+        
+        
+        
+        
+def save(variable,result,path):
+    
+    """ This function saves the value of a variable in the provided path """
+    
+    if variable.type in [int,float,bool,str]:
+        with open(path,'w') as f : f.write(str(result))
+    elif isinstance(result,np.ndarray) :
+        np.savetxt(path,result)
+    elif isinstance(result, pd.DataFrame):
+        result.to_csv(path,index=False)
+    else :
+        raise ValueError("The variable {variable.name} of type {variable.type} cannot be saved.")        
+        
+        

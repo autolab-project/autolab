@@ -17,11 +17,11 @@ import usit
 
 def loadIndex():
     
+    """ Returns the content of the DeviceIndex .ini file  """
+    
     
     # LOADING
     # -------------------------------------------------------------------------
-    
-    """ Returns the content of the DeviceIndex .ini file  """
     
     index = configparser.ConfigParser()
     index.read(usit.core.DEVICES_INDEX_PATH)
