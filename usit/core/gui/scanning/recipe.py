@@ -8,6 +8,19 @@ Created on Sun Sep 29 18:15:26 2019
 from PyQt5 import QtCore, QtWidgets, QtGui
 from . import main 
 
+class MyQTreeWidget(QtWidgets.QTreeWidget):
+    
+    reorderSignal = QtCore.pyqtSignal(object) 
+    
+    def __init__(self,parent):
+        
+        QtWidgets.QTreeWidget.__init__(self,parent)
+    
+    def dropEvent(self, event):
+        QtWidgets.QTreeWidget.dropEvent(self, event)
+        self.reorderSignal.emit(event)
+
+
 class RecipeManager :
     
     def __init__(self,gui):
@@ -15,19 +28,31 @@ class RecipeManager :
         self.gui = gui
         
         # Tree configuration
-        self.tree = self.gui.recipe_treeWidget
+        #self.tree = self.gui.recipe_treeWidget
+        self.tree = MyQTreeWidget(self.gui)
+        self.gui.tree_layout.addWidget(self.tree)
+        spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gui.tree_layout.addItem(spacer)
         self.tree.setHeaderLabels(['Step name','Type','Element address','Value'])
         self.tree.header().resizeSection(3, 50)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
+        self.tree.reorderSignal.connect(self.orderChanged)
         self.tree.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.tree.setDropIndicatorShown(True)
         self.tree.setAlternatingRowColors(True)        
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.tree.setMinimumSize(450,500)
+        self.tree.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.tree.customContextMenuRequested.connect(self.rightClick)
                 
         self.defaultItemBackground = None
         
         
+    def orderChanged(self,event):
+        newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
+        self.gui.configManager.setRecipeOrder(newOrder)
         
+
     def refresh(self):
         
         """ Refresh the whole scan recipe displayed from the configuration center """
@@ -41,7 +66,8 @@ class RecipeManager :
             # Loading step informations
             step = recipe[i]
             item = QtWidgets.QTreeWidgetItem()
-            item.setFlags(item.flags() & ~QtCore.Qt.ItemIsDropEnabled)
+#            item.setFlags(~QtCore.Qt.ItemIsSelectable & ~QtCore.Qt.ItemIsEnabled & ~QtCore.Qt.ItemIsDragEnabled)
+            item.setFlags(item.flags() ^ QtCore.Qt.ItemIsDropEnabled ) # | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled )
             
             # Column 1 : Step name
             item.setText(0,step['name'])

@@ -155,6 +155,18 @@ class ConfigManager :
                 
                 
                 
+    def setRecipeOrder(self,stepOrder):
+        
+        """ This function reorder the recipe as a function of the list of step names provided """
+        
+        newOrder = [self.getRecipeStepPosition(name) for name in stepOrder]
+        recipe = self.config['recipe']
+        self.config['recipe'] = [recipe[i] for i in newOrder]
+        self.gui.recipeManager.refresh()
+        self.gui.dataManager.clear()  
+                
+        
+                
     def setNbPts(self,value):
         
         """ This function set the value of the number of points of the scan """
