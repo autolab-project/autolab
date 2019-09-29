@@ -83,8 +83,30 @@ class Device():
     def getArray(self):
         return np.ones((3,4))
     
+    def getUsitConfig(self):
+        
+        config = []
+        config.append({'element':'module','name':'slot1','object':self.slot1})
+        config.append({'element':'module','name':'slot2','object':self.slot2,'help':'coucou'})
+        config.append({'element':'variable','name':'amplitude','type':float,'unit':'V',
+                       'read':self.getAmplitude,'write':self.setAmplitude,
+                       'help':'This is the amplitude of the device...'})
+        config.append({'element':'variable','name':'phrase','type':float,
+                       'read':self.getPhrase,'write':self.setPhrase})
+        config.append({'element':'variable','name':'phase','type':float,'read':self.getPhase})
+        config.append({'element':'action','name':'something','do':self.doSth,
+                       'help':'This do something...'})
+        config.append({'element':'variable','name':'dataframe','type':pd.DataFrame,
+                       'read':self.getDataframe})
+        config.append({'element':'variable','name':'option','type':bool,
+                       'read':self.getOption,'write':self.setOption})
+        config.append({'element':'variable','name':'array','type':np.ndarray,
+                       'read':self.getArray})
+        return config
+    
     
 class Slot() :
+    
     def __init__(self,num):
         self.num = num
         
@@ -97,3 +119,9 @@ class Slot() :
         value = np.random.uniform()
         print(f'slot {self.num} get wavelength',value)
         return value
+
+    def getUsitConfig(self):
+        config = []
+        config.append({'element':'variable','name':'power','type':float,'read':self.getPower,'unit':'W'})
+        config.append({'element':'variable','name':'wavelength','type':float,'read':self.getWavelength,'unit':'nm'})
+        return config

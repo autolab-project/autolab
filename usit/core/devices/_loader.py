@@ -56,20 +56,11 @@ def loadDevice(deviceName):
     driverClass = getattr(driver,className)
     assert inspect.isclass(driverClass), f"The object {className} is not a class in the driver script"
     
-    # Laod usit_config
-    configPath = os.path.join(usit.core.DRIVERS_PATH,driverName,'usit_config.py')
-    configLib = getLibrary(configPath)
-    
-    # Check if "configure" function exists inside
-    assert hasattr(configLib,'configure'), "There is no function 'configure' in the script usit_config.py"
-    configFunc = getattr(configLib,'configure')
-    assert inspect.isfunction(configFunc), "The object 'configure' is not a function in the script usit_config.py"
-    
     # kwargs creation
     kwargs = dict(index)
     del kwargs['driver']
     if 'class' in kwargs.keys() : del kwargs['class']
     instance = driverClass(**kwargs)
     
-    return instance, configFunc
+    return instance
     
