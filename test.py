@@ -9,5 +9,5 @@ import usit
 import traceback
 
 
-usit._run()
+usit.gui()
 
