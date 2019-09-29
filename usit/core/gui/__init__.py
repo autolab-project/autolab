@@ -23,6 +23,7 @@ def gui() :
 def _run():
     
     from PyQt5 import QtWidgets
+    
     app = QtWidgets.QApplication.instance()
     if app is None:
         app = QtWidgets.QApplication([])
@@ -31,7 +32,7 @@ def _run():
     gui = ControlCenter()
     gui.initialize()
     gui.show()
-    print(app.exec_())
+    app.exec_()
         
 class AppThread(Thread):
     
