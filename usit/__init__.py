@@ -5,22 +5,37 @@ Created on Fri May 17 15:04:04 2019
 @author: quentin.chateiller
 """
 
-# Define the path of the drivers
-import os as _os
-_DRIVERS_PATH = _os.path.join(_os.path.dirname(__file__),'drivers')
-_USER_FOLDER_PATH = _os.path.join(_os.path.expanduser('~'),'usit')
+# Initializing
+#from . import core
+#core.checkConfig()
 
+__version__ = '1.0'
+
+from . import drivers
+
+from . import core
+core.checkConfig()
+core.devices.index = core.devices.loadIndex()
+
+devices = core.devices.DeviceManager()
+
+from .core.gui import gui,_run
+
+from .core._report import report
+from .core.recorder_old.recorder import Recorder, Recorder_V2
 
 # User folder and devices_index.ini
-from .core.config import config as _config
-_config.checkConfig()
 
 
 
 # Import moldules
-from .core.drivers.drivers import driverManager as drivers
-from .core.devices.devices import deviceManager as devices
-from .core.recorder_old.recorder import Recorder, Recorder_V2
+#from .core.drivers.drivers import driverManager as drivers
+#from .core.devices.devices import deviceManager as devices
+#from .core.recorder_old.recorder import Recorder, Recorder_V2
+#from .core.gui import main as gui
+#
+#from .core.report.main import report
+#from .core.scanner import main as scanner
 #from .core.toolbox import toolbox
 
     
