@@ -51,7 +51,6 @@ class Module():
     def load(self,instance):
         
         self.instance = instance
-        print(self.instance)
         assert hasattr(self.instance,'getDriverConfig'), f"There is no function 'getDriverConfig' in the driver class"
         config = self.instance.getDriverConfig()
         
