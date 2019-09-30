@@ -253,29 +253,12 @@ class Device(Module):
         self.instance = None
         
         
-        
-    def _acquire(self):
-        
-        """ Acquire the lock of the device """
-        
-        self._lock.acquire()
-        
-        
-        
-    def _release(self):
-        
-        """ Release the lock of the device """
-        
-        self._lock.release()   
-        
-        
-        
     def reload(self):
         
         """ Close and setup a new connection to the physical device """
         
         self.close()
-        self._manager._load(self.name)
+        self._manager._reinit(self.name)
         
         
         
@@ -377,29 +360,18 @@ class Variable:
         
         """ Measure or set the value of the variable """
                 
-        self._parent._acquire()
         # GET FUNCTION
         if value is None:
-            try : 
-                assert self.readable, f"The variable {self.name} is not configured to be measurable"
-                answer = self.readFunction()
-                if self._readSignal is not None : self._readSignal.emit(answer)
-                self._parent._release()
-                return answer
-            except Exception as e :
-                self._parent._release()
-                raise ValueError(f'An error occured while reading variable {self.name} : {str(e)}')
+            assert self.readable, f"The variable {self.name} is not configured to be measurable"
+            answer = self.readFunction()
+            if self._readSignal is not None : self._readSignal.emit(answer)
+            return answer
             
         # SET FUNCTION
         else : 
-            try : 
-                assert self.writable, f"The variable {self.name} is not configured to be set"
-                self.writeFunction(value)
-                if self._writeSignal is not None : self._writeSignal.emit()
-                self._parent._release()
-            except Exception as e :
-                self._parent._release()
-                raise ValueError(f'An error occured while writing variable {self.name} : {str(e)}')
+            assert self.writable, f"The variable {self.name} is not configured to be set"
+            self.writeFunction(value)
+            if self._writeSignal is not None : self._writeSignal.emit()
   
         
         
@@ -448,14 +420,8 @@ class Action:
         """ Executes the action """
         
         # DO FUNCTION
-        try : 
-            assert self.function is not None, f"The action {self.name} is not configured to be actionable"
-            self._parent._acquire()
-            self.function()
-            self._parent._release()
-        except Exception as e :
-            self._parent._release()
-            raise ValueError(f'An error occured while executing action {self.name} : {str(e)}')
+        assert self.function is not None, f"The action {self.name} is not configured to be actionable"
+        self.function()
             
     
         
