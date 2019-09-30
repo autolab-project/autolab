@@ -26,7 +26,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         uic.loadUi(ui_path,self)
                 
         # Window configuration
-        self.setWindowTitle("USIT Control Center")
+        self.setWindowTitle("USIt (Universal Scanning Interface) - Control Center")
         self.setFocus()
         
         # Tree widget configuration
