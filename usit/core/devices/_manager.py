@@ -125,4 +125,8 @@ class DeviceManager() :
         
         instance = loadDevice(name)
         self._dev[name].load(instance)
+        
+    def _reinit(self,name):
+        self._dev[name] = Device(self,name)
+        self._load(name)
 
