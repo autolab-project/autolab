@@ -19,7 +19,7 @@ core.devices.index = core.devices.loadIndex()
 
 devices = core.devices.DeviceManager()
 
-from .core.gui import gui,_run
+from .core.gui import gui
 
 from .core._report import report
 from .core.recorder_old.recorder import Recorder, Recorder_V2
