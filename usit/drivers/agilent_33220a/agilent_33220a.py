@@ -10,28 +10,7 @@ import sys
 from numpy import zeros,ones,linspace
 
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address):
-        import visa
-        
-        Device.__init__(self)
-        rm = visa.ResourceManager()
-        self.inst = rm.get_instrument(address)
-        
-    def close(self):
-        self.inst.close()
-    def query(self,query):
-        self.write(query)
-        return self.read()
-    def write(self,query):
-        self.inst.write(query)
-    def read(self):
-        rep = self.inst.read()
-        return rep
-############################## Connections classes ##############################
-#################################################################################
+
 
 class Device():
     def __init__(self):
@@ -63,7 +42,34 @@ class Device():
         config.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':'Frequency'})
         
         return config
+
+
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address):
+        import visa
         
+        rm = visa.ResourceManager()
+        self.inst = rm.get_instrument(address)
+        
+        Device.__init__(self)
+        
+    def close(self):
+        self.inst.close()
+    def query(self,query):
+        self.write(query)
+        return self.read()
+    def write(self,query):
+        self.inst.write(query)
+    def read(self):
+        rep = self.inst.read()
+        return rep
+############################## Connections classes ##############################
+#################################################################################
+        
+    
         
 if __name__ == '__main__':
 

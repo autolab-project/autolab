@@ -7,38 +7,7 @@ Supported instruments (identified):
 """
 import time
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address):
-        import visa
-        
-        self.TIMEOUT = 10000 #ms
-        
-        # Instantiation
-        rm = visa.ResourceManager()
-        self.controller = rm.open_resource(address)
-        self.controller.timeout = self.TIMEOUT
-        Device.__init__(self)        
 
-    def close(self):
-        try : self.controller.close()
-        except : pass
-
-    def query(self,command):
-        result = self.controller.query(command)
-        result = result.strip('\n')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
-        return result
-    
-    def write(self,command):
-        self.controller.write(command)
-        
-        
-############################## Connections classes ##############################
-#################################################################################
 
 
 class Device():
@@ -111,6 +80,41 @@ class Device():
         config.append({'element':'variable','name':'power','read':self.getPower,'type':str,'help':'This command returns the power of both channels in their respective current unit.'})
         config.append({'element':'action','name':'zero','do':self.setZero, 'help':'This command performs an offset nulling measurement.'})       
         return config
+
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address):
+        import visa
+        
+        self.TIMEOUT = 10000 #ms
+        
+        # Instantiation
+        rm = visa.ResourceManager()
+        self.controller = rm.open_resource(address)
+        self.controller.timeout = self.TIMEOUT
+        Device.__init__(self)        
+
+    def close(self):
+        try : self.controller.close()
+        except : pass
+
+    def query(self,command):
+        result = self.controller.query(command)
+        result = result.strip('\n')
+        if '=' in result : result = result.split('=')[1]
+        try : result = float(result)
+        except: pass
+        return result
     
-    if __name__ == '__main__' :
-        ADDRESS = 'GPIB0::12::INSTR'
+    def write(self,command):
+        self.controller.write(command)
+        
+        
+############################## Connections classes ##############################
+#################################################################################
+        
+        
+if __name__ == '__main__' :
+    ADDRESS = 'GPIB0::12::INSTR'

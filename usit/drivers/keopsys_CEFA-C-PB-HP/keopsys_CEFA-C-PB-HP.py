@@ -6,9 +6,30 @@ Supported instruments (identified):
 - Keopsys CEFA-C-PB-HP
 """
 
+
+
+
+class Device() :
+    def __init__(self):
+        pass
+        
+    def getID(self):
+        return self.query('*IDN?')
+    
+    def setPower(self, value):             # For this model range is from 20dBm to 30dBm, 200=20dBm here 
+        self.write(f"CPU="+str(value))
+        
+    def getPower(self):
+        return self.query('CPU?')
+    
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'power','type':float,'read':self.getPower,'write':self.setPower, 'help':'Set power.'})
+        return config
+    
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA():
+class Device_VISA(Device):
     def __init__(self, address, **kwargs):
         import visa
         
@@ -34,26 +55,6 @@ class Device_VISA():
         self.controller.write(command)
 ############################## Connections classes ##############################
 #################################################################################
-
-
-class Device() :
-    def __init__(self):
-        pass
         
-    def getID(self):
-        return self.query('*IDN?')
-    
-    def setPower(self, value):             # For this model range is from 20dBm to 30dBm, 200=20dBm here 
-        self.write(f"CPU="+str(value))
-        
-    def getPower(self):
-        return self.query('CPU?')
-    
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'power','type':str,'read':self.getPower, ,'write':self.setPower, 'help':'Set power.'})
-        return config
-    
-
 if __name__ == '__main__':
     ADDRESS = 'GPIB0::3::INSTR' #write here the address of your device

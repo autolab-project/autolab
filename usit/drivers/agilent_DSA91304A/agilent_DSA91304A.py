@@ -9,30 +9,6 @@ Supported instruments (identified):
 import sys,os
 import time
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VXI11():
-    def __init__(self, address, **kwargs):
-        import vxi11 as v
-    
-        try:
-            self.sock = v.Instrument(address)
-        except:
-            print("Wrong IP, Listening port or bad connection \nCheck cables first")
-            sys.exit()
-        Device.__init__(self, **kwargs)
-    
-    def read_raw(self):
-        self.sock.read_raw()
-    def write(self,string):
-        "Take a sting and write it to the scope"
-        self.sock.write(string)
-    def read(self):
-        return self.sock.read()
-    def close(self):
-        self.sock.close()
-############################## Connections classes ##############################
-#################################################################################
 
 class Device():
     def __init__(self,nb_channels=4):
@@ -85,6 +61,39 @@ class Device():
         self.write(f':WAVEFORM:FORMAT {self.type}')
     def get_type(self):
         return self.type
+    
+    
+    
+#################################################################################
+############################## Connections classes ##############################
+class Device_VXI11(Device):
+    def __init__(self, address, **kwargs):
+        import vxi11 as v
+    
+        try:
+            self.sock = v.Instrument(address)
+        except:
+            print("Wrong IP, Listening port or bad connection \nCheck cables first")
+            sys.exit()
+            
+        Device.__init__(self, **kwargs)
+    
+    def read_raw(self):
+        self.sock.read_raw()
+    def write(self,string):
+        "Take a sting and write it to the scope"
+        self.sock.write(string)
+    def read(self):
+        return self.sock.read()
+    def close(self):
+        self.sock.close()
+############################## Connections classes ##############################
+#################################################################################
+
+
+
+
+
 
 class Channel():
     def __init__(self,dev,channel):

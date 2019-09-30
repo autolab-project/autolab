@@ -11,41 +11,7 @@ from module_t100 import T100
 
 modules_dict = {'sld':SLD,'t100':T100}
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address,**kwargs):
-        
-        import visa
-        
-        Device.__init__(self,**kwargs)
-        self.TIMEOUT = 60000 #ms
-        
-        rm = visa.ResourceManager()
-        self.controller = rm.open_resource(address)
-        self.controller.timeout = self.TIMEOUT
-        
 
-    def close(self):
-        try : self.controller.close()
-        except : pass
-
-
-    def write(self,command):
-        self.controller.write(command)
-        
-    def read(self):
-        result = self.controller.read()
-        result = result.strip('\n')
-        return result
-    
-    def query(self,command):
-        result = self.controller.query(command)
-        result = result.strip('\n')
-        return result
-        
-############################## Connections classes ##############################
-#################################################################################
 
 class Device():
 
@@ -78,7 +44,43 @@ class Device():
         return config
 
 
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address,**kwargs):
+        
+        import visa
+        
+        
+        self.TIMEOUT = 60000 #ms
+        
+        rm = visa.ResourceManager()
+        self.controller = rm.open_resource(address)
+        self.controller.timeout = self.TIMEOUT
+        
+        Device.__init__(self,**kwargs)
+        
 
+    def close(self):
+        try : self.controller.close()
+        except : pass
+
+
+    def write(self,command):
+        self.controller.write(command)
+        
+    def read(self):
+        result = self.controller.read()
+        result = result.strip('\n')
+        return result
+    
+    def query(self,command):
+        result = self.controller.query(command)
+        result = result.strip('\n')
+        return result
+        
+############################## Connections classes ##############################
+#################################################################################
 
 
 

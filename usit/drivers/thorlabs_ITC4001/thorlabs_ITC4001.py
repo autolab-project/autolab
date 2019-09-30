@@ -10,9 +10,25 @@ from numpy import *
 from optparse import OptionParser
 import sys
 
+
+
+class Device():
+    def __init__(self):
+        pass
+
+    def amplitude(self,amplitude):
+        self.write('SOUR:CURR %f\n' %amplitude)
+        print('\nSetting current to: ',amplitude,'V\n')
+            
+    def getDriverConfig(self):
+        config = []        
+        config.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':"Set the pumping current value"})
+        return config
+
+
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA():
+class Device_VISA(Device):
     def __init__(self, address):
         import visa
 
@@ -32,20 +48,7 @@ class Device_VISA():
         self.inst.close()
 ############################## Connections classes ##############################
 #################################################################################
-
-class Device():
-    def __init__(self):
-        pass
-
-    def amplitude(self,amplitude):
-        self.write('SOUR:CURR %f\n' %amplitude)
-        print('\nSetting current to: ',amplitude,'V\n')
-            
-    def getDriverConfig(self):
-        config = []        
-        config.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':"Set the pumping current value"})
-        return config
-
+        
     
 if __name__=="__main__":
     

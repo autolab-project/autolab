@@ -12,30 +12,6 @@ from numpy import fromstring,int8,int16,float64,sign
 import pandas
 
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VXI11():
-    def __init__(self, address, **kwargs):
-        import vxi11 as v
-    
-        self.inst = v.Instrument(address)
-        Device.__init__(self, **kwargs)
-
-
-    def read_raw(self):
-        return self.inst.read_raw()
-    def query(self,com):
-        self.sock.write(com)
-        return self.inst.read_raw()
-    def read(self):
-        self.inst.read()
-    def write(self,cmd):
-        self.inst.write(cmd)
-    def close(self):
-        self.inst.close()
-############################## Connections classes ##############################
-#################################################################################
-
 class Device():
     def __init__(self,nb_channels=4):
               
@@ -80,6 +56,36 @@ class Device():
     def stop(self):
         self.sock.write(':STOP')
         
+        
+        
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VXI11(Device):
+    def __init__(self, address, **kwargs):
+        import vxi11 as v
+    
+        self.inst = v.Instrument(address)
+        Device.__init__(self, **kwargs)
+
+
+    def read_raw(self):
+        return self.inst.read_raw()
+    def query(self,com):
+        self.sock.write(com)
+        return self.inst.read_raw()
+    def read(self):
+        self.inst.read()
+    def write(self,cmd):
+        self.inst.write(cmd)
+    def close(self):
+        self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
+
+
+
+
 
 class Channel():
     def __init__(self,dev,channel):

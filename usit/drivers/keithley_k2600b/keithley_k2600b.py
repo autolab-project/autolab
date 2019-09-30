@@ -9,9 +9,35 @@ Supported instruments (identified):
 
 from module_line import Line
 
+
+class Device():
+    
+    def __init__(self):
+        
+        # Initialisation
+        self.write('*CLS')
+        
+        # Subdevices
+        self.source1 = Line(self,1)
+        self.source2 = Line(self,2)
+    
+    def setSafeState(self):
+        self.source1.setSafeState()
+        self.source2.setSafeState()
+    
+    def getID(self):
+        return self.query('*IDN?')
+        
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'module','name':'source1','object':self.source1})
+        config.append({'element':'module','name':'source2','object':self.source2})
+        return config
+ 
+
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA():
+class Device_VISA(Device):
     def __init__(self, address):
         import visa
 
@@ -45,29 +71,5 @@ class Device_VISA():
 ############################## Connections classes ##############################
 #################################################################################
 
-class Device():
-    
-    def __init__(self):
-        
-        # Initialisation
-        self.write('*CLS')
-        
-        # Subdevices
-        self.source1 = Line(self,1)
-        self.source2 = Line(self,2)
-    
-    def setSafeState(self):
-        self.source1.setSafeState()
-        self.source2.setSafeState()
-    
-    def getID(self):
-        return self.query('*IDN?')
-        
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'module','name':'source1','object':self.source1})
-        config.append({'element':'module','name':'source2','object':self.source2})
-        return config
-    
         
 #ADDRESS = 'GPIB0::10::INSTR'
