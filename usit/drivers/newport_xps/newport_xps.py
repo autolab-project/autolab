@@ -51,7 +51,7 @@ class Device_TCPIP(Device):
         
         # Instantiation
         self.controller = XPS()
-        self.socketID = self.controller.TCP_ConnectToServer(address,str(port),self.TIMEOUT)
+        self.socketID = self.controller.TCP_ConnectToServer(address,int(port),self.TIMEOUT)
 
         Device.__init__(self,**kwargs)
 
@@ -177,135 +177,7 @@ class Device_TCPIP(Device):
 #  for XPS-C8 Firmware V2.1.4
 #
 #  See Programmer's manual for more information on XPS function calls
-
-import socket        
-
-
-class XPSController :
-    
-    def __init__(self):
-        
-        self.connInfos = {}
-                
-        self.controller = None
-        self.socketID = None
-        
-        self.timeout = 2
-        
-        self.debugMode = False
-        
-        
-
-        
-        
-        
-    # -------------------------------------------------------------------------
-    # Connection
-    # -------------------------------------------------------------------------
-        
-    def setup(self,param,value):
-        self.connInfos[param] = value
-        if self.isConnected() :
-            self.close()
-
-    def connect(self):
-        try : 
-            assert self.checkConnInfos()
-            if self.isConnected() :
-                self.close()
-                
-            self.controller = XPS()
-            IP = self.connInfos['IP']
-            port = self.connInfos['port']
-            self.socketID = self.controller.TCP_ConnectToServer(IP,port,self.timeout)
-            return True
-        except :
-            self.controller = None
-            self.socketID = None
-            return False
-        
-        
-    def isConnected(self):
-        try :
-            assert self.controller.FirmwareVersionGet(self.socketID) is not None
-            return True
-        except :
-            return False
-    
-    
-            
-    def close(self):
-        try :
-            self.controller.TCP_CloseSocket(self.socketId)
-        except :
-            pass
-        self.controller = None
-        self.socketID = None
-        
-        
-        
-    def checkConnInfos(self):
-        try :
-            assert 'IP' in self.connInfos.keys()
-            assert isinstance(self.connInfos['IP'],str)
-            assert 'port' in self.connInfos.keys()
-            assert isinstance(self.connInfos['port'],int)
-            return True
-        except :
-            return False
-        
-        
-    # -------------------------------------------------------------------------
-    # Read & Write
-    # -------------------------------------------------------------------------
-    
-    
-    
-    def query(self,command,**kwargs):
-
-        if self.debugMode is True :
-            print(f'command:{command}')
-        
-        assert isinstance(command,list)
-        assert hasattr(self.controller,command[0])
-
-        if len(command)>1 :
-            ans = getattr(self.controller,command[0])(self.socketID,*command[1:])
-        else :
-            ans = getattr(self.controller,command[0])(self.socketID)
-
-
-        if self.debugMode is True :
-            print(f'ans:{ans}')
-            
-        if ans[1] != '' :
-            if len(ans)>2:
-                return ans[1:]
-            else :
-                return ans[1]
-            
-            
-        
-    def read(self,**kwargs):
-        pass
-        
-    def write(self,**kwargs):
-        pass
-        
-
-
-
-
-
-
-
-
-def getInstance():
-    return XPSController()
-
-
-
-
+import socket
 
 
 
