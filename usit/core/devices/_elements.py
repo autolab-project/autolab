@@ -339,7 +339,7 @@ class Variable:
         self.readable = self.readFunction is not None
         self.numerical = self.type in [int,float]
         self.parameterAllowed = self.writable and self.numerical
-        
+                
         # Signals for GUI
         self._readSignal = None
         self._writeSignal = None

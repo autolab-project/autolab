@@ -12,7 +12,8 @@ DRIVERS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),'drivers'
 USER_FOLDER_PATH = os.path.join(os.path.expanduser('~'),'usit')
 USER_LAST_CUSTOM_FOLDER_PATH = os.path.expanduser('~')
 DEVICES_INDEX_PATH = os.path.join(USER_FOLDER_PATH,'devices_index.ini')
-DEVICES_INDEX_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__),'devices_index_template.ini')
+TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__),'files')
+
 
 def checkConfig():
 
@@ -23,7 +24,10 @@ def checkConfig():
     
     # LOCAL CONFIG
     if os.path.exists(DEVICES_INDEX_PATH) is False :
-        shutil.copyfile(DEVICES_INDEX_TEMPLATE_PATH,USER_FOLDER_PATH)
+        for filename in ['devices_index.ini','launcher.cmd','launcher.py'] :
+            shutil.copyfile(os.path.join(TEMPLATE_FILES_PATH,filename),
+                            os.path.join(USER_FOLDER_PATH,filename))
+
         print(f'INFORMATION: The configuration file devices_index.ini has been created : {USER_FOLDER_PATH}')
         
 

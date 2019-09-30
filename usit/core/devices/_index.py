@@ -6,7 +6,6 @@ Created on Mon Sep 23 16:01:43 2019
 """
 
 import configparser
-import os
 import usit
 
 # =============================================================================
@@ -41,10 +40,6 @@ def loadIndex():
         
         # Driver existing
         driver = index[name]['driver']
-        assert driver in usit.drivers.list()
-        
-        # Configuration file  --- to be changed
-        assert os.path.exists(os.path.join(usit.core.DRIVERS_PATH,driver,'usit_config.py')), f"Device index: Missing usit_config.py file for device '{name}'"
-        
+        assert driver in usit.drivers.list()        
         
     return index
