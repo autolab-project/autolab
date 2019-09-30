@@ -209,8 +209,8 @@ class Device():
     def getDriverConfig(self):
         config = []
         config.append({'element':'variable','name':'exposureTime','unit':'s','type':float,'read':self.getExposureTime,'write':self.setExposureTime,'help':'Exposure time of the camera'})
-        config.append({'element':'variable','name':'autoExposureTime','type':bool,'read':self.getAutoExposureTimeEnabled,'write':self.setAutoExposureTimeEnabled,'help':'Enable or not the auto exposure time mode'})
-        config.append({'element':'variable','name':'autoBackgroundRemoval','type':bool,'read':self.getAutoBackgroundRemovalEnabled,'write':self.setAutoBackgroundRemovalEnabled,'help':'Enable or not the auto background removal mode'})
+        config.append({'element':'variable','name':'autoExposureTime','type':bool,'read':self.isAutoExposureTimeEnabled,'write':self.setAutoExposureTimeEnabled,'help':'Enable or not the auto exposure time mode'})
+        config.append({'element':'variable','name':'autoBackgroundRemoval','type':bool,'read':self.isAutoBackgroundRemovalEnabled,'write':self.setAutoBackgroundRemovalEnabled,'help':'Enable or not the auto background removal mode'})
         config.append({'element':'variable','name':'spectrum','read':self.getSpectrum,'type':pd.DataFrame,'help':'Spectrum acquired'})
         config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'help':'Temperature of the camera'})
         config.append({'element':'variable','name':'mainPeakWavelength','type':float,'unit':'nm','read':self.getMainPeakWavelength,'help':'Wavelength of the main peak in the spectrum'})
