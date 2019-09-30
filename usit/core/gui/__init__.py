@@ -12,15 +12,15 @@ from threading import Event, Thread
 
 started = Event()
 
-def gui() :
+#def gui() :
+#        
+#    if started.is_set():
+#        print("Gui already running")
+#    else :
+#        t=AppThread()
+#        t.start()
         
-    if started.is_set():
-        print("Gui already running")
-    else :
-        t=AppThread()
-        t.start()
-        
-def _run():
+def gui():
     
     from PyQt5 import QtWidgets
     
@@ -34,18 +34,18 @@ def _run():
     gui.show()
     app.exec_()
         
-class AppThread(Thread):
-    
-    def __init__(self):
-        
-        Thread.__init__(self)
-            
-    def run(self):
-                
-        started.set()
-        
-        _run()
-        
-        started.clear()
-        
+#class AppThread(Thread):
+#    
+#    def __init__(self):
+#        
+#        Thread.__init__(self)
+#            
+#    def run(self):
+#                
+#        started.set()
+#        
+#        _run()
+#        
+#        started.clear()
+#        
             
