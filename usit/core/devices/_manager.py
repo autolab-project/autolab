@@ -47,7 +47,7 @@ class DeviceManager() :
         
         """ Test is a device is already loaded """
         
-        return self._dev[name]._instance is not None
+        return self._dev[name].instance is not None
     
     
     
