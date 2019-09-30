@@ -8,7 +8,7 @@ quentin.chateiller@c2n.upsaclay.fr
 """
 
 import usit
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
 import os 
 from ..scanning.main import Scanner
 
@@ -66,6 +66,8 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         for devName in usit.devices.list() :
             item = TreeWidgetItemModule(self.tree,devName,self)
+            for i in range(5) :
+                item.setBackground(i, QtGui.QColor('#9EB7F5')) #vert
             if devName in usit.devices.get_loaded_devices() :
                 self.associate(item)
         
