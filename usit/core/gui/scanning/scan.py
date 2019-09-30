@@ -123,7 +123,7 @@ class ScanManager :
         self.gui.start_pushButton.setText('Start')
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
-        self.gui.configManager.importAction.setEnabled(False)
+        self.gui.configManager.importAction.setEnabled(True)
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
         self.thread = None

@@ -13,7 +13,7 @@ import pandas as pd
 def getAddress(item):
     
     """ Returns the address of the given element """
-    
+
     address = [item.name]
     parent = item._parent
     while parent is not None : 
@@ -51,9 +51,6 @@ class Module():
     def load(self,instance):
         
         self.instance = instance
-        assert hasattr(self.instance,'getUsitConfig'), f"Module {self.name} configuration: Missing function 'getUsitConfig'" 
-        assert inspect.ismethod(self.instance.getUsitConfig), f"Module {self.name} configuration: 'getUsitConfig' has to be a function" 
-
         config = self.instance.getDriverConfig()
         assert isinstance(config,list), f"Module {self.name} configuration: 'getUsitConfig' output must be a list of dictionnaries"
         for configPart in config : 
@@ -82,6 +79,7 @@ class Module():
                 assert 'object' in configPart.keys(), f"Module {self.name}, Submodule {name} configuration: Missing module object"
             
                 mod = Module(self)
+                mod.name = name
                 
                 # Help
                 if 'help' in configPart.keys():
