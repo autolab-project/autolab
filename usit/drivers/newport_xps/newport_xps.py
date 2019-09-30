@@ -45,13 +45,13 @@ class Device():
 ############################## Connections classes ##############################
 class Device_TCPIP(Device):
     
-    def __init__(self,address,port,**kwargs):
+    def __init__(self,address=None,port=None,**kwargs):
         
         self.TIMEOUT = 2
         
         # Instantiation
         self.controller = XPS()
-        self.socketID = self.controller.TCP_ConnectToServer(address,port,self.TIMEOUT)
+        self.socketID = self.controller.TCP_ConnectToServer(address,str(port),self.TIMEOUT)
 
         Device.__init__(self,**kwargs)
 

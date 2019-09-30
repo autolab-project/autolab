@@ -226,7 +226,7 @@ class Device():
 ############################## Connections classes ##############################
 class Device_SOCKET(Device) :
     
-    def __init__(self,address):
+    def __init__(self,address=None):
         
         import socket 
         

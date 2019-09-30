@@ -110,7 +110,7 @@ class Device():
         config.append({'element':'action','name':'zero','do':self.setZero,                       
                        'help':'Sets the zeroing value with the present reading.'})
 
-        config.append({'element':'variable','name':'autorange','type':int,
+        config.append({'element':'variable','name':'autorange','type':bool,
                        'read':self.getAutoRange,'write':self.setAutoRange,
                        'help':'Auto range enable command.'})
 
@@ -126,7 +126,7 @@ class Device():
                        'read':self.getBufferInterval,'write':self.setBufferInterval,
                        'help':'Set data store interval.'})   
     
-        config.append({'element':'variable','name':'wavelength','type':int,
+        config.append({'element':'variable','name':'wavelength','type':float,
                        'read':self.getWavelength,'write':self.setWavelength,
                        'help':'Sets the wavelength for use when calculating power.'})      
 
@@ -141,7 +141,7 @@ class Device():
 
 class Device_DLL(Device):
     
-    def __init__(self,libpath):
+    def __init__(self,libpath=None):
         
         self.productID=0xCEC7
         self.modelNumber=1918

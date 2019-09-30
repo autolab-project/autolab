@@ -73,7 +73,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_TCPIP(Device):
-    def __init__(self, address, **kwargs):
+    def __init__(self, address=None, **kwargs):
         import visa as v
         
         rm        = v.ResourceManager()
@@ -93,7 +93,7 @@ class Device_TCPIP(Device):
         self.inst.close()
 
 class Device_VXI11(Device):
-    def __init__(self, address, **kwargs):
+    def __init__(self, address=None, **kwargs):
         import vxi11 as v
     
         self.inst = v.Instrument(address)
