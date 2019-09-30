@@ -45,7 +45,7 @@ class Device():
 ############################## Connections classes ##############################
 class Device_TCPIP(Device):
     
-    def __init__(self,address=None,port=None,**kwargs):
+    def __init__(self,address=None,port=5001,**kwargs):
         
         self.TIMEOUT = 2
         
