@@ -51,7 +51,10 @@ class Module():
     def load(self,instance):
         
         self.instance = instance
+        
+        assert hasattr(self.instance,'getDriverConfig'), f"There is no function 'getDriverConfig' in the driver class"
         config = self.instance.getDriverConfig()
+        
         assert isinstance(config,list), f"Module {self.name} configuration: 'getUsitConfig' output must be a list of dictionnaries"
         for configPart in config : 
             
