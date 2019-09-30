@@ -7,78 +7,6 @@ Supported instruments (identified): newport_1918c
 import time
 import ctypes as ct
 
-class Device_DLL():
-    
-    def __init__(self,libpath):
-        
-        self.productID=0xCEC7
-        self.modelNumber=1918
-        
-        self.controller = ct.windll.LoadLibrary(libpath)
-        
-        # Open device
-        cproductid = ct.c_int(self.productID)
-        useusbaddress = ct.c_bool(1)
-        num_devices = ct.c_int()
-        status = self.controller.newp_usb_open_devices(cproductid, useusbaddress, ct.byref(num_devices))
-
-        # Test ouverture
-        if status != 0 or num_devices.value == 0:
-            raise ValueError('Impossible to load the device')
-
-        # Test device information
-        arInstruments = ct.c_int()
-        arInstrumentsModel = ct.c_int()
-        arInstrumentsSN = ct.c_int()
-        nArraySize = ct.c_int()
-        status = self.controller.GetInstrumentList(ct.byref(arInstruments), 
-                                                   ct.byref(arInstrumentsModel), 
-                                                   ct.byref(arInstrumentsSN),
-                                                   ct.byref(nArraySize))
-        if status != 0 :
-            raise ValueError('Impossible to load device information')
-
-        # Test model number
-        if arInstrumentsModel.value != self.modelNumber:
-            raise ValueError('The device model number is not correct for this driver')
-            
-        self.IDnum = arInstruments.value
-            
-        Device.__init__(self)
-        
-        
-        
-    def close(self):
-        try: self.controller.newp_usb_uninit_system()
-        except : pass
-
-    def query(self,command):
-        self.write(command)
-        return self.read()
-
-
-    def read(self):  
-        try :         
-            response = ct.create_string_buffer(1024)
-            length = ct.c_ulong(1024)
-            read_bytes = ct.c_ulong()
-            cdevice_id = ct.c_long(self.IDnum)
-            status = self.controller.newp_usb_get_ascii(cdevice_id, ct.byref(response), length, ct.byref(read_bytes))
-            if status == 0:
-                answer = response.value[0:read_bytes.value].decode().rstrip('\r\n')
-                return answer
-        except :
-            pass
-
-    def write(self, commandString):
-        try :
-            assert isinstance(commandString,str)
-            query = ct.create_string_buffer(commandString.encode())
-            length = ct.c_ulong(ct.sizeof(query))
-            cdevice_id = ct.c_long(self.IDnum)
-            self.controller.newp_usb_send_ascii(cdevice_id, ct.byref(query), length)
-        except:
-            pass
 
 class Device():
     
@@ -210,3 +138,76 @@ class Device():
                        'read':self.getPowerMean, 'help':'Mean power value at a certain wavelength.'})    
     
         return config
+
+class Device_DLL(Device):
+    
+    def __init__(self,libpath):
+        
+        self.productID=0xCEC7
+        self.modelNumber=1918
+        
+        self.controller = ct.windll.LoadLibrary(libpath)
+        
+        # Open device
+        cproductid = ct.c_int(self.productID)
+        useusbaddress = ct.c_bool(1)
+        num_devices = ct.c_int()
+        status = self.controller.newp_usb_open_devices(cproductid, useusbaddress, ct.byref(num_devices))
+
+        # Test ouverture
+        if status != 0 or num_devices.value == 0:
+            raise ValueError('Impossible to load the device')
+
+        # Test device information
+        arInstruments = ct.c_int()
+        arInstrumentsModel = ct.c_int()
+        arInstrumentsSN = ct.c_int()
+        nArraySize = ct.c_int()
+        status = self.controller.GetInstrumentList(ct.byref(arInstruments), 
+                                                   ct.byref(arInstrumentsModel), 
+                                                   ct.byref(arInstrumentsSN),
+                                                   ct.byref(nArraySize))
+        if status != 0 :
+            raise ValueError('Impossible to load device information')
+
+        # Test model number
+        if arInstrumentsModel.value != self.modelNumber:
+            raise ValueError('The device model number is not correct for this driver')
+            
+        self.IDnum = arInstruments.value
+            
+        Device.__init__(self)
+        
+        
+        
+    def close(self):
+        try: self.controller.newp_usb_uninit_system()
+        except : pass
+
+    def query(self,command):
+        self.write(command)
+        return self.read()
+
+
+    def read(self):  
+        try :         
+            response = ct.create_string_buffer(1024)
+            length = ct.c_ulong(1024)
+            read_bytes = ct.c_ulong()
+            cdevice_id = ct.c_long(self.IDnum)
+            status = self.controller.newp_usb_get_ascii(cdevice_id, ct.byref(response), length, ct.byref(read_bytes))
+            if status == 0:
+                answer = response.value[0:read_bytes.value].decode().rstrip('\r\n')
+                return answer
+        except :
+            pass
+
+    def write(self, commandString):
+        try :
+            assert isinstance(commandString,str)
+            query = ct.create_string_buffer(commandString.encode())
+            length = ct.c_ulong(ct.sizeof(query))
+            cdevice_id = ct.c_long(self.IDnum)
+            self.controller.newp_usb_send_ascii(cdevice_id, ct.byref(query), length)
+        except:
+            pass
