@@ -44,7 +44,7 @@ class Device_DLL():
             
         self.IDnum = arInstruments.value
             
-
+        Device.__init__(self)
         
         
         
