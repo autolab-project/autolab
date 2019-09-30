@@ -114,7 +114,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     
     def __init__(self,itemParent,variable,gui) :
         
-        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[variable.name,'Variable'])
+        displayName = f'{variable.name}'
+        if variable.unit is not None :
+            displayName += f' ({variable.unit})'
+
+        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[displayName,'Variable'])
         self.setTextAlignment(1,QtCore.Qt.AlignHCenter)
         
         self.gui = gui

@@ -21,7 +21,10 @@ class FigureManager :
         matplotlib.rcParams.update({'font.size': 12})
         self.ax = self.fig.add_subplot(111)        
         self.ax.set_xlabel('Time [s]')
-        self.ax.set_ylabel(f'{self.gui.variable.getAddress()}')
+        ylabel = f'{self.gui.variable.getAddress()}'
+        if self.gui.variable.unit is not None :
+            ylabel += f' ({self.gui.variable.unit})'
+        self.ax.set_ylabel(ylabel)
         self.ax.grid()
         self.plot=self.ax.plot([0],[0],color='r')[0]
         # The first time we open a monitor it doesn't work, I don't know why..
