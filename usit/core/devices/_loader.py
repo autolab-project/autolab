@@ -55,7 +55,6 @@ def loadDevice(deviceName):
     assert hasattr(driver,className), f"There is no class {className} in the driver script"
     driverClass = getattr(driver,className)
     assert inspect.isclass(driverClass), f"The object {className} is not a class in the driver script"
-    assert hasattr(driverClass,'getDriverConfig'), f"There is no function 'getDriverConfig' in the driver class"
 
     # kwargs creation
     kwargs = dict(index)
