@@ -91,7 +91,7 @@ class Device():
         config.append({'element':'variable','name':'amplitude','type':float,'unit':'V',
                        'read':self.getAmplitude,'write':self.setAmplitude,
                        'help':'This is the amplitude of the device...'})
-        config.append({'element':'variable','name':'phrase','type':float,
+        config.append({'element':'variable','name':'phrase','type':str,
                        'read':self.getPhrase,'write':self.setPhrase})
         config.append({'element':'variable','name':'phase','type':float,'read':self.getPhase})
         config.append({'element':'action','name':'something','do':self.doSth,
