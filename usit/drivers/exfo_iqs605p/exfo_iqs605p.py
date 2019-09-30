@@ -44,7 +44,7 @@ class Device():
 ############################## Connections classes ##############################
 class Device_TELNET(Device):
     
-    def __init__(self, address, port, **kwargs):
+    def __init__(self, address=None, port=None, **kwargs):
         from telnetlib import Telnet
         
         self.TIMEOUT = 1

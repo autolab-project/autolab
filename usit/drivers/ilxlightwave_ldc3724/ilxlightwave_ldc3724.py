@@ -37,7 +37,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address):
+    def __init__(self, address=None):
         import visa
         
         self.TIMEOUT = 15000 #ms
