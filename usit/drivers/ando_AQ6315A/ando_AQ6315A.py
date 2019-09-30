@@ -28,22 +28,22 @@ class Device():
             
     def get_data(self):
         print("ACQUIRING...")
-        self.amp    = self.query("LDATA").split(',')[1:]
+        self.amp    = self.query("LDATB").split(',')[1:]
         self.amp    = [eval(self.amp[i]) for i in range(len(self.amp))]
         stopWL     = float(self.query("STPWL?"))
         startWL    = float(self.query("STAWL?"))
         self.lambd = linspace(startWL,stopWL,len(self.amp))
     
     def set_start_wavelength(self,value):
-        scope.write('STAWL '+value)
+        self.write('STAWL '+value)
     def set_stop_wavelength(self,value):
-        scope.write('STPWL '+value)
+        self.write('STPWL '+value)
         
     def singleSweep(self):
         s = self.write("SGL")
         return s
     def repeatSweep(self):
-        scope.write('RPT')
+        self.write('RPT')
     
     def query(self,query,length=1000000):
         self.write(query)
@@ -53,7 +53,7 @@ class Device():
         self.string = query + '\n'
         self.scope.write(self.string)
     def read(self,length=10000000):
-        rep = self.scope.read_raw()
+        rep = self.scope.read()
         return rep
         
     def close(self):

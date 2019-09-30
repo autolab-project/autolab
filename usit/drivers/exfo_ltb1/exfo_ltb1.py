@@ -1,42 +1,33 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr  3 20:06:08 2019
 
-@author: quentin.chateiller
+"""
+Supported instruments (identified):
+- 
 """
 
-from telnetlib import Telnet
+
 from module_ftb1750 import FTB1750
-
-ADDRESS = '192.168.0.1'
-PORT = 5024
 
 modules_dict = {'ftb1750':FTB1750}
 
-class Device():
+#################################################################################
+############################## Connections classes ##############################
+class Device_TELNET():
     
-    def __init__(self,address=ADDRESS,port=PORT,**kwargs):
+    def __init__(self, address, port, **kwargs):
+        from telnetlib import Telnet
         
-        self.TIMEOUT = 1 #s
+        Device.__init__(self)
+        
+        self.TIMEOUT = 1
         
         # Instantiation
-        self.controller = Telnet(address,port)
+        self.controller = Telnet(address,str(port))
         self.read()
         self.read()
         
-        # Submodules
-        prefix = 'slot'
-        for key in kwargs.keys():
-            if key.startswith(prefix):
-                slot_num = key[len(prefix):]
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
-                setattr(self,name,module(self,slot_num))
         
-    # -------------------------------------------------------------------------
-    # Read & Write
-    # -------------------------------------------------------------------------
-    
     def write(self,command):
         try : self.controller.write(f'{command}\r\n'.encode())
         except : pass
@@ -56,17 +47,43 @@ class Device():
         try : self.controller.close()
         except : pass
     
+############################## Connections classes ##############################
+#################################################################################
+
+
+
+
+class Device():
     
-    
+    def __init__(self,**kwargs):
         
-        
+        # Submodules
+        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<NAME>
+        self.slotnames = []
+        prefix = 'slot'
+        for key in kwargs.keys():
+            if key.startswith(prefix):
+                slot_num = key[len(prefix):]
+                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
+                name = kwargs[key].split(',')[1].strip()
+                setattr(self,name,module(self,slot_num))
+                self.slotnames.append(name)       
         
     def getID(self):
         return self.write('*IDN?')
     
     
+    def getDriverConfig(self):
+        config = []
+        for name in self.slotnames :
+            config.append({'element':'module','name':name,'object':getattr(self,name)})
+        return config
+    
+    
     
 
-
+if __name__ == '__main__' :
+    ADDRESS = '192.168.0.1'
+    PORT = 5024
 
 

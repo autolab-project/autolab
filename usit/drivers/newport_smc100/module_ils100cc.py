@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Aug  7 13:42:52 2019
 
-@author: quentin.chateiller
+"""
+Supported instruments (identified):
+- Module ils100cc
 """
 
 import time 
@@ -12,11 +13,7 @@ class ILS100CC() :
     def __init__(self,dev,slot):
         
         self.dev = dev
-        self.SLOT = str(slot)
-        
-        
-
-        
+        self.SLOT = str(slot)        
         
     def query(self,command):
         return self.dev.query(self.SLOT+command)
@@ -25,12 +22,6 @@ class ILS100CC() :
     def write(self,command):
         self.dev.write(self.SLOT+command)
         
-        
-        
-        
-        
-    
-
     def getState(self):
         ans = self.query('TS?',unwrap=False)[-2:]
         if ans[0] == '0' :
@@ -50,9 +41,6 @@ class ILS100CC() :
         else :
             return 'UNKNOWN'
         
-        
-        
-        
     def getReady(self):
         
         # On vérifie que l'on est pas dans le mode REF
@@ -68,13 +56,8 @@ class ILS100CC() :
             time.sleep(0.1)
             
 
-            
-            
     def getID(self):
         return self.query('ID?')
-
-
-
 
 
     def getPosition(self):
@@ -86,9 +69,6 @@ class ILS100CC() :
         self.waitReady()
 
 
-  
-        
-
     def setAcceleration(self,value):
         self.getReady()
         self.write('AC'+str(value))
@@ -96,3 +76,9 @@ class ILS100CC() :
 
     def getAcceleration(self):
         return self.query('AC?')
+    
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'position','type':str,
+                       'read':self.getPosition,'write':self.setPosition, 'help':'Initiates an absolute move.'})
+        return config

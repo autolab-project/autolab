@@ -1,19 +1,20 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr  3 20:06:08 2019
 
-@author: quentin.chateiller
 """
-import visa
+Supported instruments (identified):
+- 
+"""
+
+
 from module_line import Line
 
-ADDRESS = 'GPIB0::10::INSTR'
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address):
+        import visa
 
-class Device():
-    
-    
-    def __init__(self,address=ADDRESS):
-        
         self.TIMEOUT = 1000 #ms
         
         # Instantiation
@@ -21,13 +22,10 @@ class Device():
         self.controller = rm.open_resource(self.address)
         self.controller.timeout = self.TIMEOUT
         
-        # Initialisation
-        self.write('*CLS')
+        Device.__init__(self)
+    
         
-        # Subdevices
-        self.source1 = Line(self,1)
-        self.source2 = Line(self,2)
-        
+   
     def close(self):
         try : self.controller.close()
         except : pass
@@ -43,7 +41,20 @@ class Device():
     def write(self,command):
         self.controller.write(command)
         
+        
+############################## Connections classes ##############################
+#################################################################################
+
+class Device():
     
+    def __init__(self):
+        
+        # Initialisation
+        self.write('*CLS')
+        
+        # Subdevices
+        self.source1 = Line(self,1)
+        self.source2 = Line(self,2)
     
     def setSafeState(self):
         self.source1.setSafeState()
@@ -52,5 +63,11 @@ class Device():
     def getID(self):
         return self.query('*IDN?')
         
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'module','name':'source1','object':self.source1})
+        config.append({'element':'module','name':'source2','object':self.source2})
+        return config
+    
         
-
+#ADDRESS = 'GPIB0::10::INSTR'

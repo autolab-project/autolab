@@ -155,3 +155,17 @@ class Line():
         else :
             return True
         
+        
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'resistance','read':self.getResistance,'type':float,'help':'Resistance'})
+        config.append({'element':'variable','name':'power','read':self.getPower,'type':float,'help':'Power'})
+        config.append({'element':'variable','name':'powerCompliance','read':self.getPowerCompliance,'write':self.setPowerCompliance,'type':float,'help':'Power compliance'})
+        config.append({'element':'variable','name':'current','read':self.getCurrent,'type':float,'help':'Current'})
+        config.append({'element':'variable','name':'currentCompliance','read':self.getCurrentCompliance,'write':self.setCurrentCompliance,'type':float,'help':'Current compliance'})
+        config.append({'element':'variable','name':'voltage','read':self.getVoltage,'type':float,'help':'Voltage'})
+        config.append({'element':'variable','name':'voltageCompliance','read':self.getVoltageCompliance,'write':self.setVoltageCompliance,'type':float,'help':'Voltage compliance'})
+        config.append({'element':'variable','name':'output','read':self.getOutputState,'write':self.setOutputState,'type':bool,'help':'Output'})
+        config.append({'element':'variable','name':'4wireMode','read':self.get4wireModeState,'write':self.set4wireModeState,'type':bool,'help':'4 wire mode'})
+        return config
+        

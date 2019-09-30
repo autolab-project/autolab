@@ -83,11 +83,14 @@ class Device():
     def getArray(self):
         return np.ones((3,4))
     
-    def getUsitConfig(self):
+    def getDriverConfig(self):
         
         config = []
-        config.append({'element':'module','name':'slot1','object':self.slot1})
-        config.append({'element':'module','name':'slot2','object':self.slot2,'help':'coucou'})
+        
+        for i in range(10) :
+            if hasattr(self,f'slot{i}') :
+                config.append({'element':'module','name':f'slot{i}','object':getattr(self,f'slot{i}')})
+        
         config.append({'element':'variable','name':'amplitude','type':float,'unit':'V',
                        'read':self.getAmplitude,'write':self.setAmplitude,
                        'help':'This is the amplitude of the device...'})
@@ -120,7 +123,7 @@ class Slot() :
         print(f'slot {self.num} get wavelength',value)
         return value
 
-    def getUsitConfig(self):
+    def getDriverConfig(self):
         config = []
         config.append({'element':'variable','name':'power','type':float,'read':self.getPower,'unit':'W'})
         config.append({'element':'variable','name':'wavelength','type':float,'read':self.getWavelength,'unit':'nm'})

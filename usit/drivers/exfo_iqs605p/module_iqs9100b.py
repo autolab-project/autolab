@@ -45,11 +45,19 @@ class IQS9100B():
         ans=self.dev.write(self.prefix+f'ROUT1:OPEN:STAT?')
         return not bool(int(ans))
         
-    def setShutter(self,value):
+    def setShuttered(self,value):
         assert isinstance(value,bool)
         if value is False :
             self.dev.write(self.prefix+f"ROUT1:OPEN")
         else :
             self.dev.write(self.prefix+f"ROUT1:CLOS")
         self.dev.write('*OPC?')
+        
+    def getDriverConfig(self):
+        
+        config = []
+        config.append({'element':'variable','name':'route','type':int,'read':self.getRoute,'write':self.setRoute,'help':'Current route of the switch'})
+        config.append({'element':'variable','name':'shuttered','type':bool,'read':self.isShuttered,'write':self.setShuttered,'help':'State of the shutter'})
+        config.append({'element':'action','name':'safestate','do':self.setSafeState,'help':'Set the shutter'})
+        return config
         

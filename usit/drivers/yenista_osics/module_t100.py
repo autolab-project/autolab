@@ -171,3 +171,16 @@ class T100():
         result = self.cleanResult(result)
         return result == 'ENABLED'
     
+    
+    
+    def getDriverConfig(self):
+        
+        config = []
+        config.append({'element':'variable','name':'wavelength','type':float,'unit':'nm','read':self.getWavelength,'write':self.setWavelength,'help':'Wavelength'})
+        config.append({'element':'variable','name':'frequency','type':float,'unit':'GHz','read':self.getFrequency,'write':self.setFrequency,'help':'Frequency'})
+        config.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.getPower,'write':self.setPower,'help':'Output power'})
+        config.append({'element':'variable','name':'intensity','type':float,'unit':'mA','read':self.getIntensity,'write':self.setIntensity,'help':'Current intensity'})
+        config.append({'element':'variable','name':'output','type':bool,'read':self.getOutputState,'write':self.setOutputState,'help':'Output state'})
+        config.append({'element':'variable','name':'coherenceControl','type':bool,'read':self.getCoherenceControlState,'write':self.setCoherenceControlState,'help':'Coherence control mode'})
+        config.append({'element':'variable','name':'autoPeakFindControl','type':bool,'read':self.getAutoPeakFindControlState,'write':self.setAutoPeakFindControlState,'help':'Auto peak find control'})
+        return config

@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
-Created on Wed Apr  3 20:06:08 2019
-
-@author: quentin.chateiller
+Supported instruments (identified): Yenista Tunics.
+- 
 """
-import visa
 
-ADDRESS = 'GPIB0::23::INSTR'
-
-class Device():
-    
-    def __init__(self,address=ADDRESS):
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address, **kwargs):
+        import visa    
         
         self.TIMEOUT = 15000 #ms
         
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
         self.controller.timeout = self.TIMEOUT
-
-        self.write('MW')
         
+        Device.__init__(self, **kwargs)
+    
     def close(self):
         try : self.controller.close()
         except : pass
@@ -38,23 +37,22 @@ class Device():
     
     def read(self):
         return self.controller.read()
+
+
+############################## Connections classes ##############################
+#################################################################################
+
+class Device():
     
+    def __init__(self,address):
+        self.write('MW')
+        
     def wait(self):
         self.getID() # Not fantastic but programming interface really basic
-        
-        
-        
-        
-        
+             
     def getID(self):
         return self.query('*IDN?')
     
-    
-    
-
-
-
-
     def setFrequency(self,value):
         self.write(f"F={value}")
         self.wait()
@@ -62,19 +60,12 @@ class Device():
     def getFrequency(self):
         return self.query("F?")
 
-
-
-
     def setWavelength(self,value):
         self.write(f"L={value}")
         self.wait()
         
     def getWavelength(self):
         return self.query("L?")
-    
-    
-    
-    
     
     def setPower(self,value):
         self.write(f"P={float(value)}")
@@ -88,9 +79,6 @@ class Device():
         if ans == 'DISABLED' : return 0
         else : return ans
     
-
-
-
     def setIntensity(self,value):
         self.write(f"I={float(value)}")
         if value == 0 : self.setOutput(False)
@@ -103,9 +91,6 @@ class Device():
         if isinstance(ans,str) is True and ans == 'DISABLED' : return 0
         else : return ans
         
-    
-    
-    
     def setOutput(self,state):
         if state is True : self.write("ENABLE")
         else : self.write("DISABLE")
@@ -128,7 +113,31 @@ class Device():
         self.wait()
 
 
-   
+    def getDriverConfig(self):
+        
+        config = []
+
+        config.append({'element':'variable','name':'wavelength','type':str,
+                       'read':self.getWavelength,'write':self.setWavelength})
+    
+        config.append({'element':'variable','name':'frequency','type':str,
+                       'read':self.getFrequency,'write':self.setFrequency})
+
+        config.append({'element':'variable','name':'power','type':str,
+                       'read':self.getPower,'write':self.setPower})
+
+        config.append({'element':'variable','name':'intensity','type':str,
+                       'read':self.getIntensity,'write':self.setIntensity})
+    
+        config.append({'element':'variable','name':'output','type':str,
+                       'read':self.getOutput,'write':self.setOutput})
+
+        config.append({'element':'variable','name':'motorSpeed','type':str,
+                       'read':self.getMotorSpeed,'write':self.setMotorSpeed})
+    
+        return config
+
+    
 if __name__ == '__main__':
     from optparse import OptionParser
     import sys,os
@@ -148,7 +157,7 @@ if __name__ == '__main__':
     parser.add_option("-p", "--power", type="str", dest="power", default=None, help="Set the output power in mW." )
     parser.add_option("-f", "--frequency", type="str", dest="frequency", default=None, help="Set the operating frequency in GHz." )
     parser.add_option("-w", "--wavelength", type="str", dest="wavelength", default=None, help="Set the operating wavelength in nm." )
-    parser.add_option("-i", "--address", type="str", dest="address", default=ADDRESS, help="Set the GPIB address to use to communicate." )
+    parser.add_option("-i", "--address", type="str", dest="address", default='GPIB0::23::INSTR', help="Set the GPIB address to use to communicate." )
     (options, args) = parser.parse_args()
     
     ### Start the talker ###
@@ -180,4 +189,3 @@ if __name__ == '__main__':
     try: sys.exit()
     except: os._exit(1)
 
-        
