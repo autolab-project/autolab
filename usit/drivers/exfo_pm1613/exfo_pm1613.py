@@ -1,17 +1,17 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr  3 20:06:08 2019
 
-@author: quentin.chateiller
 """
-import visa
+Supported instruments (identified):
+- Exfo pm1613 
+"""
 import time
 
-ADDRESS = 'GPIB0::12::INSTR'
-
-class Device():
-    
-    def __init__(self,address=ADDRESS):
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address):
+        import visa
         
         self.TIMEOUT = 10000 #ms
         
@@ -19,17 +19,8 @@ class Device():
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
         self.controller.timeout = self.TIMEOUT
-        
-        # Initialisation
-        self.write('*CLS')
-        self.write('SENS:POW:RANG:AUTO 1')      # Ajuster la gamme de mesure automatiquement
-        self.write('SENS:POW:REF:STAT 0')       # Set Absolute power measurment mode (dBm or W)
-        self.write('SENS:POW W')                # Unité = Watts
-        self.write('SENS:POW:UNIT W')
-        
-        
-        
-        
+        Device.__init__(self)        
+
     def close(self):
         try : self.controller.close()
         except : pass
@@ -46,19 +37,24 @@ class Device():
         self.controller.write(command)
         
         
+############################## Connections classes ##############################
+#################################################################################
+
+
+class Device():
+    
+    def __init__(self):
         
-        
-        
+        # Initialisation
+        self.write('*CLS')
+        self.write('SENS:POW:RANG:AUTO 1')      # Ajuster la gamme de mesure automatiquement
+        self.write('SENS:POW:REF:STAT 0')       # Set Absolute power measurment mode (dBm or W)
+        self.write('SENS:POW W')                # Unité = Watts
+        self.write('SENS:POW:UNIT W')
         
         
     def getID(self):
         return self.query('*IDN?')
-    
-    
-    
-
-    
-
     
     def setAveragingState(self,state):
         assert isinstance(state,bool)
@@ -69,17 +65,10 @@ class Device():
     
     def getAveragingState(self):
         return bool(self.query('SENS:AVER:STAT?'))
-    
-    
-    
-    
-    
+        
     def setZero(self):
         self.write('SENS:CORR:COLL:ZERO')
         self.query('*OPC?')
-    
-    
-    
     
     def getBufferSize(self):
         return int(self.query('SENS:AVER:COUN?'))
@@ -92,8 +81,6 @@ class Device():
             self.write('SENS:AVER:COUN %i'%value)
             self.query('*OPC?')
         
-        
-
     def getPower(self):
         while True :
             result=self.query('READ:ALL:POW:DC?')
@@ -103,10 +90,6 @@ class Device():
                 break
         return float(result)
 
-
-
-    
-        
     def setWavelength(self,wavelength):
         assert isinstance(float(wavelength),float)
         wavelength=float(wavelength)
@@ -117,3 +100,17 @@ class Device():
     
     def getWavelength(self):
         return float(self.query('SENS:POW:WAVE?'))
+    
+    
+    def getDriverConfig(self):
+        
+        config = []
+        config.append({'element':'variable','name':'averagingState','write':self.setAveragingState,'read':self.getAveragingState,'type':bool,'help':'This command activates or deactivates data averaging.'})
+        config.append({'element':'variable','name':'bufferSize','write':self.setBufferSize,'read':self.getBufferSize,'type':int,'help':'This command sets the number of power measurements that will be used to compute data averaging.'})
+        config.append({'element':'variable','name':'wavelength','write':self.setWavelength,'read':self.getWavelength,'type':float,'help':'The <numeric_value> parameter is an operating wavelength in nm. Any wavelength within the spectral range of the power meter optical detector at 0.01 nm resolution may be selected.'})
+        config.append({'element':'variable','name':'power','read':self.getPower,'type':str,'help':'This command returns the power of both channels in their respective current unit.'})
+        config.append({'element':'action','name':'zero','do':self.setZero, 'help':'This command performs an offset nulling measurement.'})       
+        return config
+    
+    if __name__ == '__main__' :
+        ADDRESS = 'GPIB0::12::INSTR'

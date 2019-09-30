@@ -110,4 +110,12 @@ class SLD():
         return result == 'ENABLED'
     
 
+
+
+    def getDriverConfig(self):
+        
+        config = []
+        config.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.getPower,'write':self.setPower,'help':'Output power'})
+        config.append({'element':'variable','name':'output','type':bool,'read':self.getOutputState,'write':self.setOutputState,'help':'Output state'})
+        return config
     

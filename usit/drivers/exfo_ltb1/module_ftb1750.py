@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jul 23 16:42:17 2019
 
-@author: qchat
 """
+Supported instruments (identified):
+- 
+"""
+
 
 class FTB1750():
     
@@ -73,4 +75,14 @@ class FTB1750():
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV?")
         return float(ans)
     
+    
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'averaging','type':bool,'read':self.getAveragingState,'write':self.setAveragingState,'help':'Average or not the measure'})
+        config.append({'element':'variable','name':'bufferSize','type':int,'read':self.getBufferSize,'write':self.setBufferSize,'help':'Buffer size for the average'})
+        config.append({'element':'variable','name':'wavelength','type':float,'unit':'nm','read':self.getWavelength,'write':self.setWavelength,'help':'Wavelength of the measure'})
+        config.append({'element':'variable','name':'power','type':float,'unit':'W','read':self.getPower,'help':'Current power'})
+        config.append({'element':'action','name':'safestate','do':self.setSafeState,'help':'Set the shutter'})
+        return config
+        
     

@@ -370,3 +370,21 @@ class NSR1():
         
         # Raffraichissement des donnees
         self.loadCalib()
+     
+        
+    def getDriverConfig(self):
+        
+        config = []
+        config.append({'element':'variable','name':'velocity','type':float,'read':self.getVelocity,'write':self.setVelocity,'help':'Velocity of the filter during move'})
+        config.append({'element':'variable','name':'acceleration','type':float,'read':self.getAcceleration,'write':self.setAcceleration,'help':'Acceleration of the filter during move'})
+        config.append({'element':'variable','name':'angle','type':float,'read':self.getAngle,'write':self.setAngle,'help':'Current angle position'})
+        config.append({'element':'variable','name':'transmission','type':float,'read':self.getTransmission,'write':self.setTransmission,'help':'Current transmission of the filter'})
+        config.append({'element':'action','name':'setMin','do':self.setMin,'help':'Go to minimum transmission'})
+        config.append({'element':'action','name':'setMax','do':self.setMax,'help':'Go to maximum transmission'})
+        config.append({'element':'action','name':'goHome','do':self.goHome,'help':'Go to home position'})
+        return config
+    
+    
+        
+        
+    

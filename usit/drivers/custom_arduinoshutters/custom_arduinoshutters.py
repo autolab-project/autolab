@@ -1,51 +1,42 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
-Created on Wed Apr  3 20:06:08 2019
-
-@author: quentin.chateiller
+Supported instruments (identified):
+- 
 """
-import visa
 
-ADDRESS = 'ASRL15::INSTR'
-
-class Device():
-    
-    def __init__(self,address=ADDRESS):
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address):
+        import visa 
         
         self.DEF_TIMEOUT = 1000 #ms
         self.LONG_TIMEOUT = 5000 #ms
         self.BAUDRATE = 115200 
         
-        # Angle configuration : 1=Closed  0=Open
-        self.POS = {1:{1:30,0:60},
-                    2:{1:125,0:85},
-                    3:{1:25,0:70}}
-
+        Device.__init__(self)
+        
         # Instantiation
         rm = visa.ResourceManager()
-        self.controller = rm.open_resource(address)
-        self.controller.timeout = self.DEF_TIMEOUT
-        self.controller.baud_rate = self.BAUDRATE
-        
-        self.config = '111' # default position ALL closed
-        
-        
-        
-        
+        self.inst = rm.open_resource(address)
+        self.inst.timeout = self.DEF_TIMEOUT
+        self.inst.baud_rate = self.BAUDRATE
         
         
     def close(self):
-        try : self.controller.close()
+        try : self.inst.close()
         except : pass
 
     def query(self,command):
-        result = self.controller.query(command)
+        result = self.inst.query(command)
         result = result.strip('\n')
         
         if '=' in result : result = result.split('=')[1]
         
-        if 'SRV' in command : self.controller.timeout = self.LONG_TIMEOUT
-        else : self.controller.timeout = self.DEF_TIMEOUT
+        if 'SRV' in command : self.inst.timeout = self.LONG_TIMEOUT
+        else : self.inst.timeout = self.DEF_TIMEOUT
         
         try : result = float(result)
         except: pass
@@ -53,29 +44,39 @@ class Device():
         return result
     
     def write(self,command):
-        self.controller.write(command)
-        
+        self.inst.write(command)
+
+############################## Connections classes ##############################
+#################################################################################
         
     
+
+class Device():
     
-    
+    def __init__(self):
         
+
+        
+        # Angle configuration : 1=Closed  0=Open
+        self.POS = {1:{1:30,0:60},
+                    2:{1:125,0:85},
+                    3:{1:25,0:70}}
+        
+        self.config = '111' # default position ALL closed
+
+
+
     def getID(self):
         return self.query('*IDN?')
     
-    
-    
-    
-    
-        
+
+
     def setSafeState(self):
         self.setConfig('111')
         if self.getConfig() == '111' :
             return True
         
         
-        
-            
         
     def setConfig(self,value):
         assert isinstance(value,str)
@@ -93,15 +94,13 @@ class Device():
         self.query(command)
 
         self.config = value
+        
     
     def getConfig(self):
         return self.config
     
     
-    
-    
-    
-    
+ 
     def invertConfig(self):
         newConfig = ''
         for i in range(3):
@@ -111,13 +110,8 @@ class Device():
                 newConfig += 'x'
         self.setConfig(newConfig)
         
+      
         
-        
-    
-
-        
-        
-    
     def setAngleShutter1(self,value):
         self.query(f'SRV1={value}')
         
@@ -126,4 +120,18 @@ class Device():
         
     def setAngleShutter3(self,value):
         self.query(f'SRV3={value}')
+        
+    def getDriverConfig(self):
+        
+        config = []
+        
+        config.append({'element':'action','name':'closeAll','do':self.setSafeState,'help':'Close every shutters'})
+        config.append({'element':'action','name':'invert','do':self.invertConfig,'help':'Invert every shutters state'})
+        config.append({'element':'variable','name':'config','read':self.getConfig,'write':self.setConfig,'type':str,'help':'Shutter configuration. 1 is closed, 0 is opened.'})
+
+        return config
+        
+        
+if __name__ == '__main__' : 
+    ADDRESS = 'ASRL15::INSTR'
         

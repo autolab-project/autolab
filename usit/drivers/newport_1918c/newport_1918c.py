@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr  3 21:17:28 2019
+#!/usr/bin/env python3
 
-@author: quentin.chateiller
+"""
+Supported instruments (identified): newport_1918c
+- 
 """
 import time
 import ctypes as ct
 
-LIBPATH = r'C:\Program Files\Newport\Newport USB Driver\Bin\usbdll.dll'
-
-class Device():
+class Device_DLL():
     
-    def __init__(self,libpath=LIBPATH):
+    def __init__(self,libpath):
         
         self.productID=0xCEC7
         self.modelNumber=1918
@@ -46,9 +44,7 @@ class Device():
             
         self.IDnum = arInstruments.value
             
-        self.write('PM:DS:Clear') # Clear data store
-        self.write('PM:AUTO 1') # Automatic range
-        self.write('PM:UNITs 2') # for Watts
+
         
         
         
@@ -83,10 +79,13 @@ class Device():
             self.controller.newp_usb_send_ascii(cdevice_id, ct.byref(query), length)
         except:
             pass
-        
-    #--------------------------------------------------------------------------
-    # Optional functions
-    #--------------------------------------------------------------------------
+
+class Device():
+    
+    def __init__(self):
+        self.write('PM:DS:Clear') # Clear data store
+        self.write('PM:AUTO 1') # Automatic range
+        self.write('PM:UNITs 2') # for Watts
     
     def getID(self):
         return self.query('*IDN?')
@@ -143,18 +142,10 @@ class Device():
         return float(self.query('PM:DS:INT?'))/10 
     
     
-    
-    
-
-    
     def getPowerMean(self):
 
         """
         Stores the power values at a certain wavelength.
-        :param wavelength: float: Wavelength at which this operation should be done. float.
-        :param buff_size: int: nuber of readings that will be taken
-        :param interval_ms: float: Time between readings in ms.
-        :return: [actualwavelength,mean_power,std_power]
         """
         
         # On vide la mémoDL
@@ -183,4 +174,39 @@ class Device():
                 time.sleep(0.1)
         return power
         
-a=Device()
+
+    def getDriverConfig(self):
+        
+        config = []
+        
+        config.append({'element':'action','name':'zero','do':self.setZero,                       
+                       'help':'Sets the zeroing value with the present reading.'})
+
+        config.append({'element':'variable','name':'autorange','type':int,
+                       'read':self.getAutoRange,'write':self.setAutoRange,
+                       'help':'Auto range enable command.'})
+
+        config.append({'element':'variable','name':'zeroValue','type':float,
+                       'read':self.getZeroValue,'write':self.setZeroValue,
+                       'help':'Sets the zeroing value.'})
+
+        config.append({'element':'variable','name':'bufferSize','type':int,
+                       'read':self.getBufferSize,'write':self.setBufferSize,
+                       'help':'Sets the size of the Data Store buffer.'})    
+
+        config.append({'element':'variable','name':'bufferInterval','type':int,
+                       'read':self.getBufferInterval,'write':self.setBufferInterval,
+                       'help':'Set data store interval.'})   
+    
+        config.append({'element':'variable','name':'wavelength','type':int,
+                       'read':self.getWavelength,'write':self.setWavelength,
+                       'help':'Sets the wavelength for use when calculating power.'})      
+
+        config.append({'element':'variable','name':'power','type':float,
+                       'read':self.getPower,
+                       'help':'Returns the power in the selected units.'})      
+    
+        config.append({'element':'variable','name':'powerMean','type':float,
+                       'read':self.getPowerMean, 'help':'Mean power value at a certain wavelength.'})    
+    
+        return config

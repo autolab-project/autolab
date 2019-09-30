@@ -32,7 +32,7 @@ class Module():
         
         self.name = None
         self._parent = parent   
-        self._instance = None
+        self.instance = None
         self._mod = {}
         self._var = {}
         self._act = {}
@@ -50,11 +50,11 @@ class Module():
     
     def load(self,instance):
         
-        self._instance = instance
-        assert hasattr(self._instance,'getUsitConfig'), f"Module {self.name} configuration: Missing function 'getUsitConfig'" 
-        assert inspect.ismethod(self._instance.getUsitConfig), f"Module {self.name} configuration: 'getUsitConfig' has to be a function" 
+        self.instance = instance
+        assert hasattr(self.instance,'getUsitConfig'), f"Module {self.name} configuration: Missing function 'getUsitConfig'" 
+        assert inspect.ismethod(self.instance.getUsitConfig), f"Module {self.name} configuration: 'getUsitConfig' has to be a function" 
 
-        config = self._instance.getUsitConfig()
+        config = self.instance.getDriverConfig()
         assert isinstance(config,list), f"Module {self.name} configuration: 'getUsitConfig' output must be a list of dictionnaries"
         for configPart in config : 
             
@@ -209,7 +209,7 @@ class Module():
         
         """ For auto-completion """
         
-        return self.getModuleList() + self.getVariableList() + self.getActionList() + ['info']
+        return self.getModuleList() + self.getVariableList() + self.getActionList() + ['info','instance']
     
     
     
@@ -248,9 +248,9 @@ class Device(Module):
         
         """ This function close the connection of the current physical device """
         
-        try : self._instance.close()
+        try : self.instance.close()
         except : pass
-        self._instance = None
+        self.instance = None
         
         
         

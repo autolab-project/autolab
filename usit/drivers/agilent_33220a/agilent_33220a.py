@@ -1,38 +1,27 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import visa as v
-from optparse import OptionParser
+"""
+Supported instruments (identified):
+- 
+"""
+
 import sys
-import time
 from numpy import zeros,ones,linspace
 
-ADDRESS = 'TCPIP::172.24.23.119::INSTR'
 
-class Device():
-    def __init__(self,address=ADDRESS):
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address):
+        import visa
         
-        rm = v.ResourceManager('@py')
+        Device.__init__(self)
+        rm = visa.ResourceManager()
         self.inst = rm.get_instrument(address)
-    
-    
-    def amplitude(self,amplitude):
-        self.write('VOLT '+amplitude)
-    def offset(self,offset):
-        self.write('VOLT:OFFS '+offset)
-    def frequency(self,frequency):
-        self.write('FREQ '+frequency)
-    def ramp(self,ramp):
-        l   = list(zeros(5000) - 1)
-        lll = list(ones(5000))
-        ll  = list(linspace(-1,1,100+ramp))
-        l.extend(ll);l.extend(lll)
-        s = str(l)[1:-1]
-        self.write('DATA VOLATILE,'+s)
-    
-    
+        
     def close(self):
-        #self.inst.close()
-        pass
+        self.inst.close()
     def query(self,query):
         self.write(query)
         return self.read()
@@ -41,12 +30,45 @@ class Device():
     def read(self):
         rep = self.inst.read()
         return rep
+############################## Connections classes ##############################
+#################################################################################
+
+class Device():
+    def __init__(self):
+        pass
+    def amplitude(self,amplitude):
+        self.write('VOLT '+str(amplitude))
+    def offset(self,offset):
+        self.write('VOLT:OFFS '+str(offset))
+    def frequency(self,frequency):
+        self.write('FREQ '+str(frequency))
+    def ramp(self,ramp):
+        l   = list(zeros(5000) - 1)
+        lll = list(ones(5000))
+        ll  = list(linspace(-1,1,100+ramp))
+        l.extend(ll);l.extend(lll)
+        s = str(l)[1:-1]
+        self.write('DATA VOLATILE,'+s)
+
     def idn(self):
         self.inst.write('*IDN?')
         self.read()
         
-            
+    def getDriverConfig(self):
+        
+        config = []
+        
+        config.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':'Amplitude'})
+        config.append({'element':'variable','name':'offset','write':self.offset,'type':float,'help':'Offset'})
+        config.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':'Frequency'})
+        
+        return config
+        
+        
 if __name__ == '__main__':
+
+    from optparse import OptionParser
+    import inspect
 
     usage = """usage: %prog [options] arg
                
@@ -63,11 +85,15 @@ if __name__ == '__main__':
     parser.add_option("-o", "--offset", type="str", dest="off", default=None, help="Set the offset value." )
     parser.add_option("-a", "--amplitude", type="str", dest="amp", default=None, help="Set the amplitude." )
     parser.add_option("-f", "--frequency", type="str", dest="freq", default=None, help="Set the frequency." )
-    parser.add_option("-i", "--address", type="str", dest="address", default=ADDRESS, help="Set the Ip address to use for communicate." )
+    parser.add_option("-i", "--address", type="str", dest="address", default='TCPIP::172.24.23.119::INSTR', help="Set the Ip address to use for communicate." )
+    parser.add_option("-l", "--link", type="string", dest="link", default='VISA', help="Set the connection type." )
     (options, args) = parser.parse_args()
     
     ### Start the talker ###
-    I = Device(address=options.address)
+    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
+    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
+    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
+    I = Device_LINK(address=options.address)
     if options.query:
         print('\nAnswer to query:',options.query)
         rep = I.query(options.query)

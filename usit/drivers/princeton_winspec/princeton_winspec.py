@@ -1,23 +1,73 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr  3 20:06:08 2019
 
-@author: quentin.chateiller
 """
+Supported instruments (identified):
+- 
+"""
+
 import pandas as pd
 import numpy as np
 
-from connector import WinspecConnectorRemote
-
-ADDRESS = '192.168.0.3'
-
-
-class Device(WinspecConnectorRemote):    
+class Device_SOCKET :
     
-    def __init__(self, address=ADDRESS):
+    def __init__(self,address):
         
-        WinspecConnectorRemote.__init__(self,address)
-                
+        import socket 
+        
+        self.ADDRESS = address
+        self.PORT = 5005
+        self.BUFFER_SIZE = 40000
+        
+        self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.controller.connect((self.ADDRESS,self.PORT))   
+        
+        Device.__init__(self)
+        
+    def write(self,command):
+        self.controller.send(command.encode())
+        self.controller.recv(self.BUFFER_SIZE)
+        
+    def query(self,command):
+        self.controller.send(command.encode())
+        data = self.controller.recv(self.BUFFER_SIZE)
+        return data.decode()
+        
+    def close(self):
+        try :
+            self.controller.close()
+        except :
+            pass
+        self.controller = None
+
+
+
+class Device_LOCAL : #not used
+
+    def __init__(self):
+        
+        from .winspec_gui_driver import Winspec
+        self.controller = Winspec()
+
+        Device.__init__(self)
+        
+              
+    def write(self,command):
+        self.controller.command(command)
+        
+    def query(self,command):
+        return self.controller.command(command)
+        
+    def close(self):
+        self.controller = None
+
+
+
+
+class Device():    
+    
+    def __init__(self):
+                        
         self.minCountsAllowed=5000
         self.maxCountsAllowed=61000
         self.nbPixelsFitBaseline=10 # en % du spectre à chaque extrémité
@@ -37,12 +87,8 @@ class Device(WinspecConnectorRemote):
         except :
             return False
 
+
     
-
-
-        
-        
-
 
         
         
@@ -211,8 +257,23 @@ class Device(WinspecConnectorRemote):
     
     
     
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'exposureTime','unit':'s','type':float,'read':self.getExposureTime,'write':self.setExposureTime,'help':'Exposure time of the camera'})
+        config.append({'element':'variable','name':'autoExposureTime','type':bool,'read':self.getAutoExposureTimeEnabled,'write':self.setAutoExposureTimeEnabled,'help':'Enable or not the auto exposure time mode'})
+        config.append({'element':'variable','name':'autoBackgroundRemoval','type':bool,'read':self.getAutoBackgroundRemovalEnabled,'write':self.setAutoBackgroundRemovalEnabled,'help':'Enable or not the auto background removal mode'})
+        config.append({'element':'variable','name':'spectrum','read':self.getSpectrum,'type':pd.DataFrame,'help':'Spectrum acquired'})
+        config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'help':'Temperature of the camera'})
+        config.append({'element':'variable','name':'mainPeakWavelength','type':float,'unit':'nm','read':self.getMainPeakWavelength,'help':'Wavelength of the main peak in the spectrum'})
+        config.append({'element':'variable','name':'mainPeakFWHM','type':float,'unit':'nm','read':self.getMainPeakFWHM,'help':'FWHM of the main peak in the spectrum'})
+        config.append({'element':'variable','name':'maxPower','type':float,'read':self.getMaxPower,'help':'Maximum power of the main peak in the spectrum'})
+        config.append({'element':'variable','name':'integratedPower','type':float,'read':self.getIntegratedPower,'help':'Integrated power of the spectrum'})
+        config.append({'element':'action','name':'acquire','do':self.acquireSpectrum,'help':'Acquire a spectrum'})
+        return config
     
     
+#ADDRESS = '192.168.0.3'
+
     
 
 

@@ -8,9 +8,30 @@ Supported instruments (identified):
 
 import sys,os
 import time
+from numpy import fromstring,int8,int16,float64,sign
+import pandas
+
 
 #################################################################################
 ############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address, **kwargs):
+        import visa as v
+        
+        rm        = v.ResourceManager()
+        self.inst = rm.get_instrument(address)
+        Device.__init__(self, **kwargs)
+        
+    def query(self,command):
+        self.write(command)
+        return self.read()
+    def read(self):
+        return self.inst.read()
+    def write(self,command):
+        self.inst.write(command)
+    def close(self):
+        self.inst.close()
+
 class Device_VXI11():
     def __init__(self, address, **kwargs):
         import vxi11 as v
@@ -18,12 +39,11 @@ class Device_VXI11():
         self.inst = v.Instrument(address)
         Device.__init__(self, **kwargs)
 
-    def read_raw(self,length=100000000):
-        rep = self.inst.read_raw(length)
-        return rep
-    def read(self,length=100000000):
-        rep = self.inst.read(length)
-        return rep
+    def query(self, command, nbytes=100000000):
+        self.write(command)
+        return self.read(nbytes)
+    def read(self,nbytes=100000000):
+        self.inst.read(nbytes)
     def write(self,cmd):
         self.inst.write(cmd)
     def close(self):
@@ -36,13 +56,6 @@ class Device():
     def __init__(self,nb_channels=4):
               
         self.nb_channels = int(nb_channels)
-        self.type        = 'BYTE'
-        
-        self.write(':WAVeform:TYPE RAW')
-        self.write(':WAVEFORM:BYTEORDER LSBFirst')
-        self.write(':TIMEBASE:MODE MAIN')
-        self.write(':WAV:SEGM:ALL ON')
-        self.set_type(self.type)
         
         for i in range(1,self.nb_channels+1):
             setattr(self,f'channel{i}',Channel(self,i))
@@ -51,12 +64,15 @@ class Device():
     ### User utilities
     def acquire_data_channels(self,channels=[]):
         """Get all channels or the ones specified"""
+        previous_trigger_state = self.get_previous_trigger_state()
         self.stop()
+        self.is_stopped()
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels():
-            getattr(self,f'channel{i}').acquire_data()
-            getattr(self,f'channel{i}').acquire_log_data()
-        self.run()
+            if not(getattr(self,f'channel{i}').is_active()): continue
+            getattr(self,f'channel{i}').get_data()
+            getattr(self,f'channel{i}').get_log_data()
+        self.set_previous_trigger_state(previous_trigger_state)
         
     def save_data_channels(self,filename,channels=[],FORCE=False):
         if channels == []: channels = list(range(1,self.nb_channels+1))
@@ -65,45 +81,49 @@ class Device():
             getattr(self,f'channel{i}').save_log_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions
-    def run(self):
-        self.write(':RUN')
+    def single(self):
+        pass
     def stop(self):
-        self.write(':STOP')
+        pass
+    def is_stopped(self):
+        while self.query('TRMD?') != 'TRMD STOP':    # typical example
+            time.sleep(0.05)
+        return True
+    def get_previous_trigger_state(self):
+        return str(previous_trigger_state)
         
-    def set_type(self,val):
-        """Argument type must be a string (BYTE or ASCII)"""
-        self.type = val
-        self.write(f':WAVEFORM:FORMAT {self.type}')
-    def get_type(self):
-        return self.type
-    
+    def set_previous_trigger_state(self):
+        pass
+        
+    ### Cross-channel settings 
+    def set_encoding(self):
+        return str
+    def get_encoding(self):
+        return str
     
 
 class Channel():
     def __init__(self,dev,channel):
         self.channel = int(channel)
         self.dev  = dev
+        self.autoscale = False
     
-        
+    
     def acquire_data(self):
-        self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
-        self.dev.write(':WAV:DATA?')
-        self.data = self.dev.read_raw()
-        if typ=='BYTE':
-            self.data = self.data[8:]
-        self.data = self.data[:-1]
-    def acquire_log_data(self):
-        self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
-        self.dev.write(f':WAVEFORM:PREAMBLE?')
-        self.log_data = self.dev.read()
-
+        #self.dev.write(...)
+        #self.data = self.dev.read()
+    def get_log_data(self):
+        #self.dev.write(...)
+        #self.log_data = self.dev.read()
+    
     def get_data(self):
         return self.data
     def get_log_data(self):
         return self.log_data
         
+        
     def save_data(self,filename,FORCE=False):
-        temp_filename = f'{filename}_DSO54853A{self.channel}'
+        temp_filename = f'{filename}_DSACHAN{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -111,7 +131,7 @@ class Channel():
         f.write(self.data)
         f.close()
     def save_log_data(self,filename,FORCE=False):
-        temp_filename = f'{filename}_DSO54853A{self.channel}.log'
+        temp_filename = f'{filename}_DSACHAN{self.channel}.log'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -124,6 +144,27 @@ class Channel():
         return array_of_float
     def save_data_numerical(self):
         return array_of_float
+    
+    # additionnal functions
+    def get_min(self):
+        return float
+    def get_max(self):
+        return float
+    def get_mean(self):
+        return float
+       
+    
+    def set_autoscale_enabled(bool):
+        #self.autoscale = 
+        pass
+    def is_autoscable_enabled():
+        return bool
+    def do_autoscale():
+        pass
+       
+    def is_active():
+        pass
+
 
 
 if __name__ == '__main__':
@@ -131,35 +172,20 @@ if __name__ == '__main__':
     import inspect
     
     usage = """usage: %prog [options] arg
-    
-               WARNING: - Be sure all the channel you provide are active
-               
+
                EXAMPLES:
-                   get_DSO54853A -o filename 1,2
-               Record channel 1 and 2 and create 4 files (2 per channels) name filename_DSO54853ACH1 and filename_DSO54853ACH1.log
-
-
-               IMPORTANT INFORMATIONS:
-                    - Datas are obtained in a binary format: int8 
-                    - Header is composed as follow:
-                    <format>, <type>, <points>, <count> , <X increment>, <X origin>, < X reference>, <Y increment>, <Y origin>, <Y reference>, <coupling>, <X display range>, <X display origin>, <Y display range>, <Y display origin>, <date>,
-                    <time>, <frame model #>, <acquisition mode>, <completion>, <X units>, <Y units>, <max bandwidth limit>, <min bandwidth limit>    
-                    - To retrieve datas (in "Units")
-                    Y-axis Units = data value * Yincrement + Yorigin (analog channels) 
-                    X-axis Units = data index * Xincrement + Xorigin
+                   
 
                """
     parser = OptionParser(usage)
     parser.add_option("-c", "--command", type="str", dest="com", default=None, help="Set the command to use." )
     parser.add_option("-q", "--query", type="str", dest="que", default=None, help="Set the query to use." )
-    parser.add_option("-o", "--filename", type="string", dest="filename", default=None, help="Set the name of the output file" )
-    parser.add_option("-i", "--address", type="string", dest="address", default='192.168.0.4', help="Set ip address" )
-
-    parser.add_option("-t", "--type", type="str", dest="type", default="BYTE", help="Type of data returned (available values are 'BYTE' or 'ASCII')" )
+    parser.add_option("-i", "--address", type="string", dest="address", default='192.168.0.4', help="Set ip address." )
     parser.add_option("-l", "--link", type="string", dest="link", default='VXI11', help="Set the connection type." )
     parser.add_option("-F", "--force",action = "store_true", dest="force", default=None, help="Allows overwriting file" )
+    parser.add_option("-o", "--filename", type="string", dest="filename", default=None, help="Set the name of the output file" )
     (options, args) = parser.parse_args()
-
+    
     ### Compute channels to acquire ###
     if (len(args) == 0) and (options.com is None) and (options.que is None):
         print('\nYou must provide at least one channel\n')
@@ -174,28 +200,25 @@ if __name__ == '__main__':
     Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
     I = Device_LINK(address=options.address)
     
-    if options.type:
-        I.set_type(options.type)
-    
-    if options.query:
-        print('\nAnswer to query:',options.query)
-        I.write(options.query)
-        rep = I.read()
+    if query:
+        print('\nAnswer to query:',query)
+        rep = I.query(query)
         print(rep,'\n')
         sys.exit()
-    elif options.command:
-        print('\nExecuting command',options.command)
-        I.write(options.command)
+    elif command:
+        print('\nExecuting command',command)
+        I.write(command)
         print('\n')
         sys.exit()
-    
+        
+    ### Acquire ###
     if options.filename:
         I.stop()
         print('trying to get channel',chan[i])
         I.acquire_data_channels(channels=chan)
         I.save_data_channels(channels=chan,filename=options.filename,FORCE=options.force)
-    else:
-        print('If you want to save, provide an output file name')
+    
+    print('Measurment time', time.time() - t)
     
     I.run()
     I.close()

@@ -1,41 +1,29 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug  5 08:51:25 2019
 
-@author: qchat
 """
-
-import visa
+Supported instruments (identified):
+- Newport smc100
+"""
 
 from module_ils100cc import ILS100CC
 
 modules_dict = {'ils100cc':ILS100CC}
 
-ADDRESS = "ASRL1::INSTR"
-
-
-
-class Device():
-    
-    def __init__(self,address=ADDRESS,**kwargs):
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address, **kwargs):
+        import visa
+        
+        Device.__init__(self, **kwargs)
         
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
         self.controller.baud_rate = 57600
         self.controller.flow_control = visa.constants.VI_ASRL_FLOW_XON_XOFF
         self.controller.read_termination = '\r\n'
-        
-        
-        # Submodules
-        prefix = 'slot'
-        for key in kwargs.keys():
-            if key.startswith(prefix):
-                slot_num = key[len(prefix):]
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
-                setattr(self,name,module(self,slot_num))
-
-
+    
 
     def query(self,command,unwrap=True) :
         result = self.controller.query(command)
@@ -51,9 +39,39 @@ class Device():
         
     def write(self,command) :
         self.controller.write(command)
+
+############################## Connections classes ##############################
+#################################################################################
+
+
+class Device():
     
-    
+    def __init__(self,**kwargs):
+        
+        # Submodules
+        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<NAME>
+        self.slotnames = []
+        prefix = 'slot'
+        for key in kwargs.keys():
+            if key.startswith(prefix):
+                slot_num = key[len(prefix):]
+                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
+                name = kwargs[key].split(',')[1].strip()
+                setattr(self,name,module(self,slot_num))
+                self.slotnames.append(name)
+
+
+    def getDriverConfig(self):
+        
+        config = []
+        
+        for name in self.slotnames:
+            if hasattr(self,f'slot{i}') :
+                config.append({'element':'module','name':name,'object':getattr(self,name)})
+        
+        return config
     
             
-
+if __name__ == '__main__' :
+    ADDRESS = "ASRL1::INSTR"
 

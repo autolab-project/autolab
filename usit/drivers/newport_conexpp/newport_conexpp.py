@@ -1,21 +1,23 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr  3 20:06:08 2019
 
-@author: quentin.chateiller
 """
+Supported instruments (identified):
+- 
+"""
+
 
 from module_nsr1 import NSR1
-import visa
-
-
-ADDRESS = 'ASRL4::INSTR'
 
 modules_dict = {'nsr1':NSR1}
 
-class Device():
-    
-    def __init__(self,address=ADDRESS,**kwargs):
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA():
+    def __init__(self, address):
+        import visa
+        
+        Device.__init__(self)
         
         self.BAUDRATE = 115200
         
@@ -23,16 +25,6 @@ class Device():
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
         self.controller.baud_rate = self.BAUDRATE
-        
-        # Submodules
-        prefix = 'slot'
-        for key in kwargs.keys():
-            if key.startswith(prefix):
-                slot_num = key[len(prefix):]
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
-                calibpath = kwargs[key].split(',')[2].strip()
-                setattr(self,name,module(self,slot_num,name,calibpath))
         
         
     def close(self):
@@ -48,5 +40,36 @@ class Device():
         self.controller.write(command)
         
         
+############################## Connections classes ##############################
+#################################################################################
 
+
+
+class Device():
+    
+    def __init__(self,**kwargs):
+        
+        # Submodules
+        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<NAME>,<CALIBPATH>
+        self.slotnames = []
+        prefix = 'slot'
+        for key in kwargs.keys():
+            if key.startswith(prefix):
+                slot_num = key[len(prefix):]
+                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
+                name = kwargs[key].split(',')[1].strip()
+                calibpath = kwargs[key].split(',')[2].strip()
+                setattr(self,name,module(self,slot_num,name,calibpath))
+                self.slotnames.append(name)
+        
+        
+    def getDriverConfig(self):
+        
+        config = []
+        for name in self.slotnames :
+            config.append({'element':'module','name':name,'object':getattr(self,name)})
+        return config
+        
+        
+    
     
