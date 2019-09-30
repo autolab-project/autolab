@@ -6,48 +6,7 @@ Supported instruments (identified):
 - 
 """
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address):
-        import visa 
-        
-        self.DEF_TIMEOUT = 1000 #ms
-        self.LONG_TIMEOUT = 5000 #ms
-        self.BAUDRATE = 115200 
-        
-        Device.__init__(self)
-        
-        # Instantiation
-        rm = visa.ResourceManager()
-        self.inst = rm.open_resource(address)
-        self.inst.timeout = self.DEF_TIMEOUT
-        self.inst.baud_rate = self.BAUDRATE
-        
-        
-    def close(self):
-        try : self.inst.close()
-        except : pass
 
-    def query(self,command):
-        result = self.inst.query(command)
-        result = result.strip('\n')
-        
-        if '=' in result : result = result.split('=')[1]
-        
-        if 'SRV' in command : self.inst.timeout = self.LONG_TIMEOUT
-        else : self.inst.timeout = self.DEF_TIMEOUT
-        
-        try : result = float(result)
-        except: pass
-    
-        return result
-    
-    def write(self,command):
-        self.inst.write(command)
-
-############################## Connections classes ##############################
-#################################################################################
         
     
 
@@ -130,6 +89,52 @@ class Device():
         config.append({'element':'variable','name':'config','read':self.getConfig,'write':self.setConfig,'type':str,'help':'Shutter configuration. 1 is closed, 0 is opened.'})
 
         return config
+  
+
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address):
+        import visa 
+        
+        self.DEF_TIMEOUT = 1000 #ms
+        self.LONG_TIMEOUT = 5000 #ms
+        self.BAUDRATE = 115200 
+        
+        # Instantiation
+        rm = visa.ResourceManager()
+        self.inst = rm.open_resource(address)
+        self.inst.timeout = self.DEF_TIMEOUT
+        self.inst.baud_rate = self.BAUDRATE
+        
+        Device.__init__(self)
+        
+        
+    def close(self):
+        try : self.inst.close()
+        except : pass
+
+    def query(self,command):
+        result = self.inst.query(command)
+        result = result.strip('\n')
+        
+        if '=' in result : result = result.split('=')[1]
+        
+        if 'SRV' in command : self.inst.timeout = self.LONG_TIMEOUT
+        else : self.inst.timeout = self.DEF_TIMEOUT
+        
+        try : result = float(result)
+        except: pass
+    
+        return result
+    
+    def write(self,command):
+        self.inst.write(command)
+
+############################## Connections classes ##############################
+#################################################################################
+        
         
         
 if __name__ == '__main__' : 

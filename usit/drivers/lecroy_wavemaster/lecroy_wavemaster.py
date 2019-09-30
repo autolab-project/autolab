@@ -11,48 +11,6 @@ Supported instruments (identified):
 import sys,os
 import time
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_TCPIP():
-    def __init__(self, address, **kwargs):
-        import visa as v
-        
-        rm        = v.ResourceManager()
-        self.inst = rm.get_instrument(address)
-        Device.__init__(self, **kwargs)
-    
-    def query(self,command):
-        self.write(command)
-        return self.read()
-    def read(self):
-        return self.inst.read()
-    def read_raw(self):
-        return self.inst.read_raw()
-    def write(self,command):
-        self.inst.write(command)
-    def close(self):
-        self.inst.close()
-
-class Device_VXI11():
-    def __init__(self, address, **kwargs):
-        import vxi11 as v
-    
-        self.inst = v.Instrument(address)
-        Device.__init__(self, **kwargs)
-
-    def query(self, command, nbytes=100000000):
-        self.write(command)
-        return self.read(nbytes)
-    def read(self,nbytes=100000000):
-        self.inst.read(nbytes)
-    def read_raw(self):
-        return self.inst.read_raw()
-    def write(self,cmd):
-        self.inst.write(cmd)
-    def close(self):
-        self.inst.close()
-############################## Connections classes ##############################
-#################################################################################
 
 
 class Device():
@@ -110,7 +68,53 @@ class Device():
         elif encoding=='WORD':dtype=int16;NUM=65536;LIM=55700.   # 15% less than the maximal number possible
     def get_encoding(self):
         return self.encoding
+  
     
+#################################################################################
+############################## Connections classes ##############################
+class Device_TCPIP(Device):
+    def __init__(self, address, **kwargs):
+        import visa as v
+        
+        rm        = v.ResourceManager()
+        self.inst = rm.get_instrument(address)
+        Device.__init__(self, **kwargs)
+    
+    def query(self,command):
+        self.write(command)
+        return self.read()
+    def read(self):
+        return self.inst.read()
+    def read_raw(self):
+        return self.inst.read_raw()
+    def write(self,command):
+        self.inst.write(command)
+    def close(self):
+        self.inst.close()
+
+class Device_VXI11(Device):
+    def __init__(self, address, **kwargs):
+        import vxi11 as v
+    
+        self.inst = v.Instrument(address)
+        Device.__init__(self, **kwargs)
+
+    def query(self, command, nbytes=100000000):
+        self.write(command)
+        return self.read(nbytes)
+    def read(self,nbytes=100000000):
+        self.inst.read(nbytes)
+    def read_raw(self):
+        return self.inst.read_raw()
+    def write(self,cmd):
+        self.inst.write(cmd)
+    def close(self):
+        self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
+
+
+
 
 class Channel():
     def __init__(self,dev,channel):

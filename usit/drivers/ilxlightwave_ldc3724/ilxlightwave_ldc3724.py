@@ -8,9 +8,35 @@ Created on Wed Apr  3 20:06:08 2019
 
 import time
 
+
+
+class Device():
+    
+    def __init__(self):
+    
+        # Initialisation
+        self.write('*CLS')      # Clear status registers
+        self.write('DELAY 0')   # User commands not delayed
+        
+        # Subdevices
+        self.tec = TEC(self)
+        self.las = LAS(self)
+        
+        
+    def getID(self):
+        return self.query('*IDN?')
+    
+    
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'module','name':'tec','object':self.tec})
+        config.append({'element':'module','name':'las','object':self.las})
+        return config
+    
+    
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA():
+class Device_VISA(Device):
     def __init__(self, address):
         import visa
         
@@ -44,7 +70,7 @@ class Device_VISA():
         
 
          
-class Device_GPIB():
+class Device_GPIB(Device):
     def __init__(self,address):
         import Gpib
         self.inst = Gpib.Gpib(address[0],address[1])
@@ -62,32 +88,6 @@ class Device_GPIB():
         return self.inst.read()
 ############################## Connections classes ##############################
 #################################################################################
-
-class Device():
-    
-    def __init__(self):
-    
-        # Initialisation
-        self.write('*CLS')      # Clear status registers
-        self.write('DELAY 0')   # User commands not delayed
-        
-        # Subdevices
-        self.tec = TEC(self)
-        self.las = LAS(self)
-        
-        
-    def getID(self):
-        return self.query('*IDN?')
-    
-    
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'module','name':'tec','object':self.tec})
-        config.append({'element':'module','name':'las','object':self.las})
-        return config
-    
-    
-
 
 
 class LAS():

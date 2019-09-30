@@ -10,48 +10,6 @@ Supported instruments (identified):
 from module_iqs9100b import IQS9100B
 
 modules_dict = {'iqs9100b':IQS9100B}
-
-
-#################################################################################
-############################## Connections classes ##############################
-class Device_TELNET():
-    
-    def __init__(self, address, port, **kwargs):
-        from telnetlib import Telnet
-        
-        Device.__init__(self)
-        
-        self.TIMEOUT = 1
-        
-        # Instantiation
-        self.controller = Telnet(address,str(port))
-        self.read()
-        self.read()
-        
-        
-    def write(self,command):
-        try : self.controller.write(f'{command}\r\n'.encode())
-        except : pass
-        return self.read()
-        
-        
-    def read(self):
-        try :
-            ans = self.controller.read_until('READY>'.encode(),timeout=self.TIMEOUT)
-            ans = ans.decode().replace('READY>','').strip() 
-            assert ans != ''
-            return ans
-        except :
-            pass
-        
-    def close(self):
-        try : self.controller.close()
-        except : pass
-    
-############################## Connections classes ##############################
-#################################################################################
-  
-    
     
     
 class Device():
@@ -79,6 +37,49 @@ class Device():
         for name in self.slotnames :
             config.append({'element':'module','name':name,'object':getattr(self,name)})
         return config
+    
+    
+    
+#################################################################################
+############################## Connections classes ##############################
+class Device_TELNET(Device):
+    
+    def __init__(self, address, port, **kwargs):
+        from telnetlib import Telnet
+        
+        self.TIMEOUT = 1
+        
+        # Instantiation
+        self.controller = Telnet(address,str(port))
+        self.read()
+        self.read()
+        
+        Device.__init__(self)
+        
+        
+    def write(self,command):
+        try : self.controller.write(f'{command}\r\n'.encode())
+        except : pass
+        return self.read()
+        
+        
+    def read(self):
+        try :
+            ans = self.controller.read_until('READY>'.encode(),timeout=self.TIMEOUT)
+            ans = ans.decode().replace('READY>','').strip() 
+            assert ans != ''
+            return ans
+        except :
+            pass
+        
+    def close(self):
+        try : self.controller.close()
+        except : pass
+    
+############################## Connections classes ##############################
+#################################################################################
+        
+    
     
     
 if __name__ == '__main__' :

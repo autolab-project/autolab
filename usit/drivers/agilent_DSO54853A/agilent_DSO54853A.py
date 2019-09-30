@@ -9,27 +9,6 @@ Supported instruments (identified):
 import sys,os
 import time
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VXI11():
-    def __init__(self, address, **kwargs):
-        import vxi11 as v
-    
-        self.inst = v.Instrument(address)
-        Device.__init__(self, **kwargs)
-
-    def read_raw(self,length=100000000):
-        rep = self.inst.read_raw(length)
-        return rep
-    def read(self,length=100000000):
-        rep = self.inst.read(length)
-        return rep
-    def write(self,cmd):
-        self.inst.write(cmd)
-    def close(self):
-        self.inst.close()
-############################## Connections classes ##############################
-#################################################################################
 
 
 class Device():
@@ -77,7 +56,28 @@ class Device():
     def get_type(self):
         return self.type
     
+#################################################################################
+############################## Connections classes ##############################
+class Device_VXI11(Device):
+    def __init__(self, address, **kwargs):
+        import vxi11 as v
     
+        self.inst = v.Instrument(address)
+        Device.__init__(self, **kwargs)
+
+    def read_raw(self,length=100000000):
+        rep = self.inst.read_raw(length)
+        return rep
+    def read(self,length=100000000):
+        rep = self.inst.read(length)
+        return rep
+    def write(self,cmd):
+        self.inst.write(cmd)
+    def close(self):
+        self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
+
 
 class Channel():
     def __init__(self,dev,channel):

@@ -10,66 +10,7 @@ Supported instruments (identified):
 import time
 
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address, **kwargs):
-        import visa
-        
-        rm = visa.ResourceManager()
-        self.controller = rm.open_resource(address)
-        Device.__init__(self, **kwargs)
 
-    def close(self):
-        try : self.controller.close()
-        except : pass
-
-    def query(self,command):
-        result = self.controller.query(command)
-        result = result.strip('\n')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
-        return result
-    
-    def write(self,command):
-        self.controller.write(command)
-        
-        
-class Device_SOCKET():
-    def __init__(self, address, **kwargs):
-        import socket
-        
-        self.BUFFER_SIZE = 40000
-        
-        self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.controller.connect((address,50000))    
-        Device.__init__(self, **kwargs)
-        
-    def write(self,command):
-        self.controller.send(command.encode())
-        self.controller.recv(self.BUFFER_SIZE)
-        
-
-    def query(self,command):
-        self.controller.send(command.encode())
-        result = self.controller.recv(self.BUFFER_SIZE).decode()
-        result = result.strip('\n\x00)\x00')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
-        return result
-    
-    def close(self):
-        try :
-            self.controller.close()
-        except :
-            pass
-        self.controller = None  
-
-
-############################## Connections classes ##############################
-#################################################################################
 
 
 
@@ -113,6 +54,68 @@ class Device():
         return config
     
     
+    
+    
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address, **kwargs):
+        import visa
+        
+        rm = visa.ResourceManager()
+        self.controller = rm.open_resource(address)
+        Device.__init__(self, **kwargs)
+
+    def close(self):
+        try : self.controller.close()
+        except : pass
+
+    def query(self,command):
+        result = self.controller.query(command)
+        result = result.strip('\n')
+        if '=' in result : result = result.split('=')[1]
+        try : result = float(result)
+        except: pass
+        return result
+    
+    def write(self,command):
+        self.controller.write(command)
+        
+        
+class Device_SOCKET(Device):
+    def __init__(self, address, **kwargs):
+        import socket
+        
+        self.BUFFER_SIZE = 40000
+        
+        self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.controller.connect((address,50000))    
+        Device.__init__(self, **kwargs)
+        
+    def write(self,command):
+        self.controller.send(command.encode())
+        self.controller.recv(self.BUFFER_SIZE)
+        
+
+    def query(self,command):
+        self.controller.send(command.encode())
+        result = self.controller.recv(self.BUFFER_SIZE).decode()
+        result = result.strip('\n\x00)\x00')
+        if '=' in result : result = result.split('=')[1]
+        try : result = float(result)
+        except: pass
+        return result
+    
+    def close(self):
+        try :
+            self.controller.close()
+        except :
+            pass
+        self.controller = None  
+
+
+############################## Connections classes ##############################
+#################################################################################    
     
 if __name__ == '__main__':
     ADDRESS_VISA = 'GPIB0::12::INSTR'

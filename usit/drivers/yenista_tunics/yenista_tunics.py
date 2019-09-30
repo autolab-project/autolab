@@ -6,41 +6,7 @@ Supported instruments (identified): Yenista Tunics.
 - 
 """
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address, **kwargs):
-        import visa    
-        
-        self.TIMEOUT = 15000 #ms
-        
-        rm = visa.ResourceManager()
-        self.controller = rm.open_resource(address)
-        self.controller.timeout = self.TIMEOUT
-        
-        Device.__init__(self, **kwargs)
-    
-    def close(self):
-        try : self.controller.close()
-        except : pass
 
-    def query(self,command):
-        result = self.controller.query(command)
-        result = result.strip('\n')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
-        return result
-    
-    def write(self,command):
-        self.controller.write(command)
-    
-    def read(self):
-        return self.controller.read()
-
-
-############################## Connections classes ##############################
-#################################################################################
 
 class Device():
     
@@ -137,6 +103,45 @@ class Device():
     
         return config
 
+
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address, **kwargs):
+        import visa    
+        
+        self.TIMEOUT = 15000 #ms
+        
+        rm = visa.ResourceManager()
+        self.controller = rm.open_resource(address)
+        self.controller.timeout = self.TIMEOUT
+        
+        Device.__init__(self, **kwargs)
+    
+    def close(self):
+        try : self.controller.close()
+        except : pass
+
+    def query(self,command):
+        result = self.controller.query(command)
+        result = result.strip('\n')
+        if '=' in result : result = result.split('=')[1]
+        try : result = float(result)
+        except: pass
+        return result
+    
+    def write(self,command):
+        self.controller.write(command)
+    
+    def read(self):
+        return self.controller.read()
+
+
+############################## Connections classes ##############################
+#################################################################################
+        
+    
     
 if __name__ == '__main__':
     from optparse import OptionParser

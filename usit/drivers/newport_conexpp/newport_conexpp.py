@@ -11,37 +11,7 @@ from module_nsr1 import NSR1
 
 modules_dict = {'nsr1':NSR1}
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address):
-        import visa
-        
-        Device.__init__(self)
-        
-        self.BAUDRATE = 115200
-        
-        # Initialisation
-        rm = visa.ResourceManager()
-        self.controller = rm.open_resource(address)
-        self.controller.baud_rate = self.BAUDRATE
-        
-        
-    def close(self):
-        try : self.controller.close()
-        except : pass
 
-    def query(self,command):
-        result = self.controller.query(command)
-        result = result.strip('\r\n')
-        return result
-    
-    def write(self,command):
-        self.controller.write(command)
-        
-        
-############################## Connections classes ##############################
-#################################################################################
 
 
 
@@ -72,4 +42,36 @@ class Device():
         
         
     
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address):
+        import visa
+        
+        
+        self.BAUDRATE = 115200
+        
+        # Initialisation
+        rm = visa.ResourceManager()
+        self.controller = rm.open_resource(address)
+        self.controller.baud_rate = self.BAUDRATE
+        
+        Device.__init__(self)
+        
+        
+        
+    def close(self):
+        try : self.controller.close()
+        except : pass
+
+    def query(self,command):
+        result = self.controller.query(command)
+        result = result.strip('\r\n')
+        return result
     
+    def write(self,command):
+        self.controller.write(command)
+        
+        
+############################## Connections classes ##############################
+#################################################################################
