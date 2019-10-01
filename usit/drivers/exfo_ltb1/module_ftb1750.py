@@ -64,7 +64,7 @@ class FTB1750():
         
     def setWavelength(self,wavelength):
         assert isinstance(float(wavelength),float)
-        wavelength=float(wavelength)
+        wavelength=float(wavelength)*1e-9
         currentWavelength=self.getWavelength()
         if wavelength != currentWavelength :
             self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV {wavelength} nm")
@@ -73,7 +73,7 @@ class FTB1750():
     
     def getWavelength(self):
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV?")
-        return float(ans)
+        return float(ans)*1e9
     
     
     def getDriverConfig(self):
@@ -82,7 +82,6 @@ class FTB1750():
         config.append({'element':'variable','name':'bufferSize','type':int,'read':self.getBufferSize,'write':self.setBufferSize,'help':'Buffer size for the average'})
         config.append({'element':'variable','name':'wavelength','type':float,'unit':'nm','read':self.getWavelength,'write':self.setWavelength,'help':'Wavelength of the measure'})
         config.append({'element':'variable','name':'power','type':float,'unit':'W','read':self.getPower,'help':'Current power'})
-        config.append({'element':'action','name':'safestate','do':self.setSafeState,'help':'Set the shutter'})
         return config
         
     

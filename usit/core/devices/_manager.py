@@ -81,7 +81,7 @@ class DeviceManager() :
     
     
     
-    def info(self):
+    def help(self):
         
         """ This function prints informations for the user about the availables devices """
         
