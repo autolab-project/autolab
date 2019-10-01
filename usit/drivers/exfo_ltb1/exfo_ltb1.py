@@ -46,7 +46,7 @@ class Device():
 ############################## Connections classes ##############################
 class Device_TELNET(Device):
     
-    def __init__(self, address=None, port=None, **kwargs):
+    def __init__(self, address=None, port=5024, **kwargs):
         from telnetlib import Telnet
         
         self.TIMEOUT = 1
@@ -56,7 +56,7 @@ class Device_TELNET(Device):
         self.read()
         self.read()
         
-        Device.__init__(self)
+        Device.__init__(self, **kwargs)
         
     def write(self,command):
         try : self.controller.write(f'{command}\r\n'.encode())

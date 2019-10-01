@@ -54,7 +54,7 @@ class Device_TELNET(Device):
         self.read()
         self.read()
         
-        Device.__init__(self)
+        Device.__init__(self,**kwargs)
         
         
     def write(self,command):
