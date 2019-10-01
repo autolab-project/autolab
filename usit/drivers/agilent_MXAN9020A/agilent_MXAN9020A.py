@@ -29,7 +29,6 @@ class Device():
         self.ensure_scope_stopped()
         if traces == []: traces = list(range(1,self.nb_traces+1))
         for i in traces():
-            if not(getattr(self,f'trace{i}').is_active()): continue
             getattr(self,f'trace{i}').get_data()
         self.set_previous_trigger_state(previous_trigger_state)
         
@@ -89,16 +88,16 @@ class Traces():
         return pandas.DataFrame(self.data_dict)
     
     def get_start_frequency(self):
-        return float(self.query("SENS:FREQ:START?"))
+        return float(self.dev.query("SENS:FREQ:START?"))
     def get_stop_frequency(self):
-        return float(self.query("SENS:FREQ:STOP?"))
+        return float(self.dev.query("SENS:FREQ:STOP?"))
     def get_frequencies(self,data):
         start = self.get_start_frequency()
         stop  = self.get_stop_frequency()
         return linspace(start,stop,len(data))
     
     def save_data(self,filename,FORCE=False):
-        temp_filename = f'{filename}_MXAN9020ACH{self.trace}.txt'
+        temp_filename = f'{filename}_MXAN9020ATR{self.trace}.txt'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -124,6 +123,7 @@ if __name__ == '__main__':
     parser.add_option("-l", "--link", type="string", dest="link", default='VXI11', help="Set the connection type." )
     parser.add_option("-F", "--force",action = "store_true", dest="force", default=None, help="Allows overwriting file" )
     parser.add_option("-o", "--filename", type="string", dest="filename", default=None, help="Set the name of the output file" )
+    parser.add_option("-t", "--trigger", action="store_true", dest="trigger", default=False, help="Ask the scope to trigger once before acquiring." )
     (options, args) = parser.parse_args()
     
     ### Compute traces to acquire ###
