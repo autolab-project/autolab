@@ -1,2 +1,0 @@
-include AUTHORS COPYING MANIFEST.in
-include doc/*.rst doc/Makefile doc/make.bat
