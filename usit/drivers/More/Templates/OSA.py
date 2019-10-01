@@ -35,7 +35,7 @@ class Device():
         
     def save_data_traces(self,filename,traces=[],FORCE=False):
         if traces == []: traces = list(range(1,self.nb_traces+1))
-        for i in self.active_traces():
+        for i in traces():
             getattr(self,f'trace{i}').save_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions
