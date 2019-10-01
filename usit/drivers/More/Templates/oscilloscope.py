@@ -8,8 +8,7 @@ Supported instruments (identified):
 
 import sys,os
 import time
-from numpy import fromstring,int8,int16,float64,sign
-import pandas
+from numpy import frombuffer,int8
 
 
 class Device():
@@ -52,7 +51,7 @@ class Device():
     def get_previous_trigger_state(self):
         return str(previous_trigger_state)
         
-    def set_previous_trigger_state(self):
+    def set_previous_trigger_state(self,prious_trigger_state):
         pass
         
     ### Cross-channel settings 
@@ -65,7 +64,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address, **kwargs):
+    def __init__(self, address=None, **kwargs):
         import visa as v
         
         rm        = v.ResourceManager()
@@ -83,7 +82,7 @@ class Device_VISA(Device):
         self.inst.close()
 
 class Device_VXI11(Device):
-    def __init__(self, address, **kwargs):
+    def __init__(self, address=None, **kwargs):
         import vxi11 as v
     
         self.inst = v.Instrument(address)
@@ -214,7 +213,7 @@ if __name__ == '__main__':
     if options.filename:
         I.stop()
         print('trying to get channel',chan[i])
-        I.acquire_data_channels(channels=chan)
+        I.get_data_channels(channels=chan)
         I.save_data_channels(channels=chan,filename=options.filename,FORCE=options.force)
     
     print('Measurment time', time.time() - t)
