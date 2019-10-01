@@ -70,14 +70,14 @@ class Device():
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels():
             if not(getattr(self,f'channel{i}').is_active()): continue
-            getattr(self,f'channel{i}').get_raw_data()
+            getattr(self,f'channel{i}').get_data_raw()
             getattr(self,f'channel{i}').get_log_data()
         self.set_previous_trigger_state(previous_trigger_state)
         
     def save_data_channels(self,filename,channels=[],FORCE=False):
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in self.active_channels():
-            getattr(self,f'channel{i}').save_raw_data(filename=filename,FORCE=FORCE)
+            getattr(self,f'channel{i}').save_data_raw(filename=filename,FORCE=FORCE)
             getattr(self,f'channel{i}').save_log_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions
@@ -109,7 +109,7 @@ class Channel():
         self.autoscale = False
     
     
-    def get_raw_data(self):
+    def get_data_raw(self):
         #self.dev.write(...)
         #self.data_raw = self.dev.read()
         #return self.data_raw
@@ -118,10 +118,10 @@ class Channel():
         #self.log_data = self.dev.read()
         #return self.log_data
     def get_data(self):
-        return frombuffer(self.get_raw_data(),int8)
+        return frombuffer(self.get_data_raw(),int8)
 
         
-    def save_raw_data(self,filename,FORCE=False):
+    def save_data_raw(self,filename,FORCE=False):
         temp_filename = f'{filename}_DSACHAN{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
