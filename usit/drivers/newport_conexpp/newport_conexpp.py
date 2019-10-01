@@ -9,7 +9,7 @@ Supported instruments (identified):
 
 from module_nsr1 import NSR1
 
-modules_dict = {'nsr1':NSR1}
+modules = {'nsr1':NSR1}
 
 
 
@@ -17,16 +17,17 @@ modules_dict = {'nsr1':NSR1}
 
 class Device():
     
+    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>,<CALIBRATION_PATH>'
+    
     def __init__(self,**kwargs):
         
         # Submodules
-        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<NAME>,<CALIBPATH>
         self.slotnames = []
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
+                module = modules[ kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 calibpath = kwargs[key].split(',')[2].strip()
                 setattr(self,name,module(self,slot_num,name,calibpath))
@@ -45,7 +46,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None):
+    def __init__(self, address='GPIB0::2::INSTR'):
         import visa
         
         

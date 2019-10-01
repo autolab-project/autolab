@@ -68,7 +68,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VXI11(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='192.168.0.14', **kwargs):
         import vxi11 as v
     
         try:

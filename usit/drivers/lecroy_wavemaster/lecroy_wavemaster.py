@@ -80,7 +80,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='GPIB0::2::INSTR', **kwargs):
         import visa as v
         
         rm        = v.ResourceManager()
@@ -100,7 +100,7 @@ class Device_VISA(Device):
         self.inst.close()
 
 class Device_VXI11(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='192.168.0.1', **kwargs):
         import vxi11 as v
     
         self.inst = v.Instrument(address)

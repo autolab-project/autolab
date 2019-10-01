@@ -37,7 +37,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None):
+    def __init__(self, address='GPIB0::2::INSTR'):
         import visa
         
         self.TIMEOUT = 15000 #ms
@@ -68,10 +68,11 @@ class Device_VISA(Device):
         self.controller.write(command)
         time.sleep(0.01)
         
-
-         
+        
+        
 class Device_GPIB(Device):
-    def __init__(self,address):
+    
+    def __init__(self,address='GPIB0::2::INSTR'):
         import Gpib
         self.inst = Gpib.Gpib(address[0],address[1])
         Device.__init__(self)

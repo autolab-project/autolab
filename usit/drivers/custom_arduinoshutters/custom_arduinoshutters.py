@@ -95,7 +95,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None):
+    def __init__(self, address='ASRL::2::INSTR'):
         import visa 
         
         self.DEF_TIMEOUT = 1000 #ms

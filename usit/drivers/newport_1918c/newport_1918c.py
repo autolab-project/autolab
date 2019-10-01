@@ -141,7 +141,7 @@ class Device():
 
 class Device_DLL(Device):
     
-    def __init__(self,libpath=None):
+    def __init__(self,libpath=r'C:\Program Files\Newport\Newport USB Driver\Bin\usbdll.dll'):
         
         self.productID=0xCEC7
         self.modelNumber=1918

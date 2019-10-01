@@ -8,28 +8,24 @@ Supported instruments (identified):
 
 from module_nsr1 import NSR1
 
-modules_dict = {'nsr1':NSR1}
-
-
-    
-    
+modules = {'nsr1':NSR1}
 
 
 class Device():
     
+    slotNaming = 'slot<NUM> = <MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
+
     def __init__(self,**kwargs):
         
         # Submodules
-        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<MODULEID>,<NAME>,<CALIBPATH>
         self.slotnames = []
         prefix = 'slot'        
         for key in kwargs.keys():
             if key.startswith(prefix):
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
-                module_id = kwargs[key].split(',')[1].strip()
-                name = kwargs[key].split(',')[2].strip()
+                module = modules[ kwargs[key].split(',')[0].strip() ]
+                name = kwargs[key].split(',')[1].strip()
                 calibpath = kwargs[key].split(',')[3].strip()
-                setattr(self,name,module(self,module_id,calibpath))
+                setattr(self,name,module(self,name,calibpath))
                 self.slotnames.append(name)
 
         
@@ -45,13 +41,13 @@ class Device():
 ############################## Connections classes ##############################
 class Device_TCPIP(Device):
     
-    def __init__(self,address=None,port=5001,**kwargs):
+    def __init__(self,address='192.168.0.8',**kwargs):
         
         self.TIMEOUT = 2
         
         # Instantiation
         self.controller = XPS()
-        self.socketID = self.controller.TCP_ConnectToServer(address,int(port),self.TIMEOUT)
+        self.socketID = self.controller.TCP_ConnectToServer(address,5001,self.TIMEOUT)
 
         Device.__init__(self,**kwargs)
 

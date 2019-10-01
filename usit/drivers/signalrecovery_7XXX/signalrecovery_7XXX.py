@@ -9,11 +9,6 @@ Supported instruments (identified):
 
 import time
 
-
-
-
-
-
 class Device():
 
     def __init__(self):
@@ -59,7 +54,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='GPIB0::2::INSTR', **kwargs):
         import visa
         
         rm = visa.ResourceManager()
@@ -83,7 +78,7 @@ class Device_VISA(Device):
         
         
 class Device_SOCKET(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='192.168.0.9', **kwargs):
         import socket
         
         self.BUFFER_SIZE = 40000

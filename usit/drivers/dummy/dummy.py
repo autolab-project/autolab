@@ -10,7 +10,7 @@ import pandas as pd
 
 class Device():
     
-    def __init__(self,address=2):
+    def __init__(self,address='192.168.0.1'):
         
         self.amp = 1
         print('DUMMY DEVICE INSTANTIATED with address',address)

@@ -9,25 +9,24 @@ Supported instruments (identified):
 from module_sld import SLD
 from module_t100 import T100
 
-modules_dict = {'sld':SLD,'t100':T100}
-
-
+modules = {'sld':SLD,'t100':T100}
 
 class Device():
+    
+    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
 
     def __init__(self,**kwargs):
         
         self.write('*RST') # The input buffer is cleared. The command interpreter is reset and a reset instruction is sent to every module. The status and event registers are cleared. Sets the OPC bit to 1.
         self.write('*CLS') # Clears the Event Status Register and the output queue. Sets the OPC bit to 1.
         
-        # Submodules
-        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<NAME>
+        # Submodules loading
         self.slotnames = []
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
+                module = modules[ kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
                 self.slotnames.append(name)
@@ -47,7 +46,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None,**kwargs):
+    def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         
         import visa
         
