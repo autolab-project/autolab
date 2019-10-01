@@ -1,18 +1,54 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import socket
+"""
+Supported instruments (identified):
+- 
+"""
+
 import sys,os
 import time
-from optparse import OptionParser
-import subprocess
-from numpy import savetxt
-
-ADDRESS = "169.254.166.207"
-PORT    = 10001
+from numpy import savetxt,linspace
+import pandas
 
 class Device():
-    def __init__(self, filename=None,query=None,command=None,address=ADDRESS,FORCE=False,SAVE=True,trigger=False):
-        ### Establish the connection ###
+    def __init__(self):
+        
+        for i in ['A','B','C','D','E','F','G']:
+            setattr(self,f'trace{i}',Traces(self,i))
+    
+    ### User utilities
+    def get_data_traces(self,traces=[],single=None):
+        """Get all traces or the ones specified"""
+        if single: self.single()
+        self.is_scope_stopped()
+        if traces == []: traces = ['A','B','C','D','E','F','G']
+        for i in traces():
+            if not(getattr(self,f'trace{i}').is_active()): continue
+            getattr(self,f'trace{i}').get_data()
+        
+    def save_data_traces(self,filename,traces=[],FORCE=False):
+        if traces == []: traces = ['A','B','C','D','E','F','G']
+        for i in traces():
+            getattr(self,f'trace{i}').save_data(filename=filename,FORCE=FORCE)
+        
+    ### Trigger functions
+    def single(self):
+         """Trigger a single sweep"""
+        self.send('*TRG')
+    def is_scope_stopped(self):
+        flag = 0.1
+        while self.query(':STATUS:OPER:COND?') != '1':
+            time.sleep(flag)
+            flag = flag + 0.1
+        
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_SOCKET(Device):
+    def __init__(self, address=None, **kwargs):
+        import socket
+        
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((address, PORT))
         self.send('OPEN "anonymous"')
@@ -25,58 +61,8 @@ class Device():
         if not ans=='ready':
             print("problem with authentication")
             sys.exit(1)
-
-        if query:
-            print('\nAnswer to query:',query)
-            rep = self.query(query)
-            print(rep,'\n')
-            sys.exit()
-        elif command:
-            print('\nExecuting command',command)
-            self.send(command)
-            print('\n')
-            sys.exit()
         
-        if trigger:
-            self.trigger_once()
-        if filename:
-            self.lambd,self.amp = self.get_data()
-            self.lambd = [eval(self.lambd[i]) for i in range(len(self.lambd))]
-            self.amp = [eval(self.amp[i]) for i in range(len(self.amp))]
-            ### TO SAVE ###
-            if SAVE:
-                temp_filename = filename + '_AQ6370.txt'
-                temp = os.listdir()               # if file exist => exit
-                for i in range(len(temp)):
-                    if temp[i] == temp_filename and not(FORCE):
-                        print('\nFile ', temp_filename, ' already exists, change filename, remove old file or use -F option to overwrite\n')
-                        sys.exit()
-
-                savetxt(temp_filename,(self.lambd,self.amp))
-
-                
-    def get_data(self):
-        X = self.query(":TRAC:DATA:X? TRA", length=100000).split(',')
-        data = self.query(":TRAC:DATA:Y? TRA", length=100000).split(',')
-        return X,data
-    
-    def trigger_once(self):
-        self.send('*TRG')
-        flag = 0.1
-        while self.query(':STATUS:OPER:COND?') != '1':
-            time.sleep(flag)
-            print('Waiting for trigger:', flag)
-            flag = flag + 0.1
-    
-    def makesweep(self):
-        """Trigger a single sweep"""
-        self.mode('1')
-        self.send('INIT')
-    def mode(self,mode=None):
-        """Sets or queries mode. Returns mode in any case"""
-        if mode is not None:
-            self.send('INIT:SMOD '+mode)
-        return self.query('INIT:SMOD?')
+        Device.__init__(self, **kwargs)
 
     def send(self, msg):
         msg=msg+"\n"
@@ -92,24 +78,90 @@ class Device():
         self.send(msg)
         #time.sleep(1)
         return(self.recv(length))
+    def close(self):
+        self.sock.close()
+############################## Connections classes ##############################
+#################################################################################
 
 
-if __name__=="__main__":
+class Traces():
+    def __init__(self,dev,trace):
+        self.trace     = str(trace)
+        self.dev       = dev
+        self.data_dict = {}
+        
+    def get_data(self):
+        self.data        = self.dev.query(f":TRAC:DATA:Y? TR{self.trace}", length=100000).split(',')
+        self.frequencies = self.get_frequencies()
+        return self.frequencies,self.data
+    def get_data_dataframe(self):
+        frequencies,data              = self.get_data()
+        self.data_dict['frequencies'] = self.frequencies
+        self.data_dict['amplitude']   = self.data
+        return pandas.DataFrame(self.data_dict)
+    
+    def get_frequencies(self):
+        return self.dev.query(f":TRAC:DATA:X? TR{self.trace}", length=1000000).split(',')
+    
+    def save_data(self,filename,FORCE=False):
+        temp_filename = f'{filename}_AQ6370TR{self.trace}.txt'
+        if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
+            print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
+            return
+        
+        savetxt(temp_filename,(self.frequencies,self.data))
+
+
+if __name__ == '__main__':
+    from optparse import OptionParser
+    import inspect
+    
     usage = """usage: %prog [options] arg
 
                EXAMPLES:
-                   get_YOKO -o filename
+                   get_AQ6370 -o filename A,B,C,D,E,F,G
                Record the spectrum and create one file with two columns lambda,spectral amplitude
 
                """
     parser = OptionParser(usage)
     parser.add_option("-c", "--command", type="str", dest="com", default=None, help="Set the command to use." )
     parser.add_option("-q", "--query", type="str", dest="que", default=None, help="Set the query to use." )
+    parser.add_option("-i", "--address", type="string", dest="address", default='192.168.0.4', help="Set ip address." )
+    parser.add_option("-l", "--link", type="string", dest="link", default='SOCKET', help="Set the connection type." )
+    parser.add_option("-F", "--force",action = "store_true", dest="force", default=None, help="Allows overwriting file" )
     parser.add_option("-o", "--filename", type="string", dest="filename", default=None, help="Set the name of the output file" )
-    parser.add_option("-F", "--force", type="string", dest="force", default=None, help="Allows overwriting file" )
-    parser.add_option("-i", "--address", type="string", dest="address", default=ADDRESS, help="Set the ip address to establish the communication with" )
-    parser.add_option("-t", "--trigger", action = "store_true", dest ="trigger", default=False, help="Make sure the instrument trigger once and finishes sweeping before acquiring the data")
+    parser.add_option("-t", "--trigger", action="store_true", dest="trigger", default=False, help="Ask the scope to trigger once before acquiring." )
     (options, args) = parser.parse_args()
+    
+    ### Compute traces to acquire ###
+    if (len(args) == 0) and (options.com is None) and (options.que is None):
+        print('\nYou must provide at least one trace\n')
+        sys.exit()
+    else:
+        chan = [str(a) for a in args[0].split(',') if a in ['A','B','C','D','E','F','G']]
+    ####################################
+    
+    ### Start the talker ###
+    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
+    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
+    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
+    I = Device_LINK(address=options.address)
+    
+    if options.query:
+        print('\nAnswer to query:',options.query)
+        rep = I.query(options.query)
+        print(rep,'\n')
+        sys.exit()
+    elif options.command:
+        print('\nExecuting command',options.command)
+        I.write(options.command)
+        print('\n')
+        sys.exit()
+    
+    if options.filename:
+        I.get_data_traces(traces=chan,single=options.trigger)
+        I.save_data_traces(options.filename,FORCE=options.force)
 
-    Device(query=options.que,command=options.com,filename=options.filename,FORCE=options.force,address=options.address,trigger=options.trigger)
-
+    
+    I.close()
+    sys.exit()
