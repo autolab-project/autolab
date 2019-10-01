@@ -108,7 +108,7 @@ class Channel():
         return frombuffer(self.get_data_raw(),int8)
     
     def save_data_raw(self,filename,FORCE=False):
-        temp_filename = f'{filename}_DSO81204B{self.channel}'
+        temp_filename = f'{filename}_DSO81204BCH{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -116,7 +116,7 @@ class Channel():
         f.write(self.data_raw)
         f.close()
     def save_log_data(self,filename,FORCE=False):
-        temp_filename = f'{filename}_DSO81204B{self.channel}.log'
+        temp_filename = f'{filename}_DSO81204BCH{self.channel}.log'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
