@@ -135,13 +135,11 @@ class Channel():
         if self.autoscale_iter:
             self.do_autoscale()
         self.dev.write(f'C{self.channel}:WF? DAT1')
-        self.data = self.dev.read_raw()
-        self.data = self.data[self.data.find(b'#')+11:-1]
-        return self.data
-                                             
+        self.data_raw = self.dev.read_raw()
+        self.data_raw = self.data[self.data.find(b'#')+11:-1]
+        return self.data_raw
     def get_data(self):
         return frombuffer(self.get_data_raw(),int8)
-                                             
     def get_log_data(self):
         self.log_data = self.dev.query(f"C{self.channel}:INSP? 'WAVEDESC'")
         return self.log_data
@@ -153,7 +151,7 @@ class Channel():
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
         f = open(temp_filename,'wb')# Save data
-        f.write(self.data)
+        f.write(self.data_raw)
         f.close()
     def save_log_data(self,filename,FORCE=False):
         temp_filename = f'{filename}_DSACHAN{self.channel}.log'

@@ -33,8 +33,8 @@ class Device():
         self.stop()
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels():
-            getattr(self,f'channel{i}').acquire_data()
-            getattr(self,f'channel{i}').acquire_log_data()
+            getattr(self,f'channel{i}').get_raw_data()
+            getattr(self,f'channel{i}').get_log_data()
         self.run()
         
     def save_data_channels(self,filename,channels=[],FORCE=False):
@@ -85,22 +85,21 @@ class Channel():
         self.dev  = dev
     
         
-    def acquire_data(self):
+    def get_raw_data(self):
         self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
         self.dev.write(':WAV:DATA?')
         self.data = self.dev.read_raw()
         if typ=='BYTE':
             self.data = self.data[8:]
         self.data = self.data[:-1]
-    def acquire_log_data(self):
+        return self.data
+    def get_log_data(self):
         self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
         self.dev.write(f':WAVEFORM:PREAMBLE?')
         self.log_data = self.dev.read()
-
-    def get_data(self):
-        return self.data
-    def get_log_data(self):
         return self.log_data
+    def get_raw_data(self):
+        return frombuffer(self.get_raw_data(),int8)
         
     def save_data(self,filename,FORCE=False):
         temp_filename = f'{filename}_DSO54853A{self.channel}'
