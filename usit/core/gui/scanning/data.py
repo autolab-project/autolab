@@ -39,7 +39,7 @@ class DataManager :
         
         
         
-    def getPlotData(self,nbDataset,resultName):
+    def getData(self,nbDataset,varList):
         
         """ This function returns to the figure manager the required data """
         
@@ -48,7 +48,7 @@ class DataManager :
         for i in range(nbDataset) :
             if i < len(self.datasets) :
                 dataset = self.datasets[-(i+1)]
-                data = dataset.getData(resultName)
+                data = dataset.getData(varList)
                 dataList.append(data)
             else :
                 break
@@ -87,7 +87,8 @@ class DataManager :
         
         self.datasets = []
         self.initialized = False
-        self.gui.variable_comboBox.clear()
+        self.gui.variable_x_comboBox.clear()
+        self.gui.variable_y_comboBox.clear()
         self.gui.save_pushButton.setEnabled(False)
         
         
@@ -157,15 +158,23 @@ class DataManager :
         
         resultNamesList = []
         for resultName in dataset.data.columns :
-            if resultName not in ['id',dataset.config['parameter']['name']] :
+            if resultName not in ['id'] :
                 try : 
                     float(dataset.data.iloc[0][resultName])
                     resultNamesList.append(resultName)
                 except : 
                     pass
+                
+        
     
-        self.gui.variable_comboBox.clear()
-        self.gui.variable_comboBox.addItems(resultNamesList)
+        for axe in ['x','y']:
+            widget = getattr(self.gui,f'variable_{axe}_comboBox')
+            widget.clear()
+            widget.addItems(resultNamesList)
+         
+        # Default x and y
+        self.gui.variable_x_comboBox.setCurrentIndex(0) # parameter
+        self.gui.variable_y_comboBox.setCurrentIndex(1) # first numerical measure
         
         
         
@@ -190,14 +199,12 @@ class Dataset():
         
         
 
-    def getData(self,resultName):
+    def getData(self,varList):
         
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
         
-        data = self.data.loc[:,[self.config['parameter']['name'],resultName]]
-        data.rename(columns={self.config['parameter']['name']: 'x', resultName: 'y'},inplace=True)
-        return data
+        return self.data.loc[:,varList]
     
     
     

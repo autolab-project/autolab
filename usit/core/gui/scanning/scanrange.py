@@ -32,6 +32,7 @@ class RangeManager :
         
         # Push button
         self.gui.fromFigure_pushButton.clicked.connect(self.fromFigureButtonClicked)
+        self.gui.fromFigure_pushButton.setEnabled(False)
         
         self.refresh()
                         

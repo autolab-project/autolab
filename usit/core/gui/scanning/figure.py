@@ -8,7 +8,6 @@ Created on Sun Sep 29 18:12:24 2019
 
 import os
 import math as m
-import pandas as pd
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib
@@ -47,6 +46,7 @@ class FigureManager :
             getattr(self.gui,f'autoscale_{axe}_checkBox').setChecked(True)
             getattr(self.gui,f'zoom_{axe}_pushButton').clicked.connect(lambda b,axe=axe:self.zoomButtonClicked('zoom',axe))
             getattr(self.gui,f'unzoom_{axe}_pushButton').clicked.connect(lambda b,axe=axe:self.zoomButtonClicked('unzoom',axe))
+            getattr(self.gui,f'variable_{axe}_comboBox').currentIndexChanged.connect(self.variableChanged)
                     
         self.gui.goUp_pushButton.clicked.connect(lambda:self.moveButtonClicked('up'))
         self.gui.goDown_pushButton.clicked.connect(lambda:self.moveButtonClicked('down'))
@@ -68,8 +68,7 @@ class FigureManager :
         self.gui.nbTraces_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
         self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
         
-        # Variable displayed on Y axis
-        self.gui.variable_comboBox.currentIndexChanged.connect(self.variableChanged)
+
         
         
         
@@ -183,17 +182,7 @@ class FigureManager :
 
 
 
-    def xLabelChanged(self):
-        
-        """ This function is called when the label on the x axis has to be updated (parameter changed) """
-        
-        label = self.gui.configManager.getParameterName()
-        self.setLabel('x',str(label))
-        self.redraw()
-        
-        
-        
-        
+
 
 
     # PLOT DATA
@@ -219,19 +208,24 @@ class FigureManager :
         self.clearData()
         
         # Get current displayed result
-        resultName = self.gui.variable_comboBox.currentText()
-        self.setLabel('y',resultName)
+        variable_x = self.gui.variable_x_comboBox.currentText()
+        variable_y = self.gui.variable_y_comboBox.currentText()
+        
+        # Label update
+        self.setLabel('x',variable_x)
+        self.setLabel('y',variable_y)
         
         # Load the last results data
-        data = self.gui.dataManager.getPlotData(self.nbtraces,resultName)       
+        data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y])       
         
         # Plot them
         for i in range(len(data)) :
                             
             # Data
             subdata = data[i]
-            x = pd.to_numeric(subdata.x,errors='coerce')
-            y = pd.to_numeric(subdata.y,errors='coerce')
+            subdata = subdata.astype(float)
+            x = subdata.loc[:,variable_x]
+            y = subdata.loc[:,variable_y]
             
             # Apprearance:    
             if i == (len(data)-1) :      
@@ -257,13 +251,16 @@ class FigureManager :
         
         ''' This functions update the data of the last curve '''
         
-        # Get last data
-        resultName = self.gui.variable_comboBox.currentText()
-        data = self.gui.dataManager.getPlotData(1,resultName)
+        # Get current displayed result
+        variable_x = self.gui.variable_x_comboBox.currentText()
+        variable_y = self.gui.variable_y_comboBox.currentText()
+        
+        data = self.gui.dataManager.getData(1,[variable_x,variable_y])[0]
+        data = data.astype(float)
         
         # Update plot data
-        self.curves[-1].set_xdata(pd.to_numeric(data[0].x,errors='coerce'))
-        self.curves[-1].set_ydata(pd.to_numeric(data[0].y,errors='coerce'))
+        self.curves[-1].set_xdata(data.loc[:,variable_x])
+        self.curves[-1].set_ydata(data.loc[:,variable_y])
         
         # Autoscale
         if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
@@ -280,8 +277,13 @@ class FigureManager :
         
         self.clearData()
         
-        if index != -1: 
+        if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1 : 
             self.reloadData()
+            
+        if self.gui.variable_x_comboBox.currentText() == self.gui.configManager.getParameterName() :
+            self.gui.fromFigure_pushButton.setEnabled(True)
+        else :
+            self.gui.fromFigure_pushButton.setEnabled(False)
 
             
             
@@ -308,7 +310,7 @@ class FigureManager :
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
         
-        if check is True and self.gui.variable_comboBox.currentIndex() != -1 :
+        if check is True and self.gui.variable_y_comboBox.currentIndex() != -1 :
             self.reloadData()
         
         
