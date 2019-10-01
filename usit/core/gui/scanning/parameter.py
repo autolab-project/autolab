@@ -59,3 +59,22 @@ class ParameterManager :
         newName = main.cleanString(newName)
         if newName != '' : 
             self.gui.configManager.setParameterName(newName)
+            
+            
+            
+    # PROCESSING STATE BACKGROUND
+    ###########################################################################
+    
+
+    def setProcessingState(self,state):
+        
+        """ This function set the background color of the parameter address during the scan """
+                
+        if state == 'idle' : 
+            self.gui.parameterAddress_label.setStyleSheet("font-size: 9pt;")
+        else : 
+            if state == 'started' : color = '#ff8c1a'
+            if state == 'finished' : color = '#70db70'
+            self.gui.parameterAddress_label.setStyleSheet(f"background-color: {color}; font-size: 9pt;")
+            
+        

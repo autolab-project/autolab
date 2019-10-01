@@ -82,6 +82,8 @@ class ScanManager :
             self.thread.errorSignal.connect(self.error)
             self.thread.startStepSignal.connect(lambda stepName:self.gui.recipeManager.setStepProcessingState(stepName,'started'))
             self.thread.finishStepSignal.connect(lambda stepName:self.gui.recipeManager.setStepProcessingState(stepName,'finished'))
+            self.thread.startParameterSignal.connect(lambda:self.gui.parameterManager.setProcessingState('started'))
+            self.thread.finishParameterSignal.connect(lambda:self.gui.parameterManager.setProcessingState('finished'))
             self.thread.recipeCompletedSignal.connect(self.gui.recipeManager.resetStepsProcessingState)
             self.thread.finished.connect(self.finished)
             # Starting
@@ -123,6 +125,7 @@ class ScanManager :
         self.gui.start_pushButton.setText('Start')
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
+        self.gui.parameterManager.setProcessingState('idle')
         self.gui.configManager.importAction.setEnabled(True)
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
@@ -220,6 +223,8 @@ class ScanThread(QtCore.QThread):
     
     # Signals
     errorSignal = QtCore.pyqtSignal(object) 
+    startParameterSignal = QtCore.pyqtSignal()
+    finishParameterSignal = QtCore.pyqtSignal()
     startStepSignal = QtCore.pyqtSignal(object)
     finishStepSignal = QtCore.pyqtSignal(object)
     recipeCompletedSignal = QtCore.pyqtSignal()
@@ -260,7 +265,9 @@ class ScanThread(QtCore.QThread):
                 try : 
                     
                     # Set the parameter value
+                    self.startParameterSignal.emit()
                     parameter(paramValue)
+                    self.finishParameterSignal.emit()
                     
                     # Start the recipe
                     dataPoint = collections.OrderedDict()
