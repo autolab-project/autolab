@@ -198,14 +198,13 @@ if __name__ == '__main__':
         for i in range(options.MEAS):
             I.stop()
             print(str(i+1))
-            I.acquire_data_channels(channels=chan)
+            I.get_data_channels(channels=chan)
             I.save_data_channels(channels=chan,filename=str(i+1),FORCE=options.force)
             I.run()
             time.sleep(0.050)
     elif options.filename:
         I.stop()
-        print('trying to get channel',chan[i])
-        I.acquire_data_channels(channels=chan)
+        I.get_data_channels(channels=chan)
         I.save_data_channels(channels=chan,filename=options.filename,FORCE=options.force)
     
     print('Measurment time', time.time() - t)
