@@ -7,10 +7,9 @@ quentin.chateiller@c2n.upsaclay.fr
 
 
 """
+#from threading import Event, Thread
 
-from threading import Event, Thread
-
-started = Event()
+#started = Event()
 
 #def gui() :
 #        

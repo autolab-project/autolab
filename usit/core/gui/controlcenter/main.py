@@ -195,4 +195,3 @@ class ControlCenter(QtWidgets.QMainWindow):
 
 
 
-
