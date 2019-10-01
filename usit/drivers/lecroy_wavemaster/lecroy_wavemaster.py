@@ -28,7 +28,7 @@ class Device():
     
     
     ### User utilities
-    def acquire_data_channels(self,channels=[]):
+    def get_data_channels(self,channels=[]):
         """Get all channels or the ones specified"""
         previous_trigger_state = self.get_previous_trigger_state()    #1 WARNING previous trigger state in memory or returned
         self.stop()
@@ -43,7 +43,7 @@ class Device():
     def save_data_channels(self,filename,channels=[],FORCE=False):
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in self.active_channels():
-            getattr(self,f'channel{i}').save_data(filename=filename,FORCE=FORCE)
+            getattr(self,f'channel{i}').save_data_raw(filename=filename,FORCE=FORCE)
             getattr(self,f'channel{i}').save_log_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions
@@ -145,7 +145,7 @@ class Channel():
         return self.log_data
     
     
-    def save_data(self,filename,FORCE=False):
+    def save_data_raw(self,filename,FORCE=False):
         temp_filename = f'{filename}_lecroyC{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')

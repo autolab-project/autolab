@@ -28,19 +28,19 @@ class Device():
     
     
     ### User utilities
-    def acquire_data_channels(self,channels=[]):
+    def get_data_channels(self,channels=[]):
         """Get all channels or the ones specified"""
         self.stop()
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels():
-            getattr(self,f'channel{i}').get_raw_data()
+            getattr(self,f'channel{i}').get_data_raw()
             getattr(self,f'channel{i}').get_log_data()
         self.run()
         
     def save_data_channels(self,filename,channels=[],FORCE=False):
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in self.active_channels():
-            getattr(self,f'channel{i}').save_data(filename=filename,FORCE=FORCE)
+            getattr(self,f'channel{i}').save_data_raw(filename=filename,FORCE=FORCE)
             getattr(self,f'channel{i}').save_log_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions
@@ -85,29 +85,29 @@ class Channel():
         self.dev  = dev
     
         
-    def get_raw_data(self):
+    def get_data_raw(self):
         self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
         self.dev.write(':WAV:DATA?')
-        self.data = self.dev.read_raw()
+        self.data_raw = self.dev.read_raw()
         if typ=='BYTE':
-            self.data = self.data[8:]
-        self.data = self.data[:-1]
-        return self.data
+            self.data_raw = self.data_raw[8:]
+        self.data_raw = self.data_raw[:-1]
+        return self.data_raw
     def get_log_data(self):
         self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
         self.dev.write(f':WAVEFORM:PREAMBLE?')
         self.log_data = self.dev.read()
         return self.log_data
     def get_raw_data(self):
-        return frombuffer(self.get_raw_data(),int8)
+        return frombuffer(self.get_data_raw(),int8)
         
-    def save_data(self,filename,FORCE=False):
+    def save_data_raw(self,filename,FORCE=False):
         temp_filename = f'{filename}_DSO54853A{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
         f = open(temp_filename,'wb')# Save data
-        f.write(self.data)
+        f.write(self.data_raw)
         f.close()
     def save_log_data(self,filename,FORCE=False):
         temp_filename = f'{filename}_DSO54853A{self.channel}.log'
