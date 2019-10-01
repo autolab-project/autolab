@@ -46,11 +46,11 @@ class DataManager :
         dataList = []
         
         for i in range(nbDataset) :
-            try :
+            if i < len(self.datasets) :
                 dataset = self.datasets[-(i+1)]
                 data = dataset.getData(resultName)
                 dataList.append(data)
-            except :
+            else :
                 break
             
         dataList.reverse()
@@ -195,7 +195,7 @@ class Dataset():
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
         
-        data = self.data.loc[[self.config['parameter']['name'],resultName]]
+        data = self.data.loc[:,[self.config['parameter']['name'],resultName]]
         data.rename(columns={self.config['parameter']['name']: 'x', resultName: 'y'},inplace=True)
         return data
     
