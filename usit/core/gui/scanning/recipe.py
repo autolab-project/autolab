@@ -66,8 +66,7 @@ class RecipeManager :
             # Loading step informations
             step = recipe[i]
             item = QtWidgets.QTreeWidgetItem()
-#            item.setFlags(~QtCore.Qt.ItemIsSelectable & ~QtCore.Qt.ItemIsEnabled & ~QtCore.Qt.ItemIsDragEnabled)
-            item.setFlags(item.flags() ^ QtCore.Qt.ItemIsDropEnabled ) # | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled )
+            item.setFlags(item.flags() ^ QtCore.Qt.ItemIsDropEnabled ) 
             
             # Column 1 : Step name
             item.setText(0,step['name'])
