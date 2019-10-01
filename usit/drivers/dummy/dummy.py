@@ -15,17 +15,24 @@ class Device():
         self.amp = 1
         print('DUMMY DEVICE INSTANTIATED with address',address)
         
-        self.slot1 = Slot(1)
-        self.slot2 = Slot(2)
+        self.slot1 = Slot(self,1)
+        self.slot2 = Slot(self,2)
         
         self.option = True
         
         self.count = 0
         self.phrase = 'Coucou'
+        self.sleep = 0
         #raise ValueError('Test error')
+        
+    def setSleep(self,value):
+        self.sleep = value
+        
+    def getSleep(self):
+        return self.sleep
     
     def getAmplitude(self):
-        time.sleep(0.05)
+        time.sleep(self.sleep)
         #raise ValueError('Test error')
         #self.count += 1
 #        if np.random.uniform() > 0.5 : sign = 1
@@ -39,15 +46,18 @@ class Device():
         return value
     
     def setPhrase(self,phrase):
+        time.sleep(self.sleep)
         assert isinstance(phrase,str)
         self.phrase = phrase
         print('set phrase',self.phrase)
         
     def getPhrase(self):
+        time.sleep(self.sleep)
         print('get phrase',self.phrase)
         return self.phrase
     
     def setAmplitude(self,value):
+        time.sleep(self.sleep)
         self.amp = value
         print('set amplitude',self.amp)
         #raise ValueError('Test error')
@@ -56,12 +66,13 @@ class Device():
         print('DUMMY DEVICE CLOSED')
         
     def getPhase(self):
+        time.sleep(self.sleep)
         value = np.random.uniform(-1, 1)
         print('get phase',value)
         return value
     
     def doSth(self):
-        time.sleep(1)
+        time.sleep(self.sleep)
         print('do sth')
         #raise ValueError('Test error')
         
@@ -69,18 +80,22 @@ class Device():
         df = pd.DataFrame()
         d = {'e':1,'f':2}
         df=df.append(d,ignore_index=True)
+        time.sleep(self.sleep)
         print('get dataframe',d)
         return df
     
     def setOption(self,value):
+        time.sleep(self.sleep)
         self.option = bool(value)
         print('set option',self.option)
         
     def getOption(self):
+        time.sleep(self.sleep)
         print('get option',self.option)
         return self.option
     
     def getArray(self):
+        time.sleep(self.sleep)
         return np.ones((3,4))
     
     def getDriverConfig(self):
@@ -105,20 +120,25 @@ class Device():
                        'read':self.getOption,'write':self.setOption})
         config.append({'element':'variable','name':'array','type':np.ndarray,
                        'read':self.getArray})
+        config.append({'element':'variable','name':'sleep','type':float,
+                       'read':self.getSleep,'write':self.setSleep})
         return config
     
     
 class Slot() :
     
-    def __init__(self,num):
+    def __init__(self,dev,num):
+        self.dev = dev
         self.num = num
         
     def getPower(self):
+        time.sleep(self.dev.sleep)
         value = np.random.uniform()
         print(f'slot {self.num} get power',value)
         return value
     
     def getWavelength(self):
+        time.sleep(self.dev.sleep)
         value = np.random.uniform()
         print(f'slot {self.num} get wavelength',value)
         return value
