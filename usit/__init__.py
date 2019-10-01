@@ -5,12 +5,10 @@ Created on Fri May 17 15:04:04 2019
 @author: quentin.chateiller
 """
 
-# Initializing
-#from . import core
-#core.checkConfig()
-
-__version__ = '1.0'
-
+import os
+with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as version_file:
+    __version__ = version_file.read().strip()
+del os
 
 from . import core
 core.checkConfig()
