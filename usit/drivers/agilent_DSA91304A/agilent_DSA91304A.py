@@ -8,6 +8,7 @@ Supported instruments (identified):
 
 import sys,os
 import time
+from numpy import frombuffer,int8
 
 
 class Device():
@@ -26,12 +27,12 @@ class Device():
             setattr(self,f'channel{i}',Channel(self,i))
     
     ### User utilities
-    def acquire_data_channels(self,channels=[]):
+    def get_data_channels(self,channels=[]):
         """Get all channels or the ones specified"""
         self.stop()
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels:
-            getattr(self,f'channel{i}').get_data()
+            getattr(self,f'channel{i}').get_raw_data()
             getattr(self,f'channel{i}').get_log_data()
         self.run()
         
@@ -91,31 +92,26 @@ class Device_VXI11(Device):
 #################################################################################
 
 
-
-
-
-
 class Channel():
     def __init__(self,dev,channel):
         self.channel = int(channel)
         self.dev     = dev
         
-    def acquire_data(self):
+    def get_raw_data(self):
         self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
         self.dev.write(':WAV:DATA?')
         self.data = self.dev.read_raw()
         if self.dev.type == "BYTE":
             self.data = self.data[10:]
-    def acquire_log_data(self):
+        return self.data
+    def get_log_data(self):
         self.dev.write(f':WAVEFORM:SOURCE CHAN{self.channel}')
         self.dev.write(f':WAVEFORM:PREAMBLE?')
         self.log_data = self.dev.read()
-    
-    def get_data(self):
-        return self.data
-    def get_log_data(self):
         return self.log_data
-    
+    def get_data(self):
+        return frombuffer(self.get_raw_data(),int8)
+        
     def save_data(self,filename,FORCE=False):
         temp_filename = f'{filename}_DSACHAN{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
