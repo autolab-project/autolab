@@ -24,7 +24,7 @@ class Device():
             if key.startswith(prefix):
                 module = modules[ kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
-                calibpath = kwargs[key].split(',')[3].strip()
+                calibpath = kwargs[key].split(',')[2].strip()
                 setattr(self,name,module(self,name,calibpath))
                 self.slotnames.append(name)
 
