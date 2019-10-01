@@ -190,8 +190,7 @@ if __name__ == '__main__':
     
     if options.filename:
         I.stop()
-        print('trying to get channel',chan[i])
-        I.acquire_data_channels(channels=chan)
+        I.get_data_channels(channels=chan)
         I.save_data_channels(channels=chan,filename=options.filename,FORCE=options.force)
     else:
         print('If you want to save, provide an output file name')
