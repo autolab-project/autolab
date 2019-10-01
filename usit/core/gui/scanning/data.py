@@ -9,7 +9,7 @@ import collections
 from queue import Queue
 from PyQt5 import QtCore,QtWidgets
 import usit
-import distutils
+from distutils.dir_util import copy_tree
 import os 
 import numpy as np
 import pandas as pd
@@ -72,10 +72,12 @@ class DataManager :
                                                               usit.core.USER_LAST_CUSTOM_FOLDER_PATH))
      
             if path != '' :
+                self.gui.statusBar.showMessage(f'Saving data...',5000)
+                
                 dataset.save(path)
                 self.gui.figureManager.save(path)
                 
-            self.gui.statusBar.showMessage(f'Last dataset successfully saved in {path}',5000)
+                self.gui.statusBar.showMessage(f'Last dataset successfully saved in {path}',5000)
         
         
 
@@ -193,7 +195,7 @@ class Dataset():
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
         
-        data = self.data[[self.config['parameter']['name'],resultName]]
+        data = self.data.loc[[self.config['parameter']['name'],resultName]]
         data.rename(columns={self.config['parameter']['name']: 'x', resultName: 'y'},inplace=True)
         return data
     
@@ -203,7 +205,7 @@ class Dataset():
         
         """ This function saved the dataset in the provided path """
         
-        distutils.dir_util.copy_tree(self.tempFolderPath,path)
+        copy_tree(self.tempFolderPath,path)
         
     
     
@@ -242,7 +244,7 @@ class Dataset():
         # Store data in the dataset's dataframe
         self.data = self.data.append(simpledata,ignore_index=True)
         if ID == 1 : 
-            self.data = self.data[simpledata.keys()] # reorder columns
+            self.data = self.data[list(simpledata.keys())] # reorder columns
             header = True
         else :
             header = False
