@@ -6,6 +6,7 @@ Created on Tue Oct  1 17:38:15 2019
 """
 import usit
 import os 
+import inspect
 import importlib
 
 class DriverWrapper() :
@@ -44,7 +45,20 @@ class DriverWrapper() :
         
     def help(self) :
         
-        print(f'Auto help for the configuration of driver {self._name}')
+        mess = f'Help for the configuration of driver {self._name} in the file devices_index.ini\n\n'
+        
+        # Availables classes: 
+        mess+='Available classes:\n'
+        classes = [name for name, obj in inspect.getmembers(self._module, inspect.isclass) if obj.__module__ is self._module.__name__]
+        for name in classes :
+            mess+=f' - {name}\n'
+        
+        print(mess)
+    
+#    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
+#    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
+#    I = Device_LINK(address=options.address)
+
         
 
 
