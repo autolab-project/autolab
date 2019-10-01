@@ -12,46 +12,6 @@ from numpy import fromstring,int8,int16,float64,sign
 import pandas
 
 
-#################################################################################
-############################## Connections classes ##############################
-class Device_VISA():
-    def __init__(self, address, **kwargs):
-        import visa as v
-        
-        rm        = v.ResourceManager()
-        self.inst = rm.get_instrument(address)
-        Device.__init__(self, **kwargs)
-        
-    def query(self,command):
-        self.write(command)
-        return self.read()
-    def read(self):
-        return self.inst.read()
-    def write(self,command):
-        self.inst.write(command)
-    def close(self):
-        self.inst.close()
-
-class Device_VXI11():
-    def __init__(self, address, **kwargs):
-        import vxi11 as v
-    
-        self.inst = v.Instrument(address)
-        Device.__init__(self, **kwargs)
-
-    def query(self, command, nbytes=100000000):
-        self.write(command)
-        return self.read(nbytes)
-    def read(self,nbytes=100000000):
-        self.inst.read(nbytes)
-    def write(self,cmd):
-        self.inst.write(cmd)
-    def close(self):
-        self.inst.close()
-############################## Connections classes ##############################
-#################################################################################
-
-
 class Device():
     def __init__(self,nb_channels=4):
               
@@ -100,7 +60,47 @@ class Device():
         return str
     def get_encoding(self):
         return str
+
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address, **kwargs):
+        import visa as v
+        
+        rm        = v.ResourceManager()
+        self.inst = rm.get_instrument(address)
+        Device.__init__(self, **kwargs)
+        
+    def query(self,command):
+        self.write(command)
+        return self.read()
+    def read(self):
+        return self.inst.read()
+    def write(self,command):
+        self.inst.write(command)
+    def close(self):
+        self.inst.close()
+
+class Device_VXI11(Device):
+    def __init__(self, address, **kwargs):
+        import vxi11 as v
     
+        self.inst = v.Instrument(address)
+        Device.__init__(self, **kwargs)
+
+    def query(self, command, nbytes=100000000):
+        self.write(command)
+        return self.read(nbytes)
+    def read(self,nbytes=100000000):
+        self.inst.read(nbytes)
+    def write(self,cmd):
+        self.inst.write(cmd)
+    def close(self):
+        self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
+
 
 class Channel():
     def __init__(self,dev,channel):

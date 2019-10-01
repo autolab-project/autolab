@@ -79,7 +79,7 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_TCPIP(Device):
+class Device_VISA(Device):
     def __init__(self, address=None, **kwargs):
         import visa as v
         
@@ -119,8 +119,6 @@ class Device_VXI11(Device):
         self.inst.close()
 ############################## Connections classes ##############################
 #################################################################################
-
-
 
 
 class Channel():
