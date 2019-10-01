@@ -5,36 +5,9 @@ Created on Sat Jul 20 10:02:22 2019
 @author: qchat
 """
 
-import os
-import importlib
+
 import inspect
-
-import usit
-    
-
-    
-def getLibrary(driver_path):
-    
-    """ Open the library located at the path provided """
-    
-    driverDir = os.path.dirname(driver_path)
-    scriptName = os.path.splitext(os.path.basename(driver_path))[0]
-    
-    spec = importlib.util.spec_from_file_location(scriptName, driver_path)
-    lib = importlib.util.module_from_spec(spec)
-    
-    currDir = os.getcwd()
-    os.chdir(driverDir)
-    
-    try : 
-        spec.loader.exec_module(lib)
-    except :
-        print(f'Impossible to load {driver_path}')
-        
-    os.chdir(currDir)
-    
-    return lib
-    
+import usit  
 
 
 def loadDevice(deviceName):
@@ -44,9 +17,8 @@ def loadDevice(deviceName):
     
     index = usit.core.devices.index[deviceName]
     driverName = index['driver']
-    
-    driver_path = os.path.join(usit.core.DRIVERS_PATH,driverName,f'{driverName}.py')
-    driver = getLibrary(driver_path)
+
+    driver = getattr(usit.drivers,driverName)
         
     # Check if Device class exists in the driver
     className = 'Device'
