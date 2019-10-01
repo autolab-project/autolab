@@ -45,7 +45,7 @@ class DriverWrapper() :
         
     def help(self) :
         
-        mess = f'Help for the configuration of driver {self._name} in the file devices_index.ini\n\n'
+        mess = f'\nHelp for the configuration of driver {self._name} in the file devices_index.ini\n\n'
         
         # Availables classes: 
         mess+='Available classes:\n'
