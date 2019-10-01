@@ -559,6 +559,7 @@ class FigureManager :
     def setRange(self,axe,r):
         
         """ This function sets the current range of the given axis """
-
-        getattr(self.ax,f'set_{axe}lim')(r)
+        
+        if r[0] != r[1] :
+            getattr(self.ax,f'set_{axe}lim')(r)
         
