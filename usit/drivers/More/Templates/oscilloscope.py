@@ -212,7 +212,6 @@ if __name__ == '__main__':
     ### Acquire ###
     if options.filename:
         I.stop()
-        print('trying to get channel',chan[i])
         I.get_data_channels(channels=chan)
         I.save_data_channels(channels=chan,filename=options.filename,FORCE=options.force)
     
