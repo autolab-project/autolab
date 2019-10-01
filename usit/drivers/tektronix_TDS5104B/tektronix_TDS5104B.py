@@ -1,103 +1,138 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import vxi11 as v
+"""
+Supported instruments (identified):
+- 
+"""
+
 import sys,os
 import time
-from optparse import OptionParser
-import subprocess
-from numpy import savetxt
+from numpy import frombuffer,int8
 
-ADDRESS="169.254.108.199"
 
 class Device():
-    def __init__(self,address=ADDRESS,channel=None,filename=None,query=None,command=None,FORCE=False,SAVE=True):
-        ### Establish the connection ###
-        self.scope = v.Instrument(address)
-
-        if query:
-            print('\nAnswer to query:',query)
-            rep = self.query(query)
-            print(rep,'\n')
-            sys.exit()
-        elif command:
-            print('\nExecuting command',command)
-            self.scope.write(command)
-            print('\n')
-            sys.exit()
-            
-        self.stop()
-        self.scope.write('HORizontal:RECOrdlength?')
-        string = self.scope.read()
-        length = string[len(':HORIZONTAL:RECORDLENGTH '):]
-        self.scope.write('DAT:STAR 1')
-        self.scope.write('DAT:STOP '+length)
-            
-        if filename:
-            for i in range(len(channel)):
-                time.sleep(0.1)
-                self.get_data(chan=channel[i],filename=filename,SAVE=SAVE)
-            
-            self.run()
-        else:
-            print('If you want to save, provide an output file name')
-
-        sys.exit()
-
-
-    def get_data(self,chan='CH1',filename='test_save_file_',PLOT=False,SAVE=False,LOG=True,RET=False):
-        self.scope.write('DAT:ENC FAS')
-        self.scope.write('DAT:SOU '+chan)
-        self.scope.write('WFMO:BYT_Nr 1')
-        self.scope.write('CURV?')
-        self.data = self.scope.read_raw()
+    def __init__(self,nb_channels=4):
+              
+        self.nb_channels = int(nb_channels)
         
-        self.data = self.data[7:-1]     # to remove last shitty point
-        ### TO SAVE ###
-        if SAVE:
-            temp_filename = filename + '_TDS5104B' + chan
-            temp = os.listdir()                           # if file exist => exit
-            for i in range(len(temp)):
-                
-                if temp[i] == temp_filename:
-                    print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
-                    sys.exit()
-            
-            f = open(temp_filename,'wb')                   # Save data
-            f.write(self.data)
-            f.close()
-            if LOG:
-                self.preamb = self.get_log_data()             # Save scope configuration
-                f = open(temp_filename + '.log','w')
-                f.write(self.preamb)
-                f.close()
-            print(chan + ' saved')
-        if RET:
-            return self.data
+        self.write('HORizontal:RECOrdlength?')
+        string = self.read()
+        length = string[len(':HORIZONTAL:RECORDLENGTH '):]
+        self.write('DAT:STAR 1')
+        self.write('DAT:STOP '+length)
+        
+        for i in range(1,self.nb_channels+1):
+            setattr(self,f'channel{i}',Channel(self,i))
+        
     
-    def get_log_data(self):
-        self.scope.write('WFMO?')
-        return self.scope.read()          
-
-    def query(self, cmd, nbytes=1000000):
-        """Send command 'cmd' and read 'nbytes' bytes as answer."""
-        self.scope.write(cmd)
-        r = self.scope.read(nbytes)
-        return r
+    ### User utilities
+    def get_data_channels(self,channels=[]):
+        """Get all channels or the ones specified"""
+        self.stop()
+        while not self.is_stopped():time.sleep(0.05)
+        if channels == []: channels = list(range(1,self.nb_channels+1))
+        for i in channels():
+            time.sleep(0.1)
+            getattr(self,f'channel{i}').get_data_raw()
+            getattr(self,f'channel{i}').get_log_data()
+        self.run()
+        
+    def save_data_channels(self,filename,channels=[],FORCE=False):
+        if channels == []: channels = list(range(1,self.nb_channels+1))
+        for i in channels():
+            getattr(self,f'channel{i}').save_data_raw(filename=filename,FORCE=FORCE)
+            getattr(self,f'channel{i}').save_log_data(filename=filename,FORCE=FORCE)
+        
+    ### Trigger functions
     def run(self):
         self.scope.write('ACQUIRE:STATE ON')
     def stop(self):
         self.scope.write('ACQUIRE:STATE OFF')
+    def is_stopped(self):
+        return '0' in self.query('ACQUIRE:STATE?')
+
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VXI11(Device):
+    def __init__(self, address=None, **kwargs):
+        import vxi11 as v
+    
+        self.inst = v.Instrument(address)
+        Device.__init__(self, **kwargs)
+
+    def query(self, command, nbytes=100000000):
+        self.write(command)
+        return self.read(nbytes)
+    def read_raw(self):
+        self.inst.read_raw()
+    def read(self,nbytes=100000000):
+        self.inst.read(nbytes)
+    def write(self,cmd):
+        self.inst.write(cmd)
     def close(self):
-        self.scope.close()
+        self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
 
-if __name__=="__main__":
 
-    usage = u"""usage: %prog [options] arg
+class Channel():
+    def __init__(self,dev,channel):
+        self.channel = int(channel)
+        self.dev  = dev
+        self.autoscale = False
+    
+    
+    def get_data_raw(self):
+        self.dev.write(f'DAT:SOU CH{self.channel}')
+        self.dev.write('DAT:ENC FAS')
+        self.dev.write('WFMO:BYT_Nr 1')
+        self.dev.write('CURV?')
+        self.data_raw = self.dev.read_raw()
+        self.data_raw = self.data_raw[7:-1]
+        return self.data_raw
+    def get_log_data(self):
+        self.dev.write(f'DAT:SOU CH{self.channel}')
+        self.dev.write('WFMO?')
+        self.log_data = self.dev.read()
+        return self.log_data     
+    def get_data(self):
+        return frombuffer(self.get_data_raw(),int8)
+        
+    def save_data_raw(self,filename,FORCE=False):
+        temp_filename = f'{filename}_TDS5104BCH{self.channel}'
+        if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
+            print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
+            return
+        f = open(temp_filename,'wb')# Save data
+        f.write(self.data_raw)
+        f.close()
+    def save_log_data(self,filename,FORCE=False):
+        temp_filename = f'{filename}_TDS5104BCH{self.channel}.log'
+        if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
+            print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
+            return
+        f = open(temp_filename,'w')
+        f.write(self.log_data)
+        f.close()
+    
+    
+    def get_data_numerical(self):
+        return array_of_float
+    def save_data_numerical(self):
+        return array_of_float
 
+
+if __name__ == '__main__':
+    from optparse import OptionParser
+    import inspect
+    
+    usage = """usage: %prog [options] arg
+    
                 EXAMPLES:
-                    get_TDS5104B -o filename
-                Record the spectrum and create one file with two columns lambda,spectral amplitude
+                    get_TDS5104B -o filename 1,3
+                Records the temporal traces of both channel 1 and 3. Each of them are saved in two different files: 1 composed of int8 and 1 (.log) composed of all the values necessary to retrieve initial values in Volts.
 
                 Datas are recorded in int8 format
                
@@ -115,24 +150,43 @@ if __name__=="__main__":
     parser = OptionParser(usage)
     parser.add_option("-c", "--command", type="str", dest="com", default=None, help="Set the command to use." )
     parser.add_option("-q", "--query", type="str", dest="que", default=None, help="Set the query to use." )
+    parser.add_option("-i", "--address", type="string", dest="address", default='192.168.0.4', help="Set ip address." )
+    parser.add_option("-l", "--link", type="string", dest="link", default='VXI11', help="Set the connection type." )
+    parser.add_option("-F", "--force",action = "store_true", dest="force", default=None, help="Allows overwriting file" )
     parser.add_option("-o", "--filename", type="string", dest="filename", default=None, help="Set the name of the output file" )
-    parser.add_option("-i", "--address", type="string", dest="address", default=ADDRESS, help="Set the IP address to use for the communication" )
-    parser.add_option("-F", "--force", type="string", dest="force", default=None, help="Allows overwriting file" )
     (options, args) = parser.parse_args()
-
+    
+    ### Compute channels to acquire ###
     if (len(args) == 0) and (options.com is None) and (options.que is None):
         print('\nYou must provide at least one channel\n')
         sys.exit()
-    elif len(args) == 1:
-        chan = []
-        temp_chan = args[0].split(',')                  # Is there a coma?
-        for i in range(len(temp_chan)):
-            chan.append('CH' + temp_chan[i])
     else:
-        chan = []
-        for i in range(len(args)):
-            chan.append('CH' + str(args[i]))
-    print(chan)
+        chan = [int(a) for a in args[0].split(',')]
+    ####################################
     
-    Device(address=options.address,channel=chan,query=options.que,command=options.com,filename=options.filename,FORCE=options.force)
-
+    ### Start the talker ###
+    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
+    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
+    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
+    I = Device_LINK(address=options.address)
+    
+    if query:
+        print('\nAnswer to query:',query)
+        rep = I.query(query)
+        print(rep,'\n')
+        sys.exit()
+    elif command:
+        print('\nExecuting command',command)
+        I.write(command)
+        print('\n')
+        sys.exit()
+        
+    ### Acquire ###
+    if options.filename:
+        I.get_data_channels(channels=chan)
+        I.save_data_channels(channels=chan,filename=options.filename,FORCE=options.force)
+    
+    print('Measurment time', time.time() - t)
+    
+    I.close()
+    sys.exit()
