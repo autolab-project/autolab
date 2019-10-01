@@ -77,7 +77,6 @@ class ConfigManager :
             if name is None : name = self.getUniqueName(element.name)
             self.config['parameter']['name'] = name
             self.gui.parameterManager.refresh()
-            self.gui.figureManager.xLabelChanged()
             self.gui.dataManager.clear()
             
             
@@ -90,7 +89,6 @@ class ConfigManager :
             if name != self.config['parameter']['name']:
                 name = self.getUniqueName(name)
                 self.config['parameter']['name'] = name
-                self.gui.figureManager.xLabelChanged()
                 self.gui.dataManager.clear()
         self.gui.parameterManager.refresh()
         
@@ -442,7 +440,6 @@ class ConfigManager :
                 self.gui.parameterManager.refresh()
                 self.gui.recipeManager.refresh()
                 self.gui.rangeManager.refresh()
-                self.gui.figureManager.xLabelChanged()
                 
                 self.gui.statusBar.showMessage(f"Configuration file loaded successfully",5000)
             
