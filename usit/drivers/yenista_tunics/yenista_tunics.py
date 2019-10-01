@@ -10,7 +10,7 @@ Supported instruments (identified): Yenista Tunics.
 
 class Device():
     
-    def __init__(self,address):
+    def __init__(self):
         self.write('MW')
         
     def wait(self):
@@ -108,7 +108,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='GPIB0::2::INSTR', **kwargs):
         import visa    
         
         self.TIMEOUT = 15000 #ms

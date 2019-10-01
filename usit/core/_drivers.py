@@ -45,14 +45,32 @@ class DriverWrapper() :
         
     def help(self) :
         
-        mess = f'\nHelp for the configuration of driver {self._name} in the file devices_index.ini\n\n'
+        mess = f'\nExample(s) of configuration in file devices_index.ini for driver "{self._name}"\n\n'
         
-        # Availables classes: 
-        mess+='Available classes:\n'
-        classes = [name for name, obj in inspect.getmembers(self._module, inspect.isclass) if obj.__module__ is self._module.__name__]
-        for name in classes :
-            mess+=f' - {name}\n'
-        
+        classes = [name for name, obj in inspect.getmembers(self._module, inspect.isclass) 
+                    if obj.__module__ is self._module.__name__ and name.startswith('Device_') ]
+
+        for className in classes :
+            
+            mess += '[myDeviceName]\n'
+            mess += f'driver = {self._name}\n'
+            mess += f'class = {className}\n'
+            
+            signature = inspect.signature(getattr(self._module,className))
+            defaults_args = {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
+            for key,value in defaults_args.items() :
+                mess += f'{key} = {value}\n'
+                
+            if hasattr(self._module,'Device') :
+                signature = inspect.signature(getattr(self._module,'Device'))
+                defaults_args = {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
+                for key,value in defaults_args.items() :
+                    mess += f'{key} = {value}\n'
+                if hasattr(self._module.Device,'slotNaming') and isinstance(self._module.Device.slotNaming,str) : 
+                    mess += self._module.Device.slotNaming
+                    if hasattr(self._module,'modules') and isinstance(self._module.modules,dict) : 
+                        mess += '\t;(modules:'+','.join(self._module.modules.keys())+')'
+                
         print(mess)
     
 #    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])

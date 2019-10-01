@@ -8,23 +8,24 @@ Supported instruments (identified):
 
 from module_ils100cc import ILS100CC
 
-modules_dict = {'ils100cc':ILS100CC}
+modules = {'ils100cc':ILS100CC}
 
 
 
 
 class Device():
     
+    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    
     def __init__(self,**kwargs):
         
         # Submodules
-        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<NAME>
         self.slotnames = []
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
+                module = modules[ kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
                 self.slotnames.append(name)

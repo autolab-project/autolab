@@ -9,21 +9,24 @@ Supported instruments (identified):
 
 from module_iqs9100b import IQS9100B
 
-modules_dict = {'iqs9100b':IQS9100B}
+modules = {'iqs9100b':IQS9100B}
     
     
 class Device():
     
+    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    
     def __init__(self, **kwargs):
+        
         self.write('*CLS')
+        
         # Submodules
-        # DEVICE_CONFIG.ini : slot<NUM> = <MODULE>,<NAME>
         self.slotnames = []
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
-                module = modules_dict[ kwargs[key].split(',')[0].strip() ]
+                module = modules[ kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
                 self.slotnames.append(name)
@@ -44,13 +47,13 @@ class Device():
 ############################## Connections classes ##############################
 class Device_TELNET(Device):
     
-    def __init__(self, address=None, port=None, **kwargs):
+    def __init__(self, address='192.168.0.12', **kwargs):
         from telnetlib import Telnet
         
         self.TIMEOUT = 1
         
         # Instantiation
-        self.controller = Telnet(address,str(port))
+        self.controller = Telnet(address,5024)
         self.read()
         self.read()
         

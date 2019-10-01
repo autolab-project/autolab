@@ -30,7 +30,7 @@ class Device() :
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='GPIB0::2::INSTR', **kwargs):
         import visa
         
         rm = visa.ResourceManager()

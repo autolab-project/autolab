@@ -46,7 +46,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_SOCKET(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='192.168.0.9', **kwargs):
         import socket
         
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
