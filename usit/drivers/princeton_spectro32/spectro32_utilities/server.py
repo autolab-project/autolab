@@ -2,7 +2,7 @@
 import socket
 import threading
 import datetime as dt
-import spectro32_server as spectro
+import spectro32_driver as spectro
 
 
 IP_LOCAL_PREFIX = '192.168.0'
@@ -24,7 +24,7 @@ class Server():
     def __init__(self):
 		
 		### Initiate spectro and camera ###
-        self.spectro = spectro.remote_Device()
+        self.spectro = spectro.Device_driver()
 		
         ### Start the server ###
         log('')

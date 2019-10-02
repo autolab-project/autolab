@@ -10,11 +10,10 @@ import os
 import time
 import numpy
 
-CAMERA  = 'Camera1'
-ADDRESS = 'ASRL6::INSTR'
+ADDRESS = 'ASRL6::INSTR'     # to implement with the x axis and modify accordingly....
 
-class remote_Device():
-    def __init__(self,camera=CAMERA):
+class Device_driver():
+    def __init__(self,camera='Camera1'):
         
         self.minExpTimeAllowed = 2e-5  #s
         self.maxExpTimeAllowed = 10    #s
@@ -79,14 +78,12 @@ class remote_Device():
         return CAM
 
     def save_data_local(self,filename,FORCE=False,camera=CAMERA):
-        # Verify file doesn't already exist
         data = eval(self.data.deepcopy())
-        temp_filename = filename + '_spectro32' + camera + '.txt'
-        temp = os.listdir()
-        for i in range(len(temp)):
-            if temp[i] == temp_filename and not(FORCE):
-                print('\nFile ', temp_filename, ' already exists, use -F option, change filename or remove old file\n')
-                sys.exit()
+        temp_filename = f'{filename}_spectro32{self.camera}.txt'
+        if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
+            print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
+            return
+        
         self.lambd=[list(range(len(data[0])))]
         assert self.lambd, 'You may want to get_data before saving ...'
         [self.lambd.append(data[i]) for i in xrange(len(data))]
