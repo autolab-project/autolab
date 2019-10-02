@@ -261,7 +261,7 @@ class Device_LOCAL(Device) : #not used
 
     def __init__(self):
         
-        from .winspec_gui_driver import Winspec
+        from winspec_utilities.winspec_gui_driver import Winspec
         self.controller = Winspec()
 
         Device.__init__(self)
