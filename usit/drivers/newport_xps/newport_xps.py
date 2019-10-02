@@ -6,7 +6,7 @@ Supported instruments (identified):
 - 
 """
 
-import XPS
+from XPS import XPS
 
 class Device():
     
