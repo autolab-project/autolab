@@ -8,12 +8,14 @@ import numpy as np
 import time
 import pandas as pd
 
+
+
 class Device():
     
-    def __init__(self,address='192.168.0.1'):
+    def __init__(self):
         
         self.amp = 1
-        print('DUMMY DEVICE INSTANTIATED with address',address)
+        
         
         self.slot1 = Slot(self,1)
         self.slot2 = Slot(self,2)
@@ -124,6 +126,14 @@ class Device():
                        'read':self.getSleep,'write':self.setSleep})
         return config
     
+    
+class Device_CONN(Device):
+    
+    def __init__(self,address='192.168.0.8'):
+        print('DUMMY DEVICE INSTANTIATED with address',address)
+        
+        Device.__init__(self)
+        
     
 class Slot() :
     

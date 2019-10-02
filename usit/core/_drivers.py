@@ -45,16 +45,32 @@ class DriverWrapper() :
         
     def help(self) :
         
-        mess = f'\nExample(s) of configuration in file devices_index.ini for driver "{self._name}"\n\n'
+        mess = f'\nExample(s) of configuration in file devices_index.ini for driver "{self._name}"\n'
         
+        # Arguments of Device class
+        argsDevicesClass = ''
+        signature = inspect.signature(getattr(self._module,'Device'))
+        defaults_args = {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
+        for key,value in defaults_args.items() :
+            argsDevicesClass += f'{key} = {value}\n'
+        if hasattr(self._module.Device,'slotNaming') and isinstance(self._module.Device.slotNaming,str) : 
+            argsDevicesClass += self._module.Device.slotNaming
+            moduleList = [attr.split('_')[1] for attr in self._module.__dir__() if attr.startswith('Module_') ]
+            argsDevicesClass += '\t;(modules:'+','.join(moduleList)+')'
+            argsDevicesClass += '\n'
+        
+        # Arguments of Device_XXX classes
         classes = [name for name, obj in inspect.getmembers(self._module, inspect.isclass) 
                     if obj.__module__ is self._module.__name__ and name.startswith('Device_') ]
-
+        
         for className in classes :
             
+            connection = className.split('_')[1]
+            
+            mess += '\n'
             mess += '[myDeviceName]\n'
             mess += f'driver = {self._name}\n'
-            mess += f'class = {className}\n'
+            mess += f'connection = {connection}\n'
             
             # get all optional parameters and default values of __init__ method of Device_ class
             signature = inspect.signature(getattr(self._module,className))
@@ -62,16 +78,8 @@ class DriverWrapper() :
             for key,value in defaults_args.items() :
                 mess += f'{key} = {value}\n'
             
-            # Same for Device class
-            if hasattr(self._module,'Device') :
-                signature = inspect.signature(getattr(self._module,'Device'))
-                defaults_args = {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
-                for key,value in defaults_args.items() :
-                    mess += f'{key} = {value}\n'
-                if hasattr(self._module.Device,'slotNaming') and isinstance(self._module.Device.slotNaming,str) : 
-                    mess += self._module.Device.slotNaming
-                    if hasattr(self._module.Device,'modules') and isinstance(self._module.Device.modules,dict) : 
-                        mess += '\t;(modules:'+','.join(self._module.Device.modules.keys())+')'
+            mess += argsDevicesClass
+            
                 
         print(mess)
     
