@@ -24,7 +24,7 @@ def checkConfig():
     
     # LOCAL CONFIG
     if os.path.exists(DEVICES_INDEX_PATH) is False :
-        for filename in ['devices_index.ini','launcher.cmd','launcher.py'] :
+        for filename in ['devices_index.ini','launcher.cmd','launcher.py','usit.py'] :
             shutil.copyfile(os.path.join(TEMPLATE_FILES_PATH,filename),
                             os.path.join(USER_FOLDER_PATH,filename))
 
