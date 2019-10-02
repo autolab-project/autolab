@@ -56,11 +56,13 @@ class DriverWrapper() :
             mess += f'driver = {self._name}\n'
             mess += f'class = {className}\n'
             
+            # get all optional parameters and default values of __init__ method of Device_ class
             signature = inspect.signature(getattr(self._module,className))
             defaults_args = {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
             for key,value in defaults_args.items() :
                 mess += f'{key} = {value}\n'
-                
+            
+            # Same for Device class
             if hasattr(self._module,'Device') :
                 signature = inspect.signature(getattr(self._module,'Device'))
                 defaults_args = {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
@@ -68,8 +70,8 @@ class DriverWrapper() :
                     mess += f'{key} = {value}\n'
                 if hasattr(self._module.Device,'slotNaming') and isinstance(self._module.Device.slotNaming,str) : 
                     mess += self._module.Device.slotNaming
-                    if hasattr(self._module,'modules') and isinstance(self._module.modules,dict) : 
-                        mess += '\t;(modules:'+','.join(self._module.modules.keys())+')'
+                    if hasattr(self._module.Device,'modules') and isinstance(self._module.Device.modules,dict) : 
+                        mess += '\t;(modules:'+','.join(self._module.Device.modules.keys())+')'
                 
         print(mess)
     

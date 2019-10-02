@@ -9,10 +9,10 @@ Supported instruments (identified):
 from module_sld import SLD
 from module_t100 import T100
 
-modules = {'sld':SLD,'t100':T100}
 
 class Device():
     
+    modules = {'sld':SLD,'t100':T100}
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
 
     def __init__(self,**kwargs):
@@ -26,7 +26,7 @@ class Device():
         for key in kwargs.keys():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
-                module = modules[ kwargs[key].split(',')[0].strip() ]
+                module = self.modules[ kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
                 self.slotnames.append(name)
