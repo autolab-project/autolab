@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Supported instruments (identified):
+- 
+"""
 
 import visa as v
 from optparse import OptionParser
@@ -6,12 +12,11 @@ import sys
 import time
 from numpy import zeros,ones,linspace
 
-ADDRESS = 'TCPIP::169.254.54.215::INSTR'
 
 class Device():
-    def __init__(self,address=ADDRESS):
+    def __init__(self,address='TCPIP::169.254.54.215::INSTR'):
 
-        rm = v.ResourceManager('@py')
+        rm = v.ResourceManager()
         self.inst = rm.get_instrument(address)
 
 
@@ -47,7 +52,7 @@ if __name__ == '__main__':
     parser.add_option("-o", "--offset", type="str", dest="off", default=None, help="Set the offset value." )
     parser.add_option("-a", "--amplitude", type="str", dest="amp", default=None, help="Set the amplitude." )
     parser.add_option("-f", "--frequency", type="str", dest="freq", default=None, help="Set the frequency." )
-    parser.add_option("-i", "--address", type="str", dest="address", default=ADDRESS, help="Set the Ip address to use for communicate." )
+    parser.add_option("-i", "--address", type="str", dest="address", default='TCPIP::169.254.54.215::INSTR', help="Set the Ip address to use for communicate." )
     (options, args) = parser.parse_args()
     
     ### Start the talker ###

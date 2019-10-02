@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Supported instruments (identified):
+- 
+"""
 
 import visa as v
 from optparse import OptionParser
@@ -6,10 +12,9 @@ import sys
 import time
 from numpy import zeros,ones,linspace
 
-ADDRESS = 'TCPIP::192.168.0.3::INSTR'
 
 class Device():
-    def __init__(self,address=ADDRESS):
+    def __init__(self,address='TCPIP::192.168.0.3::INSTR'):
         # Instantiation
         rm = v.ResourceManager()
         self.inst = rm.get_instrument(address)
@@ -75,7 +80,7 @@ if __name__ == '__main__':
     parser.add_option("-p", "--pulsemode", type="str", dest="pulsemode", default=None, help="Set pulse mode and use argument as either the duty cycle or the pulse width depending on the first letter 'd' or 'w' (see examples)." )
     parser.add_option("-a", "--amplitude", type="str", dest="amplitude", default=None, help="Set the amplitude." )
     parser.add_option("-f", "--frequency", type="str", dest="frequency", default=None, help="Set the frequency; may be 50000 or 50KHZ" )
-    parser.add_option("-i", "--address", type="str", dest="address", default=ADDRESS, help="Set the Ip address to use for communicate." )
+    parser.add_option("-i", "--address", type="str", dest="address", default='TCPIP::192.168.0.3::INSTR', help="Set the Ip address to use for communicate." )
     (options, args) = parser.parse_args()
     
     ### Compute channels to act on ###

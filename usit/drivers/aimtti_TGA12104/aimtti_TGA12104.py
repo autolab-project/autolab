@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Supported instruments (identified):
+- 
+"""
 
 import usb
 import usb.core

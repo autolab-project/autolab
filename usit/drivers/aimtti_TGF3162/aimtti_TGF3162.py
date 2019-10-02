@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Supported instruments (identified):
+- 
+"""
 
 import socket
 from optparse import OptionParser
@@ -6,14 +12,12 @@ import sys
 import time
 from numpy import zeros,ones,linspace,arange,array,copy,concatenate
 
-PORT    = 9221
-ADDRESS = '169.254.62.40'
 
 class Device():
-        def __init__(self,address=ADDRESS):
+        def __init__(self,address='169.254.62.40',port=9221):
 
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.connect((address,PORT))
+            self.s.connect((address,port))
             
             
         def amplitude(self,amplitude):
@@ -79,7 +83,8 @@ if __name__ == '__main__':
     parser.add_option("-o", "--offset", type="str", dest="off", default=None, help="Set the offset value." )
     parser.add_option("-a", "--amplitude", type="str", dest="amp", default=None, help="Set the amplitude." )
     parser.add_option("-f", "--frequency", type="str", dest="freq", default=None, help="Set the frequency." )
-    parser.add_option("-i", "--address", type="str", dest="address", default=ADDRESS, help="Set the Ip address to use for communicate." )
+    parser.add_option("-i", "--address", type="str", dest="address", default='169.254.62.40', help="Set the Ip address to use for communicate." )
+    parser.add_option("-p", "--port", type="float", dest="port", default=9221, help="Set the port to use for communicate." )
     (options, args) = parser.parse_args()
     
         ### Compute channels to acquire ###
