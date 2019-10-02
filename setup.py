@@ -28,7 +28,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     include_package_data=True,
-    package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:
+    package_data={'': ['*.ini','*.txt','*.ui','*.cmd']},# If any package contains *.ini files, include them:
     keywords = ['Universal','Scanning','Interface','automation','scientific','laboratory','experiments','measures']
 )
 
