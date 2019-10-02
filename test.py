@@ -7,5 +7,5 @@ Created on Sat Jul 20 10:46:59 2019
 
 import usit
 
-#usit.gui()
+usit.gui()
 #usit.devices.mydummy

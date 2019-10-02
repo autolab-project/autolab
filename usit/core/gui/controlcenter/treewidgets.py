@@ -233,8 +233,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def write(self):
         
         """ Start a new thread to WRITE the associated variable """
+        try :
+            value = self.readGui()
+            self.gui.threadManager.start(self,'write',value=value)
+        except :
+            pass
         
-        self.gui.threadManager.start(self,'write',value=self.readGui())
         
         
         
