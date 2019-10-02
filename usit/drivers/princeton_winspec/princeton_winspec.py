@@ -226,7 +226,7 @@ class Device():
 ############################## Connections classes ##############################
 class Device_SOCKET(Device) :
     
-    def __init__(self,address='192.168.0.8'):
+    def __init__(self,address='192.168.0.8',**kwargs):
         
         import socket 
         
@@ -259,7 +259,7 @@ class Device_SOCKET(Device) :
 
 class Device_LOCAL(Device) : #not used
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         
         from winspec_utilities.winspec_gui_driver import Winspec
         self.controller = Winspec()

@@ -139,9 +139,12 @@ class Device():
     
         return config
 
+
+#################################################################################
+############################## Connections classes ##############################
 class Device_DLL(Device):
     
-    def __init__(self,libpath=r'C:\Program Files\Newport\Newport USB Driver\Bin\usbdll.dll'):
+    def __init__(self,libpath=r'C:\Program Files\Newport\Newport USB Driver\Bin\usbdll.dll',**kwargs):
         
         self.productID=0xCEC7
         self.modelNumber=1918
@@ -211,3 +214,5 @@ class Device_DLL(Device):
             self.controller.newp_usb_send_ascii(cdevice_id, ct.byref(query), length)
         except:
             pass
+############################## Connections classes ##############################
+#################################################################################
