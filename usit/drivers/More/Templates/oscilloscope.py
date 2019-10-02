@@ -64,7 +64,7 @@ class Device():
 #################################################################################
 ############################## Connections classes ##############################
 class Device_VISA(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='TCPIP::192.168.0.3::INSTR', **kwargs):
         import visa as v
         
         rm        = v.ResourceManager()
@@ -82,7 +82,7 @@ class Device_VISA(Device):
         self.inst.close()
 
 class Device_VXI11(Device):
-    def __init__(self, address=None, **kwargs):
+    def __init__(self, address='192.168.0.3', **kwargs):
         import vxi11 as v
     
         self.inst = v.Instrument(address)
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     parser = OptionParser(usage)
     parser.add_option("-c", "--command", type="str", dest="com", default=None, help="Set the command to use." )
     parser.add_option("-q", "--query", type="str", dest="que", default=None, help="Set the query to use." )
-    parser.add_option("-i", "--address", type="string", dest="address", default='192.168.0.4', help="Set ip address." )
+    parser.add_option("-i", "--address", type="string", dest="address", default='TCPIP::192.168.0.3::INSTR', help="Set ip address." )
     parser.add_option("-l", "--link", type="string", dest="link", default='VXI11', help="Set the connection type." )
     parser.add_option("-F", "--force",action = "store_true", dest="force", default=None, help="Allows overwriting file" )
     parser.add_option("-o", "--filename", type="string", dest="filename", default=None, help="Set the name of the output file" )

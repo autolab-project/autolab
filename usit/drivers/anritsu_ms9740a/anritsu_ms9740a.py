@@ -1,17 +1,16 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jul 25 16:30:37 2019
 
-@author: giuseppe
 """
-
+Supported instruments (identified):
+- 
+"""
 
 import visa
 
-ADDRESS = 'GPIB0::1::INSTR' #write here the address of your device
 
 class Device() :
-    def __init__(self,address=ADDRESS):
+    def __init__(self,address='GPIB0::1::INSTR'):
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
         

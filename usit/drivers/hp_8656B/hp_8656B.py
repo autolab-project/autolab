@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Supported instruments (identified):
+- 
+"""
 
 from optparse import OptionParser
 import sys
@@ -10,13 +16,11 @@ import visa as v
 # Get functions not available for instrument
 # default GPIB address
 
-ADDRESS = 'GPIB::7::INSTR'
-
 
 class Device():
-    def __init__(self, address=ADDRESS):
+    def __init__(self, address='GPIB::7::INSTR'):
         ### establish GPIB communication ###
-        r = v.ResourceManager('@py')
+        r = v.ResourceManager()
         self.scope = r.get_instrument(address)
 
 
@@ -63,7 +67,7 @@ if __name__ == '__main__':
     parser = OptionParser(usage)
     parser.add_option("-q", "--query", type="str", dest="que", default=None, help="Set the query to use.")
     parser.add_option("-c", "--command", type="str", dest="com", default=None, help="Set the command to execute.")
-    parser.add_option("-i", "--address", type="str", dest="address", default=ADDRESS, help="Set the gpib port to use.")
+    parser.add_option("-i", "--address", type="str", dest="address", default='GPIB::7::INSTR', help="Set the gpib port to use.")
     parser.add_option("-f", "--frequency", type="str", dest="frequency", default=None, help="Set the carrier frequency (Hz)")
     parser.add_option("-a", "--amplitude", type="str", dest="amplitude", default=None, help="Set the carrier RF amplitude (mV)")
     parser.add_option("-x", "--RFenable", action="store_true", dest="RFenable", default=False, help="Enable RF output")
