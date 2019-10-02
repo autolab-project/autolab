@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Supported instruments (identified):
+- 
+"""
 
 import vxi11 as v
 from optparse import OptionParser
@@ -6,44 +12,42 @@ import sys
 import time
 from numpy import fromstring,int8,int16,float64,sign
 
-ADDRESS = '169.254.166.210'
-
-conv = ['T0','T1','A','B','C','D','E','F','G','H']
-conv2 = ['T0','AB','CD','EF','GH']
 
 class Device():
-    def __init__(self,address=ADDRESS):
+    def __init__(self,address='169.254.166.210'):
         ### Initiate communication ###
         self.inst = v.Instrument(address)
-
+        
+        self.conv = ['T0','T1','A','B','C','D','E','F','G','H']
+        self.conv2 = ['T0','AB','CD','EF','GH']
 
     def get_frequency(self):
         return self.query('TRAT?')
     
     def amplitude(self,channel,amplitude):
-        self.write('LAMP'+str(conv2.index(channel))+','+amplitude)
+        self.write('LAMP'+str(self.conv2.index(channel))+','+amplitude)
     def frequency(self,frequency):
         self.write('TRAT'+frequency)
     def polarity(self,channel,polarity):
-        self.write('LPOL'+str(conv2.index(channel))+','+polarity)
+        self.write('LPOL'+str(self.conv2.index(channel))+','+polarity)
     def offset(self,channel,offset):
-        self.write('LOFF'+str(conv2.index(channel))+','+offset)
+        self.write('LOFF'+str(self.conv2.index(channel))+','+offset)
     def display(self,channel):
         if (channel == []):
-            for chan in conv2[1:5]:
+            for chan in self.conv2[1:5]:
                 self.ch_disp(chan)
         else: 
             self.ch_disp(channel)
             
     ### PRINT OUT CODE 
     def ch_disp(self,channel):
-        ch1 = str(conv.index(channel[0]))
+        ch1 = str(self.conv.index(channel[0]))
         tmpdelay = self.query('DLAY?'+ch1)
         tmpdelay = tmpdelay.split(',')
     
         if len(channel) == 2:
-            ch = str(conv2.index(channel))
-            ch2 = str(conv.index(channel[1]))
+            ch = str(self.conv2.index(channel))
+            ch2 = str(self.conv.index(channel[1]))
             
             tmpdelay2 = self.query('DLAY?'+ch2)
             tmpdelay2 = tmpdelay2.split(',')
@@ -52,20 +56,20 @@ class Device():
             print('Level Amplitude  :  '+self.query('LAMP?'+ch)+' V')
             print('Level Offset     :  '+self.query('LOFF?'+ch)+' V')
             print('Level Polarity   :  '+self.query('LPOL?'+ch)+'\n')
-            print('Delay           '+channel[0]+':  '+ conv[int(tmpdelay[0])]+tmpdelay[1]+' s')
-            print('Delay           '+channel[1]+':  '+ conv[int(tmpdelay2[0])]+tmpdelay2[1]+' s\n' )
+            print('Delay           '+channel[0]+':  '+ self.conv[int(tmpdelay[0])]+tmpdelay[1]+' s')
+            print('Delay           '+channel[1]+':  '+ self.conv[int(tmpdelay2[0])]+tmpdelay2[1]+' s\n' )
         else:
             print('==========CH:'+channel+'==============')
-            print('Delay           '+channel+':  '+ conv[int(tmpdelay[0])]+tmpdelay[1]+' s\n' )
+            print('Delay           '+channel+':  '+ self.conv[int(tmpdelay[0])]+tmpdelay[1]+' s\n' )
     
     #Channel delay code block 
     def ad_delay(self, channel, delay):
         if len(channel) == 2:
-            ch1 = str(conv.index(channel[0]))
-            ch2 = str(conv.index(channel[1]))
+            ch1 = str(self.conv.index(channel[0]))
+            ch2 = str(self.conv.index(channel[1]))
         else:
             ch1 = '0'
-            ch2 = str(conv.index(channel))
+            ch2 = str(self.conv.index(channel))
             
         self.write('DLAY'+ch2+','+ch1+','+delay,)
             
@@ -103,13 +107,14 @@ if __name__ == '__main__':
     parser.add_option("-f", "--frequency", type="str", dest="frequency", default=None, help="Set the frequency (Hz)")
     parser.add_option("-p", "--polarity", type="str", dest="polarity", default=None, help="Set the level polarity if 1, then up if 0, then down")
     parser.add_option("-o", "--offset", type="str", dest="offset", default=None, help="Set the offset")
-    parser.add_option("-i", "--address", type="string", dest="address", default=ADDRESS, help="Set ip address" )
+    parser.add_option("-i", "--address", type="string", dest="address", default='169.254.166.210', help="Set ip address" )
     (options, args) = parser.parse_args()
 
     chan = []
+    conv = ['T0','T1','A','B','C','D','E','F','G','H']
+    conv2 = ['T0','AB','CD','EF','GH']
     # Errors for options that do not require a channel input
-    # command, query, display, 
-    # amplitude, freq, polarity, level
+    # command, query, display, amplitude, freq, polarity, level
 
     if (options.amplitude) or (options.delay) or (options.pol) or (options.offset):
         if (len(args) == 0):

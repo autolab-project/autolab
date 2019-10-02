@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import Gpib
-import visa as v
-from optparse import OptionParser
+"""
+Supported instruments (identified):
+- 
+"""
+
 import sys
-import time
-from numpy import zeros,ones,linspace
-import os
-
-ADDRESS = 'GPIB0::19::INSTR'  # for visa not used here
-NAME = 0   # board_index
-PAD  = 19  # gpib address
 
 class Device():
-    def __init__(self,address=[NAME,PAD]):
-        
-        self.inst = Gpib.Gpib(address[0],address[1])
+    def __init__(self):        
+        pass
     
     def amplitude(self,amplitude):
         self.write('AMPL '+amplitude)
@@ -25,10 +20,40 @@ class Device():
         self.write('FREQ '+frequency)
     def phase(self,phase):
         self.write('PHSE '+phase)
-    
+
+    def idn(self):
+        return self.query('*IDN?')
+
+
+#################################################################################
+############################## Connections classes ##############################
+class Device_VISA(Device):
+    def __init__(self, address='GPIB0::19::INSTR',**kwargs):
+        import visa
+        
+        rm = visa.ResourceManager()
+        self.inst = rm.get_instrument(address)
+        
+        Device.__init__(self)
+        
     def close(self):
-        """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
-        Gpib.gpib.close(self.inst.id)
+        self.inst.close()
+    def query(self,query):
+        self.write(query)
+        return self.read()
+    def write(self,query):
+        self.inst.write(query)
+    def read(self):
+        rep = self.inst.read()
+        return rep
+    
+class Device_GPIB(Device):
+    def __init__(self,address=19,board_index=0,**kwargs):
+        import Gpib
+        
+        self.inst = Gpib.Gpib(int(address),int(board_index))
+        Device.__init__(self)
+    
     def query(self,query):
         self.write(query)
         return self.read()
@@ -36,17 +61,23 @@ class Device():
         self.inst.write(query)
     def read(self):
         return self.inst.read()
-    def idn(self):
-        return self.query('*IDN?')
-        
+    def close(self):
+        """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
+        Gpib.gpib.close(self.inst.id)
+############################## Connections classes ##############################
+#################################################################################
+
             
 if __name__ == '__main__':
+
+    from optparse import OptionParser
+    import inspect
 
     usage = """usage: %prog [options] arg
                
                EXAMPLES:
-                   set_srsDS345 -f 1.4e6 -a 1.1VP -o 0.1 -p 0.1
-                   set the frequency to 1.4 MHz with an amplitude of 1.1 V, an offset of 100 mV and a phase of 1 degree.
+                   set_srsDS345 -i 19 -b 0 -f 1.4e6 -a 1.1VP -o 0.1 -p 0.1
+                   set the frequency to 1.4 MHz with an amplitude of 1.1 V, an offset of 100 mV and a phase of 1 degree. The gpib address is set to 19 and the board number to 0.
                """
     parser = OptionParser(usage)
     parser.add_option("-c", "--command", type="str", dest="command", default=None, help="Set the command to use." )
@@ -55,12 +86,17 @@ if __name__ == '__main__':
     parser.add_option("-a", "--amplitude", type="str", dest="amplitude", default=None, help="Set the amplitude. Note: The units can be VP(Vpp), VR (Vrms), or DB (dBm)." )
     parser.add_option("-f", "--frequency", type="str", dest="frequency", default=None, help="Set the frequency." )
     parser.add_option("-p", "--phase", type="str", dest="phase", default=None, help="Set the phase." )
-    parser.add_option("-i", "--address", type='str', dest="address", default='[NAME,PAD]', help="Set the GPIB address to use to communicate." )
+    parser.add_option("-i", "--address", type='str', dest="address", default='19', help="Set the GPIB address to use to communicate." )
+    parser.add_option("-b", "--board_index", type='str', dest="board_index", default='0', help="Set the GPIB address to use to communicate." )
+    parser.add_option("-l", "--link", type="string", dest="link", default='GPIB', help="Set the connection type." )
     (options, args) = parser.parse_args()
-    options.address = eval(options.address)
     
     ### Start the talker ###
-    I = Device(address=options.address)
+    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
+    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
+    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
+    I = Device_LINK(address=options.address,board_index=options.board_index)
+    
     if options.query:
         print('\nAnswer to query:',options.query)
         rep = I.query(options.query)
