@@ -57,7 +57,9 @@ class ControlCenter(QtWidgets.QMainWindow):
         reportAction.triggered.connect(usit.report)
         reportAction.setToolTip('Open the issue webpage of this project on GitHub')  
         
-
+        helpAction = self.menuBar.addAction('Help')
+        helpAction.triggered.connect(usit.help)
+        helpAction.setToolTip('Open the documentation on Read The Docs website')  
         
     def initialize(self):
         
