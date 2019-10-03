@@ -7,15 +7,9 @@ Supported instruments (identified):
 """
 
 
-from optparse import OptionParser
-import sys
-import time
-from numpy import fromstring,int8,int16,float64,sign
-
-
-class Device():
+class Driver():
     
-    categories = ['Function generator']
+    category = 'Function generator'
     
     def __init__(self,address='169.254.166.210'):
         
@@ -94,7 +88,10 @@ class Device():
 
         
 if __name__ == '__main__':
-
+    from optparse import OptionParser
+    import inspect
+    import sys
+    
     usage = """usage: %prog [options] arg
 
                EXAMPLES:
@@ -144,7 +141,7 @@ if __name__ == '__main__':
     
     
     ### Start the talker ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
     
     if options.query:
         print('\nAnswer to query:',options.query)

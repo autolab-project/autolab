@@ -8,7 +8,7 @@ Supported instruments (identified):
 
 
 
-class Device():
+class Driver():
     
     def __init__(self):
         
@@ -35,7 +35,7 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         import visa
 
@@ -46,7 +46,7 @@ class Device_VISA(Device):
         self.controller = rm.open_resource(self.address)
         self.controller.timeout = self.TIMEOUT
         
-        Device.__init__(self)
+        Driver.__init__(self)
     
         
    

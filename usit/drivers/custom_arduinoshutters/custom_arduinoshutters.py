@@ -10,9 +10,9 @@ Supported instruments (identified):
         
     
 
-class Device():
+class Driver():
     
-    categories = ['Optical shutter']
+    category = 'Optical shutter'
     
     def __init__(self):
         
@@ -96,7 +96,7 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='ASRL::2::INSTR', **kwargs):
         import visa 
         
@@ -110,7 +110,7 @@ class Device_VISA(Device):
         self.inst.timeout = self.DEF_TIMEOUT
         self.inst.baud_rate = self.BAUDRATE
         
-        Device.__init__(self)
+        Driver.__init__(self)
         
         
     def close(self):

@@ -8,7 +8,7 @@ Supported instruments (identified):
 
 
 
-class Device():
+class Driver():
     
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
@@ -35,7 +35,7 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR', **kwargs):
         import visa
         
@@ -45,7 +45,7 @@ class Device_VISA(Device):
         self.controller.flow_control = visa.constants.VI_ASRL_FLOW_XON_XOFF
         self.controller.read_termination = '\r\n'
         
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
     
 
     def query(self,command,unwrap=True) :

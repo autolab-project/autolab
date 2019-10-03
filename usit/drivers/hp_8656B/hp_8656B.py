@@ -6,20 +6,12 @@ Supported instruments (identified):
 - 
 """
 
-from optparse import OptionParser
-import sys
-import time
 import visa as v
 
-# Refer to section 3 of manual for GPIB configuration
 
-# Get functions not available for instrument
-# default GPIB address
-
-
-class Device():
+class Driver():
     
-    categories = ['Function generator']
+    category = 'Function generator'
     
     def __init__(self, address='GPIB::7::INSTR'):
         ### establish GPIB communication ###
@@ -58,6 +50,10 @@ class Device():
 
 
 if __name__ == '__main__':
+    from optparse import OptionParser
+    import inspect
+    import sys
+    
     usage = """usage: %prog [options] arg
 
                EXAMPLES:
@@ -79,7 +75,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     ### Start the talker ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
     
     if options.query:
         print('\nAnswer to query:', options.query)

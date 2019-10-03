@@ -8,7 +8,7 @@ Supported instruments (identified):
 
 from XPS import XPS
 
-class Device():
+class Driver():
     
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
 
@@ -36,7 +36,7 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_TCPIP(Device):
+class Driver_TCPIP(Driver):
     
     def __init__(self,address='192.168.0.8',**kwargs):
         
@@ -46,7 +46,7 @@ class Device_TCPIP(Device):
         self.controller = XPS()
         self.socketID = self.controller.TCP_ConnectToServer(address,5001,self.TIMEOUT)
 
-        Device.__init__(self,**kwargs)
+        Driver.__init__(self,**kwargs)
 
 
     def isConnected(self):
