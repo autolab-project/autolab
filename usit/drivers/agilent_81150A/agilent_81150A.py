@@ -6,41 +6,34 @@ Supported instruments (identified):
 - 
 """
 
-import visa as v
-from optparse import OptionParser
-import sys
-import time
-from numpy import zeros,ones,linspace
+
+class Driver():
+    
+    category = 'Function generator'
+    
+    def __init__(self,nb_channels=2):
+        
+        self.nb_channels = int(nb_channels)
+        
+        for i in range(1,self.nb_channels+1):
+            setattr(self,f'channel{i}',Channel(self,i))
+        
+    
+    def idn(self):
+        self.write('*IDN?')
+        self.read()
 
 
-class Device():
-    
-    categories = ['Function generator']
-    
-    def __init__(self,address='TCPIP::192.168.0.3::INSTR'):
-        # Instantiation
-        rm = v.ResourceManager()
+#################################################################################
+############################## Connections classes ##############################
+class Driver_VISA(Driver):
+    def __init__(self, address='TCPIP::192.168.0.3::INSTR', **kwargs):
+        import visa as v
+        
+        rm        = v.ResourceManager()
         self.inst = rm.get_instrument(address)
-    
-    def amplitude(self,chan,amplitude):
-        self.write(':VOLT'+chan+' '+amplitude)
-    def offset(self,chan,offset):
-        self.write(':VOLT'+chan+':OFFS '+offset)
-    def frequency(self,chan,frequency):
-        self.write(':FREQ'+chan+' '+frequency)
-    def dc_mode(self,chan,offset):
-        self.write(':FUNC'+chan+' DC')
-        self.offset(chan=chan,offset=offset)
-    def arbitrary_mode(self,chan,waveform,round_factor=4):
-        assert len(waveform) <= 524288, "Don't overcome Sample max of 524288"
-        waveform = ''.join([str(round(waveform[i],round_factor))+',' for i in range(len(waveform))])[:-1]
-        self.write('DATA'+chan+' VOLATILE,'+waveform)
-    def pulse_mode(self,chan,width=None,duty_cycle=None):
-        assert not(duty_cycle and width), "Please provide either duty_cycle OR width"
-        self.write(':FUNC'+chan+' PULS')
-        if duty_cycle: self.write(':PULS:DCYC'+chan+' '+duty_cycle)
-        if width:      self.write(':PULS:WIDT'+chan+' '+width)
-
+        Driver.__init__(self, **kwargs)
+        
     def query(self,query):
         self.write(query)
         return self.read()
@@ -52,25 +45,50 @@ class Device():
     def close(self):
         self.write(':SYST:COMM:RLST LOC')
         #self.inst.close()
-    def exit(self):
-        sys.exit()
-    def idn(self):
-        self.inst.write('*IDN?')
-        self.read()
+############################## Connections classes ##############################
+#################################################################################
+
+class Channel():
+    def __init__(self,dev,channel):
+        self.channel = int(channel)
+        self.dev  = dev
         
+    def amplitude(self,amplitude):
+        self.dev.write(f':VOLT{self.channel} {amplitude}')
+    def offset(self,offset):
+        self.dev.write(f':VOLT{self.channel}:OFFS {offset}')
+    def frequency(self,frequency):
+        self.dev.write(f':FREQ{self.channel} {frequency}')
+    def dc_mode(self,offset):
+        self.dev.write(f':FUNC{self.channel} DC')
+        self.offset(offset=offset)
+    def arbitrary_mode(self,waveform,round_factor=4):
+        assert len(waveform) <= 524288, "Don't overcome Sample max of 524288"
+        waveform = ''.join([str(round(waveform[i],round_factor))+',' for i in range(len(waveform))])[:-1]
+        self.dev.write(f'DATA{self.channel} VOLATILE,{waveform}')
+    def pulse_mode(self,width=None,duty_cycle=None):
+        assert not(duty_cycle and width), "Please provide either duty_cycle OR width"
+        self.dev.write(f':FUNC{self.channel} PULS')
+        if duty_cycle: self.dev.write(f':PULS:DCYC{self.channel} {width}')
+        if width:      self.dev.write(f':PULS:WIDT{self.channel} {width}')
+        
+
             
 if __name__ == '__main__':
-
+    from optparse import OptionParser
+    import inspect
+    import sys
+    
     usage = """usage: %prog [options] arg
                
                
                EXAMPLES:
                    set_agilent81150A -a 1 -o 1 -f 50KHZ 1,2
-				   set the frequency to 50 kHz, the amplitude to 1V, the offset to 1V for both channel 1 and 2
+                   set the frequency to 50 kHz, the amplitude to 1V, the offset to 1V for both channel 1 and 2
 
                    set_agilent81150A -p w10NS 1
                    set pulse mode to channel 1 with pulse width of 10NS (MS stands for microseconds)
-				   
+
                    set_agilent81150A -p d10 2
                    set pulse mode to channel 2 with duty cycle of 10 purcent
                    
@@ -97,7 +115,7 @@ if __name__ == '__main__':
         print(chan)
 
     ### Start the talker ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
     if options.query:
         print('\nAnswer to query:',options.query)
         rep = I.query(options.query)
