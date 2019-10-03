@@ -15,6 +15,8 @@ import numpy as np
 
 class Device():    
     
+    categories = ['Spectrum analyser']
+    
     def __init__(self):
                         
         self.minCountsAllowed=5000

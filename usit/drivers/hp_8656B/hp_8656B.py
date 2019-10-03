@@ -18,6 +18,9 @@ import visa as v
 
 
 class Device():
+    
+    categories = ['Function generator']
+    
     def __init__(self, address='GPIB::7::INSTR'):
         ### establish GPIB communication ###
         r = v.ResourceManager()

@@ -13,6 +13,9 @@ import sys
 
 
 class Device():
+    
+    categories = ['Optical source']
+    
     def __init__(self):
         pass
 

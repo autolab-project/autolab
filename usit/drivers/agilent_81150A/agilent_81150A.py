@@ -14,6 +14,9 @@ from numpy import zeros,ones,linspace
 
 
 class Device():
+    
+    categories = ['Function generator']
+    
     def __init__(self,address='TCPIP::192.168.0.3::INSTR'):
         # Instantiation
         rm = v.ResourceManager()

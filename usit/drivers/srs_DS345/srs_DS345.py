@@ -9,6 +9,9 @@ Supported instruments (identified):
 import sys
 
 class Device():
+    
+    categories = ['Function generator']
+    
     def __init__(self):        
         pass
     

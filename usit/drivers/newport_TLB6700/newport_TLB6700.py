@@ -15,6 +15,9 @@ import time
 import numpy as np
 
 class Device():
+    
+    categories = ['Optical source']
+    
     def __init__(self):
         dev = usb.core.find(idVendor=0x104d,idProduct=0x100a)
         dev.reset()

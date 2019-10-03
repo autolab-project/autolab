@@ -10,6 +10,8 @@ Supported instruments (identified): Yenista Tunics.
 
 class Device():
     
+    categories = ['Optical source']
+    
     def __init__(self):
         self.write('MW')
         
