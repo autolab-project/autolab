@@ -16,7 +16,7 @@ class Driver():
         self.conv = ['T0','T1','A','B','C','D','E','F','G','H']
         self.conv2 = ['T0','AB','CD','EF','GH']
         
-        for i in range(1,self.nb_channels+1):
+        for i in self.conv2:
             setattr(self,f'channel{i}',Channel(self,i))
     
         
@@ -25,60 +25,15 @@ class Driver():
     def get_frequency(self):
         return self.query('TRAT?')
     
-    def set_amplitude(self,channel,amplitude):
-        self.write(f'LAMP{self.conv2.index(channel)},{amplitude}')
-    def get_amplitude(self):
-        return float(self.query(f'LAMP?{self.conv2.index(channel)}'))
-    def set_polarity(self,channel,polarity):
-        self.write(f'LPOL{self.conv2.index(channel)},{polarity}')
-    def get_polarity(self):
-        return float(self.query(f'LPOL?{self.conv2.index(channel)}'))
-    def set_offset(self,channel,offset):
-        self.write(f'LOFF{self.conv2.index(channel)},{offset}')
-    def get_offset(self):
-        return float(self.query(f'LOFF?{self.conv2.index(channel)}'))
-    
-    def display(self,channel):
-        if (channel == []):
-            for chan in self.conv2[1:5]:
-                self.ch_disp(chan)
-        else: 
-            self.ch_disp(channel)
-            
-    ### PRINT OUT CODE 
-    def ch_disp(self,channel):
-        ch1 = str(self.conv.index(channel[0]))
-        tmpdelay = self.query('DLAY?'+ch1)
-        tmpdelay = tmpdelay.split(',')
-    
-        if len(channel) == 2:
-            ch = str(self.conv2.index(channel))
-            ch2 = str(self.conv.index(channel[1]))
-            
-            tmpdelay2 = self.query('DLAY?'+ch2)
-            tmpdelay2 = tmpdelay2.split(',')
-        
-            print('==========CH:'+channel+'==============')
-            print('Level Amplitude  :  '+self.query('LAMP?'+ch)+' V')
-            print('Level Offset     :  '+self.query('LOFF?'+ch)+' V')
-            print('Level Polarity   :  '+self.query('LPOL?'+ch)+'\n')
-            print('Delay           '+channel[0]+':  '+ self.conv[int(tmpdelay[0])]+tmpdelay[1]+' s')
-            print('Delay           '+channel[1]+':  '+ self.conv[int(tmpdelay2[0])]+tmpdelay2[1]+' s\n' )
-        else:
-            print('==========CH:'+channel+'==============')
-            print('Delay           '+channel+':  '+ self.conv[int(tmpdelay[0])]+tmpdelay[1]+' s\n' )
-    
-    #Channel delay code block 
-    def ad_delay(self, channel, delay):
+    def ad_delay(self,channel, delay):
         if len(channel) == 2:
             ch1 = str(self.conv.index(channel[0]))
             ch2 = str(self.conv.index(channel[1]))
         else:
             ch1 = '0'
             ch2 = str(self.conv.index(channel))
-            
-        self.write('DLAY'+ch2+','+ch1+','+delay,)
-            
+        self.write(f'DLAY{ch2},{ch1},{delay}')
+
 #################################################################################
 ############################## Connections classes ##############################
 class Driver_VXI11(Driver):
@@ -107,8 +62,22 @@ class Channel():
     def __init__(self,dev,channel):
         self.channel = str(channel)
         self.dev     = dev
-
     
+    def set_amplitude(self,amplitude):
+        self.dev.write(f'LAMP{self.dev.conv2.index(self.channel)},{amplitude}')
+    def get_amplitude(self):
+        return float(self.dev.query(f'LAMP?{self.dev.conv2.index(self.channel)}'))
+    def set_polarity(self,polarity):
+        self.dev.write(f'LPOL{self.dev.conv2.index(self.channel)},{polarity}')
+    def get_polarity(self):
+        return float(self.dev.query(f'LPOL?{self.dev.conv2.index(self.channel)}'))
+    def set_offset(self,offset):
+        self.dev.write(f'LOFF{self.dev.conv2.index(self.channel)},{offset}')
+    def get_offset(self):
+        return float(self.dev.query(f'LOFF?{self.dev.conv2.index(self.channel)}'))
+    
+
+            
     
 
 if __name__ == '__main__':
