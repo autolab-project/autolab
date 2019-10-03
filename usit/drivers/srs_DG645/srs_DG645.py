@@ -6,7 +6,7 @@ Supported instruments (identified):
 - 
 """
 
-import vxi11 as v
+
 from optparse import OptionParser
 import sys
 import time
@@ -15,6 +15,9 @@ from numpy import fromstring,int8,int16,float64,sign
 
 class Device():
     def __init__(self,address='169.254.166.210'):
+        
+        import vxi11 as v
+        
         ### Initiate communication ###
         self.inst = v.Instrument(address)
         
