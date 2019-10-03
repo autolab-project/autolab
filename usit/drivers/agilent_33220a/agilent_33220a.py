@@ -61,8 +61,8 @@ class Device_VISA(Device):
     def query(self,query):
         self.write(query)
         return self.read()
-    def write(self,query):
-        self.inst.write(query)
+    def write(self,command):
+        self.inst.write(command)
     def read(self):
         rep = self.inst.read()
         return rep
