@@ -9,12 +9,10 @@ Supported instruments (identified):
 import usb
 import usb.core
 import usb.util
-from optparse import OptionParser
-import sys
 
-class Device():
+class Driver():
     
-    categories = ['Function generator']
+    category = 'Function generator'
     
     def __init__(self):
 
@@ -75,6 +73,10 @@ class Device():
         
 
 if __name__ == '__main__':
+    from optparse import OptionParser
+    import inspect
+    import sys
+
     usage = """usage: %prog [options] arg
                
                
@@ -93,7 +95,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
     
     ### Start the talker ###
-    I = Device()
+    I = Driver()
     
     if options.kar:
         I.init_karen_meas()

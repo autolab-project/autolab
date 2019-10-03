@@ -11,10 +11,10 @@ import time
 from numpy import frombuffer,int8
 
 
-class Device():
+class Driver():
 
-    categories = ['Oscilloscope']
-    #['Oscilloscope','Optical source','Spectrum analyser','Motion controller','Function generator','Power meter','Electrical source','Optical frame', 'Electrical frame','Optical shutter','PID controller']
+    category = 'Oscilloscope'
+    #['Oscilloscope','Optical source','Spectrum analyser','Motion controller','Function generator','Power meter','Electrical source','Optical frame', 'Electrical frame','Optical shutter','PID controller','Temperature controller']
 
     def __init__(self,nb_channels=4):
               
@@ -65,13 +65,13 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='TCPIP::192.168.0.3::INSTR', **kwargs):
         import visa as v
         
         rm        = v.ResourceManager()
         self.inst = rm.get_instrument(address)
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
         
     def query(self,command):
         self.write(command)
@@ -83,12 +83,12 @@ class Device_VISA(Device):
     def close(self):
         self.inst.close()
 
-class Device_VXI11(Device):
+class Driver_VXI11(Driver):
     def __init__(self, address='192.168.0.3', **kwargs):
         import vxi11 as v
     
         self.inst = v.Instrument(address)
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
 
     def query(self, command, nbytes=100000000):
         self.write(command)
@@ -197,9 +197,9 @@ if __name__ == '__main__':
     
     ### Start the talker ###
     classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
-    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
-    I = Device_LINK(address=options.address)
+    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
+    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
+    I = Driver_LINK(address=options.address)
     
     if query:
         print('\nAnswer to query:',query)
