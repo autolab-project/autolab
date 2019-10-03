@@ -10,7 +10,9 @@ import pandas as pd
 
 
 
-class Device():
+class Driver():
+    
+    category = ''
     
     def __init__(self):
         
@@ -127,12 +129,12 @@ class Device():
         return config
     
     
-class Device_CONN(Device):
+class Driver_CONN(Driver):
     
     def __init__(self,address='192.168.0.8'):
         print('DUMMY DEVICE INSTANTIATED with address',address)
         
-        Device.__init__(self)
+        Driver.__init__(self)
         
     
 class Slot() :

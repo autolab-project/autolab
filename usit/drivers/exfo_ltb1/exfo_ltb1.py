@@ -7,7 +7,7 @@ Supported instruments (identified):
 """
 
 
-class Device():
+class Driver():
     
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
@@ -36,7 +36,7 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_TELNET(Device):
+class Driver_TELNET(Driver):
     
     def __init__(self, address='192.168.0.9', **kwargs):
         from telnetlib import Telnet
@@ -49,7 +49,7 @@ class Device_TELNET(Device):
         self.read()
         self.read()
         
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
         
     def write(self,command):
         try : self.controller.write(f'{command}\r\n'.encode())

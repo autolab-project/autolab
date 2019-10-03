@@ -6,11 +6,10 @@ Supported instruments (identified):
 - 
 """
 
-import sys
 
-class Device():
+class Driver():
     
-    categories = ['Function generator']
+    category = 'Function generator'
     
     def __init__(self):        
         pass
@@ -30,14 +29,14 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::19::INSTR',**kwargs):
         import visa
         
         rm = visa.ResourceManager()
         self.inst = rm.get_instrument(address)
         
-        Device.__init__(self)
+        Driver.__init__(self)
         
     def close(self):
         self.inst.close()
@@ -50,12 +49,12 @@ class Device_VISA(Device):
         rep = self.inst.read()
         return rep
     
-class Device_GPIB(Device):
+class Driver_GPIB(Driver):
     def __init__(self,address=19,board_index=0,**kwargs):
         import Gpib
         
         self.inst = Gpib.Gpib(int(address),int(board_index))
-        Device.__init__(self)
+        Driver.__init__(self)
     
     def query(self,query):
         self.write(query)
@@ -72,9 +71,9 @@ class Device_GPIB(Device):
 
             
 if __name__ == '__main__':
-
     from optparse import OptionParser
     import inspect
+    import sys
 
     usage = """usage: %prog [options] arg
                
@@ -96,9 +95,9 @@ if __name__ == '__main__':
     
     ### Start the talker ###
     classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
-    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
-    I = Device_LINK(address=options.address,board_index=options.board_index)
+    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
+    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
+    I = Driver_LINK(address=options.address,board_index=options.board_index)
     
     if options.query:
         print('\nAnswer to query:',options.query)

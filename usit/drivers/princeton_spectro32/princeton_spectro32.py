@@ -6,14 +6,14 @@ Supported instruments (identified):
 - 
 """
 
-import sys,os
+import os
 import time
 from numpy import savetxt
 
 
-class Device():
+class Driver():
     
-    categories = ['Spectrum analyser']
+    category = 'Spectrum analyser'
     
     def __init__(self,camera='Camera1'):
         self.camera = camera
@@ -53,7 +53,7 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_SOCKET(Device):
+class Driver_SOCKET(Driver):
     def __init__(self,address='192.168.0.2',camera='Camera1',**kwargs):
         import socket 
         
@@ -63,7 +63,7 @@ class Device_SOCKET(Device):
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.controller.connect((address,self.PORT))
         
-        Device.__init__(self,camera)
+        Driver.__init__(self,camera)
         
     def write(self,command):
         self.controller.send(command.encode())
@@ -95,13 +95,13 @@ class Device_SOCKET(Device):
             pass
         self.controller = None
 
-class Device_LOCAL(Device):
+class Driver_LOCAL(Driver):
     def __init__(self,camera='Camera1',**kwargs):
 
-        from spectro32_utilities.spectro32_driver import Device_driver
-        self.controller = Device_driver()
+        from spectro32_utilities.spectro32_driver import Driver
+        self.controller = Driver()
 
-        Device.__init__(self,camera)
+        Driver.__init__(self,camera)
               
     def write(self,command):
         self.controller.command(command)
@@ -118,6 +118,7 @@ if __name__=='__main__':
     
     from optparse import OptionParser
     import inspect
+    import sys
     
     usage = """usage: %prog [options] arg
 
@@ -141,9 +142,9 @@ if __name__=='__main__':
     
     ### Start the talker ###
     classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
-    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
-    I = Device_LINK(address=options.address,camera=options.camera)
+    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
+    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
+    I = Driver_LINK(address=options.address,camera=options.camera)
     
     if options.query:
         print('\nAnswer to query:',options.query)

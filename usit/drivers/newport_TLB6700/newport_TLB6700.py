@@ -9,14 +9,13 @@ Supported instruments (identified):
 import usb
 import usb.core
 import usb.util
-from optparse import OptionParser
 import sys
 import time
 import numpy as np
 
-class Device():
+class Driver():
     
-    categories = ['Optical source']
+    category = 'Optical source'
     
     def __init__(self):
         dev = usb.core.find(idVendor=0x104d,idProduct=0x100a)
@@ -49,7 +48,6 @@ class Device():
             scanpiezo = scanpiezo[:2]
         elif len(scanpiezo)!=2:
             print('Please provide a list of at least 2 values for the scan')
-            sys.exit()
         beg,end=[scanpiezo[i] for i in range(len(scanpiezo))]
         ### kernel ###
         step = 1
@@ -110,7 +108,9 @@ class Device():
             
         
 if __name__ == '__main__':
-
+    from optparse import OptionParser
+    import inspect
+    
     usage = """usage: %prog [options] arg
                
                Think to provide a tuple of values (min,max) for the scans
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         options.scanpiezo = eval(options.scanpiezo)
     
     ### Start the talker ###
-    I = Device()
+    I = Driver()
     
     if options.query:                          
         print('\nAnswer to query:',options.query)

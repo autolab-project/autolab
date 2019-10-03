@@ -6,7 +6,7 @@ Supported instruments (identified):
 - 
 """
 
-import sys,os
+import os
 import time
 from numpy import savetxt,linspace
 import pandas
@@ -131,6 +131,7 @@ class Traces():
 if __name__ == '__main__':
     from optparse import OptionParser
     import inspect
+    import sys
     
     usage = """usage: %prog [options] arg
 

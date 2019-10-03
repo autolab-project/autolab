@@ -9,7 +9,7 @@ Supported instruments (identified):
 
 
 
-class Device() :
+class Driver() :
     def __init__(self):
         pass
         
@@ -29,7 +29,7 @@ class Device() :
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR', **kwargs):
         import visa
         
@@ -38,7 +38,7 @@ class Device_VISA(Device):
         self.controller.write_termination = 0x00  #needed in order to read properly from the optical amplifier 
         self.controller.read_termination = 0x00
 
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
 
     def close(self):
         self.controller.close()
