@@ -8,6 +8,7 @@ Supported instruments (identified):
 
 class Device():
 
+    category = 'Optical frame'
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
 
     def __init__(self,**kwargs):
@@ -78,6 +79,8 @@ class Device_VISA(Device):
 
 
 class Module_T100():   
+    
+    category = 'Optical source'
     
     def __init__(self,dev,slot):
         
@@ -262,6 +265,8 @@ class Module_T100():
 
 
 class Module_SLD():   
+    
+    category = 'Broadband optical source'
     
     def __init__(self,dev,slot):
         

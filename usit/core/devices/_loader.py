@@ -6,7 +6,7 @@ Created on Sat Jul 20 10:02:22 2019
 """
 
 
-import inspect
+
 import usit  
 
 
@@ -22,10 +22,10 @@ def loadDevice(deviceName):
         
     # Check if Device class exists in the driver
     assert 'connection' in index.keys(), f"Missing connection type"
-    className = 'Device_'+index['connection']
-    assert hasattr(driver,className), f"There is no class {className} in the driver script"
-    driverClass = getattr(driver,className)
-    assert inspect.isclass(driverClass), f"The object {className} is not a class in the driver script"
+    connection = index['connection']
+    assert connection in driver._getConnectionNames(),f"There is no connection '{connection}' available in the driver script"
+    driver._getConnectionClass(connection)
+    driverClass = driver._getConnectionClass(connection)
 
     # kwargs creation
     kwargs = dict(index)
