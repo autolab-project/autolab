@@ -22,7 +22,7 @@ core.devices.index = core.devices.loadIndex()
 devices = core.devices.DeviceManager()
 
 from .core.gui import gui
-from .core._report import report
+from .core._web import report,help
 from .core.recorder_old.recorder import Recorder, Recorder_V2
 
 
