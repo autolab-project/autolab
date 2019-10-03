@@ -7,79 +7,42 @@ Supported instruments (identified):
 """
 
 
-from optparse import OptionParser
-import sys
-import time
-from numpy import fromstring,int8,int16,float64,sign
-
-
-class Device():
+class Driver():
     
-    categories = ['Function generator']
+    category = 'Function generator'
     
-    def __init__(self,address='169.254.166.210'):
-        
-        import vxi11 as v
-        
-        ### Initiate communication ###
-        self.inst = v.Instrument(address)
+    def __init__(self):
         
         self.conv = ['T0','T1','A','B','C','D','E','F','G','H']
         self.conv2 = ['T0','AB','CD','EF','GH']
-
+        
+        for i in self.conv2:
+            setattr(self,f'channel{i}',Channel(self,i))
+    
+        
+    def set_frequency(self,frequency):
+        self.write(f'TRAT{frequency}')
     def get_frequency(self):
         return self.query('TRAT?')
     
-    def amplitude(self,channel,amplitude):
-        self.write('LAMP'+str(self.conv2.index(channel))+','+amplitude)
-    def frequency(self,frequency):
-        self.write('TRAT'+frequency)
-    def polarity(self,channel,polarity):
-        self.write('LPOL'+str(self.conv2.index(channel))+','+polarity)
-    def offset(self,channel,offset):
-        self.write('LOFF'+str(self.conv2.index(channel))+','+offset)
-    def display(self,channel):
-        if (channel == []):
-            for chan in self.conv2[1:5]:
-                self.ch_disp(chan)
-        else: 
-            self.ch_disp(channel)
-            
-    ### PRINT OUT CODE 
-    def ch_disp(self,channel):
-        ch1 = str(self.conv.index(channel[0]))
-        tmpdelay = self.query('DLAY?'+ch1)
-        tmpdelay = tmpdelay.split(',')
-    
-        if len(channel) == 2:
-            ch = str(self.conv2.index(channel))
-            ch2 = str(self.conv.index(channel[1]))
-            
-            tmpdelay2 = self.query('DLAY?'+ch2)
-            tmpdelay2 = tmpdelay2.split(',')
-        
-            print('==========CH:'+channel+'==============')
-            print('Level Amplitude  :  '+self.query('LAMP?'+ch)+' V')
-            print('Level Offset     :  '+self.query('LOFF?'+ch)+' V')
-            print('Level Polarity   :  '+self.query('LPOL?'+ch)+'\n')
-            print('Delay           '+channel[0]+':  '+ self.conv[int(tmpdelay[0])]+tmpdelay[1]+' s')
-            print('Delay           '+channel[1]+':  '+ self.conv[int(tmpdelay2[0])]+tmpdelay2[1]+' s\n' )
-        else:
-            print('==========CH:'+channel+'==============')
-            print('Delay           '+channel+':  '+ self.conv[int(tmpdelay[0])]+tmpdelay[1]+' s\n' )
-    
-    #Channel delay code block 
-    def ad_delay(self, channel, delay):
+    def ad_delay(self,channel, delay):
         if len(channel) == 2:
             ch1 = str(self.conv.index(channel[0]))
             ch2 = str(self.conv.index(channel[1]))
         else:
             ch1 = '0'
             ch2 = str(self.conv.index(channel))
-            
-        self.write('DLAY'+ch2+','+ch1+','+delay,)
-            
-    ### BASIC FUNCTIONS
+        self.write(f'DLAY{ch2},{ch1},{delay}')
+
+#################################################################################
+############################## Connections classes ##############################
+class Driver_VXI11(Driver):
+    def __init__(self,address='169.254.166.210', **kwargs):
+        import vxi11 as v
+
+        self.inst = v.Instrument(address)
+        Driver.__init__(self, **kwargs)
+
     def query(self, cmd, nbytes=1000000):
         """Send command 'cmd' and read 'nbytes' bytes as answer."""
         self.write(cmd+'\n')
@@ -91,10 +54,37 @@ class Device():
         self.inst.write(cmd)
     def close(self):
         self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
 
-        
+
+class Channel():
+    def __init__(self,dev,channel):
+        self.channel = str(channel)
+        self.dev     = dev
+    
+    def set_amplitude(self,amplitude):
+        self.dev.write(f'LAMP{self.dev.conv2.index(self.channel)},{amplitude}')
+    def get_amplitude(self):
+        return float(self.dev.query(f'LAMP?{self.dev.conv2.index(self.channel)}'))
+    def set_polarity(self,polarity):
+        self.dev.write(f'LPOL{self.dev.conv2.index(self.channel)},{polarity}')
+    def get_polarity(self):
+        return float(self.dev.query(f'LPOL?{self.dev.conv2.index(self.channel)}'))
+    def set_offset(self,offset):
+        self.dev.write(f'LOFF{self.dev.conv2.index(self.channel)},{offset}')
+    def get_offset(self):
+        return float(self.dev.query(f'LOFF?{self.dev.conv2.index(self.channel)}'))
+    
+
+            
+    
+
 if __name__ == '__main__':
-
+    from optparse import OptionParser
+    import inspect
+    import sys
+    
     usage = """usage: %prog [options] arg
 
                EXAMPLES:
@@ -144,7 +134,7 @@ if __name__ == '__main__':
     
     
     ### Start the talker ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
     
     if options.query:
         print('\nAnswer to query:',options.query)

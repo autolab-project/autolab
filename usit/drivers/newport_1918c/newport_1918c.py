@@ -8,7 +8,7 @@ import time
 import ctypes as ct
 
 
-class Device():
+class Driver():
     
     def __init__(self):
         self.write('PM:DS:Clear') # Clear data store
@@ -142,7 +142,7 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_DLL(Device):
+class Driver_DLL(Driver):
     
     def __init__(self,libpath=r'C:\Program Files\Newport\Newport USB Driver\Bin\usbdll.dll',**kwargs):
         
@@ -179,7 +179,7 @@ class Device_DLL(Device):
             
         self.IDnum = arInstruments.value
             
-        Device.__init__(self)
+        Driver.__init__(self)
         
         
         

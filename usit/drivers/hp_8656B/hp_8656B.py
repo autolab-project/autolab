@@ -6,35 +6,19 @@ Supported instruments (identified):
 - 
 """
 
-from optparse import OptionParser
-import sys
-import time
-import visa as v
 
-# Refer to section 3 of manual for GPIB configuration
-
-# Get functions not available for instrument
-# default GPIB address
-
-
-class Device():
+class Driver():
     
-    categories = ['Function generator']
+    category = 'Function generator'
     
-    def __init__(self, address='GPIB::7::INSTR'):
-        ### establish GPIB communication ###
-        r = v.ResourceManager()
-        self.scope = r.get_instrument(address)
+    def __init__(self):
+        pass
 
+    def set_frequency(self, frequency):
+        self.write('FR' + frequency + 'HZ')
 
-    #####################  FUNCTIONS ##############################################
-    def modify_frequency(self, set_frequency):
-        self.write('FR' + set_frequency + 'HZ')
-        print('Frequency: ' + set_frequency)
-
-    def modify_rfamp(self, set_amplitude):
-        self.write('AP' + set_amplitude + 'MV')
-        print('RF amplitude: ' + set_amplitude)
+    def set_rfamp(self, amplitude):
+        self.write('AP' + amplitude + 'MV')
 
     def RFdisable(self):
         self.write('R2')
@@ -42,7 +26,17 @@ class Device():
     def RFenable(self):
         self.write('R3')
 
-    #####################  BASICS FUNCTIONS #######################################
+
+#################################################################################
+############################## Connections classes ##############################
+class Driver_VISA(Driver):
+    def __init__(self, address='GPIB::7::INSTR', **kwargs):
+        import visa as v
+        
+        r = v.ResourceManager()
+        self.scope = r.get_instrument(address)
+        Driver.__init__(self, **kwargs)
+        
     def query(self, query, length=1000000):
         self.write(query)
         r = self.read(length=length)
@@ -53,11 +47,15 @@ class Device():
     def read(self, length=10000000):
         rep = self.scope.read_raw()
         return rep
-    def close(self):
-        pass
-
+        
+############################## Connections classes ##############################
+#################################################################################
 
 if __name__ == '__main__':
+    from optparse import OptionParser
+    import inspect
+    import sys
+    
     usage = """usage: %prog [options] arg
 
                EXAMPLES:
@@ -79,7 +77,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     ### Start the talker ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
     
     if options.query:
         print('\nAnswer to query:', options.query)

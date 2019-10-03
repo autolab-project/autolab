@@ -9,7 +9,7 @@ Supported instruments (identified):
 
 import time
 
-class Device():
+class Driver():
 
     def __init__(self):
         pass 
@@ -53,13 +53,13 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR', **kwargs):
         import visa
         
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
 
     def close(self):
         try : self.controller.close()
@@ -77,7 +77,7 @@ class Device_VISA(Device):
         self.controller.write(command)
         
         
-class Device_SOCKET(Device):
+class Driver_SOCKET(Driver):
     def __init__(self, address='192.168.0.9', **kwargs):
         import socket
         
@@ -85,7 +85,7 @@ class Device_SOCKET(Device):
         
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.controller.connect((address,50000))    
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
         
     def write(self,command):
         self.controller.send(command.encode())

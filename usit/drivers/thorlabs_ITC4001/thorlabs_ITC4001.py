@@ -5,23 +5,18 @@
 Supported instruments (identified):
 - thorlabs ITC4001
 """
-import time as t
-from numpy import *
-from optparse import OptionParser
-import sys
 
 
-
-class Device():
+class Driver():
     
-    categories = ['Optical source']
+    category = 'Optical source'
     
     def __init__(self):
         pass
 
     def amplitude(self,amplitude):
-        self.write('SOUR:CURR %f\n' %amplitude)
-        print('\nSetting current to: ',amplitude,'V\n')
+        self.write(f'SOUR:CURR {amplitude}\n')
+        print(f'\nSetting current to: {amplitude}V\n')
             
     def getDriverConfig(self):
         config = []        
@@ -31,13 +26,13 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         import visa
 
         rm = visa.ResourceManager()
         self.inst = rm.get_instrument(address)
-        Device.__init__(self)
+        Driver.__init__(self)
         
     def query(self, cmd):
         self.write(cmd)
@@ -54,6 +49,9 @@ class Device_VISA(Device):
         
     
 if __name__=="__main__":
+    from optparse import OptionParser
+    import inspect
+    import sys
     
     usage = """usage: %prog [options] arg
                
@@ -73,7 +71,7 @@ if __name__=="__main__":
     
     
     ### Call the class with arguments ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
 
     ### Basic communications ###
     if options.query:

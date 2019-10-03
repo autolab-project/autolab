@@ -16,7 +16,7 @@ from scipy.interpolate import interp1d
 import numpy as np
 import pandas as pd
 
-class Device():
+class Driver():
     
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>,<CALIBRATION_PATH>'
     
@@ -46,7 +46,7 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         import visa
         
@@ -58,7 +58,7 @@ class Device_VISA(Device):
         self.controller = rm.open_resource(address)
         self.controller.baud_rate = self.BAUDRATE
         
-        Device.__init__(self)
+        Driver.__init__(self)
         
         
         
@@ -116,7 +116,7 @@ class Module_NSR1():
         self.dev.write(self.SLOT+command)
     
        
-    # Devices functions
+    # Drivers functions
     # =========================================================================
             
     def getID(self):
