@@ -6,7 +6,7 @@ import connector
 
 ADDRESS = '192.168.0.2'
 
-class Device(connector.InstrumentConnectorRemote):
+class Driver(connector.InstrumentConnectorRemote):
     def __init__(self,address=ADDRESS):
         
         ### Start the communication using socket ###
@@ -34,7 +34,7 @@ if __name__=='__main__':
     (options, args) = parser.parse_args()
     
     ### Start the talker ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
     
     if options.query:
         print('\nAnswer to query:',options.query)

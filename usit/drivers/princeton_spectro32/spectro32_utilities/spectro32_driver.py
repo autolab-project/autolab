@@ -7,12 +7,10 @@
 import pvcam_Manis
 import visa
 import os
-import time
-import numpy
 
 ADDRESS = 'ASRL6::INSTR'     # to implement with the x axis and modify accordingly....
 
-class Device_driver():
+class Driver():
     def __init__(self,camera='Camera1'):
         
         self.minExpTimeAllowed = 2e-5  #s

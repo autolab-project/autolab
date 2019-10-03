@@ -9,10 +9,9 @@ Created on Wed Apr  3 20:06:08 2019
 import time
 
 
-
-class Device():
+class Driver():
     
-    categories = ['Optical source']
+    categories = 'Optical source'
     
     def __init__(self):
     
@@ -38,7 +37,7 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         import visa
         
@@ -53,7 +52,7 @@ class Device_VISA(Device):
         self.controller.baud_rate = 19200
         #self.controller.query_delay = 0.05
         
-        Device.__init__(self)
+        Driver.__init__(self)
 
     def close(self):
         try : self.controller.close()
@@ -70,12 +69,12 @@ class Device_VISA(Device):
         self.controller.write(command)
         time.sleep(0.01)
         
-class Device_GPIB(Device):
+class Driver_GPIB(Driver):
     def __init__(self,address=2,board_index=0,**kwargs):
         import Gpib
         
         self.inst = Gpib.Gpib(int(address),int(board_index))
-        Device.__init__(self)
+        Driver.__init__(self)
     
     def query(self,query):
         self.write(query)
@@ -393,9 +392,9 @@ if __name__ == '__main__':
     
     ### Start the talker ###
     classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
-    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
-    I = Device_LINK(address=options.address,board_index=options.board_index)
+    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
+    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
+    I = Driver_LINK(address=options.address,board_index=options.board_index)
     
     if options.query:
         print('\nAnswer to query:',options.query)

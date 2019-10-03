@@ -23,7 +23,7 @@ class Server():
     def __init__(self):
 		
 		### Initiate spectro and camera ###
-        self.inst = instrument_server.remote_Device()
+        self.inst = instrument_server.Driver()
 		
         ### Start the server ###
         log('')
@@ -55,7 +55,7 @@ class ClientThread(threading.Thread):
     def __init__(self, clientsocket, spectro):
         self.end_char = '\n'
         
-        self.inst = instrument.Device()
+        self.inst = instrument.Driver()
 	
         threading.Thread.__init__(self)
         self.clientsocket = clientsocket

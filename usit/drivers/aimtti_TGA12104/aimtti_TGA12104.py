@@ -6,18 +6,36 @@ Supported instruments (identified):
 - 
 """
 
-import usb
-import usb.core
-import usb.util
-from optparse import OptionParser
-import sys
 
-class Device():
+class Driver():
     
-    categories = ['Function generator']
+    category = 'Function generator'
     
-    def __init__(self):
+    def __init__(self,nb_channels=4):
+        
+        self.nb_channels = int(nb_channels)
+        
+        for i in range(1,self.nb_channels+1):
+            setattr(self,f'channel{i}',Channel(self,i))
+    
+    
+    def write_to_channel(self,channel,command):
+        self.write(f'SETUPCH {channel}')
+        self.write(command)
+        
+        
+    def idn(self):
+        self.write('*IDN?\r\n')
 
+
+#################################################################################
+############################## Connections classes ##############################
+class Driver_USB(Driver):
+    def __init__(self, **kwargs):
+        import usb
+        import usb.core
+        import usb.util
+        
         dev = usb.core.find(idVendor=0x103e,idProduct=0x03f2)
         dev.reset()
         dev.set_configuration()
@@ -36,28 +54,10 @@ class Device():
 
         assert self.ep_out is not None
         assert self.ep_in is not None
-    
-    
-    def amplitude(self,command):
-        """ Change amplitude in Vpp """
-        command = 'AMPL ' + command
-        self.write(command)
-    def frequency(self,command):
-        """ Change the frequency in Hz """
-        command = 'WAVFREQ ' + command
-        self.write(command)
-    def period(self,command):
-        """ Change the period in s """
-        command = 'WAVPER ' + command
-        self.write(command)
+        rm        = v.ResourceManager()
+        self.inst = rm.get_instrument(address)
         
-    def init_karen_meas(self):
-        """ setup the function generator for karen measurment """
-        self.write('SETUPCH 1')
-        self.write('ARB PZTRAMP')
-        self.amplitude(str(2))           # 2 Vpp
-        self.period(str(0.01))            # 10 ms
-        self.write('OUTPUT ON')
+        Driver.__init__(self, **kwargs)
         
     def close(self):
         self.write('LOCAL')
@@ -70,11 +70,33 @@ class Device():
         const = ''.join(chr(i) for i in rep)
         const = const#[:const.find('\r\n')]
         return const
-    def idn(self):
-        self.ep_out.write('*IDN?\r\n')
         
+############################## Connections classes ##############################
+#################################################################################
+
+
+class Channel():
+    def __init__(self,dev,channel):
+        self.channel = int(channel)
+        self.dev     = dev
+
+    def amplitude(self,val):
+        """ Change amplitude in Vpp """
+        self.dev.write_to_channel(self.channel,f'AMPL {val}')
+    def frequency(self,val):
+        """ Change the frequency in Hz """
+        self.dev.write_to_channel(self.channel,f'WAVFREQ {val}')
+    def period(self,val):
+        """ Change the period in s """
+        self.dev.write_to_channel(self.channel,f'WAVPER {val}')
+
+
 
 if __name__ == '__main__':
+    from optparse import OptionParser
+    import inspect
+    import sys
+
     usage = """usage: %prog [options] arg
                
                
@@ -93,7 +115,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
     
     ### Start the talker ###
-    I = Device()
+    I = Driver()
     
     if options.kar:
         I.init_karen_meas()

@@ -6,14 +6,14 @@ Supported instruments (identified):
 - 
 """
 
-import sys,os
+import os
 import time
 from numpy import frombuffer,int8
 
 
-class Device():
+class Driver():
     
-    categories = ['Oscilloscope']
+    category = 'Oscilloscope'
     
     def __init__(self,nb_channels=4):
               
@@ -58,12 +58,12 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VXI11(Device):
+class Driver_VXI11(Driver):
     def __init__(self, address='192.168.0.8', **kwargs):
         import vxi11 as v
     
         self.inst = v.Instrument(address)
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
 
     def query(self, command, nbytes=100000000):
         self.write(command)
@@ -130,6 +130,7 @@ class Channel():
 if __name__ == '__main__':
     from optparse import OptionParser
     import inspect
+    import sys
     
     usage = """usage: %prog [options] arg
     
@@ -169,9 +170,9 @@ if __name__ == '__main__':
     
     ### Start the talker ###
     classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
-    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
-    I = Device_LINK(address=options.address)
+    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
+    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
+    I = Driver_LINK(address=options.address)
     
     if query:
         print('\nAnswer to query:',query)

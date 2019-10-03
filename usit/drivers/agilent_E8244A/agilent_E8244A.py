@@ -6,38 +6,53 @@ Supported instruments (identified):
 - 
 """
 
-import visa as v
-from optparse import OptionParser
-import sys
-import time
-from numpy import zeros,ones,linspace
 
-
-class Device():
-    def __init__(self,address='TCPIP::169.254.54.215::INSTR'):
-
-        rm = v.ResourceManager()
-        self.inst = rm.get_instrument(address)
-
-
+class Driver():
+    
+    category = 'Function generator'
+    
+    def __init__(self):
+        pass
+    
+    
     def amplitude(self,amplitude):
-        self.inst.write('POW '+amplitude)
+        self.write(f'POW {amplitude}')
     def frequency(self,frequency):
-        self.inst.write('FREQ '+frequency)
+        self.write(f'FREQ {frequency}')
 
+    def idn(self):
+        self.write('*IDN?')
+        self.read()
+
+#################################################################################
+############################## Connections classes ##############################
+class Driver_VISA(Driver):
+    def __init__(self, address='TCPIP::192.168.0.3::INSTR', **kwargs):
+        import visa as v
+        
+        rm        = v.ResourceManager()
+        self.inst = rm.get_instrument(address)
+        Driver.__init__(self, **kwargs)
+        
+    def query(self,query):
+        self.write(query)
+        return self.read()
     def write(self,query):
         self.inst.write(query)
     def read(self):
-        rep = self.inst.read()
-        return rep
+        return self.inst.read()
     def close(self):
-        pass
-    def idn(self):
-        self.inst.write('*IDN?')
-        self.read()
-            
+        self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
+
             
 if __name__ == '__main__':
+    
+    from optparse import OptionParser
+    import inspect
+    import sys
+    
     usage = """usage: %prog [options] arg
                
                EXAMPLES:
@@ -52,11 +67,11 @@ if __name__ == '__main__':
     parser.add_option("-o", "--offset", type="str", dest="off", default=None, help="Set the offset value." )
     parser.add_option("-a", "--amplitude", type="str", dest="amp", default=None, help="Set the amplitude." )
     parser.add_option("-f", "--frequency", type="str", dest="freq", default=None, help="Set the frequency." )
-    parser.add_option("-i", "--address", type="str", dest="address", default='TCPIP::169.254.54.215::INSTR', help="Set the Ip address to use for communicate." )
+    parser.add_option("-i", "--address", type="str", dest="address", default='TCPIP::192.168.0.3::INSTR', help="Set the Ip address to use for communicate." )
     (options, args) = parser.parse_args()
     
     ### Start the talker ###
-    I = Device(address=options.address)
+    I = Driver(address=options.address)
 
     if options.query:
         print('\nAnswer to query:',options.query)

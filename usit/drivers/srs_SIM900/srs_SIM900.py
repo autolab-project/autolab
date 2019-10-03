@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-WARNING: The message processing to submodules is not optimal as connecting/disconnecting streams for each commands: should be optimized. See methods send_command_to_slot and get_query_from_slot of the Device class.
+WARNING: The message processing to submodules is not optimal as connecting/disconnecting streams for each commands: should be optimized. See methods send_command_to_slot and get_query_from_slot of the Driver class.
 
 Supported instruments (identified):
 - 
@@ -12,10 +12,9 @@ Supported instruments (identified):
 import time
 
 
-class Device():
+class Driver():
     
-    categories = ['Electrical frame']
-    #['Oscilloscope','Optical source','Spectrum analyser','Motion controller','Function generator','Power meter','Electrical source','Optical frame', 'Electrical frame','Optical shutter','PID controller']
+    category = 'Electrical frame'
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
     def __init__(self, **kwargs):
@@ -51,14 +50,14 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_VISA(Device):
+class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         import visa
         
         rm = visa.ResourceManager()
         self.inst = rm.get_instrument(address)
         
-        Device.__init__(self)
+        Driver.__init__(self)
         
     def close(self):
         self.inst.close()
@@ -71,12 +70,12 @@ class Device_VISA(Device):
         rep = self.inst.read()
         return rep
     
-class Device_GPIB(Device):
+class Driver_GPIB(Driver):
     def __init__(self,address=2,board_index=0,**kwargs):
         import Gpib
         
         self.inst = Gpib.Gpib(int(address),int(board_index))
-        Device.__init__(self)
+        Driver.__init__(self)
     
     def query(self,query):
         self.write(query)
@@ -94,7 +93,7 @@ class Device_GPIB(Device):
 
 class Module_SIM960():
     
-    categories = ['PID controller']
+    category = 'PID controller'
     
     def __init__(self,dev,slot):
         self.slot = int(slot)
@@ -162,9 +161,9 @@ if __name__ == '__main__':
     
     ### Start the talker ###
     classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
-    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
-    I = Device_LINK(address=options.address,board_index=options.board_index)
+    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
+    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
+    I = Driver_LINK(address=options.address,board_index=options.board_index)
     
     if query:
         print('\nAnswer to query:',query)

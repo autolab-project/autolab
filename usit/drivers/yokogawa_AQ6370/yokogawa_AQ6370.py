@@ -6,14 +6,14 @@ Supported instruments (identified):
 - 
 """
 
-import sys,os
+import os
 import time
 from numpy import savetxt,linspace
 import pandas
 
-class Device():
+class Driver():
     
-    categories = ['Spectrum analyser']
+    category = 'Spectrum analyser'
     
     def __init__(self):
         
@@ -48,24 +48,22 @@ class Device():
 
 #################################################################################
 ############################## Connections classes ##############################
-class Device_SOCKET(Device):
-    def __init__(self, address='192.168.0.9', **kwargs):
+class Driver_SOCKET(Driver):
+    def __init__(self, address='192.168.0.9', port=10001, **kwargs):
         import socket
         
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((address, PORT))
+        self.sock.connect((address, port))
         self.send('OPEN "anonymous"')
         ans = self.recv(1024)
         if not ans=='AUTHENTICATE CRAM-MD5.':
             print("problem with authentication")
-            sys.exit(1)
         self.send(" ")
         ans = self.recv(1024)
         if not ans=='ready':
             print("problem with authentication")
-            sys.exit(1)
         
-        Device.__init__(self, **kwargs)
+        Driver.__init__(self, **kwargs)
 
     def send(self, msg):
         msg=msg+"\n"
@@ -118,6 +116,7 @@ class Traces():
 if __name__ == '__main__':
     from optparse import OptionParser
     import inspect
+    import sys
     
     usage = """usage: %prog [options] arg
 
@@ -146,9 +145,9 @@ if __name__ == '__main__':
     
     ### Start the talker ###
     classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Device_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Device_')])
-    Device_LINK = getattr(sys.modules[__name__],'Device_'+options.link)
-    I = Device_LINK(address=options.address)
+    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
+    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
+    I = Driver_LINK(address=options.address)
     
     if options.query:
         print('\nAnswer to query:',options.query)

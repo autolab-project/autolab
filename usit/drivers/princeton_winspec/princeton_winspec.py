@@ -13,9 +13,9 @@ import numpy as np
 
 
 
-class Device():    
+class Driver():    
     
-    categories = ['Spectrum analyser']
+    category = 'Spectrum analyser'
     
     def __init__(self):
                         
@@ -226,7 +226,7 @@ class Device():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Device_SOCKET(Device) :
+class Driver_SOCKET(Driver) :
     
     def __init__(self,address='192.168.0.8',**kwargs):
         
@@ -239,7 +239,7 @@ class Device_SOCKET(Device) :
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.controller.connect((self.ADDRESS,self.PORT))   
         
-        Device.__init__(self)
+        Driver.__init__(self)
         
     def write(self,command):
         self.controller.send(command.encode())
@@ -259,14 +259,14 @@ class Device_SOCKET(Device) :
 
 
 
-class Device_LOCAL(Device) : #not used
+class Driver_LOCAL(Driver) : #not used
 
     def __init__(self,**kwargs):
         
         from winspec_utilities.winspec_gui_driver import Winspec
         self.controller = Winspec()
 
-        Device.__init__(self)
+        Driver.__init__(self)
         
               
     def write(self,command):
