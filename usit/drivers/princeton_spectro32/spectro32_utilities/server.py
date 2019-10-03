@@ -22,10 +22,10 @@ def get_local_ip():
 
 class Server():
     def __init__(self):
-		
-		### Initiate spectro and camera ###
-        self.spectro = spectro.Device_driver()
-		
+        
+        ### Initiate spectro and camera ###
+        self.spectro = spectro.Driver()
+
         ### Start the server ###
         log('')
         log('Looking for IP address...')
@@ -57,7 +57,7 @@ class ClientThread(threading.Thread):
         self.end_char = '\n'
         
         self.spectro = spectro
-	
+
         threading.Thread.__init__(self)
         self.clientsocket = clientsocket
         self.stopFlag = threading.Event()

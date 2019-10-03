@@ -106,7 +106,7 @@ class Driver_VXI11(Driver):
 class Channel():
     def __init__(self,dev,channel):
         self.channel = int(channel)
-        self.dev  = dev
+        self.dev     = dev
         self.autoscale = False
     
     

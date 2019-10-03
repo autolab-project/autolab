@@ -11,27 +11,33 @@ class Driver():
     
     category = 'Function generator'
     
-    def __init__(self,address='169.254.166.210'):
-        
-        import vxi11 as v
-        
-        ### Initiate communication ###
-        self.inst = v.Instrument(address)
+    def __init__(self):
         
         self.conv = ['T0','T1','A','B','C','D','E','F','G','H']
         self.conv2 = ['T0','AB','CD','EF','GH']
-
+        
+        for i in range(1,self.nb_channels+1):
+            setattr(self,f'channel{i}',Channel(self,i))
+    
+        
+    def set_frequency(self,frequency):
+        self.write(f'TRAT{frequency}')
     def get_frequency(self):
         return self.query('TRAT?')
     
-    def amplitude(self,channel,amplitude):
-        self.write('LAMP'+str(self.conv2.index(channel))+','+amplitude)
-    def frequency(self,frequency):
-        self.write('TRAT'+frequency)
-    def polarity(self,channel,polarity):
-        self.write('LPOL'+str(self.conv2.index(channel))+','+polarity)
-    def offset(self,channel,offset):
-        self.write('LOFF'+str(self.conv2.index(channel))+','+offset)
+    def set_amplitude(self,channel,amplitude):
+        self.write(f'LAMP{self.conv2.index(channel)},{amplitude}')
+    def get_amplitude(self):
+        return float(self.query(f'LAMP?{self.conv2.index(channel)}'))
+    def set_polarity(self,channel,polarity):
+        self.write(f'LPOL{self.conv2.index(channel)},{polarity}')
+    def get_polarity(self):
+        return float(self.query(f'LPOL?{self.conv2.index(channel)}'))
+    def set_offset(self,channel,offset):
+        self.write(f'LOFF{self.conv2.index(channel)},{offset}')
+    def get_offset(self):
+        return float(self.query(f'LOFF?{self.conv2.index(channel)}'))
+    
     def display(self,channel):
         if (channel == []):
             for chan in self.conv2[1:5]:
@@ -73,7 +79,15 @@ class Driver():
             
         self.write('DLAY'+ch2+','+ch1+','+delay,)
             
-    ### BASIC FUNCTIONS
+#################################################################################
+############################## Connections classes ##############################
+class Driver_VXI11(Driver):
+    def __init__(self,address='169.254.166.210', **kwargs):
+        import vxi11 as v
+
+        self.inst = v.Instrument(address)
+        Driver.__init__(self, **kwargs)
+
     def query(self, cmd, nbytes=1000000):
         """Send command 'cmd' and read 'nbytes' bytes as answer."""
         self.write(cmd+'\n')
@@ -85,8 +99,18 @@ class Driver():
         self.inst.write(cmd)
     def close(self):
         self.inst.close()
+############################## Connections classes ##############################
+#################################################################################
 
-        
+
+class Channel():
+    def __init__(self,dev,channel):
+        self.channel = str(channel)
+        self.dev     = dev
+
+    
+    
+
 if __name__ == '__main__':
     from optparse import OptionParser
     import inspect

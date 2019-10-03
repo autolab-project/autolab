@@ -49,11 +49,11 @@ class Driver():
 #################################################################################
 ############################## Connections classes ##############################
 class Driver_SOCKET(Driver):
-    def __init__(self, address='192.168.0.9', **kwargs):
+    def __init__(self, address='192.168.0.9', port=10001, **kwargs):
         import socket
         
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((address, PORT))
+        self.sock.connect((address, port))
         self.send('OPEN "anonymous"')
         ans = self.recv(1024)
         if not ans=='AUTHENTICATE CRAM-MD5.':
