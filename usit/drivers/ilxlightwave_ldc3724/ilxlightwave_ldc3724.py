@@ -12,6 +12,8 @@ import time
 
 class Device():
     
+    categories = ['Optical source']
+    
     def __init__(self):
     
         # Initialisation
@@ -90,6 +92,8 @@ class Device_GPIB(Device):
 
 
 class LAS():
+    
+    categories = ['Electrical source']
     
     def __init__(self,dev):
         
@@ -215,6 +219,8 @@ class LAS():
 
 
 class TEC():
+    
+    categories = ['Temperature controller']
     
     def __init__(self,dev):
         

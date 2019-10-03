@@ -14,52 +14,55 @@ from numpy import zeros,ones,linspace,arange,array,copy,concatenate
 
 
 class Device():
-        def __init__(self,address='169.254.62.40',port=9221):
+    
+    categories = ['Function generator']
+    
+    def __init__(self,address='169.254.62.40',port=9221):
 
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.connect((address,port))
-            
-            
-        def amplitude(self,amplitude):
-            self.write('AMPL '+amplitude)
-        def frequency(self,frequency):
-            self.write('FREQ '+frequency)
-        def offset(self,offset):
-            self.write('DCOFFS '+offset)
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.connect((address,port))
         
-        def set_output(self, state):
-            """output on, off, normal or invert""" 
-            self.write('OUTPUT '+ state)
-        def load_arb(self, chan):
-            """chan: arbitrary channel to load"""
-            self.write('WAVE ARB')
-            self.write('ARBLOAD ARB'+chan)
-        def swap_channel(self,chan):
-            """chan is either 1 or 2"""
-            self.write('CHN '+chan)
-        def write_array_to_byte(self,l,ARB):
-            """Arguments: array, arbitrary waveform number to address the array to
-            Note: ARB1 < BIN > Load data to an existing arbitrary waveform memory location ARB1. The data consists of two bytes per point with no characters between bytes or points. The point data is sent high byte first. The data block has a header which consists of the # character  followed by several ascii coded numeric characters. The first of these defines the number of ascii characters to follow and these following characters define the length of the binary data in bytes. The instrument will wait for data indefinitely If less data is sent. If more data is sent the extra is processed by the command parser which results in a command error."""
-            a = l.astype('<u2').tostring()
-            temp = str(2*len(l))
-            ARB = str(ARB)
-            qry = b'ARB'+ bytes(str(ARB),'ascii') +bytes(' #','ascii')+ bytes(str(len(temp)),'ascii')+bytes(temp,'ascii')+a +b' \n'
-            self.s.send(qry)
-            time.sleep(0.2)
         
-        def write(self,query):
-            self.s.send((query+'\n').encode())
-        def read(self):
-            rep = self.s.recv(1000).decode()
-            return rep
-        def query(self, qry):
-            self.write(qry)
-            time.sleep(0.2)
-            return self.read()
-        def idn(self):
-            self.query('*IDN?')
-        def close(self):
-            pass
+    def amplitude(self,amplitude):
+        self.write('AMPL '+amplitude)
+    def frequency(self,frequency):
+        self.write('FREQ '+frequency)
+    def offset(self,offset):
+        self.write('DCOFFS '+offset)
+    
+    def set_output(self, state):
+        """output on, off, normal or invert""" 
+        self.write('OUTPUT '+ state)
+    def load_arb(self, chan):
+        """chan: arbitrary channel to load"""
+        self.write('WAVE ARB')
+        self.write('ARBLOAD ARB'+chan)
+    def swap_channel(self,chan):
+        """chan is either 1 or 2"""
+        self.write('CHN '+chan)
+    def write_array_to_byte(self,l,ARB):
+        """Arguments: array, arbitrary waveform number to address the array to
+        Note: ARB1 < BIN > Load data to an existing arbitrary waveform memory location ARB1. The data consists of two bytes per point with no characters between bytes or points. The point data is sent high byte first. The data block has a header which consists of the # character  followed by several ascii coded numeric characters. The first of these defines the number of ascii characters to follow and these following characters define the length of the binary data in bytes. The instrument will wait for data indefinitely If less data is sent. If more data is sent the extra is processed by the command parser which results in a command error."""
+        a = l.astype('<u2').tostring()
+        temp = str(2*len(l))
+        ARB = str(ARB)
+        qry = b'ARB'+ bytes(str(ARB),'ascii') +bytes(' #','ascii')+ bytes(str(len(temp)),'ascii')+bytes(temp,'ascii')+a +b' \n'
+        self.s.send(qry)
+        time.sleep(0.2)
+    
+    def write(self,query):
+        self.s.send((query+'\n').encode())
+    def read(self):
+        rep = self.s.recv(1000).decode()
+        return rep
+    def query(self, qry):
+        self.write(qry)
+        time.sleep(0.2)
+        return self.read()
+    def idn(self):
+        self.query('*IDN?')
+    def close(self):
+        pass
         
             
 if __name__ == '__main__':

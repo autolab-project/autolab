@@ -12,6 +12,8 @@ Supported instruments (identified):
 
 class Device():
     
+    categories = ['Optical shutter']
+    
     def __init__(self):
         
 

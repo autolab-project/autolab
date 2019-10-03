@@ -12,6 +12,9 @@ from numpy import savetxt
 
 
 class Device():
+    
+    categories = ['Spectrum analyser']
+    
     def __init__(self,camera='Camera1'):
         self.camera = camera
         

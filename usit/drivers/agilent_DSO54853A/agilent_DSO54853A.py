@@ -10,8 +10,10 @@ import sys,os
 import time
 
 
-
 class Device():
+    
+    categories = ['Oscilloscope']
+    
     def __init__(self,nb_channels=4):
               
         self.nb_channels = int(nb_channels)

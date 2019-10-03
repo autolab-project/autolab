@@ -15,7 +15,7 @@ import pandas
 class Device():
     
     categories = ['Spectrum analyser']
-    #['Oscilloscope','Optical source','Spectrum analyser','Motion controller','Function generator','Power meter','Electrical source','Optical frame', 'Electrical frame','Optical shutter','PID controller']
+    #['Oscilloscope','Optical source','Spectrum analyser','Motion controller','Function generator','Power meter','Electrical source','Optical frame', 'Electrical frame','Optical shutter','PID controller','Temperature controller']
     
     def __init__(self,nb_traces=6):
               

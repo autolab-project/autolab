@@ -13,6 +13,9 @@ from optparse import OptionParser
 import sys
 
 class Device():
+    
+    categories = ['Function generator']
+    
     def __init__(self):
 
         dev = usb.core.find(idVendor=0x103e,idProduct=0x03f2)

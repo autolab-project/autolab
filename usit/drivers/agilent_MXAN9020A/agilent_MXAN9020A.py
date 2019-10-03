@@ -13,6 +13,9 @@ import pandas
 
 
 class Device():
+    
+    categories = ['Spectrum analyser']
+    
     def __init__(self,nb_traces=6):
               
         self.nb_traces = int(nb_traces)

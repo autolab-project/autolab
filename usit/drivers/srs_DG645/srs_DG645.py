@@ -14,6 +14,9 @@ from numpy import fromstring,int8,int16,float64,sign
 
 
 class Device():
+    
+    categories = ['Function generator']
+    
     def __init__(self,address='169.254.166.210'):
         
         import vxi11 as v
