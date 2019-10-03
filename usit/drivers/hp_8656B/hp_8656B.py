@@ -6,27 +6,19 @@ Supported instruments (identified):
 - 
 """
 
-import visa as v
-
 
 class Driver():
     
     category = 'Function generator'
     
-    def __init__(self, address='GPIB::7::INSTR'):
-        ### establish GPIB communication ###
-        r = v.ResourceManager()
-        self.scope = r.get_instrument(address)
+    def __init__(self):
+        pass
 
+    def set_frequency(self, frequency):
+        self.write('FR' + frequency + 'HZ')
 
-    #####################  FUNCTIONS ##############################################
-    def modify_frequency(self, set_frequency):
-        self.write('FR' + set_frequency + 'HZ')
-        print('Frequency: ' + set_frequency)
-
-    def modify_rfamp(self, set_amplitude):
-        self.write('AP' + set_amplitude + 'MV')
-        print('RF amplitude: ' + set_amplitude)
+    def set_rfamp(self, amplitude):
+        self.write('AP' + amplitude + 'MV')
 
     def RFdisable(self):
         self.write('R2')
@@ -34,7 +26,17 @@ class Driver():
     def RFenable(self):
         self.write('R3')
 
-    #####################  BASICS FUNCTIONS #######################################
+
+#################################################################################
+############################## Connections classes ##############################
+class Driver_VISA(Driver):
+    def __init__(self, address='GPIB::7::INSTR', **kwargs):
+        import visa as v
+        
+        r = v.ResourceManager()
+        self.scope = r.get_instrument(address)
+        Driver.__init__(self, **kwargs)
+        
     def query(self, query, length=1000000):
         self.write(query)
         r = self.read(length=length)
@@ -45,9 +47,9 @@ class Driver():
     def read(self, length=10000000):
         rep = self.scope.read_raw()
         return rep
-    def close(self):
-        pass
-
+        
+############################## Connections classes ##############################
+#################################################################################
 
 if __name__ == '__main__':
     from optparse import OptionParser

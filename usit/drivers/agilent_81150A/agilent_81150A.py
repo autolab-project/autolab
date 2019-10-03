@@ -51,7 +51,7 @@ class Driver_VISA(Driver):
 class Channel():
     def __init__(self,dev,channel):
         self.channel = int(channel)
-        self.dev  = dev
+        self.dev     = dev
         
     def amplitude(self,amplitude):
         self.dev.write(f':VOLT{self.channel} {amplitude}')

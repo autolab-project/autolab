@@ -11,7 +11,7 @@ import numpy
 
 ADDRESS = 'TCPIP::192.168.0.3::INSTR'
 
-class remote_Device():
+class Driver():
     def __init__(self,address=ADDRESS):
         
         ### Initiate a connection to something, e.g. here using visa ###
