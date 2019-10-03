@@ -27,6 +27,9 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
+    entry_points = {
+        'console_scripts': ['usit=usit.core.gui:gui'],
+    },
     include_package_data=True,
     package_data={'': ['*.ini','*.txt','*.ui','*.cmd']},# If any package contains *.ini files, include them:
     keywords = ['Universal','Scanning','Interface','automation','scientific','laboratory','experiments','measures']

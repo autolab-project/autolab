@@ -33,9 +33,9 @@ class DriverWrapper() :
         # Come back to previous working directory
         os.chdir(currDir)
         
-        assert hasattr(self._module,'Device'), f"Driver {self._name}: Missing class Device"
-        assert inspect.isclass(self._module.Device), f"Driver {self._name}: Device is not a class"
-        #assert len([attr for attr in self._module.__dir__() if attr.startswith('Device_')]), f"Driver {self._name}: Require at least one connection class Device_XXX"
+        assert hasattr(self._module,'Driver'), f"Driver {self._name}: Missing class Driver"
+        assert inspect.isclass(self._module.Driver), f"Driver {self._name}: Driver is not a class"
+        #assert len([attr for attr in self._module.__dir__() if attr.startswith('Driver_')]), f"Driver {self._name}: Require at least one connection class Driver_XXX"
     
     def __getattr__(self,attr) :
         
@@ -53,7 +53,7 @@ class DriverWrapper() :
         
         # Name and category if available
         submess = f'Driver "{self._name}"'
-        if hasattr(self._module.Device,'category') : submess += f' ({self._module.Device.category})'
+        if hasattr(self._module.Driver,'category') : submess += f' ({self._module.Driver.category})'
         mess += submess+'\n'+'='*len(submess)+'\n\n'
 
         
@@ -65,7 +65,7 @@ class DriverWrapper() :
         mess += '\n'
         
         # Modules
-        if hasattr(self._module.Device,'slotNaming') :
+        if hasattr(self._module.Driver,'slotNaming') :
             mess += 'Available modules(s):\n'
             modules = self._getModuleNames()
             for module in modules : 
@@ -78,27 +78,27 @@ class DriverWrapper() :
         
         mess += f'Configuration example(s) for devices_index.ini:\n\n'
         
-        # Arguments of Device class
-        deviceClassArgs = ''
-        defaults_args = self._getClassArgs(self._module.Device)
+        # Arguments of Driver class
+        DriverClassArgs = ''
+        defaults_args = self._getClassArgs(self._module.Driver)
         for key,value in defaults_args.items() :
-            deviceClassArgs += f'{key} = {value}\n'
-        if hasattr(self._module.Device,'slotNaming') : 
-            deviceClassArgs += self._module.Device.slotNaming+'\n'
+            DriverClassArgs += f'{key} = {value}\n'
+        if hasattr(self._module.Driver,'slotNaming') : 
+            DriverClassArgs += self._module.Driver.slotNaming+'\n'
             
-        # Arguments of Device_XXX classes
+        # Arguments of Driver_XXX classes
         for connection in connections :
             
             mess += '[myDeviceName]\n'
             mess += f'driver = {self._name}\n'
             mess += f'connection = {connection}\n'
             
-            # get all optional parameters and default values of __init__ method of Device_ class
+            # get all optional parameters and default values of __init__ method of Driver_ class
             defaults_args = self._getClassArgs(self._getConnectionClass(connection))
             for key,value in defaults_args.items() :
                 mess += f'{key} = {value}\n'
     
-            mess += deviceClassArgs + '\n'
+            mess += DriverClassArgs + '\n'
             
                 
         print(mess)
@@ -110,15 +110,15 @@ class DriverWrapper() :
             
     def _getConnectionNames(self):
         return [name.split('_')[1] for name, obj in inspect.getmembers(self._module, inspect.isclass) 
-                    if obj.__module__ is self._module.__name__ and name.startswith('Device_') ]
+                    if obj.__module__ is self._module.__name__ and name.startswith('Driver_') ]
         
-    def _getDeviceCategory(self):
-        if hasattr(self._module.Device,'category'):
-            return self._module.Device.category
+    def _getDriverCategory(self):
+        if hasattr(self._module.Driver,'category'):
+            return self._module.Driver.category
         
     def _getConnectionClass(self,connection):
         assert connection in self._getConnectionNames()
-        return getattr(self._module,f'Device_{connection}')
+        return getattr(self._module,f'Driver_{connection}')
     
     def _getModuleClass(self,module):
         assert module in self._getModuleNames()
@@ -150,7 +150,7 @@ class DriverManager() :
             # REMOVE TRY EXCEPT WHEN DRIVERS WILL BE FINISHED
             
             try : 
-                category = getattr(self,driver)._getDeviceCategory()
+                category = getattr(self,driver)._getDriverCategory()
                 if category is None :
                     category = 'Other'
                 if category not in d.keys() :
