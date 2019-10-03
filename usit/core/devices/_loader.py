@@ -12,7 +12,7 @@ import usit
 
 def loadDevice(deviceName):
     
-    """ Return the class 'Device' instantiated with the provided address, 
+    """ Return the class 'Driver' instantiated with the provided address, 
     and the function 'configure' of the driver """
     
     index = usit.core.devices.index[deviceName]
@@ -20,7 +20,7 @@ def loadDevice(deviceName):
 
     driver = getattr(usit.drivers,driverName)
         
-    # Check if Device class exists in the driver
+    # Check if Driver class exists in the driver
     assert 'connection' in index.keys(), f"Missing connection type"
     connection = index['connection']
     assert connection in driver._getConnectionNames(),f"There is no connection '{connection}' available in the driver script"

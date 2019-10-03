@@ -15,6 +15,8 @@ Welcome to usit's documentation!
 Indices and tables
 ==================
 
+Coucou
+
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
