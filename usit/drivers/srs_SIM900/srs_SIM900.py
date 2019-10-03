@@ -14,6 +14,8 @@ import time
 
 class Device():
     
+    categories = ['Electrical frame']
+    #['Oscilloscope','Optical source','Spectrum analyser','Motion controller','Function generator','Power meter','Electrical source','Optical frame', 'Electrical frame','Optical shutter','PID controller']
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
     def __init__(self, **kwargs):
@@ -91,6 +93,9 @@ class Device_GPIB(Device):
 
 
 class Module_SIM960():
+    
+    categories = ['PID controller']
+    
     def __init__(self,dev,slot):
         self.slot = int(slot)
         self.dev  = dev

@@ -12,6 +12,9 @@ from numpy import savetxt,linspace
 import pandas
 
 class Device():
+    
+    categories = ['Spectrum analyser']
+    
     def __init__(self):
         
         for i in ['A','B','C','D','E','F','G']:
