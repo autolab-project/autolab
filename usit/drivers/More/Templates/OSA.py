@@ -13,6 +13,10 @@ import pandas
 
 
 class Device():
+    
+    categories = ['spectrum analyser']
+    #['oscilloscope','optical source','spectrum analyser','motion controller','function generator','power meter','electrical source','frame','optical shutter','PID controller']
+    
     def __init__(self,nb_traces=6):
               
         self.nb_traces = int(nb_traces)
@@ -68,6 +72,24 @@ class Device_VXI11(Device):
         return(self.read())
     def close(self):
         self.inst.close()
+        
+class Device_GPIB(Device):
+    def __init__(self,address=2,board_index=0,**kwargs):
+        import Gpib
+        
+        self.inst = Gpib.Gpib(int(address),int(board_index))
+        Device.__init__(self)
+    
+    def query(self,query):
+        self.write(query)
+        return self.read()
+    def write(self,command):
+        self.inst.write(command)
+    def read(self):
+        return self.inst.read()
+    def close(self):
+        """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
+        Gpib.gpib.close(self.inst.id)
 ############################## Connections classes ##############################
 #################################################################################
 

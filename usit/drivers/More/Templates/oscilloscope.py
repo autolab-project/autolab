@@ -6,12 +6,16 @@ Supported instruments (identified):
 - 
 """
 
-import sys,os
+import os
 import time
 from numpy import frombuffer,int8
 
 
 class Device():
+
+    categories = ['oscilloscope']
+    #['oscilloscope','optical source','spectrum analyser','motion controller','function generator','power meter','electrical source','frame','optical shutter','PID controller']
+
     def __init__(self,nb_channels=4):
               
         self.nb_channels = int(nb_channels)
@@ -25,7 +29,7 @@ class Device():
         """Get all channels or the ones specified"""
         previous_trigger_state = self.get_previous_trigger_state()
         self.stop()
-        self.is_stopped()
+        while not self.is_stopped():time.sleep(0.05)
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels():
             if not(getattr(self,f'channel{i}').is_active()): continue
@@ -45,9 +49,7 @@ class Device():
     def stop(self):
         pass
     def is_stopped(self):
-        while self.query('TRMD?') != 'TRMD STOP':    # typical example
-            time.sleep(0.05)
-        return True
+        return 'STOP' in self.query('TRMD?')            # typical example when response from scope is "TRMD STOP"
     def get_previous_trigger_state(self):
         return str(previous_trigger_state)
         
@@ -168,6 +170,7 @@ class Channel():
 if __name__ == '__main__':
     from optparse import OptionParser
     import inspect
+    import sys
     
     usage = """usage: %prog [options] arg
 
