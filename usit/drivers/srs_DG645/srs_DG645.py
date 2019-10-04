@@ -15,9 +15,10 @@ class Driver():
         
         self.conv = ['T0','T1','A','B','C','D','E','F','G','H']
         self.conv2 = ['T0','AB','CD','EF','GH']
+        self.delay_channels = ''
         
         for i in self.conv2:
-            setattr(self,f'channel{i}',Channel(self,i))
+            setattr(self,f'output{i}',Output(self,i))
     
         
     def set_frequency(self,frequency):
@@ -25,13 +26,19 @@ class Driver():
     def get_frequency(self):
         return self.query('TRAT?')
     
-    def ad_delay(self,channel, delay):
-        if len(channel) == 2:
-            ch1 = str(self.conv.index(channel[0]))
-            ch2 = str(self.conv.index(channel[1]))
-        else:
+    def set_delay_channels(self,channels):
+        assert len(channels)==1 or len(channels)==2, f"Argument channels must be a str of length either 1 or 2 in {self.conv[2:]}"
+        self.delay_channels = channels
+        
+    def set_delay(self, delay,channels=None):
+        if channels is None: channels = self.delay_channels
+        assert len(channels)==1 or len(channels)==2, "You may want to set_delay_channels first"
+        if len(channels) == 2:
+            ch1 = str(self.conv.index(channels[0]))
+            ch2 = str(self.conv.index(channels[1]))
+        elif len(channels) == 1:
             ch1 = '0'
-            ch2 = str(self.conv.index(channel))
+            ch2 = str(self.conv.index(channels))
         self.write(f'DLAY{ch2},{ch1},{delay}')
 
 #################################################################################
@@ -58,25 +65,26 @@ class Driver_VXI11(Driver):
 #################################################################################
 
 
-class Channel():
-    def __init__(self,dev,channel):
-        self.channel = str(channel)
+class Output():
+    def __init__(self,dev,output):
+        self.output = str(output)
         self.dev     = dev
     
     def set_amplitude(self,amplitude):
-        self.dev.write(f'LAMP{self.dev.conv2.index(self.channel)},{amplitude}')
+        self.dev.write(f'LAMP{self.dev.conv2.index(self.output)},{amplitude}')
     def get_amplitude(self):
-        return float(self.dev.query(f'LAMP?{self.dev.conv2.index(self.channel)}'))
+        return float(self.dev.query(f'LAMP?{self.dev.conv2.index(self.output)}'))
     def set_polarity(self,polarity):
-        self.dev.write(f'LPOL{self.dev.conv2.index(self.channel)},{polarity}')
+        self.dev.write(f'LPOL{self.dev.conv2.index(self.output)},{polarity}')
     def get_polarity(self):
-        return float(self.dev.query(f'LPOL?{self.dev.conv2.index(self.channel)}'))
+        return float(self.dev.query(f'LPOL?{self.dev.conv2.index(self.output)}'))
     def set_offset(self,offset):
-        self.dev.write(f'LOFF{self.dev.conv2.index(self.channel)},{offset}')
+        self.dev.write(f'LOFF{self.dev.conv2.index(self.output)},{offset}')
     def get_offset(self):
-        return float(self.dev.query(f'LOFF?{self.dev.conv2.index(self.channel)}'))
+        return float(self.dev.query(f'LOFF?{self.dev.conv2.index(self.output)}'))
     
-
+    def set_delay(self,delay):
+        self.dev.set_delay(delay,channels=self.output)
             
     
 
@@ -109,7 +117,7 @@ if __name__ == '__main__':
     chan = []
     conv = ['T0','T1','A','B','C','D','E','F','G','H']
     conv2 = ['T0','AB','CD','EF','GH']
-    # Errors for options that do not require a channel input
+    # Errors for options that do not require a output input
     # command, query, display, amplitude, freq, polarity, level
 
     if (options.amplitude) or (options.delay) or (options.pol) or (options.offset):
@@ -118,18 +126,18 @@ if __name__ == '__main__':
             sys.exit()
         if (options.pol) or (options.amplitude) or (options.offset):
             if (len(args[0])==1):
-                print('\nYou must provide a channel')
+                print('\nYou must provide a output')
                 sys.exit()
         if (args[0] in conv) or (args[0] in conv2):
             chan = args[0].upper() 
         else:       
-            print('\nYou must provide a channel or edge')
+            print('\nYou must provide a output or edge')
             sys.exit()
     if (options.display) and (len(args) !=0):
         if (args[0] in conv) or (args[0] in conv2):
             chan = args[0].upper() 
         else:       
-            print('\nYou must provide a channel or edge')
+            print('\nYou must provide a output or edge')
             sys.exit()
     
     
