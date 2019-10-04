@@ -7,7 +7,7 @@ Created on Thu Jun 13 10:25:49 2019
 
 
 from . import index
-from usit import drivers
+from autolab import drivers
 
 import threading
 import inspect

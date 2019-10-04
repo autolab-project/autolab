@@ -25,8 +25,13 @@ setup(
     packages=find_packages(),
     classifiers=["Programming Language :: Python :: 3",
                  "Operating System :: OS Independent"],
-    scripts=['autolab/scripts/autolab','autolab/scripts/autolab-device','autolab/scripts/autolab-driver'],
-    install_requires=['pyqt5'],
+    install_requires=[],
+    entry_points={
+        'console_scripts': [
+            'autolab = autolab.scripts.autolab:main',
+            'autolab-device = autolab.scripts.autolab_device:main',
+            'autolab-drivers = autolab.scripts.autolab_driver:main',
+        ]},
     include_package_data=True,
     package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:
     keywords = ['scanning','interface','automation','scientific','laboratory','devices','experiments','measures','interface','gui','scan']
