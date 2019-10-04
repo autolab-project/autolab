@@ -14,7 +14,7 @@ def check():
     # LOCAL FOLDER
     if os.path.exists(paths.USER_FOLDER_PATH) is False :
         os.mkdir(paths.USER_FOLDER_PATH)
-        print(f'INFORMATION: The local folder USIT has been created : {paths.USER_FOLDER_PATH}')
+        print(f'INFORMATION: The local folder AUTOLAB has been created : {paths.USER_FOLDER_PATH}')
     
     # LOCAL CONFIG
     if os.path.exists(paths.DEVICES_INDEX_PATH) is False :

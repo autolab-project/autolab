@@ -4,7 +4,7 @@ Created on Tue Oct  1 17:38:15 2019
 
 @author: qchat
 """
-import usit
+from . import paths
 import os 
 import inspect
 import importlib
@@ -16,7 +16,7 @@ class DriverWrapper() :
         self._name = name
         
         # Loading preparation
-        driver_path = os.path.join(usit.core.DRIVERS_PATH,name,f'{name}.py')
+        driver_path = os.path.join(paths.DRIVERS_PATH,name,f'{name}.py')
         spec = importlib.util.spec_from_file_location(name, driver_path)
         lib = importlib.util.module_from_spec(spec)
         
@@ -139,9 +139,9 @@ class DriverManager() :
         return self.list() + ['list','help']
     
     def list(self):
-        return [name for name in os.listdir(usit.core.DRIVERS_PATH) 
-                if os.path.isdir(os.path.join(usit.core.DRIVERS_PATH,name)) and
-                 f'{name}.py' in os.listdir(os.path.join(usit.core.DRIVERS_PATH,name))]
+        return [name for name in os.listdir(paths.DRIVERS_PATH) 
+                if os.path.isdir(os.path.join(paths.DRIVERS_PATH,name)) and
+                 f'{name}.py' in os.listdir(os.path.join(paths.DRIVERS_PATH,name))]
         
     def help(self):
         d = {}
