@@ -5,4 +5,4 @@ The purpose of this package it to provide easy and efficient tools to deal with 
 
 Created by Quentin Chateiller, Python drivers from Quentin Chateiller and Bruno Garbin, for the C2N-CNRS (Center for Nanosciences and Nanotechnologies, Palaiseau, France) ToniQ team.
 
-Please visit https://usit.readthedocs.io/ for the full documentation of this package
+Please visit https://autolab.readthedocs.io/ for the full documentation of this package
