@@ -7,7 +7,7 @@ quentin.chateiller@c2n.upsaclay.fr
 
 """
 
-import usit
+import autolab
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 import os 
 from ..scanning.main import Scanner
@@ -26,8 +26,9 @@ class ControlCenter(QtWidgets.QMainWindow):
         uic.loadUi(ui_path,self)
                 
         # Window configuration
-        self.setWindowTitle("USIt (Universal Scanning Interface) - Control Center")
+        self.setWindowTitle("AUTOLAB - Control Panel")
         self.setFocus()
+        self.activateWindow()
         
         # Tree widget configuration
         self.tree.setHeaderLabels(['Objects','Type','Actions','Values',''])
@@ -54,23 +55,23 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         
         reportAction = self.menuBar.addAction('Report bugs / suggestions')
-        reportAction.triggered.connect(usit.report)
+        reportAction.triggered.connect(autolab.report)
         reportAction.setToolTip('Open the issue webpage of this project on GitHub')  
         
         helpAction = self.menuBar.addAction('Help')
-        helpAction.triggered.connect(usit.help)
+        helpAction.triggered.connect(autolab.help)
         helpAction.setToolTip('Open the documentation on Read The Docs website')  
         
     def initialize(self):
         
         """ This function will create the first items in the tree, but will 
-        associate only the ones already loaded in usit """
+        associate only the ones already loaded in autolab """
         
-        for devName in usit.devices.list() :
+        for devName in autolab.devices.list() :
             item = TreeWidgetItemModule(self.tree,devName,self)
             for i in range(5) :
                 item.setBackground(i, QtGui.QColor('#9EB7F5')) #vert
-            if devName in usit.devices.get_loaded_devices() :
+            if devName in autolab.devices.get_loaded_devices() :
                 self.associate(item)
         
         
@@ -124,7 +125,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         # Try to get / instantiated the device
         check = False
         try : 
-            module = getattr(usit.devices,item.name)
+            module = getattr(autolab.devices,item.name)
             check = True
         except Exception as e : 
             self.setStatus(f'An error occured when loading device {item.name} : {str(e)}')

@@ -5,7 +5,7 @@ Created on Sun Sep 29 18:16:09 2019
 @author: qchat
 """
 from PyQt5 import QtWidgets
-import usit
+import autolab
 import configparser
 import datetime
 import os
@@ -302,12 +302,12 @@ class ConfigManager :
         """ This function prompts the user for a configuration file path, 
         and export the current scan configuration in it """
 
-        path = QtWidgets.QFileDialog.getSaveFileName(self.gui, "Export USIT configuration file", 
-                                                     os.path.join(usit.core.USER_LAST_CUSTOM_FOLDER_PATH,'config.conf'), 
-                                                     "USIT configuration file (*.conf)")[0]
+        path = QtWidgets.QFileDialog.getSaveFileName(self.gui, "Export AUTOLAB configuration file", 
+                                                     os.path.join(autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH,'config.conf'), 
+                                                     "AUTOLAB configuration file (*.conf)")[0]
 
         if path != '' :
-            usit.core.USER_LAST_CUSTOM_FOLDER_PATH = path
+            autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH = path
             
             try : 
                 self.export(path)
@@ -324,8 +324,8 @@ class ConfigManager :
         """ This function exports the curr scan configuration in the provided path """
         
         configPars = configparser.ConfigParser()
-        configPars['usit'] = {'version':usit.__version__,
-                              'timestamp':str(datetime.datetime.now())}
+        configPars['autolab'] = {'version':autolab.__version__,
+                                  'timestamp':str(datetime.datetime.now())}
                 
         configPars['parameter'] = {}
         if self.config['parameter']['element'] is not None :
@@ -359,9 +359,9 @@ class ConfigManager :
         """ This function prompts the user for a configuration file path, 
         and import the current scan configuration from it """
         
-        path = QtWidgets.QFileDialog.getOpenFileName(self.gui, "Import USIT configuration file", 
-                                                     usit.core.USER_LAST_CUSTOM_FOLDER_PATH,
-                                                     "USIT configuration file (*.conf)")[0]
+        path = QtWidgets.QFileDialog.getOpenFileName(self.gui, "Import AUTOLAB configuration file", 
+                                                     autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH,
+                                                     "AUTOLAB configuration file (*.conf)")[0]
         if path != '' :
             
             configPars = configparser.ConfigParser()
@@ -373,7 +373,7 @@ class ConfigManager :
                 config = {}
                 
                 if 'address' in configPars['parameter'] :
-                    element = usit.devices.getElementByAddress(configPars['parameter']['address'])
+                    element = autolab.devices.getElementByAddress(configPars['parameter']['address'])
                     assert element is not None, f"Parameter {configPars['parameter']['address']} not found."
                     assert 'name' in configPars['parameter'], f"Parameter name not found."
                     config['parameter'] = {'element':element,'name':configPars['parameter']['name']}
@@ -406,7 +406,7 @@ class ConfigManager :
                         
                         assert f'{i}_address' in configPars['recipe'], f"Missing address in step {i} ({name})."
                         address = configPars['recipe'][f'{i}_address']
-                        element = usit.devices.getElementByAddress(address)
+                        element = autolab.devices.getElementByAddress(address)
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
                         

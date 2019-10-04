@@ -1,37 +1,207 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep 23 15:52:04 2019
+Created on Thu Jun 13 10:25:49 2019
 
-@author: qchat
+@author: quentin.chateiller
 """
+
+
+from . import index
+from usit import drivers
+
 import threading
 import inspect
 import numpy as np
 import pandas as pd
 
 
-def getAddress(item):
-    
-    """ Returns the address of the given element """
-
-    address = [item.name]
-    parent = item._parent
-    while parent is not None : 
-        address.append(parent.name)
-        parent = parent._parent
-    return '.'.join(address[::-1])
+def emphasize(txt):
+    return '-'*len(txt) + '\n' + txt + '\n' + '-'*len(txt)
     
 
 
-class Module():
+
+
+class DeviceManager() :
     
-    _elementType = 'Module'
-    getAddress = getAddress
+    """ This class manage the different devices """
+
     
+    def __init__(self):
+        
+        self._dev = {}
+        self._index = index.load()
+        
+        # Initial creation of raw Device objects 
+        for name in self._index.sections() :
+            self._dev[name] = Device(self,name)
+            
+            
+    
+    def list(self):
+        
+        """ Returns the list of available devices """
+        
+        return list(self._dev.keys())
+    
+    
+
+    def get_loaded_devices(self):
+        
+        """ Returns the list of the devices already loaded """
+        
+        return [ name for name in self.list() if self._isLoaded(name) ]
+    
+    
+    
+    def _isLoaded(self,name):
+        
+        """ Test is a device is already loaded """
+        
+        return self._dev[name].instance is not None
+    
+    
+    
+    def getElementByAddress(self,address):
+        
+        """ Return the element located at the provided address """
+        
+        address = address.split('.')
+        
+        try : 
+            element = getattr(self,address[0])
+            for addressPart in address[1:] :
+                element = getattr(element,addressPart)
+            return element
+        except :
+            pass
+            
+            
+        
+        
+        
+    
+    # REPRESENTATION
+    # =========================================================================
+    
+    def __dir__(self):
+        
+        """ For auto-completion """
+        
+        return self.list() + ['list', 'close_all', 'help']
+    
+    
+    
+    def help(self):
+        
+        """ This function prints informations for the user about the availables devices """
+
+        txt = '\n'+emphasize('Available devices:')+'\n'
+        for name in self.list():
+            txt += f" - {name}"
+            if self._isLoaded(name) : txt += ' [loaded]'
+            txt += "\n"
+        print(txt)
+    
+    
+    
+    
+    # GET AND CLOSE DEVICE
+    # =========================================================================
+
+    def __getattr__(self,name):
+        
+        assert name in self.list(), f"No device with name {name} in the device index"
+        if self._isLoaded(name) is False :
+            self._load(name)
+        return self._dev[name]
+       
+        
+    
+    def close_all(self):
+        
+        """ This function close the connection of all the loaded devices """
+        
+        for devName in self.get_loaded_devices() :
+            self._dev[devName].close()
+        
+        
+        
+    def _load(self,name):
+        
+        """ This function tries to load the devices with the following name """
+        
+        # Load corresponding index
+        index = self._index[name]
+        
+        # Driver provided
+        assert 'driver' in index.keys(), f"Device index: Missing driver for device '{name}'"
+        driverName = index['driver']
+        
+        # Driver existence
+        assert driverName in drivers.list()
+        driver = getattr(drivers,driverName)
+            
+        # Check if Driver class exists in the driver
+        assert 'connection' in index.keys(), f"Device index: Missing connection type for device '{name}'"
+        connection = index['connection']
+        assert connection in driver._getConnectionNames(),f"Device index: Wrong connection type for device '{name}'"
+        driver._getConnectionClass(connection)
+        driverClass = driver._getConnectionClass(connection)
+
+        # kwargs creation
+        kwargs = dict(index)
+        del kwargs['driver']
+        if 'connection' in kwargs.keys() : del kwargs['connection']
+        
+        # Instantiation of the driver
+        instance = driverClass(**kwargs)
+        
+        # Driver modeling
+        self._dev[name].load(instance)
+        
+        
+        
+        
+        
+    def _reinit(self,name):
+        self._dev[name] = Device(self,name)
+        self._load(name)
+        
+
+
+
+
+class Element() :
+
+    def __init__(self,parent,elementType,name):   
+
+        self.name = name
+        self._elementType = elementType
+        self._parent = parent
+        
+    def getAddress(self):
+    
+        """ Returns the address of the given element """
+    
+        address = [self.name]
+        parentElement = self._parent
+        while parentElement is not None : 
+            address.append(parentElement.name)
+            parentElement = parentElement._parent
+        return '.'.join(address[::-1])
+
+
+
+
+
+
+class Module(Element):
+
     def __init__(self,parent):
         
-        self.name = None
-        self._parent = parent   
+        Element.__init__(self,parent,'Module',None)
+        
         self.instance = None
         self._mod = {}
         self._var = {}
@@ -175,9 +345,9 @@ class Module():
         """ This function prints informations for the user about the availables 
         submodules, variables and action attached to the current module """
         
-        display = f'Module {self.name}\n'
-        display += '-'*(len(display)-1)+'\n'
+        display ='\n'+emphasize(f'Module {self.name}')+'\n'
         
+        display += '\n'
         devList = self.getModuleList()
         if len(devList)>0 :
             display+='Submodule(s):\n'
@@ -185,6 +355,7 @@ class Module():
                 display+=f' - {key}\n'
         else : display+='No submodule(s)\n'
         
+        display += '\n'
         varList = self.getVariableList()
         if len(varList)>0 :
             display+='Variable(s):\n'
@@ -192,6 +363,7 @@ class Module():
                 display+=f' - {key}\n'
         else : display+='No variable(s)\n'
         
+        display += '\n'
         actList = self.getActionList()
         if len(actList)>0 :
             display+='Action(s):\n'
@@ -199,7 +371,10 @@ class Module():
                 display+=f' - {key}\n'
         else : display+='No action(s)\n'
         
-        if self._help is not None : display+=f'Help: {self._help}\n'
+        
+        if self._help is not None : 
+            display += '\n'
+            display+=f'Help: {self._help}\n'
         
         print(display)
         
@@ -209,7 +384,7 @@ class Module():
         
         """ For auto-completion """
         
-        return self.getModuleList() + self.getVariableList() + self.getActionList() + ['info','instance']
+        return self.getModuleList() + self.getVariableList() + self.getActionList() + ['help','instance']
     
     
     
@@ -227,10 +402,6 @@ class Module():
 
 
         
-        
-        
-
-
 
 class Device(Module):
     
@@ -266,7 +437,7 @@ class Device(Module):
         
         """ For auto-completion """
         
-        return  self.getModuleList() + self.getVariableList() + self.getActionList() + ['reload','close','info']
+        return  self.getModuleList() + self.getVariableList() + self.getActionList() + ['reload','close','help']
  
         
     
@@ -275,15 +446,11 @@ class Device(Module):
 
         
         
-class Variable:
-    
-    _elementType = 'Variable'
-    getAddress = getAddress
+class Variable(Element):
     
     def __init__(self,parent,config):
         
-        self._parent = parent
-        self.name = config['name']
+        Element.__init__(self,parent,'Variable',config['name'])
         
         # Type
         assert 'type' in config.keys(), f"Variable {self.getAddress()}: Missing variable type"
@@ -329,22 +496,31 @@ class Variable:
         
         
         
-    def save(self,path):
+    def save(self,path,value=None):
         
         """ This function measure the variable and saves its value in the provided path """
         
         assert self.readable, f"The variable {self.name} is not configured to be measurable"
-        result = self()
-        save(self,result,path)
+        
+        if value is None : value = self() # New measure if value not provided
+        
+        if self.type in [int,float,bool,str]:
+            with open(path,'w') as f : f.write(str(value))
+        elif self.type == bytes :
+            with open(path,'wb') as f : f.write(value)
+        elif self.type == np.ndarray :
+            np.savetxt(path,value)
+        elif self.type == pd.DataFrame :
+            value.to_csv(path,index=False)
+        else :
+            raise ValueError("The variable {self.name} of type {self.type} cannot be saved.")  
         
         
         
     def help(self):
         
         """ This function prints informations for the user about the current variable """
-        
-        display = f'Variable {self.name}\n'
-        display += '-'*(len(display)-1)+'\n'
+        display ='\n'+emphasize(f'Variable {self.name}')+'\n'
         if self.readable is True : display+=f'Readable ({self.readFunction.__name__})\n'
         else : display+=f'Not readable\n'
         if self.writable is True : display+=f'Writable ({self.writeFunction.__name__})\n'
@@ -381,15 +557,11 @@ class Variable:
     
     
         
-class Action:
-    
-    _elementType = 'Action'
-    getAddress = getAddress
+class Action(Element):
     
     def __init__(self,parent,config):
         
-        self._parent = parent
-        self.name = config['name']
+        Element.__init__(self,parent,'Action',config['name'])
         
         # Do function
         assert 'do' in config.keys(), f"Action {self.getAddress()}: Missing 'do' function"
@@ -407,8 +579,7 @@ class Action:
         
         """ This function prints informations for the user about the current variable """
         
-        display = f'Action {self.name}\n'        
-        display += '-'*(len(display)-1)+'\n'
+        display ='\n'+emphasize(f'Variable {self.name}')+'\n'
         display+=f'Function : {self.function.__name__}\n'
         if self._help is not None : display+=f'Help: {self._help}\n'
         print(display)
@@ -429,19 +600,7 @@ class Action:
         
         
         
-def save(variable,result,path):
-    
-    """ This function saves the value of a variable in the provided path """
-    
-    if variable.type in [int,float,bool,str]:
-        with open(path,'w') as f : f.write(str(result))
-    elif variable.type == bytes :
-        with open(path,'wb') as f : f.write(result)
-    elif variable.type == np.ndarray :
-        np.savetxt(path,result)
-    elif variable.type == pd.DataFrame :
-        result.to_csv(path,index=False)
-    else :
-        raise ValueError("The variable {variable.name} of type {variable.type} cannot be saved.")        
+      
         
         
+
