@@ -167,6 +167,7 @@ class DriverManager() :
             mess += '\n'
         
         print(mess)
+        return d
         
     def __getattr__(self,name):
         
