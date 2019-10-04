@@ -26,4 +26,4 @@ https://packaging.python.org/tutorials/packaging-projects/
 
 For testing on PyPiTest first : 
 python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-python3 -m pip install --index-url https://test.pypi.org/simple/ usit
+pip install --index-url https://test.pypi.org/simple/ usit
