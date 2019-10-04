@@ -5,7 +5,7 @@
 0) Install required packages to upload to pypi after : 
 python3 -m pip install --user --upgrade setuptools wheel twine
 
-1) Update the version number in the setup.py script
+1) Update the version number in the version.txt file
 
 2) Push your updates to GitHub. 
 Then on GitHub, create a release with the same version number

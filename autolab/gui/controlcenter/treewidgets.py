@@ -8,7 +8,7 @@ Created on Sun Sep 29 18:29:07 2019
 
 from PyQt5 import QtCore, QtWidgets
 from ..monitoring.main import Monitor
-import usit
+import autolab
 import os
 
 
@@ -127,7 +127,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         
         self.monitor = None
         
-        # Signal creation and associations in usit.devices instances         
+        # Signal creation and associations in autolab.devices instances         
         self.readSignal = ReadSignal()
         self.readSignal.signal.connect(self.writeGui)
         self.variable._readSignal = self.readSignal
@@ -288,10 +288,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def saveValue(self):
         
         path = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value", 
-                                        os.path.join(usit.core.USER_LAST_CUSTOM_FOLDER_PATH,f'{self.variable.name}.txt'), 
+                                        os.path.join(autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH,f'{self.variable.name}.txt'), 
                                         "Text file (*.txt)")[0]
         if path != '' :
-            usit.core.USER_LAST_CUSTOM_FOLDER_PATH = path
+            autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH = path
             try : 
                 self.variable.save(path)
                 self.gui.statusBar.showMessage(f"Value of {self.name} successfully read and save at {path}",5000)

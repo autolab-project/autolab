@@ -54,7 +54,7 @@ class DriverWrapper() :
         # Name and category if available
         submess = f'Driver "{self._name}"'
         if hasattr(self._module.Driver,'category') : submess += f' ({self._module.Driver.category})'
-        mess += submess+'\n'+'='*len(submess)+'\n\n'
+        mess += '='*len(submess)+'\n'+submess+'\n'+'='*len(submess)+'\n\n'
 
         
         # Connections types
@@ -158,16 +158,17 @@ class DriverManager() :
                 d[category].append(driver)
             except :
                 pass
+
+
         
         mess = '\n'
         for category in d.keys() :
-            mess += f'[{category}]\n'
-            for driver in d[category] :
-                mess += f' - {driver}\n'
-            mess += '\n'
+            mess += f'[{category.upper()}]\n'
+            mess += ", ".join([driver for driver in d[category]])+'\n\n'
         
-        print(mess)
-        return d
+        
+        print(mess[:-2])
+
         
     def __getattr__(self,name):
         

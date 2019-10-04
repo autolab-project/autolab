@@ -25,7 +25,7 @@ class Scanner(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
         uic.loadUi(ui_path,self)
-        self.setWindowTitle(f"Usit Scanner")
+        self.setWindowTitle(f"AUTOLAB Scanner")
         
         # Loading of the different centers
         self.configManager = ConfigManager(self)

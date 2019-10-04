@@ -8,7 +8,7 @@ Created on Sun Sep 29 18:10:31 2019
 import collections
 from queue import Queue
 from PyQt5 import QtCore,QtWidgets
-import usit
+import autolab
 from distutils.dir_util import copy_tree
 import os 
 import numpy as np
@@ -69,7 +69,7 @@ class DataManager :
             
             path = str(QtWidgets.QFileDialog.getExistingDirectory(self.gui, 
                                                               "Select Directory",
-                                                              usit.core.USER_LAST_CUSTOM_FOLDER_PATH))
+                                                              autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH))
      
             if path != '' :
                 self.gui.statusBar.showMessage(f'Saving data...',5000)
@@ -245,7 +245,7 @@ class Dataset():
                 folderPath = os.path.join(self.tempFolderPath,resultName)
                 if os.path.exists(folderPath) is False : os.mkdir(folderPath)
                 filePath = os.path.join(folderPath,f'{ID}.txt')
-                usit.core.devices.save(element,result,filePath)
+                element.save(filePath,value=result)
                 
             
         # Store data in the dataset's dataframe
