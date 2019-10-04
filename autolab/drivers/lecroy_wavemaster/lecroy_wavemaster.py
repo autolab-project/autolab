@@ -35,7 +35,7 @@ class Driver():
         """Get all channels or the ones specified"""
         previous_trigger_state = self.get_previous_trigger_state()    #1 WARNING previous trigger state in memory or returned
         self.stop()
-        self.is_stopped()
+        while not self.is_stopped(): time.sleep(0.05)
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels():
             if not(getattr(self,f'channel{i}').is_active()): continue
@@ -55,9 +55,7 @@ class Driver():
     def stop(self):
         self.inst.write("TRMD STOP")
     def is_stopped(self):
-        while self.query('TRMD?') != 'TRMD STOP':
-            time.sleep(0.05)
-        return True
+        return 'STOP' in self.query('TRMD?')
     def get_previous_trigger_state(self):
         return self.query('TRMD?')
         
