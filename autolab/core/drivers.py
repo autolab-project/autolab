@@ -4,7 +4,7 @@ Created on Tue Oct  1 17:38:15 2019
 
 @author: qchat
 """
-from . import paths
+from .paths import Paths
 import os 
 import inspect
 import importlib
@@ -16,6 +16,7 @@ class DriverWrapper() :
         self._name = name
         
         # Loading preparation
+        paths = Paths()
         driver_path = os.path.join(paths.DRIVERS_PATH,name,f'{name}.py')
         spec = importlib.util.spec_from_file_location(name, driver_path)
         lib = importlib.util.module_from_spec(spec)
@@ -139,6 +140,7 @@ class DriverManager() :
         return self.list() + ['list','help']
     
     def list(self):
+        paths = Paths()
         return [name for name in os.listdir(paths.DRIVERS_PATH) 
                 if os.path.isdir(os.path.join(paths.DRIVERS_PATH,name)) and
                  f'{name}.py' in os.listdir(os.path.join(paths.DRIVERS_PATH,name))]

@@ -13,7 +13,7 @@ import threading
 import inspect
 import numpy as np
 import pandas as pd
-from . import paths
+from .paths import Paths
 
 
 def emphasize(txt):
@@ -30,10 +30,10 @@ class DeviceManager() :
     
     def __init__(self):
         
-        path = paths.DEVICES_INDEX_PATH
-        
         self._dev = {}
-        self._index = index.load(path)
+        paths = Paths()
+        
+        self._index = index.load(paths)
         
         # Initial creation of raw Device objects 
         for name in self._index.sections() :
