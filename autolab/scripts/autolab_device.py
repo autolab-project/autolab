@@ -17,7 +17,7 @@ import os
 def main():
 
     # Parser configuration
-    parser = argparse.ArgumentParser(add_help=False)
+    parser = argparse.ArgumentParser()
     parser.add_argument('element', type=str, nargs=1, help='Address of the element to open' )
     parser.add_argument("-v", "--value", type=str, dest="value", default=None, help='Value to set')
     parser.add_argument("-p", "--path", type=str, dest="path", default=None, help='Path where to save data')
