@@ -7,9 +7,8 @@ Created on Sun Jul 21 16:02:59 2019
 
 import shutil
 import os 
-from . import paths
 
-def check():
+def check(paths):
 
     # LOCAL FOLDER
     if os.path.exists(paths.USER_FOLDER_PATH) is False :
