@@ -156,26 +156,26 @@
             
   <div class="section" id="introduction">
 <span id="id1"></span><h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<p>Autolab provides a set of drivers to communicate with several laboratory instruments. In this Python package, a physical instrument is fully described with a hierarchy of three particular <strong>Elements</strong>: the <strong>Modules</strong>, the <strong>Variables</strong> and the <strong>Actions</strong>.</p>
+<p>Autolab provides a set of drivers to communicate with several laboratory instruments. In this Python package, a physical instrument is fully described with a hierarchy of three particular <em>Elements</em>: the <em>Modules</em>, the <em>Variables</em> and the <em>Actions</em>.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>A <strong>Module</strong> is an <strong>Element</strong> that consists in a group of <strong>Variables</strong>, <strong>Actions</strong>, and sub-<strong>Modules</strong>.</p></li>
-<li><p>A <strong>Variable</strong> is an <strong>Element</strong> that refers to a physical quantity, whose the value can be either set and/or read from an instrument (wavelength of an optical source, position of a linear stage, optical power measured with a power meter, spectrum measured with a spectrometer…). Depending on the nature of the physical quantity, it can optionally have a unit.</p></li>
-<li><p>An <strong>Action</strong> is an <strong>Element</strong> that refers to a particular operation that can be performed by an instrument. (homing of a linear stage, the zeroing of a power meter, the acquisition of a spectrum with a spectrometer…)</p></li>
+<li><p>A <em>Module</em> is an <em>Element</em> that consists in a group of <em>Variables</em>, <em>Actions</em>, and sub-<em>Modules</em>.</p></li>
+<li><p>A <em>Variable</em> is an <em>Element</em> that refers to a physical quantity, whose the value can be either set and/or read from an instrument (wavelength of an optical source, position of a linear stage, optical power measured with a power meter, spectrum measured with a spectrometer…). Depending on the nature of the physical quantity, it can optionally have a unit.</p></li>
+<li><p>An <em>Action</em> is an <em>Element</em> that refers to a particular operation that can be performed by an instrument. (homing of a linear stage, the zeroing of a power meter, the acquisition of a spectrum with a spectrometer…)</p></li>
 </ul>
 </div></blockquote>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A <strong>Device</strong> is the top level <strong>Module</strong> of an instrument.</p>
+<p>A <em>Device</em> is the top level <em>Module</em> of an instrument.</p>
 </div>
-<p>A simple instrument is usually composed of only one <strong>Module</strong>, and a few <strong>Variables</strong> and <strong>Actions</strong> attached to it.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span> <span class="n">Tunics</span> <span class="p">(</span><span class="n">Module</span><span class="o">/</span><span class="n">Device</span><span class="p">)</span>
+<p>A simple instrument is usually composed of only one <em>Module</em>, and a few <em>Variables</em> and <em>Actions</em> attached to it.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">--</span> <span class="n">Tunics</span> <span class="p">(</span><span class="n">Module</span><span class="o">/</span><span class="n">Device</span><span class="p">)</span>
         <span class="o">|--</span> <span class="n">Wavelength</span> <span class="p">(</span><span class="n">Variable</span><span class="p">)</span>
         <span class="o">|--</span> <span class="n">Output</span> <span class="n">state</span> <span class="p">(</span><span class="n">Variable</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Some instruments are a bit more complexe, in the sense that they can host several differents modules. Their representation in Autolab generally consists in one top level <strong>Module</strong> (the frame) and several others sub-<strong>Modules</strong> containing the <strong>Variables</strong> and <strong>Actions</strong> of each associated modules.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span> <span class="n">XPS</span> <span class="n">Controller</span> <span class="p">(</span><span class="n">Module</span><span class="o">/</span><span class="n">Device</span><span class="p">)</span>
+<p>Some instruments are a bit more complex, in the sense that they can host several different modules. Their representation in Autolab generally consists in one top level <em>Module</em> (the frame) and several others sub-<em>Modules</em> containing the <em>Variables</em> and <em>Actions</em> of each associated modules.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">--</span> <span class="n">XPS</span> <span class="n">Controller</span> <span class="p">(</span><span class="n">Module</span><span class="o">/</span><span class="n">Device</span><span class="p">)</span>
         <span class="o">|--</span> <span class="n">ND</span> <span class="n">Filter</span> <span class="p">(</span><span class="n">Module</span><span class="p">)</span>
                 <span class="o">|--</span> <span class="n">Angle</span> <span class="p">(</span><span class="n">Variable</span><span class="p">)</span>
                 <span class="o">|--</span> <span class="n">Transmission</span> <span class="p">(</span><span class="n">Variable</span><span class="p">)</span>

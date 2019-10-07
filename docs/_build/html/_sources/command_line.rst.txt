@@ -23,7 +23,13 @@ To establish a connection to a given device, just call the corresponding attribu
 
 	>>> autolab.devices.myTunics
 	
-You can close an existing connection and reconnect to the instrument by calling the function ``reload`` of the device:
+You can close an existing connection to the instrument by calling the function ``close`` of the device:
+
+.. code-block:: python
+
+	>>> autolab.devices.myTunics.close()
+	
+You can reload (close and reconnect) the connection to the instrument by calling the function ``reload`` of the device:
 
 .. code-block:: python
 

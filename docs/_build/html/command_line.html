@@ -175,7 +175,11 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span>
 </pre></div>
 </div>
-<p>You can close an existing connection and reconnect to the instrument by calling the function <code class="docutils literal notranslate"><span class="pre">reload</span></code> of the device:</p>
+<p>You can close an existing connection to the instrument by calling the function <code class="docutils literal notranslate"><span class="pre">close</span></code> of the device:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can reload (close and reconnect) the connection to the instrument by calling the function <code class="docutils literal notranslate"><span class="pre">reload</span></code> of the device:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
 </pre></div>
 </div>

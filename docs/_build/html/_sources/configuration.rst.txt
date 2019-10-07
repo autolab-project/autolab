@@ -51,10 +51,10 @@ Here is an example of the block structure in the configuration file ``devices_in
 
 Configuration elements:
 
-	* **Device name** (mandatory): In squared brackets, indicate the local name of your instrument, as it will be displayed in Autolab.
-	* **Option "driver"** (mandatory): Name of the associated Autolab driver.
-	* **Option "connection"** (mandatory): Type of the connection use to communicate with your instrument (ex: VISA, TELNET,...). 
-	* **Other options**: Depending on the driver, you may have to provide an address (Visa or IP address,...), a communication port, a slot configuration, or others options.
+	* *Device name* (mandatory): In squared brackets, indicate the local name of your instrument, as it will be displayed in Autolab.
+	* *Option "driver"* (mandatory): Name of the associated Autolab driver.
+	* *Option "connection"* (mandatory): Type of the connection use to communicate with your instrument (ex: VISA, TELNET,...). 
+	* *Other options*: Depending on the driver, you may have to provide an address (Visa or IP address,...), a communication port, a slot configuration, or others options.
 
 To see a concrete example of the block you have to append in the configuration file, call the function ``help`` of the corresponding driver object ``autolab.drivers.<DRIVER_NAME>`` by replacing <DRIVER_NAME> with the name of the driver associated to your instrument. Here is an example for the Yenista Tunics light source:
 
