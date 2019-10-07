@@ -15,16 +15,16 @@ Autolab provides a set of drivers to communicate with several laboratory instrum
 	
 A simple instrument is usually composed of only one **Module**, and a few **Variables** and **Actions** attached to it.
 
-.. code-block::
+.. code-block:: python
 
 	-- Tunics (Module/Device)
 		|-- Wavelength (Variable)
 		|-- Output state (Variable)
 	
 
-Some instruments are a bit more complexe, in the sense that they can host several differents modules. Their representation in Autolab generally consists in one top level **Module** (the frame) and several others sub-**Modules** containing the **Variables** and **Actions** of each associated modules.
+Some instruments are a bit more complex, in the sense that they can host several different modules. Their representation in Autolab generally consists in one top level **Module** (the frame) and several others sub-**Modules** containing the **Variables** and **Actions** of each associated modules.
 
-.. code-block::
+.. code-block:: python
 
 	-- XPS Controller (Module/Device)
 		|-- ND Filter (Module)
