@@ -8,7 +8,7 @@ Created on Fri Sep 20 17:11:57 2019
 import webbrowser
 
 def report():
-    webbrowser.open('https://github.com/qcha41/usit/issues')
+    webbrowser.open('https://github.com/qcha41/autolab/issues')
     
 def help():
-    webbrowser.open('https://usit.readthedocs.io')
+    webbrowser.open('https://autolab.readthedocs.io')
