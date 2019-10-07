@@ -6,6 +6,11 @@ Created on Fri May 17 15:04:04 2019
 """
 
 import argparse
-
+import os
 # Pas d'import autolab ici, sinon ca execute tous les __init__ sur le chemin
+
+from ..core import paths
+#os.path.dirname(__file__)
+
+
     
