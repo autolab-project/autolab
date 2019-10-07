@@ -35,5 +35,5 @@ from .core.recorder import Recorder, Recorder_V2
 # GUI
 from .gui import gui
 
-raise ValueError()
+#raise ValueError()
     
