@@ -17,7 +17,7 @@ python3 setup.py sdist bdist_wheel
 4) Upload to Pypi (WARNING, BE SURE OF WHAT YOU DO, YOU CANNOT REUPLOAD THE SAME VERSION)
 python3 -m twine upload dist/*
 
-5) Delete the dist/* folder
+5) Delete the dist/, autolab.egg-info/ and build/   folders
 
 Theses guidelines are a summary of this tutorial :
 https://packaging.python.org/tutorials/packaging-projects/
