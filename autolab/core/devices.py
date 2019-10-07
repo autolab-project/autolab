@@ -146,7 +146,6 @@ class DeviceManager() :
         assert 'connection' in index.keys(), f"Device index: Missing connection type for device '{name}'"
         connection = index['connection']
         assert connection in driver._getConnectionNames(),f"Device index: Wrong connection type for device '{name}'"
-        driver._getConnectionClass(connection)
         driverClass = driver._getConnectionClass(connection)
 
         # kwargs creation
