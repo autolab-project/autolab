@@ -89,6 +89,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Device configuration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#driver-availability">Driver availability</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#autolab-configuration-file">Autolab configuration file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#check-your-configuration">Check your configuration</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command_line_advanced.html">Advanced operation</a></li>
@@ -188,8 +189,8 @@
 <p class="admonition-title">Warning</p>
 <p>Do not modify the location and the name of this local folder and of the configuration file.</p>
 </div>
-<p>The configuration of a new device in Autolab simply consists in adding a small block of informations in the configuration file. This block contains a header that indicates the local name of the instrument (as it will be displayed in Autolab), and several options that indicates its driver name, its connection informations (connection type, address, port,…) and optionally its module configuration. These options are passed as arguments when the driver is instantiated.</p>
-<p>Example of the structure of a block in the configuration file <code class="docutils literal notranslate"><span class="pre">devices_index.ini</span></code>:</p>
+<p>The configuration of a new device in Autolab simply consists in adding a small block of informations in the configuration file. This block contains a header that indicates the local name of the instrument (as it will be displayed in Autolab), and several options that indicates its driver name, its connection informations and optionally its module configuration. These options are passed as arguments when the driver is instantiated.</p>
+<p>Here is an example of the block structure in the configuration file <code class="docutils literal notranslate"><span class="pre">devices_index.ini</span></code> :</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="o">&lt;</span><span class="n">LOCAL_NAME_OF_YOUR_DEVICE</span><span class="o">&gt;</span><span class="p">]</span>
 <span class="n">driver</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">DRIVER_NAME</span><span class="o">&gt;</span>
 <span class="n">connection</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">CONNECTION_TYPE</span><span class="o">&gt;</span>
@@ -197,11 +198,46 @@
 <span class="n">slot1</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">MODULE_NAME</span><span class="o">&gt;</span><span class="p">,</span><span class="o">&lt;</span><span class="n">SLOT_NAME</span><span class="o">&gt;</span>
 </pre></div>
 </div>
-<p>To see a concrete example of the block you have to add in the configuration file to use your instrument, call the function <code class="docutils literal notranslate"><span class="pre">help</span></code> of the driver object <code class="docutils literal notranslate"><span class="pre">autolab.drivers.&lt;DRIVER_NAME&gt;</span></code> by replacing &lt;DRIVER_NAME&gt; with the name of the driver associated to your instrument.</p>
-<p>Example for the Yenista Tunics light source:</p>
+<p>Configuration elements:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>Device name</strong> (mandatory): In squared brackets, indicate the local name of your instrument, as it will be displayed in Autolab.</p></li>
+<li><p><strong>Option “driver”</strong> (mandatory): Name of the associated Autolab driver.</p></li>
+<li><p><strong>Option “connection”</strong> (mandatory): Type of the connection use to communicate with your instrument (ex: VISA, TELNET,…).</p></li>
+<li><p><strong>Other options</strong>: Depending on the driver, you may have to provide an address (Visa or IP address,…), a communication port, a slot configuration, or others options.</p></li>
+</ul>
+</div></blockquote>
+<p>To see a concrete example of the block you have to append in the configuration file, call the function <code class="docutils literal notranslate"><span class="pre">help</span></code> of the corresponding driver object <code class="docutils literal notranslate"><span class="pre">autolab.drivers.&lt;DRIVER_NAME&gt;</span></code> by replacing &lt;DRIVER_NAME&gt; with the name of the driver associated to your instrument. Here is an example for the Yenista Tunics light source:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">drivers</span><span class="o">.</span><span class="n">yenista_tunics</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
+
+<span class="go">========================================</span>
+<span class="go">Driver &quot;yenista_tunics&quot; (Optical source)</span>
+<span class="go">========================================</span>
+
+<span class="go">Available connection(s):</span>
+<span class="go"> - VISA</span>
+
+<span class="go">Configuration example(s) for devices_index.ini:</span>
+
+<span class="go">[myDeviceName]</span>
+<span class="go">driver = yenista_tunics</span>
+<span class="go">connection = VISA</span>
+<span class="go">address = GPIB0::2::INSTR</span>
 </pre></div>
 </div>
+<p>You can then copy and paste this exemple to the configuration file <code class="docutils literal notranslate"><span class="pre">devices_index.ini</span></code>, and customize the value of the options that suits your instrument.</p>
+</div>
+<div class="section" id="check-your-configuration">
+<h2>Check your configuration<a class="headerlink" href="#check-your-configuration" title="Permalink to this headline">¶</a></h2>
+<p>To check your new configuration file, start a new Python shell and call the function <code class="docutils literal notranslate"><span class="pre">help</span></code> of the <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code> object. You should see a new line with the name of your instrument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now, try to instantiate the device by accessing the its attribute in <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code>. Here is an example for the Yenista Tunics light source, named <code class="docutils literal notranslate"><span class="pre">myYenista</span></code> in the configuration file:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myYenista</span>
+</pre></div>
+</div>
+<p>If this doesn’t raise any error, you are ready to use your new device in Autolab ! See sections <a class="reference internal" href="command_line.html#commandline"><span class="std std-ref">Command-line operation</span></a> and <a class="reference internal" href="gui/index.html#gui"><span class="std std-ref">Graphical User Interface (GUI)</span></a> to continue.</p>
 </div>
 </div>
 
