@@ -1,2 +1,4 @@
+.. _monitoring:
+
 Monitoring
 ==========
