@@ -88,10 +88,10 @@ To check your new configuration file, start a new Python shell and call the func
 
 	>>> autolab.devices.help()
 	
-Now, try to instantiate the device by accessing the its attribute in ``autolab.devices``. Here is an example for the Yenista Tunics light source, named ``myYenista`` in the configuration file:
+Now, try to instantiate a connection to the device by accessing the its attribute in ``autolab.devices``. Here is an example for the Yenista Tunics light source, named ``myTunics`` in the configuration file:
 
 .. code-block:: python
 
-	>>> autolab.devices.myYenista
+	>>> autolab.devices.myTunics
 	
 If this doesn't raise any error, you are ready to use your new device in Autolab ! See sections :ref:`commandline` and :ref:`gui` to continue.

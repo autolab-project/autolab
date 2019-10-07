@@ -86,6 +86,8 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Command-line operation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#device-architecture">Device architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#actions">Actions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#help-and-bugs-suggestions-report">Help and bugs/suggestions report</a></li>
 </ul>
 </li>
@@ -169,15 +171,51 @@
 </pre></div>
 </div>
 <p>To configure a new device on your system, see the section <a class="reference internal" href="configuration.html#configuration"><span class="std std-ref">Device configuration</span></a>.</p>
+<p>To establish a connection to a given device, just call the corresponding attribute name in <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span>
+</pre></div>
+</div>
+<p>You can close an existing connection and reconnect to the instrument by calling the function <code class="docutils literal notranslate"><span class="pre">reload</span></code> of the device:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+</pre></div>
+</div>
 <div class="section" id="device-architecture">
 <h2>Device architecture<a class="headerlink" href="#device-architecture" title="Permalink to this headline">¶</a></h2>
 <p>As explained in the section <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">Introduction</span></a>, a device is represented in Autolab by a hierarchy of three <strong>Elements</strong>: the <strong>Modules</strong>, the <strong>Variables</strong> and the <strong>Actions</strong>.</p>
-<p>You can retrieve this hierarchy in the object <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code>, where you can navigate between these <strong>Elements</strong> directly with relative attributes. For instance, to access the <strong>Variable</strong> <code class="docutils literal notranslate"><span class="pre">wavelength</span></code> of the <strong>Module</strong> (<strong>Device</strong>) <code class="docutils literal notranslate"><span class="pre">myYenista</span></code>, simply execute the following command:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myYenista</span><span class="o">.</span><span class="n">wavelength</span>
+<p>You can retrieve this hierarchy in the object <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code>, where you can navigate between these <strong>Elements</strong> directly with relative attributes. For instance, to access the <strong>Variable</strong> <code class="docutils literal notranslate"><span class="pre">wavelength</span></code> of the <strong>Module</strong> (<strong>Device</strong>) <code class="docutils literal notranslate"><span class="pre">myTunics</span></code>, simply execute the following command:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">wavelength</span>
 </pre></div>
 </div>
 <p>In the case of a more complex module, for instance a power meter named <code class="docutils literal notranslate"><span class="pre">myPowerMeter</span></code> with different lines, you can access the <strong>Variable</strong> <code class="docutils literal notranslate"><span class="pre">power</span></code> of the first line <code class="docutils literal notranslate"><span class="pre">line1</span></code> with the following command:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myPowerMeter</span><span class="o">.</span><span class="n">line1</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myPowerMeter</span><span class="o">.</span><span class="n">line1</span><span class="o">.</span><span class="n">power</span>
+</pre></div>
+</div>
+<p>Every <strong>Element</strong> has a function <code class="docutils literal notranslate"><span class="pre">help</span></code> that can be called to obtain some information about it. For a <strong>Module</strong>, it will display the list of its <strong>Variables</strong>, <strong>Actions</strong> and sub-<strong>Modules</strong>. For a <strong>Variable</strong>, it will display its read and/or write functions (from the driver) and its unit if provided in the driver. For a <strong>Action</strong>, il will display the associated function in the driver.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myPowerMeter</span><span class="o">.</span><span class="n">line1</span><span class="o">.</span><span class="n">power</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="variables">
+<h2>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h2>
+<p>If a <strong>Variable</strong> is readable (read function provided in the driver), its current value can be read by calling its attribute:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">wavelength</span><span class="p">()</span>
+<span class="go">1550.55</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">output</span><span class="p">()</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p>If a <strong>Variable</strong> is writable (write function provided in the driver), its current value can be set by calling its attribute with the desired value:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1549</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="actions">
+<h2>Actions<a class="headerlink" href="#actions" title="Permalink to this headline">¶</a></h2>
+<p>You can execute an <strong>Action</strong> by calling its attribute:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myLinearStage</span><span class="o">.</span><span class="n">goHome</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
