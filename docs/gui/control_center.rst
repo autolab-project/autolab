@@ -25,7 +25,7 @@ If the *Variable* is readable (read function provided in the driver), a **Read**
 
 If the *Variable* is writable (write function provided in the driver), its value can be edited and sent to the instrument (return pressed for interger / float values, check box checked or unchecked for boolean values).
 
-To read and save the value of a *Variable*, right click on its line and select **Read and save as...**. You will be prompt to select the path of the output file. 
+To read and save the value of a *Variable*, right click on its line and select **Read and save as...**. You will be prompted to select the path of the output file. 
 
 
 Monitoring
