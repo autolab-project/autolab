@@ -151,7 +151,7 @@ class DeviceManager() :
         # kwargs creation
         kwargs = dict(index)
         del kwargs['driver']
-        if 'connection' in kwargs.keys() : del kwargs['connection']
+        del kwargs['connection']
         
         # Instantiation of the driver
         instance = driverClass(**kwargs)
