@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Welcome to Autolab’s documentation! &mdash; Autolab  documentation</title>
+  <title>About &mdash; Autolab  documentation</title>
   
 
   
@@ -33,10 +33,10 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="author" title="About these documents" href="#" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Introduction" href="introduction.html" /> 
+    <link rel="prev" title="Drivers" href="drivers.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -50,7 +50,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> Autolab
+            <a href="index.html" class="icon icon-home"> Autolab
           
 
           
@@ -80,7 +80,7 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="command_line.html">Command-line operation</a></li>
@@ -88,7 +88,7 @@
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">Device configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="command_line_advanced.html">Advanced operation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="drivers.html">Drivers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">About</a></li>
 </ul>
 
             
@@ -103,7 +103,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">Autolab</a>
+          <a href="index.html">Autolab</a>
         
       </nav>
 
@@ -132,15 +132,15 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="#">Docs</a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Welcome to Autolab’s documentation!</li>
+      <li>About</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/about.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -153,30 +153,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="welcome-to-autolab-s-documentation">
-<h1>Welcome to Autolab’s documentation!<a class="headerlink" href="#welcome-to-autolab-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Autolab is a python package dedicated for scientific experiments automation. It provides a set of drivers to communicate in a user-friendly and straightforward way with scientific laboratory instruments. The general control of these instruments can be done fastly either by command-line or through a graphical user interface (GUI). The GUI also contains useful tools to automate a scientific experiments, such as the monitoring in time of a variable, or a scan of a parameter with the execution of a custom recipe.</p>
-<p>This is an example of basic instrument interaction by command-line:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="go">[&#39;tunics&#39;,&#39;powermeter_exfo&#39;,&#39;winspec&#39;]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">tunics</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">powermeter_exfo</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>
-<span class="go">156.89e-6</span>
-</pre></div>
-</div>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command_line.html">Command-line operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="configuration.html">Device configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command_line_advanced.html">Advanced operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="drivers.html">Drivers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
-</ul>
-</div>
+  <div class="section" id="about">
+<h1>About<a class="headerlink" href="#about" title="Permalink to this headline">¶</a></h1>
+<p>Created by Quentin Chateiller, Python drivers from Quentin Chateiller and Bruno Garbin, for the C2N-CNRS (Center for Nanosciences and Nanotechnologies, Palaiseau, France) ToniQ team.</p>
 </div>
 
 
@@ -187,8 +166,8 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+        <a href="drivers.html" class="btn btn-neutral float-left" title="Drivers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
