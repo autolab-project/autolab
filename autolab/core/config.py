@@ -19,8 +19,8 @@ def check():
     # LOCAL CONFIG
     if os.path.exists(paths.DEVICES_INDEX_PATH) is False :
         shutil.copyfile(os.path.join(paths.TEMPLATE_FILES_PATH,'devices_index.ini'),
-                        os.path.join(paths.USER_FOLDER_PATH,'devices_index.ini'))
-        print(f'INFORMATION: The configuration file devices_index.ini has been created : {paths.USER_FOLDER_PATH}')
+                        os.path.join(paths.DEVICES_INDEX_PATH))
+        print(f'INFORMATION: The configuration file devices_index.ini has been created : {paths.DEVICES_INDEX_PATH}')
         
 
 
