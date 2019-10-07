@@ -9,16 +9,35 @@ To start using Autolab, open a Python shell and import the package:
 
 	>>> import autolab
 
-Devices
--------
-
-To see which devices are currently configured locally in your system, call the function ``help`` of the object ``autolab.devices``:
+To see which devices are currently configured locally on your system, call the function ``help`` of the object ``autolab.devices``:
 
 .. code-block:: python
 
 	>>> autolab.devices.help()
 
 To configure a new device on your system, see the section :ref:`configuration`.
+
+
+Device architecture
+-------------------
+
+As explained in the section :ref:`introduction`, a device is represented in Autolab by a hierarchy of three **Elements**: the **Modules**, the **Variables** and the **Actions**.
+
+You can retrieve this hierarchy in the object ``autolab.devices``, where you can navigate between these **Elements** directly with relative attributes. For instance, to access the **Variable** ``wavelength`` of the **Module** (**Device**) ``myYenista``, simply execute the following command:
+
+.. code-block:: python
+
+	>>> autolab.devices.myYenista.wavelength
+	
+In the case of a more complex module, for instance a power meter named ``myPowerMeter`` with different lines, you can access the **Variable** ``power`` of the first line ``line1`` with the following command:
+
+.. code-block:: python
+
+	>>> autolab.devices.myPowerMeter.line1.power()
+	
+	
+
+
 
 
 Help and bugs/suggestions report
