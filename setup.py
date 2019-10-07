@@ -28,9 +28,9 @@ setup(
     install_requires=[],
     entry_points={
         'console_scripts': [
-            'autolab = autolab.scripts.autolab:main',
-            'autolab-device = autolab.scripts.autolab_device:main',
-            'autolab-drivers = autolab.scripts.autolab_driver:main',
+            'autolab = scripts.autolab:main',
+            'autolab-device = scripts.autolab_device:main',
+            'autolab-drivers = scripts.autolab_driver:main',
         ]},
     include_package_data=True,
     package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:
