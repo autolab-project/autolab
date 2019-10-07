@@ -6,7 +6,9 @@
 Welcome to Autolab's documentation!
 ===================================
 
-Autolab is a python package dedicated for scientific experiments automation. It provides a set of drivers to communicate in a user-friendly and straightforward way with scientific laboratory instruments. The general control of these instruments can be done fastly either by command-line or through a graphical user interface (GUI). The GUI also contains useful tools to automate a scientific experiments, such as the monitoring in time of a variable, or a scan of a parameter with the execution of a custom recipe.
+Autolab is a python package dedicated for scientific experiments automation. 
+
+This package provides a set of drivers to communicate with scientific laboratory instruments in a user-friendly and straightforward way. The general control of these instruments can be done easily, either by command-line or through a graphical user interface (GUI). The GUI also contains useful tools to automate a scientific experiment, such as the monitoring in time of a variable, or a scan of a parameter with the execution of a custom recipe.
 
 This is an example of basic instrument interaction by command-line:
 
