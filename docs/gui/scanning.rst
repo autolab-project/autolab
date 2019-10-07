@@ -3,3 +3,36 @@
 Scanning
 ========
 
+The Autolab GUI Scanning interface allows you to scan a parameter, and execute a custom recipe for each value of this parameter.
+
+Parameter
+---------
+
+The first step to do is to configure the scan parameter. The parameter is a *Variable* which is writable (write function provided in the driver) and numerical (integer or float value).
+To set a *Variable* as scan parameter, right click on it on the control panel window, and select **Set as scan parameter**.
+
+You can change the name of the parameter with the line edit widget. This name will be used is the data files.
+
+Parameter range
+---------------
+
+The second step is to configure the range of the values that will be applied to the parameter during the scan. You can set the start value, the end value, the mean value, the range width, the number of points of the scan or the step between to values. You can also check the **Log** check box to space the points following in a log scale.
+
+Recipe
+------
+
+The third step is to configure the recipe, that will be executed for each value of the parameter. There are three possible recipe steps:
+
+	* Measure the value of a *Variable*. Right click on the desired *Variable* in the control panel and select **Measure in scan recipe** to append this step to the recipe.
+	* Set the value of a *Variable*. Right click on the desired *Variable* in the control panel and select **Set value in scan recipe** to append this step to the recipe. The variable must be numerical (integer, float or boolean value). To set the value, right click on item associated recipe step and click **Set value**. You can also directly double click on the value to change it.
+	* Execute an *Action*. Right click on the desired *Action* in the control panel and select **Do in scan recipe** to append this step to the recipe.
+	
+Each recipe step must have a unique name. To change the name of a recipe step, right click on it and select **Rename**, or directly double click on the name to change it.
+
+Scanning
+--------
+
+Scan configuration
+------------------
+
+COOOLLLOOR
