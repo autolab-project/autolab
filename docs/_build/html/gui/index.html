@@ -161,23 +161,27 @@
             
   <div class="section" id="graphical-user-interface-gui">
 <span id="gui"></span><h1>Graphical User Interface (GUI)<a class="headerlink" href="#graphical-user-interface-gui" title="Permalink to this headline">¶</a></h1>
+<p>Autolab is provided with a user-friendly graphical interface, that allows the user to interact even more easily with its instruments.</p>
+<p>The GUI has three panels : a <strong>Control Panel</strong> that allows to see visually the architecture of a device, and to interact with an instrument through the <em>Variables</em> and <em>Actions</em>. The <strong>Monitoring Panel</strong> allows the user to monitor a <em>Variable</em> in time. The <strong>Scanning Panel</strong> allows the user to configure the scan of a parameter and the execution of a custom recipe for each value of the parameter.</p>
+<p>To start the GUI in a Python shell, call the function <code class="docutils literal notranslate"><span class="pre">gui</span></code> of the package:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">gui</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To start the GUI directly from a Windows of Linux terminal (in a Python environment), juste enter the command <code class="docutils literal notranslate"><span class="pre">autolab</span></code>:</p>
+<p>Windows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>C:\Users\qchat&gt; autolab
+</pre></div>
+</div>
+<p>Linux:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>quentin@myComputer:~$ autolab
+</pre></div>
+</div>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="control_center.html">Control panel</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="control_center.html#devices-tree">Devices tree</a></li>
-<li class="toctree-l2"><a class="reference internal" href="control_center.html#monitoring">Monitoring</a></li>
-<li class="toctree-l2"><a class="reference internal" href="control_center.html#scanning">Scanning</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="control_center.html">Control panel</a></li>
 <li class="toctree-l1"><a class="reference internal" href="monitoring.html">Monitoring</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scanning.html">Scanning</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="scanning.html#parameter">Parameter</a></li>
-<li class="toctree-l2"><a class="reference internal" href="scanning.html#parameter-range">Parameter range</a></li>
-<li class="toctree-l2"><a class="reference internal" href="scanning.html#recipe">Recipe</a></li>
-<li class="toctree-l2"><a class="reference internal" href="scanning.html#id2">Scanning</a></li>
-<li class="toctree-l2"><a class="reference internal" href="scanning.html#scan-configuration">Scan configuration</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="scanning.html">Scanning</a></li>
 </ul>
 </div>
 </div>
@@ -202,7 +206,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Quentin Chateiller
+        &copy; Copyright 2019, Quentin Chateiller, Bruno Garbin
 
     </p>
   </div>
