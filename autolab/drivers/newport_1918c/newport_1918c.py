@@ -7,8 +7,9 @@ Supported instruments (identified): newport_1918c
 import time
 import ctypes as ct
 
-
 class Driver():
+    
+    category = 'Power meter'
     
     def __init__(self):
         self.write('PM:DS:Clear') # Clear data store
