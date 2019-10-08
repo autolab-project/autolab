@@ -8,13 +8,9 @@ Created on Thu Jun 13 10:25:49 2019
 
 from . import index
 from autolab import drivers
-
 import threading
 import inspect
-import numpy as np
-import pandas as pd
 from .paths import Paths
-
 
 def emphasize(txt):
     return '-'*len(txt) + '\n' + txt + '\n' + '-'*len(txt)
@@ -38,7 +34,7 @@ class DeviceManager() :
         # Initial creation of raw Device objects 
         for name in self._index.sections() :
             self._dev[name] = Device(self,name)
-            
+          
             
     
     def list(self):
@@ -454,6 +450,9 @@ class Variable(Element):
         
         Element.__init__(self,parent,'Variable',config['name'])
         
+        import numpy as np
+        import pandas as pd
+        
         # Type
         assert 'type' in config.keys(), f"Variable {self.getAddress()}: Missing variable type"
         assert config['type'] in [int,float,bool,str,bytes,pd.DataFrame,np.ndarray], f"Variable {self.getAddress()} configuration: Variable type not supported in usit"
@@ -501,6 +500,9 @@ class Variable(Element):
     def save(self,path,value=None):
         
         """ This function measure the variable and saves its value in the provided path """
+        
+        import pandas as pd
+        import numpy as np
         
         assert self.readable, f"The variable {self.name} is not configured to be measurable"
         
