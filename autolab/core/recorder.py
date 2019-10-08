@@ -8,7 +8,7 @@ Created on Sun Jul 21 22:13:21 2019
 
 import os
 import shutil
-import pandas as pd
+
 
 
 
@@ -131,6 +131,8 @@ class Recorder :
     #--------------------------------------------------------------------------     
 
     def initialize(self):
+        
+        import pandas as pd
         self.started = True
         
         os.mkdir(self.path)
@@ -155,6 +157,8 @@ class Recorder :
         
         
     def save(self):
+        
+        import pandas as pd
         
         if self.started is False :
             self.initialize()
@@ -192,6 +196,8 @@ class Recorder :
 class Recorder_V2 :
     
     def __init__(self,name,customPath=None,verbose=True):
+        
+        import pandas as pd
         
         if isinstance(name,str) is False or checkForbiddenCharacters(name) is False:
             raise ValueError(f'The name "{name}" is not valid')           
