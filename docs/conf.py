@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Autolab'
-copyright = '2019, Quentin Chateiller'
-author = 'Quentin Chateiller et Bruno Garbin'
+copyright = '2019, Quentin Chateiller, Bruno Garbin'
+author = 'Quentin Chateiller & Bruno Garbin'
 
 
 # -- General configuration ---------------------------------------------------
