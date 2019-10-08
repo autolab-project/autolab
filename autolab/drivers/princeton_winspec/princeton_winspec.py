@@ -15,7 +15,7 @@ import numpy as np
 
 class Driver():    
     
-    category = 'Spectrum analyser'
+    category = 'Spectrometer software'
     
     def __init__(self):
                         

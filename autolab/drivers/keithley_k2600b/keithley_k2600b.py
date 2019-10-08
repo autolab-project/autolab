@@ -10,6 +10,8 @@ Supported instruments (identified):
 
 class Driver():
     
+    category = 'Electrical source'
+    
     def __init__(self):
         
         # Initialisation

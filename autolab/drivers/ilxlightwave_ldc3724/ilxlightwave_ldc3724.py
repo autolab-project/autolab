@@ -11,7 +11,7 @@ import time
 
 class Driver():
     
-    categories = 'Optical source'
+    category = 'Optical source'
     
     def __init__(self):
     
@@ -92,7 +92,7 @@ class Driver_GPIB(Driver):
 
 class LAS():
     
-    categories = ['Electrical source']
+    category = 'Electrical source'
     
     def __init__(self,dev):
         
@@ -219,7 +219,7 @@ class LAS():
 
 class TEC():
     
-    categories = ['Temperature controller']
+    category = 'Temperature controller'
     
     def __init__(self,dev):
         

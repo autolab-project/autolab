@@ -10,6 +10,9 @@ Supported instruments (identified):
 
 
 class Driver() :
+    
+    category = 'Optical amplifier'
+    
     def __init__(self):
         pass
         

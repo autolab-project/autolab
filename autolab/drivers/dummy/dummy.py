@@ -12,7 +12,7 @@ import pandas as pd
 
 class Driver():
     
-    category = ''
+    category = 'Test'
     
     def __init__(self):
         
