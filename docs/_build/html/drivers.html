@@ -156,6 +156,261 @@
             
   <div class="section" id="drivers">
 <span id="id1"></span><h1>Drivers<a class="headerlink" href="#drivers" title="Permalink to this headline">¶</a></h1>
+<p>**   !!!! OLD VERSION !!!! **</p>
+<p># Driver creation guidelines</p>
+<p>The goal of this tutorial is to present the general structure of the drivers of this GitHub repository, in order for you to create your own drivers based on this structure, and make them available in this repository.</p>
+<p>## Directory organization</p>
+<p>Each different device has its own folder in this repository. The name of this folder take the form <em>&lt;manufacturer&gt;_&lt;model&gt;</em>. The driver associated to this device is a python script taking the same name as the folder: <em>&lt;manufacturer&gt;_&lt;model&gt;.py</em>. There can be additional python scripts in this folder (devices’s modules, ..).</p>
+<p>## Driver script</p>
+<p>### Device class</p>
+<p>Inside the driver script, a driver is basically represented by a class <cite>Device</cite>. This class can be view as a “cooking recipe” that explains to Python how to interact with your device. But in order to interact with it effectively, we need to create an instance of this class (like making a cake from a recipe), and to store it in a variable (for example <cite>my_device</cite>):</p>
+<p><a href="#id2"><span class="problematic" id="id3">``</span></a><a href="#id4"><span class="problematic" id="id5">`</span></a>python
+class Device() :</p>
+<blockquote>
+<div><dl class="simple">
+<dt>def __init__(self):</dt><dd><p>pass</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>my_device = Device()
+<a href="#id6"><span class="problematic" id="id7">``</span></a><a href="#id8"><span class="problematic" id="id9">`</span></a></p>
+<p>### Controller</p>
+<p>First of all, we have to configure a first attribute in this class: the controller. This will be the object through which we are communicating with the device. In most cases, you will use the python package <cite>visa</cite> for GPIB, SERIAL, USB connections (see its documentation). You can also use the packages <cite>telnet</cite> or <cite>socket</cite> for ETHERNET communications.</p>
+<p>In any case, the controller needs the address of your device to establish a connection with it. With <cite>visa</cite>, you can get the available addresses we these three lines of codes:</p>
+<p><code class="docutils literal notranslate"><span class="pre">`python</span>
+<span class="pre">import</span> <span class="pre">visa</span>
+<span class="pre">rm</span> <span class="pre">=</span> <span class="pre">visa.ResourceManager()</span>
+<span class="pre">rm.list_resources()</span>
+<span class="pre">`</span></code>
+Just execute it before and after plugging your device to see which address appeared.</p>
+<p>For ethernet connections, you should know the IP address (set it to be part of your local network) and the port (device documentation) of your device.</p>
+<p>This address is provided when we instantiate the device, but we store a default value in a variable <cite>ADDRESS</cite>.</p>
+<p><a href="#id10"><span class="problematic" id="id11">``</span></a><a href="#id12"><span class="problematic" id="id13">`</span></a>python
+import visa</p>
+<p>ADDRESS = ‘GPIB0::8::INSTR’</p>
+<dl class="simple">
+<dt>class Device() :</dt><dd><dl class="simple">
+<dt>def __init__(self,address=ADDRESS):</dt><dd><p>rm = visa.ResourceManager()
+self.controller = rm.open_resources(address)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>my_device = Device() # Use the default address
+my_device = Device(address=’GPIB0::3::INSTR’) # Use the given address
+<a href="#id14"><span class="problematic" id="id15">``</span></a>`
+At this point, you are connected to your device as soon as you create an instance of the class Device.</p>
+<p>### Close function
+We recommand to create a class function <cite>close</cite> to be able to close properly the connection to your device.</p>
+<p><a href="#id16"><span class="problematic" id="id17">``</span></a><a href="#id18"><span class="problematic" id="id19">`</span></a>python
+import visa</p>
+<p>ADDRESS = ‘GPIB0::8::INSTR’</p>
+<dl class="simple">
+<dt>class Device() :</dt><dd><dl class="simple">
+<dt>def __init__(self,address=ADDRESS):</dt><dd><p>rm = visa.ResourceManager()
+self.controller = rm.open_resources(address)</p>
+</dd>
+<dt>def close(self):</dt><dd><p>self.controller.close()</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>my_device = Device()
+print(‘Connection established’)
+my_device.close()
+print(‘Connection closed’)
+<a href="#id20"><span class="problematic" id="id21">``</span></a><a href="#id22"><span class="problematic" id="id23">`</span></a></p>
+<p>You can know create a connection to your device, and close it properly.</p>
+<p>### Query / Write / Read functions</p>
+<p>We now have to create interaction functions such as <cite>write</cite>, <cite>query</cite> or <cite>read</cite>. These functions already exists in <cite>visa</cite>.</p>
+<p><a href="#id24"><span class="problematic" id="id25">``</span></a><a href="#id26"><span class="problematic" id="id27">`</span></a>python
+import visa</p>
+<p>ADDRESS = ‘GPIB0::8::INSTR’</p>
+<dl class="simple">
+<dt>class Device() :</dt><dd><dl class="simple">
+<dt>def __init__(self,address=ADDRESS):</dt><dd><p>rm = visa.ResourceManager()
+self.controller = rm.open_resources(address)</p>
+</dd>
+<dt>def close(self):</dt><dd><p>self.controller.close()</p>
+</dd>
+<dt>def query(self,command):</dt><dd><p>return self.controller.query(command)</p>
+</dd>
+<dt>def write(self,command):</dt><dd><p>self.controller.write(command)</p>
+</dd>
+<dt>def read(self):</dt><dd><p>return self.controller.read()</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>my_device = Device()
+<a href="#id28"><span class="problematic" id="id29">``</span></a><a href="#id30"><span class="problematic" id="id31">`</span></a></p>
+<p>We are now able to send commands and get results to our devices. Let’s now define the functions associated to these commands.</p>
+<p>### Device functions</p>
+<p>The last thing to do is to create the class functions that we will need to set a parameter, to get its value, or to process an action. This depends of course of your device, have a look on your user manual to see the available commands.</p>
+<p><a href="#id32"><span class="problematic" id="id33">``</span></a><a href="#id34"><span class="problematic" id="id35">`</span></a>python
+import visa</p>
+<p>ADDRESS = ‘GPIB0::8::INSTR’</p>
+<dl class="simple">
+<dt>class Device() :</dt><dd><dl class="simple">
+<dt>def __init__(self,address=ADDRESS):</dt><dd><p>rm = visa.ResourceManager()
+self.controller = rm.open_resources(address)</p>
+</dd>
+<dt>def close(self):</dt><dd><p>self.controller.close()</p>
+</dd>
+<dt>def query(self,command):</dt><dd><p>return self.controller.query(command)</p>
+</dd>
+<dt>def write(self,command):</dt><dd><p>self.controller.write(command)</p>
+</dd>
+<dt>def read(self):</dt><dd><p>return self.controller.read()</p>
+</dd>
+<dt>def setWavelength(self,value):</dt><dd><p>self.write(f’NM={value}’)
+self.query(‘<a href="#id36"><span class="problematic" id="id37">*</span></a>OPC?’) # Wait until the device says the operation is done</p>
+</dd>
+<dt>def getWavelength(self):</dt><dd><p>return self.query(‘NM?’)</p>
+</dd>
+<dt>def setPower(self,value):</dt><dd><p>self.write(f’PW={value}’)
+self.query(‘<a href="#id38"><span class="problematic" id="id39">*</span></a>OPC?’) # Wait until the device says the operation is done</p>
+</dd>
+<dt>def getPower(self):</dt><dd><p>return self.query(‘PW?’)</p>
+</dd>
+<dt>def goHome(self):</dt><dd><p>self.write(‘HOME’)
+self.query(‘<a href="#id40"><span class="problematic" id="id41">*</span></a>OPC?’) # Wait until the device says the operation is done</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>my_device = Device()
+print(my_device.getWavelength()) # Returns the current value of the wavelength, for instance 1540
+my_device.setWavelength(1550)
+print(my_device.getWavelength()) # Returns 1550
+<a href="#id42"><span class="problematic" id="id43">``</span></a><a href="#id44"><span class="problematic" id="id45">`</span></a></p>
+<p>### The device is a controller</p>
+<p>The device you are working with may be a controller that contains several instruments, or stages, or channels, etc.. To communicate with these sub-modules, we usually need a “slot” information in the command. To take into account these sub-modules, and to avoid a redondant <cite>Device</cite> class, we create additional classes located in additional python script, that will be imported in the main driver script:</p>
+<p>[ Folder architecture ]
+<a href="#id46"><span class="problematic" id="id47">``</span></a>`
+manufacturer_model</p>
+<blockquote>
+<div><p><a href="#id48"><span class="problematic" id="id49">|</span></a>– manufacturer_model.py
+<a href="#id50"><span class="problematic" id="id51">|</span></a>– moduleA.py
+<a href="#id52"><span class="problematic" id="id53">|</span></a>– moduleB.py</p>
+</div></blockquote>
+<p><a href="#id54"><span class="problematic" id="id55">``</span></a><a href="#id56"><span class="problematic" id="id57">`</span></a></p>
+<p>[ moduleA.py ]</p>
+<p><a href="#id58"><span class="problematic" id="id59">``</span></a><a href="#id60"><span class="problematic" id="id61">`</span></a>python</p>
+<dl class="simple">
+<dt>class ModuleA() :</dt><dd><dl class="simple">
+<dt>def __init__(self,driver,slot):</dt><dd><p>self.driver = driver
+self.slot = slot
+self.prefix = f’CH{slot}’</p>
+</dd>
+<dt>def query(self,command):</dt><dd><p>return self.driver.query(self.prefix+command)</p>
+</dd>
+<dt>def write(self,command):</dt><dd><p>self.driver.write(self.prefix+command)</p>
+</dd>
+<dt>def read(self):</dt><dd><p>return self.driver.read()</p>
+</dd>
+<dt>def setWavelength(self,value):</dt><dd><p>self.write(f’NM={value}’)
+self.query(‘<a href="#id62"><span class="problematic" id="id63">*</span></a>OPC?’) # Wait until the device says the operation is done</p>
+</dd>
+<dt>def getWavelength(self):</dt><dd><p>return self.query(‘NM?’)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><a href="#id64"><span class="problematic" id="id65">``</span></a><a href="#id66"><span class="problematic" id="id67">`</span></a></p>
+<p>[ moduleB.py ]</p>
+<p><a href="#id68"><span class="problematic" id="id69">``</span></a><a href="#id70"><span class="problematic" id="id71">`</span></a>python</p>
+<dl class="simple">
+<dt>class ModuleB() :</dt><dd><dl class="simple">
+<dt>def __init__(self,driver,slot):</dt><dd><p>self.driver = driver
+self.slot = slot
+self.prefix = f’CH{slot}’</p>
+</dd>
+<dt>def query(self,command):</dt><dd><p>return self.driver.query(self.prefix+command)</p>
+</dd>
+<dt>def write(self,command):</dt><dd><p>self.driver.write(self.prefix+command)</p>
+</dd>
+<dt>def read(self):</dt><dd><p>return self.driver.read()</p>
+</dd>
+<dt>def setPower(self,value):</dt><dd><p>self.write(f’PW={value}’)
+self.query(‘<a href="#id72"><span class="problematic" id="id73">*</span></a>OPC?’) # Wait until the device says the operation is done</p>
+</dd>
+<dt>def getPower(self):</dt><dd><p>return self.query(‘PW?’)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><a href="#id74"><span class="problematic" id="id75">``</span></a><a href="#id76"><span class="problematic" id="id77">`</span></a></p>
+<p>[ manufacturer_model.py ]
+<a href="#id78"><span class="problematic" id="id79">``</span></a><a href="#id80"><span class="problematic" id="id81">`</span></a>python
+import visa
+from moduleA import ModuleA
+from moduleB import ModuleB</p>
+<p>ADDRESS = ‘GPIB0::8::INSTR’</p>
+<dl>
+<dt>class Device() :</dt><dd><dl>
+<dt>def __init__(self,address=ADDRESS):</dt><dd><p>rm = visa.ResourceManager()
+self.controller = rm.open_resources(address)</p>
+<p>self.slot1 = ModuleA(self,1)
+self.slot2 = ModuleB(self,2)</p>
+</dd>
+<dt>def close(self):</dt><dd><p>self.controller.close()</p>
+</dd>
+<dt>def query(self,command):</dt><dd><p>return self.controller.query(command)</p>
+</dd>
+<dt>def write(self,command):</dt><dd><p>self.controller.write(command)</p>
+</dd>
+<dt>def read(self):</dt><dd><p>return self.controller.read()</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>my_device = Device()
+my_device.slot1.getWavelength()
+my_device.slot2.setPower(0.2)
+<a href="#id82"><span class="problematic" id="id83">``</span></a><a href="#id84"><span class="problematic" id="id85">`</span></a></p>
+<p>The previous structure should be used only if the physical slot configuration is naturally fixed by the manufacturer (a power meter with two channels for instance). In some cases, this slot configuration can change between two devices of the same model (module racks that can be place at different slot in the controller..). To take this into account, all information about the slot configuration should be provided in argument when instantiating the <cite>Device</cite> class for a dynamical slot attribute creation, following this structure:</p>
+<p>[ manufacturer_model.py ]
+<a href="#id86"><span class="problematic" id="id87">``</span></a><a href="#id88"><span class="problematic" id="id89">`</span></a>python
+import visa
+from moduleA import ModuleA
+from moduleB import ModuleB</p>
+<p>ADDRESS = ‘GPIB0::8::INSTR’</p>
+<p>modules_dict = {‘modA’:ModuleA,’modB’:ModuleB}</p>
+<dl>
+<dt>class Device() :</dt><dd><dl>
+<dt>def __init__(self,address=ADDRESS):</dt><dd><p>rm = visa.ResourceManager()
+self.controller = rm.open_resources(address)</p>
+<p># Submodules generation
+prefix = ‘slot’
+for key in kwargs.keys():</p>
+<blockquote>
+<div><dl class="simple">
+<dt>if key.startswith(prefix):</dt><dd><p>slot_num = key[len(prefix):]
+module = modules_dict[ kwargs[key].split(‘,’)[0].strip() ]
+name = kwargs[key].split(‘,’)[1].strip()
+setattr(self,name,module(self,slot_num))</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd>
+<dt>def close(self):</dt><dd><p>self.controller.close()</p>
+</dd>
+<dt>def query(self,command):</dt><dd><p>return self.controller.query(command)</p>
+</dd>
+<dt>def write(self,command):</dt><dd><p>self.controller.write(command)</p>
+</dd>
+<dt>def read(self):</dt><dd><p>return self.controller.read()</p>
+</dd>
+</dl>
+</dd>
+<dt>my_device = Device(slot1=’modA,my_moduleA_1’,         # Module physically in slot 1</dt><dd><p>slot2=’modA,my_moduleA_2’,        # Module physically in slot 2
+slot5=’modA,my_moduleB’)          # Module physically in slot 5</p>
+</dd>
+</dl>
+<p>my_device.my_moduleA_1.getWavelength()
+my_device.my_moduleA_2.setWavelength(1550)
+my_device.my_moduleB.setPower(0.2)</p>
 </div>
 
 

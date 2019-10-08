@@ -88,6 +88,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#device-architecture">Device architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#actions">Actions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#script-example">Script example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#help-and-bugs-suggestions-report">Help and bugs/suggestions report</a></li>
 </ul>
 </li>
@@ -183,6 +184,10 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>You can close all existing connections (with all instruments) by calling the function <code class="docutils literal notranslate"><span class="pre">close_all</span></code> of the object <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">close_all</span><span class="p">()</span>
+</pre></div>
+</div>
 <div class="section" id="device-architecture">
 <h2>Device architecture<a class="headerlink" href="#device-architecture" title="Permalink to this headline">¶</a></h2>
 <p>As explained in the section <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">Introduction</span></a>, a device is represented in Autolab by a hierarchy of three <strong>Elements</strong>: the <strong>Modules</strong>, the <strong>Variables</strong> and the <strong>Actions</strong>.</p>
@@ -220,6 +225,31 @@
 <h2>Actions<a class="headerlink" href="#actions" title="Permalink to this headline">¶</a></h2>
 <p>You can execute an <strong>Action</strong> by calling its attribute:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myLinearStage</span><span class="o">.</span><span class="n">goHome</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="script-example">
+<h2>Script example<a class="headerlink" href="#script-example" title="Permalink to this headline">¶</a></h2>
+<p>With all these commands, you can now create your own Python script. Here is an example of script that sweep the wavelength of a light source, and measure the power of a power meter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">autolab</span>
+
+<span class="n">myTunics</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span>
+<span class="n">myPowerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myPowerMeter</span>
+
+<span class="c1"># Turn on the light source</span>
+<span class="n">myTunics</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># Sweep its wavelength and measure a power with a power meter</span>
+<span class="n">wl_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">power_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">wl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1550</span><span class="p">,</span><span class="mi">1560</span><span class="p">,</span><span class="mf">0.01</span><span class="p">)</span> <span class="p">:</span>
+        <span class="n">myTunics</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="n">wl</span><span class="p">)</span>
+        <span class="n">power</span> <span class="o">=</span> <span class="n">myPowerMeter</span><span class="o">.</span><span class="n">line1</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>
+        <span class="n">wl_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wl</span><span class="p">)</span>
+        <span class="n">power_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
+
+<span class="c1"># Turn off the light source</span>
+<span class="n">myTunics</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

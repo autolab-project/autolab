@@ -34,6 +34,12 @@ You can reload (close and reconnect) the connection to the instrument by calling
 .. code-block:: python
 
 	>>> autolab.devices.myTunics.reload()
+	
+You can close all existing connections (with all instruments) by calling the function ``close_all`` of the object ``autolab.devices``:
+
+.. code-block:: python
+
+	>>> autolab.devices.close_all()
 
 Device architecture
 -------------------
@@ -90,6 +96,34 @@ You can execute an **Action** by calling its attribute:
 .. code-block:: python
 
 	>>> autolab.devices.myLinearStage.goHome()
+	
+	
+Script example
+--------------
+
+With all these commands, you can now create your own Python script. Here is an example of script that sweep the wavelength of a light source, and measure the power of a power meter:
+
+.. code-block:: python
+
+	import autolab
+	
+	myTunics = autolab.devices.myTunics
+	myPowerMeter = autolab.devices.myPowerMeter
+	
+	# Turn on the light source
+	myTunics.output(True)
+	
+	# Sweep its wavelength and measure a power with a power meter
+	wl_list = []
+	power_list = []
+	for wl in range(1550,1560,0.01) :
+		myTunics.wavelength(wl)
+		power = myPowerMeter.line1.power()
+		wl_list.append(wl)
+		power_list.append(power)
+	
+	# Turn off the light source
+	myTunics.output(False)
 
 
 Help and bugs/suggestions report
