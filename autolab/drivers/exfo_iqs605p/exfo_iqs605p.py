@@ -8,6 +8,7 @@ Supported instruments (identified):
     
 class Driver():
     
+    category = 'Optical frame'
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
     def __init__(self, **kwargs):
