@@ -6,10 +6,11 @@ Supported instruments (identified):
 - 
 """
 
-from XPS import XPS
+
 
 class Driver():
     
+    category = 'Motion controller'
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
 
     def __init__(self,**kwargs):
@@ -39,6 +40,8 @@ class Driver():
 class Driver_TCPIP(Driver):
     
     def __init__(self,address='192.168.0.8',**kwargs):
+        
+        from XPS import XPS
         
         self.TIMEOUT = 2
         
@@ -90,6 +93,7 @@ from scipy.interpolate import interp1d
 
 class Module_NSR1():
     
+    category = 'Rotation stage'
     
     def __init__(self,dev,slot,calibPath):
         

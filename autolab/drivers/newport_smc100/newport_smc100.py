@@ -10,6 +10,7 @@ Supported instruments (identified):
 
 class Driver():
     
+    category = 'Motion controller'
     slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
     def __init__(self,**kwargs):
