@@ -59,8 +59,8 @@ class Driver():
     def get_previous_trigger_state(self):
         return self.query('TRMD?')
         
-    def set_previous_trigger_state(self):                 # go to 1 WARNING
-        self.scope.write(self.prev_trigg_mode)
+    def set_previous_trigger_state(self,previous_trigger_state):                 # go to 1 WARNING
+        self.scope.write(previous_trigger_state)
         
     ### Cross-channel settings 
     def set_encoding(self,encoding):
