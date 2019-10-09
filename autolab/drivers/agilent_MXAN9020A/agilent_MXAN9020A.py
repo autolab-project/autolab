@@ -45,7 +45,7 @@ class Driver():
     def get_previous_trigger_state(self):
         return self.query('INIT:CONT?')
     def set_previous_trigger_state(self,previous_trigger_state):
-        self.write('INIT:CONT '+previous_trigger_state)
+        self.write(f'INIT:CONT {previous_trigger_state}')
     def ensure_scope_stopped(self):
         self.query('INIT:CONT OFF;*OPC?')
         
