@@ -173,9 +173,9 @@ class DriverManager() :
                 pass
 
         mess = '\n'
-        for category in d.keys() :
+        for category in sorted(list(d.keys())) :
             mess += f'[{category.upper()}]\n'
-            mess += ", ".join([driver for driver in d[category]])+'\n\n'
+            mess += ", ".join([driver for driver in sorted(d[category])])+'\n\n'
         
         
         print(mess[:-2])
