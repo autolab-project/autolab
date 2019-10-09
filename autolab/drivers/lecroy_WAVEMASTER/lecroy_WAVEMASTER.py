@@ -239,6 +239,9 @@ class Channel():
         config.append({'element':'variable','name':'trace','type':np.ndarray,'read':self.get_data,'help':'Get the current trace in numpy'})
         config.append({'element':'variable','name':'verticalScale','type':float,'unit':'V/div','read':self.get_vertical_scale,'write':self.set_vertical_scale,'help':'Set the vertical scale of the channel'})
         config.append({'element':'variable','name':'verticalOffset','type':float,'unit':'V','read':self.get_vertical_offset,'write':self.set_vertical_offset,'help':'Set the vertical offset of the channel'})
+        config.append({'element':'variable','name':'autoscaleIterations','type':int,'read':self.get_autoscale_iter,'write':self.set_autoscale_iter,'help':'Set the number of loops for the autoscale process. Set 0 to disable autoscale.'})
+        config.append({'element':'variable','name':'autoscaleFactor','type':float,'unit':float,'read':self.get_autoscale_factor,'write':self.set_autoscale_factor,'help':'For setting limits of the vertical scale, units are in number of scope divisions here. WARNING: Do not overpass 9 due to a security in the code! WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." '})
+        config.append({'element':'variable','name':'active','type':bool,'read':self.is_active,'help':'Returns the current state of the channel.'})
         return config
 
 if __name__ == '__main__':
