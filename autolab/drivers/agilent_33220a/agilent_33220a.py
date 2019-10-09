@@ -14,11 +14,10 @@ class Driver():
     category = 'Function generator'
     
     def __init__(self):
-        self.test = 3
-        self.channel = Channel(self)
         pass
-    def amplitude(self,amplitude):
-        self.write('VOLT '+str(amplitude))
+    def amplitude(self,a,b=2):
+        print(a,b)
+        #self.write('VOLT '+str(amplitude))
     def offset(self,offset):
         self.write('VOLT:OFFS '+str(offset))
     def frequency(self,frequency):
@@ -55,8 +54,6 @@ class Driver_VISA(Driver):
         #rm = visa.ResourceManager()
         #self.inst = rm.get_instrument(address)
         
-        self.test2 = 2
-        
         Driver.__init__(self)
         
     def close(self):
@@ -71,12 +68,5 @@ class Driver_VISA(Driver):
         return rep
 ############################## Connections classes ##############################
 #################################################################################
-        
-class Channel():
-    def __init__(self,dri):
-        self.dri = dri
-    def amplitude(self):
-        print('ok_channel')
-    def internal_function(self):
-        print('ok_channel_freq')
+
 
