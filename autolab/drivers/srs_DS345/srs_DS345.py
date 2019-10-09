@@ -25,6 +25,14 @@ class Driver():
 
     def idn(self):
         return self.query('*IDN?')
+        
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'amplitude','type':float,'unit':'V','write':self.amplitude,'help':'Voltage amplitude.'})
+        config.append({'element':'variable','name':'offset','type':float,'unit':'V','write':self.offset,'help':'Voltage offset'})
+        config.append({'element':'variable','name':'phase','type':float,'write':self.phase,'help':'Phase'})
+        config.append({'element':'variable','name':'frequency','type':float,'unit':'Hz','write':self.frequency,'help':'Output frequency'})
+        return config
 
 
 #################################################################################
