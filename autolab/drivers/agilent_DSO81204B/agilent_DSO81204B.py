@@ -37,6 +37,7 @@ class Driver():
             if not(getattr(self,f'channel{i}').is_active()): continue
             getattr(self,f'channel{i}').get_data_raw()
             getattr(self,f'channel{i}').get_log_data()
+        self.run()
         
     def save_data_channels(self,filename,channels=[],FORCE=False):
         if channels == []: channels = list(range(1,self.nb_channels+1))
