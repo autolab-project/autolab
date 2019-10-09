@@ -38,7 +38,9 @@ def identify_device_class(module,classes_list,link):
     return Driver_LINK
 
 def parse_commands(I,commands,methods_list):
-    for command in commands:    # see for several arguments passing
+    global NAME
+    
+    for command in commands:
         print()
         print(f'Executing command:  {command}')
         message = None
@@ -55,22 +57,21 @@ def parse_commands(I,commands,methods_list):
             if len(coms)==2:
                 if len(is_there_equal)==2:
                     if isinstance(is_there_equal[1],str):
-                        exec(f'NAME = partial(NAME,{is_there_equal[0]}="{is_there_equal[1]}")')
+                        exec(f'NAME = partial(NAME,{is_there_equal[0]}="{is_there_equal[1]}")',globals())
                     else:
-                        exec(f'NAME = partial(NAME,{is_there_equal[0]}={is_there_equal[1]})')
+                        exec(f'NAME = partial(NAME,{is_there_equal[0]}={is_there_equal[1]})',globals())
                 else:
                     NAME = partial(NAME,is_there_equal[0])
             else:
                 coms1_attr_attr = getattr(coms1_attr,coms[-1])
                 if len(is_there_equal)==2:
                     if isinstance(is_there_equal[1],str):
-                        exec(f'NAME = partial(NAME,{is_there_equal[0]}="{is_there_equal[1]}")')
+                        exec(f'NAME = partial(NAME,{is_there_equal[0]}="{is_there_equal[1]}")',globals())
                     else:
-                        exec(f'NAME = partial(NAME,{is_there_equal[0]}={is_there_equal[1]})')
+                        exec(f'NAME = partial(NAME,{is_there_equal[0]}={is_there_equal[1]})',globals())
                 else:
                     NAME = partial(NAME,is_there_equal[0])
         message = NAME()
-        
-
         if message: print('Return:  ',message)
     print()
+
