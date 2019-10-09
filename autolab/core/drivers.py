@@ -11,21 +11,21 @@ import importlib
 
 class DriverWrapper() :
     
-    def __init__(self, name):
+    def __init__(self, name, driverPath):
         
         self._name = name
         
         # Loading preparation
-        paths = Paths()
-        driver_path = os.path.join(paths.DRIVERS_PATH,name,f'{name}.py')
-        spec = importlib.util.spec_from_file_location(name, driver_path)
+        driverScript = os.path.join(driverPath,f'{name}.py')
+
+        spec = importlib.util.spec_from_file_location(name, driverScript)
         lib = importlib.util.module_from_spec(spec)
         
         # Current working directory
         currDir = os.getcwd()
         
         # Go to driver's directory, in case there are absolute imports
-        os.chdir(os.path.dirname(driver_path))
+        os.chdir(os.path.dirname(driverScript))
     
         # Load the module
         spec.loader.exec_module(lib)
@@ -116,6 +116,8 @@ class DriverWrapper() :
     def _getDriverCategory(self):
         if hasattr(self._module.Driver,'category'):
             return self._module.Driver.category
+        else :
+            return 'Other'
         
     def _getConnectionClass(self,connection):
         assert connection in self._getConnectionNames()
@@ -134,35 +136,42 @@ class DriverWrapper() :
 class DriverManager() :
     
     def __init__(self):
-        self._drivers = {}
-            
+        
+        pathsList = []
+        for folderPath in Paths().DRIVERS_PATHS.values():
+            pathsList += [os.path.join(folderPath,driverName) for driverName in os.listdir(folderPath) 
+                            if self._isValidDriver(os.path.join(folderPath,driverName))]
+        
+        self._driverPaths = {}
+        for driverPath in pathsList : 
+            driverName = os.path.basename(driverPath)
+            assert driverName not in self._driverPaths.keys(), "All the drivers must have a unique name."
+            self._driverPaths[driverName] = driverPath
+                
+    def _isValidDriver(self,driverPath):
+        driverName = os.path.basename(driverPath)
+        return os.path.isdir(driverPath) and f'{driverName}.py' in os.listdir(driverPath)
+    
     def __dir__(self):
         return self.list() + ['list','help']
     
     def list(self):
-        paths = Paths()
-        return [name for name in os.listdir(paths.DRIVERS_PATH) 
-                if os.path.isdir(os.path.join(paths.DRIVERS_PATH,name)) and
-                 f'{name}.py' in os.listdir(os.path.join(paths.DRIVERS_PATH,name))]
+        return tuple(self._driverPaths.keys())
+
         
     def help(self):
+        
         d = {}
         for driver in self.list() :
             
-            # REMOVE TRY EXCEPT WHEN DRIVERS WILL BE FINISHED
-            
-            try : 
+            try :
                 category = getattr(self,driver)._getDriverCategory()
-                if category is None :
-                    category = 'Other'
                 if category not in d.keys() :
                     d[category] = []
                 d[category].append(driver)
             except :
                 pass
 
-
-        
         mess = '\n'
         for category in d.keys() :
             mess += f'[{category.upper()}]\n'
@@ -175,6 +184,6 @@ class DriverManager() :
     def __getattr__(self,name):
         
         assert name in self.list(), f"Driver {name} doesn't exist"
-        return DriverWrapper(name)
+        return DriverWrapper(name,self._driverPaths[name])
         
 

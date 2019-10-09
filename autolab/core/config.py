@@ -21,5 +21,6 @@ def check(paths):
                         os.path.join(paths.DEVICES_INDEX_PATH))
         print(f'INFORMATION: The configuration file devices_index.ini has been created : {paths.DEVICES_INDEX_PATH}')
         
-
-
+    # lOCAL CUSTOM DRIVER FOLDER
+    if os.path.exists(paths.DRIVERS_PATHS['local']) is False :
+        os.mkdir(paths.DRIVERS_PATHS['local'])
