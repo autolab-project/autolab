@@ -7,9 +7,8 @@ Created on Sun Jul 21 16:02:59 2019
 
 import shutil
 import os 
-from . import paths
 
-def check():
+def check(paths):
 
     # LOCAL FOLDER
     if os.path.exists(paths.USER_FOLDER_PATH) is False :
@@ -22,5 +21,6 @@ def check():
                         os.path.join(paths.DEVICES_INDEX_PATH))
         print(f'INFORMATION: The configuration file devices_index.ini has been created : {paths.DEVICES_INDEX_PATH}')
         
-
-
+    # lOCAL CUSTOM DRIVER FOLDER
+    if os.path.exists(paths.DRIVERS_PATHS['local']) is False :
+        os.mkdir(paths.DRIVERS_PATHS['local'])

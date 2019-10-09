@@ -4,9 +4,11 @@
 import agilent_33220A
 from argparse import ArgumentParser
 from functools import partial
+import test
+
 
 class Driver_parser():
-    def __init__(args,utilities):
+    def __init__():
         usage = """usage: %prog [options] arg
                     
                     
@@ -15,7 +17,7 @@ class Driver_parser():
                     
 
                     """
-        parser = ArgumentParser(usage=usage,parents=args)
+        parser = ArgumentParser(usage)
 
 
         parser.add_argument("-c", "--command", nargs='+', dest="command", default=None, help="Set the command to use." )
@@ -32,14 +34,14 @@ class Driver_parser():
 
 
         ### Start the talker ###
-        classes_list = utilities.list_classes(agilent_33220A)
-        Driver_LINK  = utilities.identify_device_class(agilent_33220A,classes_list,args.link)
+        classes_list = test.list_classes(agilent_33220A)
+        Driver_LINK  = test.identify_device_class(agilent_33220A,classes_list,args.link)
         I = Driver_LINK(address=args.address)
-        methods_list = utilities.list_methods(I)
+        methods_list = test.list_methods(I)
 
-        utilities.print_help_classes(classes_list)                  # display list of classes in module
-        utilities.print_help_methods(methods_list)                  # display list of methods in module
-        utilities.print_help_methods_arguments(I,methods_list)      # display list of methods arguments
+        test.print_help_classes(classes_list)                  # display list of classes in module
+        test.print_help_methods(methods_list)                  # display list of methods in module
+        test.print_help_methods_arguments(I,methods_list)      # display list of methods arguments
 
         if args.amplitude:
             I.amplitude(args.amplitude)
@@ -52,7 +54,7 @@ class Driver_parser():
 
         if args.command:
             commands = [args.command[i].split(',') for i in range(len(args.command))]
-            message = utilities.parse_commands(I,commands,methods_list)
+            message = test.parse_commands(I,commands,methods_list)
             
         #I.close()
         #sys.exit()

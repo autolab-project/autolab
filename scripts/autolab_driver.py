@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import argparse
+from argparse import ArgumentParser
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),'autolab','core'))
@@ -17,18 +17,18 @@ PATHS = paths.Paths()
 def main():
     print('ok')
     
-    r = index.load(PATHS)
-    print(r.keys,r)
-
-
+    configparser = index.load(PATHS)
+    print(configparser.keys(),configparser.sections(),configparser)
+    
+    load_device(configparser,name)
+    
     # Parser configuration
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
     parser.add_argument("-l", "--link", type=str, dest="link", default='VISA', help="Set the link to use for the connection." )
     parser.add_argument("-i", "--address", type=str, dest="address", default='192.168.0.2', help="Set the address to use for the communication." )
+    parser.add_argument("-c", "--command", nargs='+', dest="command", default=None, help="Set the command to use." )
         
-    # Results
     args = parser.parse_args()
-    
     
     # Load element
     address = args.element[0].split('.')
@@ -41,18 +41,24 @@ def main():
 
     
     
-    # do something
+    # instatiate the Driver_parser class with arguments(parser)
+    
+    
 
 
-def load_device(name):
+def load_device(configparser,name):
     
     """ This function tries to load the devices with the following name """
     
     # Load corresponding index
-    index = self._index[name]
+    section = configparser[name]
+    list_device_attr = [key for key in configparser[section].keys()]
+    
+    
     
     # Driver provided
     if 'driver' not in index.keys():
+        pass
         # assert address and communication arguments do exist
         #parse address and communication arguments
     else:

@@ -24,7 +24,7 @@ class Driver():
     def set_frequency(self,frequency):
         self.write(f'TRAT{frequency}')
     def get_frequency(self):
-        return self.query('TRAT?')
+        return float(self.query('TRAT?'))
     
     def set_delay_channels(self,channels):
         assert len(channels)==1 or len(channels)==2, f"Argument channels must be a str of length either 1 or 2 in {self.conv[2:]}"
@@ -41,6 +41,11 @@ class Driver():
             ch2 = str(self.conv.index(channels))
         self.write(f'DLAY{ch2},{ch1},{delay}')
 
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'frequency','type':float,'unit':'Hz','write':self.set_frequency,'read':self.get_frequency,'help':'Output frequency.'})
+        return config
+        
 #################################################################################
 ############################## Connections classes ##############################
 class Driver_VXI11(Driver):
@@ -75,9 +80,9 @@ class Output():
     def get_amplitude(self):
         return float(self.dev.query(f'LAMP?{self.dev.conv2.index(self.output)}'))
     def set_polarity(self,polarity):
-        self.dev.write(f'LPOL{self.dev.conv2.index(self.output)},{polarity}')
+        self.dev.write(f'LPOL{self.dev.conv2.index(self.output)},{polarity:g}')
     def get_polarity(self):
-        return float(self.dev.query(f'LPOL?{self.dev.conv2.index(self.output)}'))
+        return bool(int(self.dev.query(f'LPOL?{self.dev.conv2.index(self.output)}')))
     def set_offset(self,offset):
         self.dev.write(f'LOFF{self.dev.conv2.index(self.output)},{offset}')
     def get_offset(self):
@@ -86,6 +91,13 @@ class Output():
     def set_delay(self,delay):
         self.dev.set_delay(delay,channels=self.output)
             
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'amplitude','type':float,'unit':'V','write':self.set_amplitude,'read',self.get_amplitude,'help':'Voltage amplitude.'})
+        config.append({'element':'variable','name':'polarity','type':bool,'read':self.get_polarity,'write':self.set_polarity,'help':'Polarity state.'})
+        config.append({'element':'variable','name':'offset','type':float,'unit':'V','write':self.set_offset,'read':self.get_offset,'help':'Voltage offset'})
+        config.append({'element':'variable','name':'delay','type':float,'unit':'s','write':self.set_delay,'help':'Set the delay between the two channels of the given output'})
+        return config
     
 
 if __name__ == '__main__':
