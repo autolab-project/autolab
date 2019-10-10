@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_33220A
+import agilent_33220A as MODULE
 from argparse import ArgumentParser
-from functools import partial
 
-class Driver_parser():
-    def __init__(args,utilities):
+
+class driver_parser():
+    def __init__(self,args,utilities,**kwargs):
+        """Set the connection up"""
+        self.classes_list = utilities.list_classes(MODULE)
+        Driver_class      = utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        self.Instance     = Driver_class(address=args.address,**kwargs)
+        
+        self.methods_list = utilities.list_methods(self.Instance)
+        
+        
+    def add_parser_arguments(self,parser):
+        """Add arguments and help to the parser passed as input"""
         usage = """usage: %prog [options] arg
                     
                     
@@ -15,44 +25,33 @@ class Driver_parser():
                     
 
                     """
-        parser = ArgumentParser(usage=usage,parents=args)
-
-
-        parser.add_argument("-c", "--command", nargs='+', dest="command", default=None, help="Set the command to use." )
-        parser.add_argument("-q", "--query", type=str, dest="query", default=None, help="Set the query to use." )
+        parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-r", "--ramp", type=float, dest="ramp", default=None, help="Turn on ramp mode." )
         parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
         parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
-        parser.add_argument("-l", "--link", type=str, dest="link", default='VISA', help="Set the link to use for the connection." )
-        parser.add_argument("-i", "--address", type=str, dest="address", default='192.168.0.2', help="Set the address to use for the communication." )
+        
+        return parser
 
-        args = parser.parse_args()
-        #args = vars(parser.parse_args())
+    def help(self):
+        """Add to the help lists of module: classes, methods and arguments"""
+        utilities.print_help_classes(self.classes_list)                  # display list of classes in module
+        utilities.print_help_methods(self.methods_list)                  # display list of methods in module
+        utilities.print_help_methods_arguments(self.Instance,self.methods_list)      # display list of methods arguments
 
-
-        ### Start the talker ###
-        classes_list = utilities.list_classes(agilent_33220A)
-        Driver_LINK  = utilities.identify_device_class(agilent_33220A,classes_list,args.link)
-        I = Driver_LINK(address=args.address)
-        methods_list = utilities.list_methods(I)
-
-        utilities.print_help_classes(classes_list)                  # display list of classes in module
-        utilities.print_help_methods(methods_list)                  # display list of methods in module
-        utilities.print_help_methods_arguments(I,methods_list)      # display list of methods arguments
-
+    def do_something(self,args):
         if args.amplitude:
-            I.amplitude(args.amplitude)
+            self.Instance.amplitude(args.amplitude)
         if args.offset:
-            I.offset(args.offset)
+            self.Instance.offset(args.offset)
         if args.frequency:
-            I.frequency(args.frequency)
+            self.Instance.frequency(args.frequency)
         if args.ramp:
-            I.ramp(args.ramp)
-
+            self.Instance.ramp(args.ramp)
         if args.command:
             commands = [args.command[i].split(',') for i in range(len(args.command))]
-            message = utilities.parse_commands(I,commands,methods_list)
-            
+            message = utilities.parse_commands(self.Instance,commands,self.methods_list)
+
+    def exit(self):
         #I.close()
-        #sys.exit()
+        sys.exit()
