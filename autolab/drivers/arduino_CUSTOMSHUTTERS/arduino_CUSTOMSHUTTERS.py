@@ -6,7 +6,7 @@ Supported instruments (identified):
 - 
 """
 
-
+import numpy as np
         
     
 
@@ -28,7 +28,7 @@ class Driver():
 
 
     def getID(self):
-        return self.query('*IDN?')
+        return self.query('ID?')
     
 
 
@@ -47,7 +47,7 @@ class Driver():
         for i in range(3):
             try :
                 servoID = i+1
-                position = self.shutterPositions[servoID][int(value[i])]
+                position = self.POS[servoID][int(value[i])]
                 command+=f'SRV{servoID}={position},'
             except :
                 pass
@@ -69,6 +69,7 @@ class Driver():
                 newConfig += str(int(not bool(int(self.config[i]))))
             except :
                 newConfig += 'x'
+
         self.setConfig(newConfig)
         
       
@@ -89,9 +90,19 @@ class Driver():
         config.append({'element':'action','name':'closeAll','do':self.setSafeState,'help':'Close every shutters'})
         config.append({'element':'action','name':'invert','do':self.invertConfig,'help':'Invert every shutters state'})
         config.append({'element':'variable','name':'config','read':self.getConfig,'write':self.setConfig,'type':str,'help':'Shutter configuration. 1 is closed, 0 is opened.'})
-
+        config.append({'element':'action','name':'danse','do':self.danse,'help':'Oh yeah'})
         return config
+    
+    def danse(self):
+        mess = ''
+        for i in range(6) :
+            for j in range(1,4) :
+                mess += f'SRV{j}={round(np.random.random()*180)},'
+        self.inst.timeout = 10000
+        self.query(mess)
+        self.inst.timeout = 5000
   
+    
 
 
 #################################################################################
@@ -100,14 +111,12 @@ class Driver_VISA(Driver):
     def __init__(self, address='ASRL::2::INSTR', **kwargs):
         import visa 
         
-        self.DEF_TIMEOUT = 1000 #ms
-        self.LONG_TIMEOUT = 5000 #ms
         self.BAUDRATE = 115200 
         
         # Instantiation
         rm = visa.ResourceManager()
         self.inst = rm.open_resource(address)
-        self.inst.timeout = self.DEF_TIMEOUT
+        self.inst.timeout = 5000 #ms
         self.inst.baud_rate = self.BAUDRATE
         
         Driver.__init__(self)
@@ -118,13 +127,11 @@ class Driver_VISA(Driver):
         except : pass
 
     def query(self,command):
+
         result = self.inst.query(command)
         result = result.strip('\n')
         
         if '=' in result : result = result.split('=')[1]
-        
-        if 'SRV' in command : self.inst.timeout = self.LONG_TIMEOUT
-        else : self.inst.timeout = self.DEF_TIMEOUT
         
         try : result = float(result)
         except: pass
@@ -140,5 +147,5 @@ class Driver_VISA(Driver):
         
         
 if __name__ == '__main__' : 
-    ADDRESS = 'ASRL15::INSTR'
+    ADDRESS = 'ASRL5::INSTR'
         
