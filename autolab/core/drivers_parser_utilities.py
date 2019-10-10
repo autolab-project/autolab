@@ -11,20 +11,18 @@ class utilities():
     def __init__(self):
         pass
     def print_help_classes(self,classes_list):
-        print()
-        print(f'[Classes]\n{", ".join(classes_list)}')
+        return f'\n[Classes]\n{", ".join(classes_list)}\n'
     def print_help_methods(self,methods_list):
-        print()
-        print(f'[Methods]\n{", ".join(methods_list)}')
+        return f'\n[Methods]\n{", ".join(methods_list)}\n'
     def print_help_methods_arguments(self,I,methods_list):
-        print()
-        print(f'[Methods arguments]')
+        s = f'\n[Methods arguments]'
         for command in methods_list:
             com = command
             coms = com.split('.')
             coms1_attr = getattr(I,coms[1])
-            if len(coms)==2: print(f'{command}   ',inspect.signature(coms1_attr))
-            else: print(f'{command}  ',inspect.signature(getattr(coms1_attr,coms[-1]))) 
+            if len(coms)==2: s = s + f'\n{command}   {inspect.signature(coms1_attr)}'
+            else: s = s + f'\n{command}   {inspect.signature(getattr(coms1_attr,coms[-1]))}'
+        return s+'\n'
         
     def list_classes(self,module):
         return [name for name, obj in inspect.getmembers(module, inspect.isclass) if obj.__module__ is module.__name__]

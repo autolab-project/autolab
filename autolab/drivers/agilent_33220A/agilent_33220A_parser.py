@@ -5,26 +5,31 @@ import agilent_33220A as MODULE
 from argparse import ArgumentParser
 
 
-class driver_parser():
+class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
+        self.name      = args.driver
+        self.utilities = utilities
         """Set the connection up"""
-        self.classes_list = utilities.list_classes(MODULE)
-        Driver_class      = utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        self.classes_list = self.utilities.list_classes(MODULE)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
         self.Instance     = Driver_class(address=args.address,**kwargs)
         
-        self.methods_list = utilities.list_methods(self.Instance)
+        self.methods_list = self.utilities.list_methods(self.Instance)
         
         
     def add_parser_arguments(self,parser):
         """Add arguments and help to the parser passed as input"""
-        usage = """usage: %prog [options] arg
-                    
-                    
-                    EXAMPLES:
-                        
-                    
+        usage = f"""
 
-                    """
+----------------  Driver informations:  ----------------
+{self.help()}
+
+----------------  Examples:  ----------------
+
+usage:    autolab-drivers [options] arg 
+        
+autolab-drivers -d {self.name} -i 192.168.0.4 -l VISA
+            """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-r", "--ramp", type=float, dest="ramp", default=None, help="Turn on ramp mode." )
         parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
@@ -35,9 +40,10 @@ class driver_parser():
 
     def help(self):
         """Add to the help lists of module: classes, methods and arguments"""
-        utilities.print_help_classes(self.classes_list)                  # display list of classes in module
-        utilities.print_help_methods(self.methods_list)                  # display list of methods in module
-        utilities.print_help_methods_arguments(self.Instance,self.methods_list)      # display list of methods arguments
+        classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module
+        methods_list = self.utilities.print_help_methods(self.methods_list)                  # display list of methods in module
+        methods_args = self.utilities.print_help_methods_arguments(self.Instance,self.methods_list)      # display list of methods arguments
+        return classes_list + methods_list + methods_args
 
     def do_something(self,args):
         if args.amplitude:
@@ -50,7 +56,7 @@ class driver_parser():
             self.Instance.ramp(args.ramp)
         if args.command:
             commands = [args.command[i].split(',') for i in range(len(args.command))]
-            message = utilities.parse_commands(self.Instance,commands,self.methods_list)
+            message = self.utilities.parse_commands(self.Instance,commands,self.methods_list)
 
     def exit(self):
         #I.close()

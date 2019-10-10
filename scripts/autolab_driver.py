@@ -15,8 +15,6 @@ PATHS     = paths.Paths()
 UTILITIES = drivers_parser_utilities.utilities()
 
 def main():
-    previous_path = os.getcwd() # get current path to move back after loading
-    
     # Initial parser for command line arguments (help finding the device and associated modules)
     accepted_arguments = ['-l','-i','-d']
     args_to_pass = init_argument_to_parse(accepted_arguments=accepted_arguments)    
@@ -25,10 +23,8 @@ def main():
     parser.add_argument("-d", "--driver", type=str, dest="driver", default=None, help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_index.ini OR(if it is not) 2) Set the driver name to use." )
     parser.add_argument("-l", "--link", type=str, dest="link", default=None, help="Set the link to use for the connection." )
     parser.add_argument("-i", "--address", type=str, dest="address", default=None, help="Set the address to use for the communication." )
-    parser.add_argument("-c", "--command", nargs='+', dest="command", default=None, help="Set the command to use." )
+    parser.add_argument("-c", "--command", nargs='+', dest="command", default=None, help="Set the commands to use." )
     args = parser.parse_args(args_to_pass)
-    
-
     
     # Load devices_index.ini to find potentially defined devices (-i nickname option to use)
     local_config.check(PATHS)
@@ -51,27 +47,29 @@ def main():
         kwargs = dict(section)
         del kwargs['driver']
         del kwargs['connection']
-
+        del kwargs['address']
     else:
         assert args.driver, f"Missing driver name to use"
         assert args.link and args.address, f"Missing address or connection type. Provided are, type: {args.link}, address: {args.address}"
         kwargs = {}
     
-    print(PATHS.DRIVERS_PATHS)
-    #os.chdir(PATHS.) + drivernaME
+    Driver_path = [os.path.join(PATHS.DRIVERS_PATHS[key],args.driver) for key in PATHS.DRIVERS_PATHS.keys() if os.path.exists(os.path.join(PATHS.DRIVERS_PATHS[key],args.driver))]
+    assert len(Driver_path) != 0, f"Warning: No driver found, full path was: {Driver_path}"
+    assert len(Driver_path) == 1, f"Warning: More than one folder found with paths: {Driver_path}"
+    Driver_path = Driver_path[0]
     
-        # driver_parser module
-    import module_driver_parser
+    sys.path.append(Driver_path)  # Add the driver's path
+    
+    # Import the parser module
+    Driver_module = __import__(f'{args.driver}_parser')
+    globals()[Driver_module] = Driver_module
     
     # Instance the driver (establish communication with the physical device)
-    Instance = driver_parser_class(args,UTILITIES,**kwargs)
+    Instance = Driver_module.Driver_parser(args,UTILITIES,**kwargs)
     
     # Add arguments to the existing parser (driver dependant)
     parser = Instance.add_parser_arguments(parser)
     args = parser.parse_args()
-    
-    # Going back to working folder
-    os.chdir(previous_path)
     
     # Finally, execute functions according to the arguments provided
     Instance.do_something(args)
@@ -81,5 +79,7 @@ def init_argument_to_parse(accepted_arguments):
     args = sys.argv[1:]  # [1:] to remove module name
     args = ''.join(args)
     args =  ["-"+arg for arg in args.split("-") if arg]
+    print(args)
     args_to_pass =  [arg   for arg in args   for acc in accepted_arguments   if acc in arg]
+    print(args_to_pass)
     return args_to_pass
