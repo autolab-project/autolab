@@ -28,6 +28,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
         
         
+        
     def load(self,module):
         
         """ This function loads the entire module (submodules, variables, actions) """
@@ -80,8 +81,12 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         self.execButton.setText("Execute")
         self.execButton.pressed.connect(self.execute)
         self.gui.tree.setItemWidget(self, 2, self.execButton)
-                
-        
+               
+        # Tooltip
+        if self.action._help is None : tooltip = 'No help available for this action'
+        else : tooltip = self.action._help
+        for i in range(5):
+            self.setToolTip(i,tooltip)
         
     def execute(self):
         
@@ -178,6 +183,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.indicator = QtWidgets.QLabel()
             self.gui.tree.setItemWidget(self, 4, self.indicator)
             
+        # Tooltip
+        if self.variable._help is None : tooltip = 'No help available for this variable'
+        else : tooltip = self.variable._help
+        for i in range(5):
+            self.setToolTip(i,tooltip)
                    
             
     def writeGui(self,value):
