@@ -156,7 +156,7 @@ class DriverManager() :
         return self.list() + ['list','help']
     
     def list(self):
-        return tuple(self._driverPaths.keys())
+        return list(self._driverPaths.keys())
 
         
     def help(self):
