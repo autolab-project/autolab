@@ -85,8 +85,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         # Tooltip
         if self.action._help is None : tooltip = 'No help available for this action'
         else : tooltip = self.action._help
-        for i in range(5):
-            self.setToolTip(i,tooltip)
+        self.setToolTip(0,tooltip)
         
     def execute(self):
         
@@ -186,8 +185,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # Tooltip
         if self.variable._help is None : tooltip = 'No help available for this variable'
         else : tooltip = self.variable._help
-        for i in range(5):
-            self.setToolTip(i,tooltip)
+        self.setToolTip(0,tooltip)
                    
             
     def writeGui(self,value):
