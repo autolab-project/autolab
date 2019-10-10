@@ -8,9 +8,9 @@ Created on Thu Jun 13 10:25:49 2019
 
 from . import index
 from autolab import drivers
+from autolab import paths
 import threading
 import inspect
-from .paths import Paths
 
 def emphasize(txt):
     return '-'*len(txt) + '\n' + txt + '\n' + '-'*len(txt)
@@ -27,7 +27,6 @@ class DeviceManager() :
     def __init__(self):
         
         self._dev = {}
-        paths = Paths()
         
         self._index = index.load(paths)
         

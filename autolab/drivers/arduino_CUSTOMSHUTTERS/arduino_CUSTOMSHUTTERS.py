@@ -83,10 +83,34 @@ class Driver():
     def setAngleShutter3(self,value):
         self.query(f'SRV3={value}')
         
+        
+    def setShutter1(self,value):
+        self.setConfig(f'{int(value)}xx')
+        
+    def setShutter2(self,value):
+        self.setConfig(f'x{int(value)}x')
+        
+    def setShutter3(self,value):
+        self.setConfig(f'xx{int(value)}')
+        
+        
+    def getShutter1(self):
+        return bool(int(self.config[0]))
+    
+    def getShutter2(self):
+        return bool(int(self.config[1]))
+    
+    def getShutter3(self):
+        return bool(int(self.config[2]))
+    
+    
+        
     def getDriverConfig(self):
         
         config = []
-        
+        config.append({'element':'variable','name':'shutter1','type':bool,'read':self.getShutter1,'write':self.getShutter1,'help':'State of shutter 1 (True: blocking)'})
+        config.append({'element':'variable','name':'shutter2','type':bool,'read':self.getShutter2,'write':self.getShutter2,'help':'State of shutter 2 (True: blocking)'})
+        config.append({'element':'variable','name':'shutter3','type':bool,'read':self.getShutter3,'write':self.getShutter3,'help':'State of shutter 3 (True: blocking)'})
         config.append({'element':'action','name':'closeAll','do':self.setSafeState,'help':'Close every shutters'})
         config.append({'element':'action','name':'invert','do':self.invertConfig,'help':'Invert every shutters state'})
         config.append({'element':'variable','name':'config','read':self.getConfig,'write':self.setConfig,'type':str,'help':'Shutter configuration. 1 is closed, 0 is opened.'})

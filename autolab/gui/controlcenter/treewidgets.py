@@ -8,9 +8,8 @@ Created on Sun Sep 29 18:29:07 2019
 
 from PyQt5 import QtCore, QtWidgets
 from ..monitoring.main import Monitor
-import autolab
 import os
-
+from autolab import paths
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -296,10 +295,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def saveValue(self):
         
         path = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value", 
-                                        os.path.join(autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH,f'{self.variable.name}.txt'), 
+                                        os.path.join(paths.USER_LAST_CUSTOM_FOLDER_PATH,f'{self.variable.name}.txt'), 
                                         "Text file (*.txt)")[0]
         if path != '' :
-            autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH = path
+            paths.USER_LAST_CUSTOM_FOLDER_PATH = path
             try : 
                 self.variable.save(path)
                 self.gui.statusBar.showMessage(f"Value of {self.name} successfully read and save at {path}",5000)
