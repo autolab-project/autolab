@@ -41,6 +41,13 @@ class Driver():
     def run(self):
         self.write('RPT')
         
+        
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'action','name':'run','do':self.run,'help':'Set run mode'})
+        config.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
+        return config
+        
 
 #################################################################################
 ############################## Connections classes ##############################
@@ -78,6 +85,7 @@ class Traces():
         self.data        = [float(self.data[i]) for i in range(len(self.data))]
         self.frequencies = self.get_frequencies(self.data)
         return self.frequencies,self.data
+    
     def get_data_dataframe(self):
         frequencies,data              = self.get_data()
         self.data_dict['frequencies'] = self.frequencies
@@ -93,9 +101,9 @@ class Traces():
         savetxt(temp_filename,(self.frequencies,self.data))
 
     def set_start_wavelength(self,value):
-        self.dev.write('STAWL '+value)
+        self.dev.write(f'STAWL {value}')
     def set_stop_wavelength(self,value):
-        self.dev.write('STPWL '+value)
+        self.dev.write(f'STPWL {value}')
     def get_start_frequency(self):
         return float(self.dev.query("STAWL?"))
     def get_stop_frequency(self):
@@ -105,6 +113,14 @@ class Traces():
         stop  = self.get_stop_frequency()
         return linspace(start,stop,len(data))
     
+    def getDriverConfig(self):
+        config = []
+        config.append({'element':'variable','name':'start_wavelength','write':self.set_start_wavelength,'type':float,'help':'Start wavelength of the window'})
+        config.append({'element':'variable','name':'stop_wavelength','write':self.set_stop_wavelength,'type':float,'help':'Stop wavelength of the window'})
+        config.append({'element':'variable','name':'start_frequency','read':self.get_start_frequency,'type':float,'help':'Start frequency of the window'})
+        config.append({'element':'variable','name':'stop_frequency','read':self.get_stop_frequency,'type':float,'help':'Stop frequency of the window'})
+        config.append({'element':'variable','name':'spectrum','read':self.get_data_dataframe,'type':pandas.DataFrame,'help':'Current spectrum'})
+        return config
     
 if __name__ == '__main__':
     from optparse import OptionParser
