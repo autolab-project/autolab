@@ -8,6 +8,8 @@ Devices tree
 
 The name of each *Device* configured in Autolab is represented in a tree widget. If the connection to a given instrument is not already established, a click on the associated *Device* will establish this connection. The corresponding *Element* hierarchy of this *Device* then appears. 
 
+A tooltip will be displayed when passing the mouse over the *Elements* (if provided in the driver).
+
 Actions
 #######
 
