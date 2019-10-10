@@ -6,8 +6,9 @@ Created on Fri Sep 20 22:08:29 2019
 """
 from PyQt5 import QtCore, QtWidgets, uic
 import os
-import autolab
 import queue
+
+from autolab import paths
 
 from .data import DataManager
 from .figure import FigureManager
@@ -116,12 +117,12 @@ class Monitor(QtWidgets.QMainWindow):
             self.monitorManager.pauseButtonClicked()
         
         # Ask the path of the output folder
-        path = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory",autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH))
+        path = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory",paths.USER_LAST_CUSTOM_FOLDER_PATH))
         
         # Save the given path for future, the data and the figure if the path provided is valid
         if path != '' :
             
-            autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH = path
+            paths.USER_LAST_CUSTOM_FOLDER_PATH = path
             self.statusBar.showMessage('Saving data...',5000)
             
             try : 

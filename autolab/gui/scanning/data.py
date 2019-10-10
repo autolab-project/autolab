@@ -8,10 +8,9 @@ Created on Sun Sep 29 18:10:31 2019
 import collections
 from queue import Queue
 from PyQt5 import QtCore,QtWidgets
-import autolab
+from autolab import paths
 from distutils.dir_util import copy_tree
 import os 
-import numpy as np
 import pandas as pd
 import tempfile
 
@@ -69,7 +68,7 @@ class DataManager :
             
             path = str(QtWidgets.QFileDialog.getExistingDirectory(self.gui, 
                                                               "Select Directory",
-                                                              autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH))
+                                                              paths.USER_LAST_CUSTOM_FOLDER_PATH))
      
             if path != '' :
                 self.gui.statusBar.showMessage(f'Saving data...',5000)
@@ -87,6 +86,7 @@ class DataManager :
         
         self.datasets = []
         self.initialized = False
+        self.gui.figureManager.clearData()
         self.gui.variable_x_comboBox.clear()
         self.gui.variable_y_comboBox.clear()
         self.gui.save_pushButton.setEnabled(False)
@@ -165,20 +165,14 @@ class DataManager :
                 except : 
                     pass
                 
-        
     
-        for axe in ['x','y']:
-            widget = getattr(self.gui,f'variable_{axe}_comboBox')
-            widget.clear()
-            widget.addItems(resultNamesList)
-         
-        # Default x and y
-        self.gui.variable_x_comboBox.setCurrentIndex(0) # parameter
-        self.gui.variable_y_comboBox.setCurrentIndex(1) # first numerical measure
+        self.gui.variable_x_comboBox.clear()
+        self.gui.variable_x_comboBox.addItems(resultNamesList) # parameter first
         
-        
-        
-        
+        name=resultNamesList.pop(0)
+        resultNamesList.append(name)
+        self.gui.variable_y_comboBox.clear()
+        self.gui.variable_y_comboBox.addItems(resultNamesList) # first numerical measure first
         
         
         

@@ -6,6 +6,7 @@ Supported instruments (identified):
 - 
 """
 
+from XPS import XPS
 
 
 class Driver():
@@ -40,9 +41,7 @@ class Driver():
 class Driver_TCPIP(Driver):
     
     def __init__(self,address='192.168.0.8',**kwargs):
-        
-        from XPS import XPS
-        
+    
         self.TIMEOUT = 2
         
         # Instantiation

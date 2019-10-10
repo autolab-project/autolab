@@ -6,6 +6,7 @@ Created on Sun Sep 29 18:16:09 2019
 """
 from PyQt5 import QtWidgets
 import autolab
+from autolab import paths
 import configparser
 import datetime
 import os
@@ -303,11 +304,11 @@ class ConfigManager :
         and export the current scan configuration in it """
 
         path = QtWidgets.QFileDialog.getSaveFileName(self.gui, "Export AUTOLAB configuration file", 
-                                                     os.path.join(autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH,'config.conf'), 
+                                                     os.path.join(paths.USER_LAST_CUSTOM_FOLDER_PATH,'config.conf'), 
                                                      "AUTOLAB configuration file (*.conf)")[0]
 
         if path != '' :
-            autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH = path
+            paths.USER_LAST_CUSTOM_FOLDER_PATH = path
             
             try : 
                 self.export(path)
@@ -360,7 +361,7 @@ class ConfigManager :
         and import the current scan configuration from it """
         
         path = QtWidgets.QFileDialog.getOpenFileName(self.gui, "Import AUTOLAB configuration file", 
-                                                     autolab.core.paths.USER_LAST_CUSTOM_FOLDER_PATH,
+                                                     paths.USER_LAST_CUSTOM_FOLDER_PATH,
                                                      "AUTOLAB configuration file (*.conf)")[0]
         if path != '' :
             

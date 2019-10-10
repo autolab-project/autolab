@@ -18,7 +18,6 @@ class Driver():
         
         self.amp = 1
         
-        
         self.slot1 = Slot(self,1)
         self.slot2 = Slot(self,2)
         
@@ -29,11 +28,19 @@ class Driver():
         self.sleep = 0
         #raise ValueError('Test error')
         
+        self.verbose = False
+        
     def setSleep(self,value):
         self.sleep = value
         
     def getSleep(self):
         return self.sleep
+    
+    def setVerbose(self,value):
+        self.verbose = value
+        
+    def getVerbose(self):
+        return self.verbose
     
     def getAmplitude(self):
         time.sleep(self.sleep)
@@ -45,7 +52,8 @@ class Driver():
 #        if self.count == 100 :
 #            raise ValueError()
         value = self.amp + np.random.uniform(-1, 1)*0.01
-        print('get amplitude',value)
+        
+        if self.verbose : print('get amplitude',value)
 
         return value
     
@@ -53,31 +61,31 @@ class Driver():
         time.sleep(self.sleep)
         assert isinstance(phrase,str)
         self.phrase = phrase
-        print('set phrase',self.phrase)
+        if self.verbose : print('set phrase',self.phrase)
         
     def getPhrase(self):
         time.sleep(self.sleep)
-        print('get phrase',self.phrase)
+        if self.verbose : print('get phrase',self.phrase)
         return self.phrase
     
     def setAmplitude(self,value):
         time.sleep(self.sleep)
         self.amp = value
-        print('set amplitude',self.amp)
+        if self.verbose : print('set amplitude',self.amp)
         #raise ValueError('Test error')
     
     def close(self):
-        print('DUMMY DEVICE CLOSED')
+        if self.verbose : print('DUMMY DEVICE CLOSED')
         
     def getPhase(self):
         time.sleep(self.sleep)
         value = np.random.uniform(-1, 1)
-        print('get phase',value)
+        if self.verbose : print('get phase',value)
         return value
     
     def doSth(self):
         time.sleep(self.sleep)
-        print('do sth')
+        if self.verbose : print('do sth')
         #raise ValueError('Test error')
         
     def getDataframe(self):
@@ -85,17 +93,17 @@ class Driver():
         d = {'e':1,'f':2}
         df=df.append(d,ignore_index=True)
         time.sleep(self.sleep)
-        print('get dataframe',d)
+        if self.verbose : print('get dataframe',d)
         return df
     
     def setOption(self,value):
         time.sleep(self.sleep)
         self.option = bool(value)
-        print('set option',self.option)
+        if self.verbose : print('set option',self.option)
         
     def getOption(self):
         time.sleep(self.sleep)
-        print('get option',self.option)
+        if self.verbose : print('get option',self.option)
         return self.option
     
     def getArray(self):
@@ -126,6 +134,8 @@ class Driver():
                        'read':self.getArray})
         config.append({'element':'variable','name':'sleep','type':float,
                        'read':self.getSleep,'write':self.setSleep})
+        config.append({'element':'variable','name':'verbose','type':bool,
+                       'read':self.getVerbose,'write':self.setVerbose})
         return config
     
     
@@ -146,13 +156,13 @@ class Slot() :
     def getPower(self):
         time.sleep(self.dev.sleep)
         value = np.random.uniform()
-        print(f'slot {self.num} get power',value)
+        if self.dev.verbose : print(f'slot {self.num} get power',value)
         return value
     
     def getWavelength(self):
         time.sleep(self.dev.sleep)
         value = np.random.uniform()
-        print(f'slot {self.num} get wavelength',value)
+        if self.dev.verbose : print(f'slot {self.num} get wavelength',value)
         return value
 
     def getDriverConfig(self):

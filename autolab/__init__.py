@@ -11,13 +11,15 @@ with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as version_fil
     __version__ = version_file.read().strip()
 del os,version_file
 
-# USER FOLDER CONFIGURATION
+# PATHS
 from .core.paths import Paths
-from .core.config import check
 paths = Paths()
+del Paths
+
+# CHECK CONFIG
+from .core.config import check
 check(paths)
 del check
-del paths
 
 # DRIVERS
 from .core.drivers import DriverManager

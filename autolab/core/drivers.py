@@ -4,7 +4,7 @@ Created on Tue Oct  1 17:38:15 2019
 
 @author: qchat
 """
-from .paths import Paths
+from autolab import paths
 import os 
 import inspect
 import importlib
@@ -138,7 +138,7 @@ class DriverManager() :
     def __init__(self):
         
         pathsList = []
-        for folderPath in Paths().DRIVERS_PATHS.values():
+        for folderPath in paths.DRIVERS_PATHS.values():
             pathsList += [os.path.join(folderPath,driverName) for driverName in os.listdir(folderPath) 
                             if self._isValidDriver(os.path.join(folderPath,driverName))]
         
