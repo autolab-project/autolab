@@ -20,7 +20,6 @@ class Driver_parser():
     def add_parser_arguments(self,parser):
         """Add arguments and help to the parser passed as input"""
         usage = f"""
-
 ----------------  Driver informations:  ----------------
 {self.help()}
 
@@ -54,9 +53,9 @@ autolab-drivers -d {self.name} -i 192.168.0.4 -l VISA
             self.Instance.frequency(args.frequency)
         if args.ramp:
             self.Instance.ramp(args.ramp)
-        if args.command:
-            commands = [args.command[i].split(',') for i in range(len(args.command))]
-            message = self.utilities.parse_commands(self.Instance,commands,self.methods_list)
+        if args.methods:
+            methods = [args.methods[i].split(',') for i in range(len(args.methods))]
+            message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
 
     def exit(self):
         #I.close()
