@@ -46,7 +46,7 @@ class utilities():
             print(f'Executing command:  {command}')
             message = None
             com     = command[0]
-            assert com in methods_list, "Method not known or bound"
+            assert com in methods_list, f"Method not known or bound. Methods known are: {method_list}"
             coms = com.split('.')
             coms1_attr     = getattr(I,coms[1])
             

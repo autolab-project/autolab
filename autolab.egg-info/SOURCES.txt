@@ -88,6 +88,8 @@ autolab/drivers/srs_DS345/__init__.py
 autolab/drivers/srs_DS345/srs_DS345.py
 autolab/drivers/srs_SIM900/__init__.py
 autolab/drivers/srs_SIM900/srs_SIM900.py
+autolab/drivers/system/__init__.py
+autolab/drivers/system/system.py
 autolab/drivers/tektronix_DPO4104/__init__.py
 autolab/drivers/tektronix_DPO4104/tektronix_DPO4104.py
 autolab/drivers/tektronix_TDS5104B/__init__.py
