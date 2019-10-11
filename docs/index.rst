@@ -21,6 +21,14 @@ This is an example of basic instrument interaction by command-line in Python:
 	>>> autolab.devices.powermeter_exfo.power()
 	156.89e-6
 
+Graphical scanning interface:
+
+.. figure:: gui/scanning.png
+	:scale: 50 %
+	:figclass: align-center	
+	
+	
+Table of contents:
 
 .. toctree::
    :maxdepth: 1
