@@ -3,6 +3,8 @@ Control panel
 
 The Autolab GUI Control Panel provides an easy way to control your instruments. From it, you can visualize and set the value of its *Variables*, and execute its *Action* through graphical widgets. 
 
+.. image:: control_panel.png
+
 Devices tree
 ------------
 

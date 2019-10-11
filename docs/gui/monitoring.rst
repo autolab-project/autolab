@@ -3,6 +3,8 @@
 Monitoring
 ==========
 
+.. image:: monitoring.png
+
 The Autolab GUI Monitoring allows you to monitor a *Variable* in time. To start a monitoring, right click on the desired *Variable* in the control panel, and click **Start monitoring**. This *Variable* has be be readable (read function provided in the driver) and numerical (integer or float value).
 
 In the Monitoring window, you can set the **Window length** in seconds. Any points older than this value is removed. You can also set a **Delay** in seconds, which corresponds to a sleep delay between each measure.

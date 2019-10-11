@@ -5,8 +5,12 @@ Scanning
 
 The Autolab GUI Scanning interface allows the user to sweep a parameter over a certain range of values, and execute for each of them a custom recipe.
 
+.. image:: scanning.png
+
 Scan configuration
 ##################
+
+
 
 Parameter
 ---------
