@@ -28,6 +28,9 @@ Graphical scanning interface:
 	:figclass: align-center	
 	
 	
+You find this package useful ? Please add a star on the `GitHub page of this project
+<https://github.com/qcha41/autolab>`_ ! :-)
+	
 Table of contents:
 
 .. toctree::
