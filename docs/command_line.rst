@@ -117,10 +117,10 @@ With all these commands, you can now create your own Python script. Here is an e
 	wl_list = []
 	power_list = []
 	for wl in range(1550,1560,0.01) :
-		myTunics.wavelength(wl)
-		power = myPowerMeter.line1.power()
-		wl_list.append(wl)
-		power_list.append(power)
+	    myTunics.wavelength(wl)
+	    power = myPowerMeter.line1.power()
+	    wl_list.append(wl)
+	    power_list.append(power)
 	
 	# Turn off the light source
 	myTunics.output(False)
