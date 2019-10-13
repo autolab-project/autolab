@@ -59,12 +59,12 @@ def main():
     update_path(args)
         
     # Import the parser module
-    Driver_parser_module = import_parser_module(args)
+    Driver_parser_module = import_module(f'{args.driver}_parser')
     
     # Second help for connection classes -l option
     if len(temp_args)>1:
         if temp_args[1] == '-h' and temp_args[0].startswith('-d'):
-            Driver_module = import_driver_module(args)
+            Driver_module = import_module(f'{args.driver}')
             print_help_connections(Driver_module) 
     
     # Instance the driver (establish communication with the physical device)
@@ -77,17 +77,11 @@ def main():
     # Finally, execute functions according to the arguments provided
     Instance.do_something(args)
 
-def import_parser_module(args):
-    try: Driver_parser_module = __import__(f'{args.driver}_parser')
+def import_module(name):
+    try: module = __import__(name)
     except ModuleNotFoundError: print(f'No module found. List of the inspected folder:{os.listdir()}');sys.exit()
-    globals()[Driver_parser_module] = Driver_parser_module
-    return Driver_parser_module
-
-def import_driver_module(args):
-    try: Driver_module = __import__(f'{args.driver}')
-    except ModuleNotFoundError: print(f'No module found. List of the inspected folder:{os.listdir()}');sys.exit()
-    globals()[Driver_module] = Driver_module
-    return Driver_module
+    globals()[module] = module
+    return module
 
 def update_path(args):
     Driver_path = [os.path.join(PATHS.DRIVERS_PATHS[key],args.driver) for key in PATHS.DRIVERS_PATHS.keys() if os.path.exists(os.path.join(PATHS.DRIVERS_PATHS[key],args.driver))]
@@ -141,7 +135,7 @@ Three helps are configured:
 
 def print_help_connections(driver_module):
     print(f"""
-----------------  Connections types for {driver_module.__name__} (-d option) ----------------
+----------------  Connections types for {driver_module.__name__} (-l option) ----------------
 
     {available_connection_classes(driver_module)}
     
