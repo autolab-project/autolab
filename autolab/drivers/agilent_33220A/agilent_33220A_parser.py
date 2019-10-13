@@ -26,8 +26,13 @@ class Driver_parser():
 ----------------  Examples:  ----------------
 
 usage:    autolab-drivers [options] arg 
-        
-autolab-drivers -d {self.name} -i 192.168.0.4 -l VISA
+            
+    autolab-drivers -d {self.name} -i TCPIP::192.168.0.4::INSTR -l VISA -a 0.5 -f 500
+    load {self.name} driver with address TCPIP... and using VISA communication protocol and set the amplitude to 0.5V and frequency to 500Hz.
+    
+    autolab-drivers -d nickname -a 0.5 -f 500
+    same as before but using the device nickname as defined in devices_index.ini
+
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-r", "--ramp", type=float, dest="ramp", default=None, help="Turn on ramp mode." )
