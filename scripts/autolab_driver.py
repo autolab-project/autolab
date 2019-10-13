@@ -43,11 +43,9 @@ def main():
             assert 'address' in section.keys(), f"Address section: Missing address for device '{args.driver}'"
             args.address = section['address']
         args.driver = section['driver']
-        # kwargs creation
+
         kwargs = dict(section)
-        del kwargs['driver']
-        del kwargs['connection']
-        del kwargs['address']
+        del kwargs['driver']; del kwargs['connection']; del kwargs['address']
     else:
         assert args.driver, f"Missing driver name to use"
         assert args.link and args.address, f"Missing address or connection type. Provided are, type: {args.link}, address: {args.address}"
@@ -61,7 +59,8 @@ def main():
     sys.path.insert(0,Driver_path)  # Insert Driver's path at the first place of the list!
     
     # Import the parser module
-    Driver_module = __import__(f'{args.driver}_parser')
+    try: Driver_module = __import__(f'{args.driver}_parser')
+    except ModuleNotFoundError: print(f'No module found. List of the inspected folder:{os.listdir()}');sys.exit()
     globals()[Driver_module] = Driver_module
     
     # Instance the driver (establish communication with the physical device)
@@ -90,9 +89,9 @@ This is a very basic help for usage of autolab-drivers. More info can be found o
     Usage:   autolab-drivers -d driver_name -l connection -i address -h
 
 Recquiered arguments to establish the connection:
-    -d driver_name: name of the driver to use (e.g.: agilent_33220A)
+    -d driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the devices_index.ini .
     -l name of the connection to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). This one must be implemented as a class in the driver module.
-    -i address: full address to reach the device that depends on the connection type ()
+    -i address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11])
 
 Once the connection is established you may access a more extensive help describing the device itself and its own defined options by adding the argument:
     -h help: Display driver's help  (this not be the first argument that would repeat the present help message)
