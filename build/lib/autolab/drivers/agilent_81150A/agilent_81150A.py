@@ -30,8 +30,8 @@ class Driver_VISA(Driver):
     def __init__(self, address='TCPIP::192.168.0.3::INSTR', **kwargs):
         import visa as v
         
-        #rm        = v.ResourceManager()
-        #self.inst = rm.get_instrument(address)
+        rm        = v.ResourceManager()
+        self.inst = rm.get_instrument(address)
         Driver.__init__(self, **kwargs)
         
     def query(self,query):

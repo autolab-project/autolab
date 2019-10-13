@@ -237,7 +237,7 @@ class FigureManager :
                 alpha = (self.nbtraces-(len(data)-1-i))/self.nbtraces
             
             # Plot
-            curve = self.ax.plot(x,y,color=color,alpha=alpha)[0]
+            curve = self.ax.plot(x,y,'x-',color=color,alpha=alpha)[0]
             self.curves.append(curve)
             
         # Autoscale

@@ -26,7 +26,7 @@ class FigureManager :
             ylabel += f' ({self.gui.variable.unit})'
         self.ax.set_ylabel(ylabel)
         self.ax.grid()
-        self.plot=self.ax.plot([0],[0],color='r')[0]
+        self.plot=self.ax.plot([0],[0],'x-',color='r')[0]
         # The first time we open a monitor it doesn't work, I don't know why..
         # There is no current event loop in thread 'Thread-7'.
         # More accurately, FigureCanvas doesn't find the event loop the first time it is called

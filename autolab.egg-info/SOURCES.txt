@@ -26,6 +26,7 @@ autolab/drivers/agilent_81150A/agilent_81150A.py
 autolab/drivers/agilent_81150A/agilent_81150A_parser.py
 autolab/drivers/agilent_DSA91304A/__init__.py
 autolab/drivers/agilent_DSA91304A/agilent_DSA91304A.py
+autolab/drivers/agilent_DSA91304A/agilent_DSA91304A_parser.py
 autolab/drivers/agilent_DSA91304A/scope_DSA91304A.py
 autolab/drivers/agilent_DSA91304A/yt_DSA91304A.py
 autolab/drivers/agilent_DSO54853A/__init__.py
