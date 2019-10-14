@@ -84,22 +84,22 @@ class Driver():
         
         config = []
 
-        config.append({'element':'variable','name':'wavelength','type':str,
+        config.append({'element':'variable','name':'wavelength','unit':'nm','type':float,
                        'read':self.getWavelength,'write':self.setWavelength})
     
-        config.append({'element':'variable','name':'frequency','type':str,
+        config.append({'element':'variable','name':'frequency','unit':'GHz','type':float,
                        'read':self.getFrequency,'write':self.setFrequency})
 
-        config.append({'element':'variable','name':'power','type':str,
+        config.append({'element':'variable','name':'power','unit':'mW','type':float,
                        'read':self.getPower,'write':self.setPower})
 
-        config.append({'element':'variable','name':'intensity','type':str,
+        config.append({'element':'variable','name':'intensity','unit':'mA','type':float,
                        'read':self.getIntensity,'write':self.setIntensity})
     
-        config.append({'element':'variable','name':'output','type':str,
+        config.append({'element':'variable','name':'output','type':bool,
                        'read':self.getOutput,'write':self.setOutput})
 
-        config.append({'element':'variable','name':'motorSpeed','type':str,
+        config.append({'element':'variable','name':'motorSpeed','unit':'nm/s','type':float,
                        'read':self.getMotorSpeed,'write':self.setMotorSpeed})
     
         return config
