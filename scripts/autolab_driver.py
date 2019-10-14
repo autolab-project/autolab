@@ -57,15 +57,15 @@ def main():
     
     # A path to sys path at index 0
     update_path(args)
-        
-    # Import the parser module
-    Driver_parser_module = import_module(f'{args.driver}_parser')
     
     # Second help for connection classes -l option
     if len(temp_args)>1:
         if temp_args[1] == '-h' and temp_args[0].startswith('-d'):
             Driver_module = import_module(f'{args.driver}')
             print_help_connections(Driver_module) 
+        
+    # Import the parser module
+    Driver_parser_module = import_module(f'{args.driver}_parser')
     
     # Instance the driver (establish communication with the physical device)
     Instance = Driver_parser_module.Driver_parser(args,UTILITIES,**kwargs)
@@ -103,14 +103,14 @@ def print_help_message():
     print(f"""
 ----------------  General informations:  ----------------
 
-This is a very basic help for usage of autolab-drivers. More info can be found on read the doc website. To display a more extensive version please provide enough arguments to establish connection with the device.
+This is a very basic help message for usage of autolab-drivers. More info can be found on read the doc website. To display a more extensive further help please have a look at the section help below.
     
     Usage:   autolab-drivers -d driver_name -l connection -i address -h
 
-Recquiered arguments to establish the connection:
+Recquiered arguments to establish the connection with a device:
     -d driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the devices_index.ini. See lower for the list of available drivers.
-    -l name of the connection to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see lower section).
-    -i address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11])
+    -l name of the connection to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
+    -i address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
     
     
 ----------------  Helps (-h option)  ----------------       

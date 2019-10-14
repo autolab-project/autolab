@@ -41,7 +41,7 @@ class Driver():
     
     def set_piezo(self,piezo):
         self.write(f'SOURce:VOLTage:PIEZo {piezo}')
-        #self.read #??
+        #self.read #?? was present
         
     def wavelength(self,lambd):
         self.write(f'SOUR:WAVE {lambd}')
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     if options.scanpiezo:
         I.func_scanpiezo(options.scanpiezo)
         
-        def scan_wavelength(self,scan):
+    def scan_wavelength(self,scan):
         if len(scan) == 3:
             vel = str(scan[2])
             scan = scan[:2]
