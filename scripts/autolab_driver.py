@@ -23,8 +23,16 @@ def main():
     parser.add_argument("-d", "--driver", type=str, dest="driver", default=None, help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_index.ini OR(if it is not) 2) Set the driver name to use." )
     parser.add_argument("-l", "--link", type=str, dest="link", default=None, help="Set the link to use for the connection." )
     parser.add_argument("-i", "--address", type=str, dest="address", default=None, help="Set the address to use for the communication." )
+    
+    parser.add_argument("-s","--slot", nargs='+', dest="slot", default=None, help="Set the slot configuration." )
+    parser.add_argument("--port", type=int, dest="port", default=None, help="Set the port to use for communicate." )
     parser.add_argument("-m", "--methods", nargs='+', dest="methods", default=None, help="Set the methods to use." )
     args = parser.parse_args(args_to_pass)
+    
+    # for adding --options, or options that must go through kwargs
+    parser_additionnal = ArgumentParser(add_help=False,parents=[parser])
+    parser.add_argument("-h","--useless",action='store_false',dest="useless", default=None, help="Useless, avoid breaking")
+    args_additionnal = parser.parse_args()
     
     # Load devices_index.ini to find potentially defined devices (-i nickname option to use)
     local_config.check(PATHS)
@@ -32,20 +40,25 @@ def main():
     # Load the device or the driver
     if args.driver in configparser.sections():
         section = configparser[args.driver]
-        
         # WARNING will choose arguments provided by the user instead of devices_index.ini ones        
+        # Mandatory arguments
+        args.driver = section['driver']
         if args.link: pass
         else: 
             assert 'connection' in section.keys(), f"Connection section: Missing connection type for device '{args.driver}'"
             args.link = section['connection']
+        
+        kwargs = dict(section)
+        del kwargs['driver']; del kwargs['connection']; 
+        
+        # Additionnal arguments
         if args.address: pass
         else: 
-            assert 'address' in section.keys(), f"Address section: Missing address for device '{args.driver}'"
-            args.address = section['address']
-        args.driver = section['driver']
-
-        kwargs = dict(section)
-        del kwargs['driver']; del kwargs['connection']; del kwargs['address']
+            if 'address' in section.keys():
+                args.address = section['address']
+                del kwargs['address']      
+        # section slot* goes to kwargs (potentially overwriten by user lower)
+        # -- options must be passed to kwargs (see lower)
     else:
         assert args.driver, f"Missing driver name to use"
         if len(temp_args)>1:
@@ -54,14 +67,20 @@ def main():
         else:
             assert args.link and args.address, f"Missing address or connection type. Provided are, type: {args.link}, address: {args.address}"
         kwargs = {}
-    
+    # Arguments processing (slot must be in kwargs dict)
+    if args_additionnal.port: kwargs['port'] = args_additionnal.port
+    if args_additionnal.slot: 
+        for slot in args_additionnal.slot:
+            temp = slot.replace(' ','')
+            kwargs[slot.split('=')[0]] = slot.split('=')[1]
+
     # A path to sys path at index 0
     Driver_path = update_path(args)
     
     # Second help for connection classes -l option
     if len(temp_args)>1:
         if temp_args[1] == '-h' and temp_args[0].startswith('-d'):
-            Driver_module = import_module(f'{args.driver}')
+            Driver_module = import_module(f'{args.driver}',Driver_path)
             print_help_connections(Driver_module) 
         
     # Import the parser module

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_33220A as MODULE
+import aimtti_TGF3162 as MODULE
 from argparse import ArgumentParser
 
 
@@ -26,17 +26,19 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.4::INSTR -l VISA -a 0.5 -f 500
-    load {MODULE.__name__} driver using VISA communication protocol with address TCPIP... and set the amplitude to 0.5V and frequency to 500Hz.
+    autolab-drivers -d {MODULE.__name__} -l SOCKET -a 0.5 -f 80000000 -c 1 2
+    load {MODULE.__name__} driver using socket and set the channel 1 and 2 amplitude to 0.5V and frequency to 80MHz.
     
-    autolab-drivers -d nickname -a 0.5 -f 500
-    same as before but using the device nickname as defined in devices_index.ini
+    autolab-drivers -d nickname -a 0.5 -f 80e6 -c 1
+    same as before but using the device nickname as defined in devices_index.ini and only for channel 1.
+    
+    Note: Arbitrary waveform available only using a python terminal
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-r", "--ramp", type=float, dest="ramp", default=None, help="Turn on ramp mode." )
-        parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
+        parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
         parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
+        parser.add_argument("-p", "--period", type=str, dest="period", default=None, help="Set the period." )
         
         return parser
 
@@ -48,18 +50,19 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def do_something(self,args):
-        if args.amplitude:
-            getattr(self.Instance,'amplitude')(args.amplitude)
-        if args.offset:
-            getattr(self.Instance,'offset')(args.offset)
-        if args.frequency:
-            getattr(self.Instance,'frequency')(args.frequency)
-        if args.ramp:
-            getattr(self.Instance,'ramp')(args.ramp)
+        if args.channels:
+            for chan in args.channels:
+                if args.amplitude:
+                    getattr(getattr(self.Instance,f'channel{chan}'),'amplitude')(args.amplitude)
+                if args.frequency:
+                    getattr(getattr(self.Instance,f'channel{chan}'),'frequency')(args.frequency)
+                if args.offset:
+                    getattr(getattr(self.Instance,f'channel{chan}'),'offset')(args.offset)
+
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
 
     def exit(self):
-        #I.close()
+        self.Instance.close()
         sys.exit()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_81150A as MODULE
+import aimtti_TGA12104 as MODULE
 from argparse import ArgumentParser
 
 
@@ -25,23 +25,18 @@ class Driver_parser():
 ----------------  Examples:  ----------------
 
 usage:    autolab-drivers [options] arg 
-        
-    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.3::INSTR -l VISA -a 1 -o 1 -f 50KHZ -c 1 2
-    set the frequency to 50 kHz, the amplitude to 1V, the offset to 1V for both channel 1 and 2
-
-    autolab-drivers -d nickname -p w10NS 1
-    set pulse mode to channel 1 with pulse width of 10NS (MS stands for microseconds), using the device nickname as defined in devices_index.ini
-
-    autolab-drivers -d nickname -p d10 2
-    set pulse mode to channel 2 with duty cycle of 10 purcent, using the device nickname as defined in devices_index.ini
+            
+    autolab-drivers -d {MODULE.__name__} -l USB -a 0.5 -f 500
+    load {MODULE.__name__} driver using pyusb and set the amplitude to 0.5V and frequency to 500Hz.
+    
+    autolab-drivers -d nickname -a 0.5 -f 500
+    same as before but using the device nickname as defined in devices_index.ini
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
-        parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
-        parser.add_argument("-u", "--uniform", type=str, dest="uniform", default=None, help="Set dc mode on and set offset." )
-        parser.add_argument("-p", "--pulsemode", type=str, dest="pulsemode", default=None, help="Set pulse mode and use argument as either the duty cycle or the pulse width depending on the first letter 'd' or 'w' (see examples)." )
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
-        parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency. Values may be 50000 or 50KHZ" )
+        parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
+        parser.add_argument("-p", "--period", type=str, dest="period", default=None, help="Set the period." )
         
         return parser
 
@@ -57,19 +52,11 @@ usage:    autolab-drivers [options] arg
             for chan in args.channels:
                 if args.amplitude:
                     getattr(getattr(self.Instance,f'channel{chan}'),'amplitude')(args.amplitude)
-                if args.offset:
-                    getattr(getattr(self.Instance,f'channel{chan}'),'offset')(args.offset)
                 if args.frequency:
                     getattr(getattr(self.Instance,f'channel{chan}'),'frequency')(args.frequency)
-                if args.uniform:
-                    getattr(getattr(self.Instance,f'channel{chan}'),'dc_mode')(args.uniform)
-                if args.pulsemode:
-                    if args.pulsemode[0]=="d": 
-                        getattr(getattr(self.Instance,f'channel{chan}'),'pulse_mode')(duty_cycle=args.pulsemode[1:])
-                    elif args.pulsemode[0]=="w":
-                        getattr(getattr(self.Instance,f'channel{chan}'),'pulse_mode')(width=args.pulsemode[1:])
-                    else: print("pulse mode argument must start with either 'd' or 'w'")
-        
+                if args.period:
+                    getattr(getattr(self.Instance,f'channel{chan}'),'period')(args.period)
+
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
