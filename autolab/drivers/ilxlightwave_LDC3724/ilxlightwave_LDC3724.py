@@ -364,38 +364,5 @@ class TEC():
         return config
     
     
-        
-        
-        
-if __name__ == '__main__':
-    
-    from optparse import OptionParser
-    import inspect
-    import sys
-
-    usage = """usage: %prog [options] arg
-               
-               EXAMPLES:
-                   set_ilxlightwaveldc3724 -i 2 -b 0 -a 30 -t 20.1
-                   set the pump current to 30 mA and the temperature to 20.1 degree celcius. The gpib address is set to 19 and the board number to 0.
-               """
-    parser = OptionParser(usage)
-    parser.add_option("-a", "--current", type="str", dest="current", default=None, help="Set the pump current in mA." )
-    parser.add_option("-p", "--power", type="str", dest="power", default=None, help="Set the pump power in mW." )
-    parser.add_option("-t", "--temperature", type="str", dest="temperature", default=None, help="Set the locking temperature." )
-
-    
-
-    if options.current:
-        I.las.setCurrent(options.current)
-    if options.power:
-        # to sort out what power does and the unit
-        #I.las.setPower(options.power)
-        pass
-    if options.temperature:
-        if (eval(options.temperature) > 18) and (eval(options.temperature) < 25):
-            I.tec.setTemperature(options.temperature)
-    
-    sys.exit()
 
         
