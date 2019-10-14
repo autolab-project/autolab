@@ -31,6 +31,9 @@ usage:    autolab-drivers [options] arg
     
     autolab-drivers -d nickname -o my_output_file -c A B C
     Same as previous one but with 3 output files on per trace (A, B and C) and using the device nickname as defined in devices_index.ini
+    
+    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )

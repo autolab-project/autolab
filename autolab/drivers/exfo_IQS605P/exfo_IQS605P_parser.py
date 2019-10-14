@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import dummy as MODULE
+import exfo_IQS605P as MODULE
 from argparse import ArgumentParser
 
 
@@ -26,11 +26,14 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -i 192.168.0.8 -l CONN -m some_methods
-    Execute some_methods of the driver. A list of available methods is present at the top of this help.
+    autolab-drivers -d {MODULE.__name__} -i 192.168.0.8 -l TELNET -m some_methods,arg1,arg2
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
-    autolab-drivers -d nickname -m some_methods
+    autolab-drivers -d nickname -m some_methods1,arg1 some_methods2,arg1,arg2
     Same as before using the nickname defined in devices_index.ini
+    
+    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         #parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
