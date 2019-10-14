@@ -50,12 +50,16 @@ autolab/drivers/aimtti_TGF3162/aimtti_TGF3162.py
 autolab/drivers/aimtti_TGF3162/aimtti_TGF3162_parser.py
 autolab/drivers/ando_AQ6315A/__init__.py
 autolab/drivers/ando_AQ6315A/ando_AQ6315A.py
+autolab/drivers/ando_AQ6315A/ando_AQ6315A_parser.py
 autolab/drivers/anritsu_MS9740A/__init__.py
 autolab/drivers/anritsu_MS9740A/anritsu_MS9740A.py
+autolab/drivers/anritsu_MS9740A/anritsu_MS9740A_parser.py
 autolab/drivers/arduino_CUSTOMSHUTTERS/__init__.py
 autolab/drivers/arduino_CUSTOMSHUTTERS/arduino_CUSTOMSHUTTERS.py
+autolab/drivers/arduino_CUSTOMSHUTTERS/arduino_CUSTOMSHUTTERS_parser.py
 autolab/drivers/dummy/__init__.py
 autolab/drivers/dummy/dummy.py
+autolab/drivers/dummy/dummy_parser.py
 autolab/drivers/exfo_IQS605P/__init__.py
 autolab/drivers/exfo_IQS605P/exfo_IQS605P.py
 autolab/drivers/exfo_LTB1/__init__.py
