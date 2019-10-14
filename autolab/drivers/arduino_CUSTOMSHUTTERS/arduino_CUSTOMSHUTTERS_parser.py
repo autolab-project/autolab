@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import ando_AQ6315A as MODULE
+import arduino_CUSTOMSHUTTERS as MODULE
 from argparse import ArgumentParser
 
 
@@ -26,16 +26,16 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.3::INSTR -l VISA -o my_output_file -c A
-    Results in saving one file for the trace A, the data as seen on the scope
+    autolab-drivers -d {MODULE.__name__} -i ASRL::2::INSTR -l VISA -m some_methods
+    Execute some_methods of the driver. A list of available methods is present at the top of this help.
     
-    autolab-drivers -d nickname -o my_output_file -c A B C
-    Same as previous one but with 3 output files on per trace (A, B and C) and using the device nickname as defined in devices_index.ini
+    autolab-drivers -d nickname -m some_methods
+    Same as before using the nickname defined in devices_index.ini
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
-        parser.add_argument("-o", "--filename", type=str, dest="filename", default='DEFAULT', help="Set the name of the output file" )
-        parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
+        #parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
+        #parser.add_argument("-o", "--filename", type=str, dest="filename", default='DEFAULT', help="Set the name of the output file" )
+        #parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
         #parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
         
         return parser
@@ -48,10 +48,10 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def do_something(self,args):
-        if args.filename:
-            #getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
-            getattr(self.Instance,'get_data_traces')(traces=args.channels)
-            getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels,FORCE=args.FORCE)
+        #if args.filename:
+            ##getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
+            #getattr(self.Instance,'get_data_traces')(traces=args.channels)
+            #getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels,FORCE=args.FORCE)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
