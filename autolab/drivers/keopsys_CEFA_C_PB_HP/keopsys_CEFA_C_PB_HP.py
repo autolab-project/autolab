@@ -58,6 +58,5 @@ class Driver_VISA(Driver):
         self.controller.write(command)
 ############################## Connections classes ##############################
 #################################################################################
-        
-if __name__ == '__main__':
-    ADDRESS = 'GPIB0::3::INSTR' #write here the address of your device
+
+
