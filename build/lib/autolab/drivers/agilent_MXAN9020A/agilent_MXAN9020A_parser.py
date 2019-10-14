@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_E8244A as MODULE
+import agilent_MXAN9020A as MODULE
 from argparse import ArgumentParser
 
 
@@ -25,16 +25,18 @@ class Driver_parser():
 ----------------  Examples:  ----------------
 
 usage:    autolab-drivers [options] arg 
-            
-    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.4::INSTR -l VISA -a 0.5 -f 500
-    load {MODULE.__name__} driver using VISA communication protocol with address TCPIP... and set the amplitude to 0.5V and frequency to 500Hz.
+        
+    autolab-drivers -d {MODULE.__name__} -i 192.168.0.3 -l VXI11 -o my_output_file -c 1
+    Results in saving two files for the trace 1, the data and the scope parameters, called respectively my_output_file_DSACHAN1 and my_output_file_DSACHAN1.log
     
-    autolab-drivers -d nickname -a 0.5 -f 500
-    same as before but using the device nickname as defined in devices_index.ini
+    autolab-drivers -d {MODULE.__name__} -o my_output_file -c 1 3 6
+    Same as previous one but with 6 output files, two for each trace (1,3 and 6) and using the device nickname as defined in devices_index.ini
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
-        parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
+        parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
+        parser.add_argument("-o", "--filename", type=str, dest="filename", default='DEFAULT', help="Set the name of the output file" )
+        parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
+        parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
         
         return parser
 
@@ -46,13 +48,14 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def do_something(self,args):
-        if args.amplitude:
-            getattr(self.Instance,'amplitude')(args.amplitude)
-        if args.frequency:
-            getattr(self.Instance,'frequency')(args.frequency)
+        if args.filename:
+            getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
+            getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels,FORCE=args.FORCE)
+  
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
+
 
     def exit(self):
         self.Instance.close()

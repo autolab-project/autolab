@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: autolab
-Version: 0.0.1
+Version: 0.1
 Summary: Python package for scientific experiments interfacing and automation
 Home-page: https://github.com/qcha41/autolab
 Author: Quentin Chateiller & Bruno Garbin
