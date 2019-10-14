@@ -26,7 +26,7 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l SOCKET -a 0.5 -f 80000000 -c 1 2
+    autolab-drivers -d {MODULE.__name__} -l SOCKET -a 0.5 -f 80000000 -c 1,2
     load {MODULE.__name__} driver using socket and set the channel 1 and 2 amplitude to 0.5V and frequency to 80MHz.
     
     autolab-drivers -d nickname -a 0.5 -f 80e6 -c 1
@@ -38,7 +38,7 @@ usage:    autolab-drivers [options] arg
     Note: Arbitrary waveform available only using a python terminal
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
+        parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
         parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
         parser.add_argument("-p", "--period", type=str, dest="period", default=None, help="Set the period." )
@@ -47,7 +47,7 @@ usage:    autolab-drivers [options] arg
 
     def do_something(self,args):
         if args.channels:
-            for chan in args.channels:
+            for chan in args.channels.split(','):
                 if args.amplitude:
                     getattr(getattr(self.Instance,f'channel{chan}'),'amplitude')(args.amplitude)
                 if args.frequency:

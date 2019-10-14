@@ -38,19 +38,19 @@ usage:    autolab-drivers [options] arg
     autolab-drivers -d {MODULE.__name__} -i 192.168.0.3 -l VXI11 -o my_output_file -c 1
     Results in saving two files for the temporal trace of channel 1, the data and the scope parameters, called respectively my_output_file_DSACHAN1 and my_output_file_DSACHAN1.log
     
-    autolab-drivers -d nickname -o my_output_file -c 1 2
+    autolab-drivers -d nickname -o my_output_file -c 1,2
     Same as previous one but with 4 output files, two for each channel (1 and 2) and using the device nickname as defined in devices_index.ini
     
     autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
-        parser.add_argument("-o", "--filename", type=str, dest="filename", default='DEFAULT', help="Set the name of the output file" )
+        parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
+        parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
         parser.add_argument("-m", "--measure", type=str, dest="measure", default=None, help="Set measurment number" )
         parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
         parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
-        parser.add_argument("-f", "--format", type=str, dest="format", default='BYTE', help="Change data encoding" )
+        parser.add_argument("-f", "--format", type=str, dest="format", default=None, help="Change data encoding" )
         
         return parser
 
@@ -63,13 +63,13 @@ usage:    autolab-drivers [options] arg
             for i in range(args.measure):
                 getattr(self.Instance,'stop')()
                 print(str(i+1))
-                getattr(self.Instance,'get_data_channels')(channels=args.channels)
-                getattr(self.Instance,'save_data_channels')(filename=str(i+1),channels=args.channels,FORCE=args.FORCE)
+                getattr(self.Instance,'get_data_channels')(channels=args.channels.split(','))
+                getattr(self.Instance,'save_data_channels')(filename=str(i+1),channels=args.channels.split(','),FORCE=args.FORCE)
                 getattr(self.Instance,'run')()
                 time.sleep(0.050)
         elif args.filename:
-            getattr(self.Instance,'get_data_channels')(channels=args.channels)
-            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels,FORCE=args.FORCE)
+            getattr(self.Instance,'get_data_channels')(channels=args.channels.split(','))
+            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels.split(','),FORCE=args.FORCE)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]

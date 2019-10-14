@@ -26,7 +26,7 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -i GPIB::7::INSTR -l VISA -v 0.2 -c A B
+    autolab-drivers -d {MODULE.__name__} -i GPIB::7::INSTR -l VISA -v 0.2 -c A,B
     load {MODULE.__name__} driver using VISA communication protocol with address TCPIP... and set the voltage to 0.2V to channel A and B
     
     autolab-drivers -d nickname -v 0.2 -c A
@@ -36,14 +36,14 @@ usage:    autolab-drivers [options] arg
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on." )
+        parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on." )
         parser.add_argument("-v", "--voltage", type=str, dest="voltage", default=None, help="Set the current in mA." )
         
         return parser
 
     def do_something(self,args):
         if args.channels:
-            for chan in args.channels:
+            for chan in args.channels.split(','):
                 if args.voltage:
                     getattr(getattr(self.Instance,f'channel{chan}'),'setVoltage')(args.voltage)
             

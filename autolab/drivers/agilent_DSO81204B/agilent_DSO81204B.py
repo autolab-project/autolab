@@ -17,6 +17,7 @@ class Driver():
     def __init__(self,nb_channels=4):
               
         self.nb_channels = int(nb_channels)
+        self.type        = 'BYTE'
         
         self.write(':WAVeform:TYPE RAW')
         self.write(':WAVEFORM:BYTEORDER LSBFirst')
