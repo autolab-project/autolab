@@ -34,7 +34,7 @@ class utilities():
         return methods_list
         
     def identify_device_class(self,module,classes_list,link):
-        assert f'Driver_{link}' in classes_list , f"Not in {[a for a in classes_list if a.startwith('Driver_')]}"
+        assert f'Driver_{link}' in classes_list , f"Not in {[a for a in classes_list if a.startswith('Driver_')]}"
         Driver_class = getattr(module,f'Driver_{link}')
         return Driver_class
 

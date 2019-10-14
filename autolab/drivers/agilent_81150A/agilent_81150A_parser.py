@@ -35,7 +35,6 @@ usage:    autolab-drivers [options] arg
 
     autolab-drivers -d nickname -p d10 2
     set pulse mode to channel 2 with duty cycle of 10 purcent, using the device nickname as defined in devices_index.ini
-    
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
