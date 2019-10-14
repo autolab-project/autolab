@@ -39,14 +39,7 @@ usage:    autolab-drivers [options] arg
         #parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
         
         return parser
-
-    def help(self):
-        """Add to the help lists of module: classes, methods and arguments"""
-        classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module
-        methods_list = self.utilities.print_help_methods(self.methods_list)                  # display list of methods in module
-        methods_args = self.utilities.print_help_methods_arguments(self.Instance,self.methods_list)      # display list of methods arguments
-        return classes_list + methods_list + methods_args
-
+    
     def do_something(self,args):
         #if args.filename:
             ##getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
@@ -56,7 +49,13 @@ usage:    autolab-drivers [options] arg
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
-
+            
+    def help(self):
+        """Add to the help lists of module: classes, methods and arguments"""
+        classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module
+        methods_list = self.utilities.print_help_methods(self.methods_list)                  # display list of methods in module
+        methods_args = self.utilities.print_help_methods_arguments(self.Instance,self.methods_list)      # display list of methods arguments
+        return classes_list + methods_list + methods_args
 
     def exit(self):
         self.Instance.close()
