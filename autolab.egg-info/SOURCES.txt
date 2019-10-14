@@ -44,8 +44,10 @@ autolab/drivers/agilent_MXAN9020A/agilent_MXAN9020A.py
 autolab/drivers/agilent_MXAN9020A/agilent_MXAN9020A_parser.py
 autolab/drivers/aimtti_TGA12104/__init__.py
 autolab/drivers/aimtti_TGA12104/aimtti_TGA12104.py
+autolab/drivers/aimtti_TGA12104/aimtti_TGA12104_parser.py
 autolab/drivers/aimtti_TGF3162/__init__.py
 autolab/drivers/aimtti_TGF3162/aimtti_TGF3162.py
+autolab/drivers/aimtti_TGF3162/aimtti_TGF3162_parser.py
 autolab/drivers/ando_AQ6315A/__init__.py
 autolab/drivers/ando_AQ6315A/ando_AQ6315A.py
 autolab/drivers/anritsu_MS9740A/__init__.py
