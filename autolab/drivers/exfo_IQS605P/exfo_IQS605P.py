@@ -135,12 +135,3 @@ class Module_IQS9100B():
         config.append({'element':'action','name':'safestate','do':self.setSafeState,'help':'Set the shutter'})
         return config
         
-    
-    
-if __name__ == '__main__' :
-    ADDRESS = '192.168.0.99'
-    PORT = 5024
-
-
-
-

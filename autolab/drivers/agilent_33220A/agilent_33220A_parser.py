@@ -31,6 +31,9 @@ usage:    autolab-drivers [options] arg
     
     autolab-drivers -d nickname -a 0.5 -f 500
     same as before but using the device nickname as defined in devices_index.ini
+    
+    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-r", "--ramp", type=float, dest="ramp", default=None, help="Turn on ramp mode." )
