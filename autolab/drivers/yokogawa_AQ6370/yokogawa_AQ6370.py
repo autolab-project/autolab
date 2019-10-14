@@ -37,7 +37,7 @@ class Driver():
         
     ### Trigger functions
     def single(self):
-         """Trigger a single sweep"""
+        """Trigger a single sweep"""
         self.send('*TRG')
     def is_scope_stopped(self):
         flag = 0.1

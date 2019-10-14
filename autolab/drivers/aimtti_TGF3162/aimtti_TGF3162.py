@@ -63,11 +63,11 @@ class Channel():
         self.dev  = dev
     
     def amplitude(self,amplitude):
-        self.dev.write_to_channel(self.channel,f'AMPL {amplitude}'))
+        self.dev.write_to_channel(self.channel,f'AMPL {amplitude}')
     def frequency(self,frequency):
-        self.dev.write_to_channel(self.channel,f'FREQ {frequency}'))
+        self.dev.write_to_channel(self.channel,f'FREQ {frequency}')
     def offset(self,offset):
-        self.dev.write_to_channel(self.channel,f'DCOFFS {offset}'))
+        self.dev.write_to_channel(self.channel,f'DCOFFS {offset}')
     
     def set_output(self, state):
         """output on, off, normal or invert""" 

@@ -93,7 +93,7 @@ class Output():
             
     def getDriverConfig(self):
         config = []
-        config.append({'element':'variable','name':'amplitude','type':float,'unit':'V','write':self.set_amplitude,'read',self.get_amplitude,'help':'Voltage amplitude.'})
+        config.append({'element':'variable','name':'amplitude','type':float,'unit':'V','write':self.set_amplitude,'read':self.get_amplitude,'help':'Voltage amplitude.'})
         config.append({'element':'variable','name':'polarity','type':bool,'read':self.get_polarity,'write':self.set_polarity,'help':'Polarity state.'})
         config.append({'element':'variable','name':'offset','type':float,'unit':'V','write':self.set_offset,'read':self.get_offset,'help':'Voltage offset'})
         config.append({'element':'variable','name':'delay','type':float,'unit':'s','write':self.set_delay,'help':'Set the delay between the two channels of the given output'})
