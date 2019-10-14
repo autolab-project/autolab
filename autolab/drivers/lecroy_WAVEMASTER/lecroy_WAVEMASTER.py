@@ -201,7 +201,7 @@ class Channel():
             if new_channel_amp<0.005: new_channel_amp = 0.005 # if lower than the lowest possible 5mV/div
             self.set_vertical_scale(new_channel_amp)
             
-            self.single()
+            self.dev.single()
             print('Optimisation loop index:', k,self.autoscale_iter)
             if k==self.autoscale_iter:
                 VDIV = self.get_vertical_scale()
