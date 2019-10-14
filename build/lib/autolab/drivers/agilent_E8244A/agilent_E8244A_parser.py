@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_33220A as MODULE
+import agilent_E8244A as MODULE
 from argparse import ArgumentParser
 
 
@@ -49,17 +49,13 @@ usage:    autolab-drivers [options] arg
 
     def do_something(self,args):
         if args.amplitude:
-            getattr(self.Instance,'amplitude')(args.amplitude)
-        if args.offset:
-            getattr(self.Instance,'offset')(args.offset)
+            self.Instance.amplitude(args.amplitude)
         if args.frequency:
-            getattr(self.Instance,'frequency')(args.frequency)
-        if args.ramp:
-            getattr(self.Instance,'ramp')(args.ramp)
+            self.Instance.frequency(args.frequency)
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
 
     def exit(self):
-        #I.close()
+        self.Instance.close()
         sys.exit()

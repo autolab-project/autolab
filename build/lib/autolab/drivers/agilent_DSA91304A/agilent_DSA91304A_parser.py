@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
-
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
@@ -41,7 +40,6 @@ usage:    autolab-drivers [options] arg
     
     autolab-drivers -d {MODULE.__name__} -o my_output_file -c 1 2
     Same as previous one but with 4 output files, two for each channel (1 and 2) and using the device nickname as defined in devices_index.ini
-
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )

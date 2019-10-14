@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
-        self.name      = args.driver
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
@@ -27,7 +26,7 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {self.name} -i TCPIP::192.168.0.3::INSTR -l VISA -a 1 -o 1 -f 50KHZ -c 1 2
+    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.3::INSTR -l VISA -a 1 -o 1 -f 50KHZ -c 1 2
     set the frequency to 50 kHz, the amplitude to 1V, the offset to 1V for both channel 1 and 2
 
     autolab-drivers -d nickname -p w10NS 1
@@ -35,7 +34,6 @@ usage:    autolab-drivers [options] arg
 
     autolab-drivers -d nickname -p d10 2
     set pulse mode to channel 2 with duty cycle of 10 purcent, using the device nickname as defined in devices_index.ini
-    
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )

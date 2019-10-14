@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
-        self.name      = args.driver
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
@@ -27,8 +26,8 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {self.name} -i TCPIP::192.168.0.4::INSTR -l VISA -a 0.5 -f 500
-    load {self.name} driver with address TCPIP... and using VISA communication protocol and set the amplitude to 0.5V and frequency to 500Hz.
+    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.4::INSTR -l VISA -a 0.5 -f 500
+    load {MODULE.__name__} driver using VISA communication protocol with address TCPIP... and set the amplitude to 0.5V and frequency to 500Hz.
     
     autolab-drivers -d nickname -a 0.5 -f 500
     same as before but using the device nickname as defined in devices_index.ini
@@ -50,13 +49,13 @@ usage:    autolab-drivers [options] arg
 
     def do_something(self,args):
         if args.amplitude:
-            self.Instance.amplitude(args.amplitude)
+            getattr(self.Instance,'amplitude')(args.amplitude)
         if args.offset:
-            self.Instance.offset(args.offset)
+            getattr(self.Instance,'offset')(args.offset)
         if args.frequency:
-            self.Instance.frequency(args.frequency)
+            getattr(self.Instance,'frequency')(args.frequency)
         if args.ramp:
-            self.Instance.ramp(args.ramp)
+            getattr(self.Instance,'ramp')(args.ramp)
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
