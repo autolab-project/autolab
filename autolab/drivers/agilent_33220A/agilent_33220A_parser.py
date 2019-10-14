@@ -32,7 +32,6 @@ usage:    autolab-drivers [options] arg
     
     autolab-drivers -d nickname -a 0.5 -f 500
     same as before but using the device nickname as defined in devices_index.ini
-
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-r", "--ramp", type=float, dest="ramp", default=None, help="Turn on ramp mode." )

@@ -56,7 +56,7 @@ def main():
         kwargs = {}
     
     # A path to sys path at index 0
-    update_path(args)
+    Driver_path = update_path(args)
     
     # Second help for connection classes -l option
     if len(temp_args)>1:
@@ -65,7 +65,7 @@ def main():
             print_help_connections(Driver_module) 
         
     # Import the parser module
-    Driver_parser_module = import_module(f'{args.driver}_parser')
+    Driver_parser_module = import_module(f'{args.driver}_parser',Driver_path)
     
     # Instance the driver (establish communication with the physical device)
     Instance = Driver_parser_module.Driver_parser(args,UTILITIES,**kwargs)
@@ -77,9 +77,9 @@ def main():
     # Finally, execute functions according to the arguments provided
     Instance.do_something(args)
 
-def import_module(name):
+def import_module(name,Driver_path):
     try: module = __import__(name)
-    except ModuleNotFoundError: print(f'No module found. List of the inspected folder:{os.listdir()}');sys.exit()
+    except ModuleNotFoundError: print(f'Module {name} not found. Files in the inspected folder:{os.listdir(Driver_path)}');sys.exit()
     globals()[module] = module
     return module
 
@@ -90,6 +90,7 @@ def update_path(args):
     Driver_path = Driver_path[0]
     
     sys.path.insert(0,Driver_path)  # Insert Driver's path at the first place of the list!
+    return Driver_path
     
 def init_argument_to_parse(accepted_arguments):
     args = sys.argv[1:]  # [1:] to remove module name
@@ -138,6 +139,8 @@ def print_help_connections(driver_module):
 ----------------  Connections types for {driver_module.__name__} (-l option) ----------------
 
     {available_connection_classes(driver_module)}
+    
+    To get further help on the driver, you need to establish the connection by providing the appropriate address.
     
     """)
     sys.exit()

@@ -16,7 +16,8 @@ class Driver():
     def __init__(self):
         pass
     def amplitude(self,amplitude):
-        self.write('VOLT '+str(amplitude))
+        print(amplitude)
+        #self.write('VOLT '+str(amplitude))
     def offset(self,offset):
         self.write('VOLT:OFFS '+str(offset))
     def frequency(self,frequency):
@@ -50,8 +51,8 @@ class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         import visa
         
-        rm = visa.ResourceManager()
-        self.inst = rm.get_instrument(address)
+        #rm = visa.ResourceManager()
+        #self.inst = rm.get_instrument(address)
         
         Driver.__init__(self)
         

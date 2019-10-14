@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_81150A as MODULE
+import agilent_DSA91304A as MODULE
 from argparse import ArgumentParser
 
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
-        self.name      = args.driver
+
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
@@ -36,12 +36,11 @@ X-axis Units = data index * Xincrement + Xorigin
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {self.name} -i 192.168.0.3 -l VXI11 -o my_output_file -c 1
+    autolab-drivers -d {MODULE.__name__} -i 192.168.0.3 -l VXI11 -o my_output_file -c 1
     result in saving two files for the temporal trace of channel 1, the data and the scope parameters, called respectively my_output_file_DSACHAN1 and my_output_file_DSACHAN1.log
     
-    autolab-drivers -d {self.name} -o my_output_file -c 1 2
+    autolab-drivers -d {MODULE.__name__} -o my_output_file -c 1 2
     Same as previous one but with 4 output files, two for each channel (1 and 2) and using the device nickname as defined in devices_index.ini
-
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
