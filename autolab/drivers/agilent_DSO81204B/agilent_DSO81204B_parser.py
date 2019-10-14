@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
-
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)

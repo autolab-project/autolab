@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_33220A as MODULE
+import agilent_E8244A as MODULE
 from argparse import ArgumentParser
 
 
@@ -33,8 +33,6 @@ usage:    autolab-drivers [options] arg
     same as before but using the device nickname as defined in devices_index.ini
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-r", "--ramp", type=float, dest="ramp", default=None, help="Turn on ramp mode." )
-        parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
         parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
         
@@ -50,16 +48,12 @@ usage:    autolab-drivers [options] arg
     def do_something(self,args):
         if args.amplitude:
             getattr(self.Instance,'amplitude')(args.amplitude)
-        if args.offset:
-            getattr(self.Instance,'offset')(args.offset)
         if args.frequency:
             getattr(self.Instance,'frequency')(args.frequency)
-        if args.ramp:
-            getattr(self.Instance,'ramp')(args.ramp)
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
 
     def exit(self):
-        #I.close()
+        self.Instance.close()
         sys.exit()
