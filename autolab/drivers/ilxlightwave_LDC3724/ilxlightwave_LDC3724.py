@@ -380,33 +380,12 @@ if __name__ == '__main__':
                    set the pump current to 30 mA and the temperature to 20.1 degree celcius. The gpib address is set to 19 and the board number to 0.
                """
     parser = OptionParser(usage)
-    parser.add_option("-c", "--command", type="str", dest="command", default=None, help="Set the command to use." )
-    parser.add_option("-q", "--query", type="str", dest="query", default=None, help="Set the query to use." )
     parser.add_option("-a", "--current", type="str", dest="current", default=None, help="Set the pump current in mA." )
-    parser.add_option("-p", "--power", type="str", dest="power", default=None, help="Set the pump power in ?." )
+    parser.add_option("-p", "--power", type="str", dest="power", default=None, help="Set the pump power in mW." )
     parser.add_option("-t", "--temperature", type="str", dest="temperature", default=None, help="Set the locking temperature." )
-    parser.add_option("-i", "--address", type="str", dest="address", default='GPIB0::2::INSTR', help="Set the GPIB address to use to communicate." )
-    parser.add_option("-b", "--board_index", type='str', dest="board_index", default='0', help="Set the GPIB address to use to communicate." )
-    parser.add_option("-l", "--link", type="string", dest="link", default='GPIB', help="Set the connection type." )
-    (options, args) = parser.parse_args()
+
     
-    ### Start the talker ###
-    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
-    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
-    I = Driver_LINK(address=options.address,board_index=options.board_index)
-    
-    if options.query:
-        print('\nAnswer to query:',options.query)
-        rep = I.query(options.query)
-        print(rep,'\n')
-        sys.exit()
-    elif options.command:
-        print('\nExecuting command',options.command)
-        I.write(options.command)
-        print('\n')
-        sys.exit()
-    
+
     if options.current:
         I.las.setCurrent(options.current)
     if options.power:
