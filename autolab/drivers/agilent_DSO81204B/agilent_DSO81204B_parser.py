@@ -38,7 +38,7 @@ usage:    autolab-drivers [options] arg
     autolab-drivers -d {MODULE.__name__} -i 192.168.0.3 -l VXI11 -o my_output_file -c 1
     Results in saving two files for the temporal trace of channel 1, the data and the scope parameters, called respectively my_output_file_DSACHAN1 and my_output_file_DSACHAN1.log
     
-    autolab-drivers -d {MODULE.__name__} -o my_output_file -c 1 2
+    autolab-drivers -d nickname -o my_output_file -c 1 2
     Same as previous one but with 4 output files, two for each channel (1 and 2) and using the device nickname as defined in devices_index.ini
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
