@@ -36,8 +36,8 @@ usage:    autolab-drivers [options] arg
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        #parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
-        #parser.add_argument("-o", "--filename", type=str, dest="filename", default='DEFAULT', help="Set the name of the output file" )
+        #parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
+        #parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
         #parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
         #parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
         
