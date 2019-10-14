@@ -18,34 +18,34 @@ class Driver():
         self.write('*CLS')
         
         # Subdevices
-        self.source1 = Line(self,1)
-        self.source2 = Line(self,2)
+        self.channelA = Channel(self,'a')
+        self.channelB = Channel(self,'b')
     
     def setSafeState(self):
-        self.source1.setSafeState()
-        self.source2.setSafeState()
+        self.channelA.setSafeState()
+        self.channelB.setSafeState()
     
     def getID(self):
         return self.query('*IDN?')
         
     def getDriverConfig(self):
         config = []
-        config.append({'element':'module','name':'source1','object':self.source1})
-        config.append({'element':'module','name':'source2','object':self.source2})
+        config.append({'element':'module','name':'channelA','object':self.channelA})
+        config.append({'element':'module','name':'channelB','object':self.channelB})
         return config
  
 
 #################################################################################
 ############################## Connections classes ##############################
 class Driver_VISA(Driver):
-    def __init__(self, address='GPIB0::2::INSTR',**kwargs):
+    def __init__(self, address='GPIB0::26::INSTR',**kwargs):
         import visa
 
-        self.TIMEOUT = 1000 #ms
+        self.TIMEOUT = 5000 #ms
         
         # Instantiation
         rm = visa.ResourceManager()
-        self.controller = rm.open_resource(self.address)
+        self.controller = rm.open_resource(address)
         self.controller.timeout = self.TIMEOUT
         
         Driver.__init__(self)
@@ -73,12 +73,12 @@ class Driver_VISA(Driver):
 
 
 
-class Line():
+class Channel():
     
     def __init__(self,dev,slot):
         
         self.dev = dev
-        self.SLOT = slot
+        self.SLOT = slot.lower()
         
         # Initialisation
         self.dev.write(f"smu{self.SLOT}.source.autorangev = smu{self.SLOT}.AUTORANGE_ON")
@@ -107,7 +107,7 @@ class Line():
     
     
     def getPower(self):
-        self.dev.write(f'display.smu{self.SLOT}.measure.func = display.MEASURE_WHATTS')
+        self.dev.write(f'display.smu{self.SLOT}.measure.func = display.MEASURE_WATTS')
         self.dev.query('*OPC?')
         return float(self.dev.query(f"print(smu{self.SLOT}.measure.p())"))
 
@@ -117,7 +117,7 @@ class Line():
     def setPowerCompliance(self,value):
         assert isinstance(float(value),float)
         value = float(value)
-        self.dev.write("smu{self.SLOT}.source.limitp = {value}")
+        self.dev.write(f"smu{self.SLOT}.source.limitp = {value}")
         self.dev.query('*OPC?')
         
     def getPowerCompliance(self):
@@ -149,11 +149,11 @@ class Line():
     def setCurrentCompliance(self,value):
         assert isinstance(float(value),float)
         value = float(value)
-        self.dev.write("smu{self.SLOT}.source.limiti = {value}")
+        self.dev.write(f"smu{self.SLOT}.source.limiti = {value}")
         self.dev.query('*OPC?')
         
     def getCurrentCompliance(self):
-        return float(self.dev.query("print(smu{self.SLOT}.source.limiti)"))
+        return float(self.dev.query(f"print(smu{self.SLOT}.source.limiti)"))
 
 
 
@@ -181,11 +181,11 @@ class Line():
     def setVoltageCompliance(self,value):
         assert isinstance(float(value),float)
         value = float(value)
-        self.dev.write("smu{self.SLOT}.source.limitv = {value}")
+        self.dev.write(f"smu{self.SLOT}.source.limitv = {value}")
         self.dev.query('*OPC?')
         
     def getVoltageCompliance(self):
-        return float(self.dev.query("print(smu{self.SLOT}.source.limitv)"))
+        return float(self.dev.query(f"print(smu{self.SLOT}.source.limitv)"))
 
 
 
@@ -226,16 +226,18 @@ class Line():
         
     def getDriverConfig(self):
         config = []
-        config.append({'element':'variable','name':'resistance','read':self.getResistance,'type':float,'help':'Resistance'})
-        config.append({'element':'variable','name':'power','read':self.getPower,'type':float,'help':'Power'})
-        config.append({'element':'variable','name':'powerCompliance','read':self.getPowerCompliance,'write':self.setPowerCompliance,'type':float,'help':'Power compliance'})
-        config.append({'element':'variable','name':'current','read':self.getCurrent,'type':float,'help':'Current'})
-        config.append({'element':'variable','name':'currentCompliance','read':self.getCurrentCompliance,'write':self.setCurrentCompliance,'type':float,'help':'Current compliance'})
-        config.append({'element':'variable','name':'voltage','read':self.getVoltage,'type':float,'help':'Voltage'})
-        config.append({'element':'variable','name':'voltageCompliance','read':self.getVoltageCompliance,'write':self.setVoltageCompliance,'type':float,'help':'Voltage compliance'})
+        config.append({'element':'variable','name':'resistance','unit':'ohm','read':self.getResistance,'type':float,'help':'Resistance'})
+        config.append({'element':'variable','name':'power','unit':'W','read':self.getPower,'type':float,'help':'Power'})
+        config.append({'element':'variable','name':'powerCompliance','unit':'W','read':self.getPowerCompliance,'write':self.setPowerCompliance,'type':float,'help':'Power compliance'})
+        config.append({'element':'variable','name':'current','unit':'A','read':self.getCurrent,'write':self.setCurrent,'type':float,'help':'Current'})
+        config.append({'element':'variable','name':'currentCompliance','unit':'A','read':self.getCurrentCompliance,'write':self.setCurrentCompliance,'type':float,'help':'Current compliance'})
+        config.append({'element':'variable','name':'voltage','unit':'V','read':self.getVoltage,'write':self.setVoltage,'type':float,'help':'Voltage'})
+        config.append({'element':'variable','name':'voltageCompliance','unit':'V','read':self.getVoltageCompliance,'write':self.setVoltageCompliance,'type':float,'help':'Voltage compliance'})
         config.append({'element':'variable','name':'output','read':self.getOutputState,'write':self.setOutputState,'type':bool,'help':'Output'})
         config.append({'element':'variable','name':'4wireMode','read':self.get4wireModeState,'write':self.set4wireModeState,'type':bool,'help':'4 wire mode'})
         return config
         
-        
+a = Driver_VISA()
+print(a.getID())
+
 #ADDRESS = 'GPIB0::10::INSTR'

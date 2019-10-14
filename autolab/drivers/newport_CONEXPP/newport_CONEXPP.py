@@ -59,7 +59,7 @@ class Driver_VISA(Driver):
         self.controller = rm.open_resource(address)
         self.controller.baud_rate = self.BAUDRATE
         
-        Driver.__init__(self)
+        Driver.__init__(self,**kwargs)
         
         
         
