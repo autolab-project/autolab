@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_MXAN9020A as MODULE
+import lecroy_WAVEMASTER as MODULE
 from argparse import ArgumentParser
 
 
