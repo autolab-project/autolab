@@ -205,10 +205,10 @@ class LAS():
     
     def getDriverConfig(self):
         config = []
-        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'write':self.setCurrentSetpoint,'help':'Current setpoint'})
-        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'help':'Current'})
-        config.append({'element':'variable','name':'powerSetpoint','type':float,'unit':'mW','read':self.getPowerSetpoint,'write':self.setPowerSetpoint,'help':'Output power setpoint'})
-        config.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.getPower,'help':'Output power'})
+        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'help':'Current setpoint'})
+        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'write':self.setCurrent,'help':'Current'})
+        config.append({'element':'variable','name':'powerSetpoint','type':float,'unit':'mW','read':self.getPowerSetpoint,'help':'Output power setpoint'})
+        config.append({'element':'variable','name':'power','type':float,'unit':'mW','write':self.setPower,'read':self.getPower,'help':'Output power'})
         config.append({'element':'variable','name':'output','type':bool,'read':self.isEnabled,'write':self.setEnabled,'help':'Output state'})
         config.append({'element':'variable','name':'mode','type':str,'read':self.getMode,'write':self.setMode,'help':'Control mode'})
         return config
@@ -355,10 +355,10 @@ class TEC():
         config = []
         config.append({'element':'variable','name':'resistance','type':float,'read':self.getResistance,'help':'Resistance'})
         config.append({'element':'variable','name':'gain','type':int,'read':self.getGain,'write':self.setGain,'help':'Gain'})
-        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'write':self.setCurrentSetpoint,'help':'Current setpoint'})
-        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'help':'Current'})
-        config.append({'element':'variable','name':'temperatureSetpoint','type':float,'unit':'°C','read':self.getTemperatureSetpoint,'write':self.setTemperatureSetpoint,'help':'Temperature setpoint'})
-        config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'help':'Actual temperature'})
+        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'help':'Current setpoint'})
+        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'write':self.setCurrent,'help':'Current'})
+        config.append({'element':'variable','name':'temperatureSetpoint','type':float,'unit':'°C','read':self.getTemperatureSetpoint,'help':'Temperature setpoint'})
+        config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'write':self.setTemperature,'help':'Actual temperature'})
         config.append({'element':'variable','name':'output','type':bool,'read':self.isEnabled,'write':self.setEnabled,'help':'Output state'})
         config.append({'element':'variable','name':'mode','type':str,'read':self.getMode,'write':self.setMode,'help':'Control mode'})
         return config
