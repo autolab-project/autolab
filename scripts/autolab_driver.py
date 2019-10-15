@@ -25,7 +25,7 @@ def main():
     parser.add_argument("-i", "--address", type=str, dest="address", default=None, help="Set the address to use for the communication." )
     
     parser.add_argument("-s","--slot", nargs='+', dest="slot", default=None, help="Set the slot configuration." )
-    parser.add_argument("--port", type=int, dest="port", default=None, help="Set the port to use for communicate." )
+    parser.add_argument("--port", type=int, dest="port", default=None, help="Argument used to address different things depending on the connection type. SOCKET: the port number used to communicate, GPIB: the gpib board index, DLL: the path to the dll library." )
     parser.add_argument("-m", "--methods", nargs='+', dest="methods", default=None, help="Set the methods to use." )
     args = parser.parse_args(args_to_pass)
 
