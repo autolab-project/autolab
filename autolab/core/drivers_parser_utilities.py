@@ -32,7 +32,14 @@ class utilities():
         class_vars = [f'I.{key}.{name}' for key in vars(I).keys() for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod) if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__']
         methods_list.extend(class_meth);methods_list.extend(class_vars)
         return methods_list
-        
+    
+    def parsekwargs_connectiondependant(kwargs,Driver_class):
+        if Driver_class.__name__ == 'Driver_DLL':
+            if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
+        elif Driver_class.__name__ == 'Driver_GPIB':
+            if kwargs['port']: kwargs['board_index'] = kwargs['port']; del kwargs['port']
+        return kwargs
+    
     def identify_device_class(self,module,classes_list,link):
         assert f'Driver_{link}' in classes_list , f"Not in {[a for a in classes_list if a.startswith('Driver_')]}"
         Driver_class = getattr(module,f'Driver_{link}')
