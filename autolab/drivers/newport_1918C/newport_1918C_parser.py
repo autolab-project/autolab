@@ -13,7 +13,8 @@ class Driver_parser():
         Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
         
         # pass the argument libpath connection argument through port one
-        if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
+        if Driver_class.__name__ == 'Driver_DLL':
+            if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
         self.Instance     = Driver_class(**kwargs)
         
         self.methods_list = self.utilities.list_methods(self.Instance)
