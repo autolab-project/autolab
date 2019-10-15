@@ -62,7 +62,7 @@ def main():
     else:
         assert args.driver, f"Missing driver name to use"
         if len(temp_args)>1:
-            if not(temp_args[1] == '-h' and temp_args[0].startswith('-d')):
+            if not(temp_args[0] == '-h' and temp_args[1].startswith('-d')):
                 assert args.link and args.address, f"Missing address or connection type. Provided are, type: {args.link}, address: {args.address}"
         else:
             assert args.link and args.address, f"Missing address or connection type. Provided are, type: {args.link}, address: {args.address}"
@@ -79,7 +79,7 @@ def main():
     
     # Second help for connection classes -l option
     if len(temp_args)>1:
-        if temp_args[1] == '-h' and temp_args[0].startswith('-d'):
+        if temp_args[0] == '-h' and temp_args[1].startswith('-d'):
             Driver_module = import_module(f'{args.driver}',Driver_path)
             print_help_connections(Driver_module) 
         
@@ -115,7 +115,9 @@ def init_argument_to_parse(accepted_arguments):
     args = sys.argv[1:]  # [1:] to remove module name
     args = ''.join(args)
     args =  ["-"+arg for arg in args.split("-") if arg]
-    if args[0] == '-h': print_help_message()  # if first argument is -h print autolab-driver's help message
+    if len(args)>1: pass
+    else: 
+        if args[0] == '-h': print_help_message()  # if first argument is -h print autolab-driver's help message
     args_to_pass =  [arg   for arg in args   for acc in accepted_arguments   if acc in arg]
     return args_to_pass,args
 
@@ -139,8 +141,8 @@ Three helps are configured:
     autolab-drivers -h
     This help message.
     
-    autolab-drivers -d driver_name -h 
-    Short message displaying the implemented connections to a device (VISA, etc).
+    autolab-drivers -h -d driver_name
+    Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
     
     autolab-drivers -d driver_name -l connection -i address -h
     Full help message about the driver.
@@ -155,6 +157,9 @@ Three helps are configured:
 
 def print_help_connections(driver_module):
     print(f"""
+----------------  Instrument category of {driver_module.__name__} (no option) ----------------
+    {UTILITIES.get_category(driver_module=driver_module)}
+
 ----------------  Connections types for {driver_module.__name__} (-l option) ----------------
 
     {available_connection_classes(driver_module)}
@@ -163,6 +168,7 @@ def print_help_connections(driver_module):
     
     """)
     sys.exit()
+    
 
 def available_drivers():
     s = ''; flag = 0

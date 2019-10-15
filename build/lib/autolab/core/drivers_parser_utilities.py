@@ -37,6 +37,12 @@ class utilities():
         assert f'Driver_{link}' in classes_list , f"Not in {[a for a in classes_list if a.startswith('Driver_')]}"
         Driver_class = getattr(module,f'Driver_{link}')
         return Driver_class
+    
+    def get_category(self,driver_module):
+        classes_list = self.list_classes(driver_module)
+        Driver_class = getattr(driver_module,f'Driver')
+        assert Driver_class.category, f"Missing category for driver {driver_module.__name__}"
+        return Driver_class.category
 
     def parse_commands(self,I,commands,methods_list):
         global NAME

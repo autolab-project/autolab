@@ -205,10 +205,10 @@ class LAS():
     
     def getDriverConfig(self):
         config = []
-        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'write':self.setCurrentSetpoint,'help':'Current setpoint'})
-        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'help':'Current'})
-        config.append({'element':'variable','name':'powerSetpoint','type':float,'unit':'mW','read':self.getPowerSetpoint,'write':self.setPowerSetpoint,'help':'Output power setpoint'})
-        config.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.getPower,'help':'Output power'})
+        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'help':'Current setpoint'})
+        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'write':self.setCurrent,'help':'Current'})
+        config.append({'element':'variable','name':'powerSetpoint','type':float,'unit':'mW','read':self.getPowerSetpoint,'help':'Output power setpoint'})
+        config.append({'element':'variable','name':'power','type':float,'unit':'mW','write':self.setPower,'read':self.getPower,'help':'Output power'})
         config.append({'element':'variable','name':'output','type':bool,'read':self.isEnabled,'write':self.setEnabled,'help':'Output state'})
         config.append({'element':'variable','name':'mode','type':str,'read':self.getMode,'write':self.setMode,'help':'Control mode'})
         return config
@@ -355,68 +355,14 @@ class TEC():
         config = []
         config.append({'element':'variable','name':'resistance','type':float,'read':self.getResistance,'help':'Resistance'})
         config.append({'element':'variable','name':'gain','type':int,'read':self.getGain,'write':self.setGain,'help':'Gain'})
-        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'write':self.setCurrentSetpoint,'help':'Current setpoint'})
-        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'help':'Current'})
-        config.append({'element':'variable','name':'temperatureSetpoint','type':float,'unit':'°C','read':self.getTemperatureSetpoint,'write':self.setTemperatureSetpoint,'help':'Temperature setpoint'})
-        config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'help':'Actual temperature'})
+        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'help':'Current setpoint'})
+        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'write':self.setCurrent,'help':'Current'})
+        config.append({'element':'variable','name':'temperatureSetpoint','type':float,'unit':'°C','read':self.getTemperatureSetpoint,'help':'Temperature setpoint'})
+        config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'write':self.setTemperature,'help':'Actual temperature'})
         config.append({'element':'variable','name':'output','type':bool,'read':self.isEnabled,'write':self.setEnabled,'help':'Output state'})
         config.append({'element':'variable','name':'mode','type':str,'read':self.getMode,'write':self.setMode,'help':'Control mode'})
         return config
     
     
-        
-        
-        
-if __name__ == '__main__':
-    
-    from optparse import OptionParser
-    import inspect
-    import sys
-
-    usage = """usage: %prog [options] arg
-               
-               EXAMPLES:
-                   set_ilxlightwaveldc3724 -i 2 -b 0 -a 30 -t 20.1
-                   set the pump current to 30 mA and the temperature to 20.1 degree celcius. The gpib address is set to 19 and the board number to 0.
-               """
-    parser = OptionParser(usage)
-    parser.add_option("-c", "--command", type="str", dest="command", default=None, help="Set the command to use." )
-    parser.add_option("-q", "--query", type="str", dest="query", default=None, help="Set the query to use." )
-    parser.add_option("-a", "--current", type="str", dest="current", default=None, help="Set the pump current in mA." )
-    parser.add_option("-p", "--power", type="str", dest="power", default=None, help="Set the pump power in ?." )
-    parser.add_option("-t", "--temperature", type="str", dest="temperature", default=None, help="Set the locking temperature." )
-    parser.add_option("-i", "--address", type="str", dest="address", default='GPIB0::2::INSTR', help="Set the GPIB address to use to communicate." )
-    parser.add_option("-b", "--board_index", type='str', dest="board_index", default='0', help="Set the GPIB address to use to communicate." )
-    parser.add_option("-l", "--link", type="string", dest="link", default='GPIB', help="Set the connection type." )
-    (options, args) = parser.parse_args()
-    
-    ### Start the talker ###
-    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
-    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
-    I = Driver_LINK(address=options.address,board_index=options.board_index)
-    
-    if options.query:
-        print('\nAnswer to query:',options.query)
-        rep = I.query(options.query)
-        print(rep,'\n')
-        sys.exit()
-    elif options.command:
-        print('\nExecuting command',options.command)
-        I.write(options.command)
-        print('\n')
-        sys.exit()
-    
-    if options.current:
-        I.las.setCurrent(options.current)
-    if options.power:
-        # to sort out what power does and the unit
-        #I.las.setPower(options.power)
-        pass
-    if options.temperature:
-        if (eval(options.temperature) > 18) and (eval(options.temperature) < 25):
-            I.tec.setTemperature(options.temperature)
-    
-    sys.exit()
 
         

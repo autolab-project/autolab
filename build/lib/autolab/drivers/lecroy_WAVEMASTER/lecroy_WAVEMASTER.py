@@ -31,9 +31,10 @@ class Driver():
     
     
     ### User utilities
-    def get_data_channels(self,channels=[]):
+    def get_data_channels(self,channels=[],single=False):
         """Get all channels or the ones specified"""
         previous_trigger_state = self.get_previous_trigger_state()    #1 WARNING previous trigger state in memory or returned
+        if single: self.single()
         self.stop()
         while not self.is_stopped(): time.sleep(0.05)
         if channels == []: channels = list(range(1,self.nb_channels+1))
@@ -51,21 +52,21 @@ class Driver():
         
     ### Trigger functions
     def single(self):
-        self.inst.write("TRMD SINGLE")
+        self.write("TRMD SINGLE")
     def stop(self):
-        self.inst.write("TRMD STOP")
+        self.write("TRMD STOP")
     def is_stopped(self):
         return 'STOP' in self.query('TRMD?')
     def get_previous_trigger_state(self):
         return self.query('TRMD?')
         
     def set_previous_trigger_state(self,previous_trigger_state):                 # go to 1 WARNING
-        self.scope.write(previous_trigger_state)
+        self.write(previous_trigger_state)
         
     ### Cross-channel settings 
     def set_encoding(self,encoding):
         self.encoding = encoding
-        self.scope.write('CFMT DEF9,'+self.encoding+',BIN')
+        self.write('CFMT DEF9,'+self.encoding+',BIN')
         if encoding=='BYTE':dtype=int8;NUM=256;LIM=217          # 15% less than the maximal number possible
         elif encoding=='WORD':dtype=int16;NUM=65536;LIM=55700   # 15% less than the maximal number possible
     def get_encoding(self):
@@ -200,7 +201,7 @@ class Channel():
             if new_channel_amp<0.005: new_channel_amp = 0.005 # if lower than the lowest possible 5mV/div
             self.set_vertical_scale(new_channel_amp)
             
-            self.single()
+            self.dev.single()
             print('Optimisation loop index:', k,self.autoscale_iter)
             if k==self.autoscale_iter:
                 VDIV = self.get_vertical_scale()
@@ -244,70 +245,6 @@ class Channel():
         config.append({'element':'variable','name':'active','type':bool,'read':self.is_active,'help':'Returns the current state of the channel.'})
         return config
 
-if __name__ == '__main__':
-    from optparse import OptionParser
-    import inspect
-    import sys
-    
-    a = Driver_VXI11("192.168.0.18")
-#    from optparse import OptionParser
-#    import inspect
-#    
-#    usage = """usage: %prog [options] arg
-#
-#               EXAMPLES:
-#                   get_lecroywavemaster 1 -o filename
-#                   Record the first channel and create two files name filename_lecroy and filename_lecroy.log
-#            
-#                   get_lecroywavemaster -i 192.168.0.4 -e WORD -o test 3
-#                   Same as before but record channel 3 with giving an IP address and an int16 data type
-#                    
-#                   get_lecroywavemaster -i 192.168.0.5 -F -t -m [10,1,2] -n 8 -o test 1,2
-#                   Uses autoscale for automatic adjustments of the vertical scale on channel 1 and 2
-#                   Note: if channel is not to be acquired it won't be subjected to amplitude optimization
-#                    
-#               
-#               IMPORTANT INFORMATIONS:
-#                    - Datas are obtained in a binary format: int8 
-#                    - To retrieve datas (in "VERTUNIT"), see corresponding log file:
-#                    DATA(VERTUNIT) = DATA(ACQUIRED) * VERTICAL_GAIN - VERTICAL_OFFSET
-#                    
-#                See for more informations:  toniq/Prog_guide/Lecroy.pdf
-#
-#               """
-#    parser = OptionParser(usage)
-#    parser.add_option("-c", "--command", type="str", dest="com", default=None, help="Set the command to use." )
-#    parser.add_option("-q", "--query", type="str", dest="que", default=None, help="Set the query to use." )
-#    parser.add_option("-i", "--address", type="string", dest="address", default='192.168.0.18', help="Set ip address." )
-#    parser.add_option("-l", "--link", type="string", dest="link", default='VXI11', help="Set the connection type." )
-#    parser.add_option("-F", "--force",action = "store_true", dest="force", default=None, help="Allows overwriting file" )
-#    parser.add_option("-e", "--encoding", type="string", dest="encoding", default='BYTE', help="For mofifying the encoding format of the answer" )
-#    parser.add_option("-m", "--spe_mode", type="string", dest="spe_mode", default=None, help="For allowing auto modification of the vertical gain. List of: spe_mode iteration number, all the channels to apply spe mode to. Note if no channel specified, all the channel are corrected. WARNING: if you want all the channels to correpond to the same trigger event, you need to spe_mode one channel only and to physically plug the cable in the first channel acquired (first in the list 1->4)")
-#    parser.add_option("-n", "--spe_fact", type="float", dest="spe_fact", default=8., help="For setting limits of the vertical gain, units are in number of scope divisions here. WARNING: Do not overpass 9 due to a security in the code! WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." )
-#    parser.add_option("-t", "--trigger", action="store_true", dest="trigger", default=False, help="Ask the scope to trigger once before acquiring." )
-#    (options, args) = parser.parse_args()
-#    
-#    ### Compute channels to acquire ###
-#    if (len(args) == 0) and (options.com is None) and (options.que is None):
-#        print('\nYou must provide at least one channel\n')
-#        sys.exit()
-#    else:
-#        chan = [int(a) for a in args[0].split(',')]
-#    ####################################
-#    
-#    ### Start the talker ###
-#    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-#    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
-#    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
-#    I = Driver_LINK(address=options.address)
-#    
-#    if query:
-#        print('\nAnswer to query:',query)
-#        rep = I.query(query)
-#        print(rep,'\n')
-#        sys.exit()
-#    elif command:
-#        print('\nExecuting command',command)
-#        I.write(command)
-#        print('\n')
-#        sys.exit()
+
+   
+

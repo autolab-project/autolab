@@ -26,7 +26,7 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.3::INSTR -l VISA -a 1 -o 1 -f 50KHZ -c 1 2
+    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.3::INSTR -l VISA -a 1 -o 1 -f 50KHZ -c 1,2
     set the frequency to 50 kHz, the amplitude to 1V, the offset to 1V for both channel 1 and 2
 
     autolab-drivers -d nickname -p w10NS 1
@@ -34,9 +34,12 @@ usage:    autolab-drivers [options] arg
 
     autolab-drivers -d nickname -p d10 2
     set pulse mode to channel 2 with duty cycle of 10 purcent, using the device nickname as defined in devices_index.ini
+    
+    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-c", "--channels", nargs='+', type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
+        parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
         parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
         parser.add_argument("-u", "--uniform", type=str, dest="uniform", default=None, help="Set dc mode on and set offset." )
         parser.add_argument("-p", "--pulsemode", type=str, dest="pulsemode", default=None, help="Set pulse mode and use argument as either the duty cycle or the pulse width depending on the first letter 'd' or 'w' (see examples)." )
@@ -45,16 +48,9 @@ usage:    autolab-drivers [options] arg
         
         return parser
 
-    def help(self):
-        """Add to the help lists of module: classes, methods and arguments"""
-        classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module
-        methods_list = self.utilities.print_help_methods(self.methods_list)                  # display list of methods in module
-        methods_args = self.utilities.print_help_methods_arguments(self.Instance,self.methods_list)      # display list of methods arguments
-        return classes_list + methods_list + methods_args
-
     def do_something(self,args):
         if args.channels:
-            for chan in args.channels:
+            for chan in args.channels.split(','):
                 if args.amplitude:
                     getattr(getattr(self.Instance,f'channel{chan}'),'amplitude')(args.amplitude)
                 if args.offset:
@@ -73,6 +69,14 @@ usage:    autolab-drivers [options] arg
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
+
+
+    def help(self):
+        """Add to the help lists of module: classes, methods and arguments"""
+        classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module
+        methods_list = self.utilities.print_help_methods(self.methods_list)                  # display list of methods in module
+        methods_args = self.utilities.print_help_methods_arguments(self.Instance,self.methods_list)      # display list of methods arguments
+        return classes_list + methods_list + methods_args
 
     def exit(self):
         self.Instance.close()
