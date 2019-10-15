@@ -48,7 +48,7 @@ class Driver():
         elif command.startswith('LISTCAMS?'):
             return self.list_cameras()
         elif command.startswith('AUTOEXP'):
-            return self.auto_exposure_time()
+            return self.get_data_auto_exposure()
         elif command.startswith('SAVEDATA'):
             return self.save_data_local()
 
@@ -91,13 +91,13 @@ class Driver():
     def list_cameras(self):
         return self.pvcam.listCameras()
     
-    def auto_exposure_time(self):
+    def get_data_auto_exposure(self):
         while True :
             # Mesure spectre
             self.get_data()
 
             # Récupération des données
-            maxValue=max(self.data)
+            maxValue=max(self.data[0])
             
             # Reduction du temps d'exposition
             if maxValue>self.maxCountsAllowed : 
