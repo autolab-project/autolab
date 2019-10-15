@@ -43,7 +43,7 @@ usage:    autolab-drivers [options] arg
         parser.add_argument("-n", "--nb_frames", type=str, dest="nb_frames", default=None, help="Set the number of frames to acquire" )
         parser.add_argument("-e", "--exposure", type=str, dest="exposure", default=None, help="Set the exposure time in s" )
         parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
-        parser.add_argument("-a", "--auto_exposure", action = "store_true", dest="auto_exposure", default=False, help="turn on auto exposition mode" )
+        parser.add_argument("-a", "--auto_exposure", action = "store_true", dest="auto_exposure", default=False, help="Get data from camera using auto exposition mode (maximize signal vertically by adjusting the exposure)" )
         parser.add_argument("-F", "--force",action = "store_true", dest="force", default=False, help="Allows overwriting file" )
         return parser
 
