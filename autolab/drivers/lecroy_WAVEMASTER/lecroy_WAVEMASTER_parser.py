@@ -60,7 +60,7 @@ usage:    autolab-drivers [options] arg
         if args.trigger and not args.filename:
             getattr(self.Instance,'single')()
         if args.auto_scale: # test must be located before args.filename's one
-            for chan in arg.autoscale.split(',')[1:]:
+            for chan in arg.auto_scale.split(',')[1:]:
                 getattr(getattr(self.Instance,f'channel{chan}'),'set_autoscale_iter')(args.auto_scale.split(',')[0])
         if args.auto_fact: # test must be located before args.filename's one
             for chan in range(1,getattr(self.Instance,'nb_channels')+1):
