@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import newport_CONEXPP as MODULE
+import newport_SMC100 as MODULE
 from argparse import ArgumentParser
 
 
@@ -64,5 +64,5 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def exit(self):
-        self.Instance.close()
+        #self.Instance.close()
         sys.exit()

@@ -24,7 +24,7 @@ class Driver():
             scan_time = float(scanpiezo[2])
             scanpiezo = scanpiezo[:2]
         elif len(scanpiezo)!=2:
-            print('Please provide a list of at least 2 values for the scan')
+            print('Please provide 2 or 3 values for the scan')
             return
         beg,end=[scanpiezo[i] for i in range(len(scanpiezo))]
         ### kernel ###
@@ -109,67 +109,3 @@ class Driver_USB(Driver):
 ############################## Connections classes ##############################
 #################################################################################
 
-
-if __name__ == '__main__':
-    from optparse import OptionParser
-    import inspect
-    import sys
-    
-    usage = """usage: %prog [options] arg
-               
-               Think to provide a tuple of values (min,max) for the scans
-               
-               EXAMPLES:
-                   
-
-
-               """
-    parser = OptionParser(usage)
-    parser.add_option("-c", "--query", type="str", dest="com", default=None, help="Set the query to use." )
-    parser.add_option("-w", "--wavelength", type="float", dest="wl", default=None, help="Set the wavelength value." )
-    parser.add_option("-s", "--scan", type="string", dest="scan", default=None, help="Set the scan values [min,max,speed]." )
-    parser.add_option("-p", "--piezo", type="float", dest="piezo", default=None, help="Set the current to apply to the piezo." )
-    parser.add_option("-r", "--scanpiezo", type="string", dest="scanpiezo", default=None, help="Set the values for the piezo scan [min,max,time_scan]." )
-    (options, args) = parser.parse_args()
-    
-    if options.scan:
-        options.scan = eval(options.scan)
-    if options.scanpiezo:
-        options.scanpiezo = eval(options.scanpiezo)
-    
-    ### Start the talker ###
-    I = Driver()
-    
-    if options.query:                          
-        print('\nAnswer to query:',options.query)
-        I.write(options.query)
-        rep = I.read()
-        print(rep,'\n')
-        sys.exit()
-        
-    if options.lambd:
-        I.wavelength(options.lambd)
-    if options.piezo or options.piezo==0:
-        I.func_piezo(options.piezo)
-    if options.scanpiezo:
-        I.func_scanpiezo(options.scanpiezo)
-        
-    def scan_wavelength(self,scan):
-        if len(scan) == 3:
-            vel = str(scan[2])
-            scan = scan[:2]
-            self.set_scan_forward_velocity(vel)
-            self.set_scan_backward_velocity(vel)
-        elif len(scan)!=2:
-            print('Please provide a list of at least 2 values for the scan')
-        beg,end=[str(scan[i]) for i in range(len(scan))]
-        self.set_scan_start_wavelength()
-        self.set_scan_stop_wavelength()
-        
-        sys.exit()
-
-    if options.scan:
-        I.scan_wavelength(options.scan)
-
-        
-    sys.exit()
