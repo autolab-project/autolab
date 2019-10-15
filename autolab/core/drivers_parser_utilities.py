@@ -4,9 +4,6 @@
 import inspect
 from functools import partial
 
-#usitconfig.checkConfig()
-#usitconfig.DEVICES_INDEX_PATH
-
 class utilities():
     def __init__(self):
         pass
