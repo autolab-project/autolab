@@ -26,8 +26,8 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -i GPIB::2::INSTR -l VISA -p 1
-    load {MODULE.__name__} driver using VISA communication protocol with address GPIB... and set the power to 1 (dBm?)
+    autolab-drivers -d {MODULE.__name__} -i GPIB::2::INSTR -l VISA -p 100
+    load {MODULE.__name__} driver using VISA communication protocol with address GPIB... and set the power to 10dBm
     
     autolab-drivers -d nickname -p 1
     same as before but using the device nickname as defined in devices_index.ini
@@ -36,7 +36,7 @@ usage:    autolab-drivers [options] arg
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-p", "--power", type=str, dest="power", default=None, help="Set the pump power setpoint in mW." )
+        parser.add_argument("-p", "--power", type=str, dest="power", default=None, help="Set the pump power setpoint in 1/10dBm (e.g. 100 <=> 10dBm; this conversion may depend on the model, please verify)." )
         
         return parser
 
