@@ -11,7 +11,10 @@ class Driver_parser():
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
         Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
-        self.Instance     = Driver_class(address=args.address,**kwargs)
+        
+        # pass the argument libpath connection argument through port one
+        if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
+        self.Instance     = Driver_class(**kwargs)
         
         self.methods_list = self.utilities.list_methods(self.Instance)
         
@@ -26,8 +29,8 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -i GPIB0::2::INSTR -l VISA -m some_methods,arg1,arg2
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+    autolab-drivers -d {MODULE.__name__} -l DLL --port C:\Program Files\Newport\Newport USB Driver\Bin\usbdll.dll -m some_methods,arg1,arg2
+    In this particular case the --port option indicate the dll library location. Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
     autolab-drivers -d nickname -m some_methods1,arg1 some_methods2,arg1,arg2
     Same as before using the nickname defined in devices_index.ini
