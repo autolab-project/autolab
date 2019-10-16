@@ -70,7 +70,7 @@ usage:    autolab-drivers [options] arg
                 getattr(getattr(self.Instance,f'channel{chan}'),'set_autoscale_factor')(args.auto_fact) # all channels instances
         if args.filename:
             getattr(self.Instance,'get_data_channels')(channels=args.channels.split(','),single=args.trigger)
-            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels.split(','),FORCE=args.FORCE)
+            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels.split(','),FORCE=args.force)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]

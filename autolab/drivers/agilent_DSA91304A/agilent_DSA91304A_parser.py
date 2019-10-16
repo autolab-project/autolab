@@ -67,12 +67,12 @@ usage:    autolab-drivers [options] arg
                 getattr(self.Instance,'stop')()
                 print(str(i+1))
                 getattr(self.Instance,'get_data_channels')(channels=args.channels.split(','))
-                getattr(self.Instance,'save_data_channels')(filename=str(i+1),channels=args.channels.split(','),FORCE=args.FORCE)
+                getattr(self.Instance,'save_data_channels')(filename=str(i+1),channels=args.channels.split(','),FORCE=args.force)
                 getattr(self.Instance,'run')()
                 time.sleep(0.050)
         elif args.filename:
             getattr(self.Instance,'get_data_channels')(channels=args.channels.split(','))
-            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels.split(','),FORCE=args.FORCE)
+            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels.split(','),FORCE=args.force)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]

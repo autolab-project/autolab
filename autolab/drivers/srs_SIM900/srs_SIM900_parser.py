@@ -32,8 +32,14 @@ usage:    autolab-drivers [options] arg
     autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -c 3,5 -s 2
     load {MODULE.__name__} driver using VISA and local network address 192.168.0.4 and set setpoint of SIM960(PID controller) module inserted in slots 3 and 5
     
-    autolab-drivers -d nickname -f 80e6 -c A,B -a 0.5 
-    Similar to previous one but using the device's nickname as defined in devices_index.ini and only for channel A and B. This will act only on B for instance if you do precise only B as channel argument.
+    autolab-drivers -d nickname -c 2 -r 
+    Similar to previous one but using the device's nickname as defined in devices_index.ini and set output to pid control.
+    
+    autolab-drivers -d nickname -c 2 -u
+    Similar to previous one but using the device's nickname as defined in devices_index.ini and set output to manual.
+    
+    autolab-drivers -d nickname -c 2 -a
+    Similar to previous one but using the device's nickname as defined in devices_index.ini and set output to manual to unlock and try relock.
     
     autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
