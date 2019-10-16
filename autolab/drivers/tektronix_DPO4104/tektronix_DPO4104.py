@@ -32,7 +32,7 @@ class Driver():
     def get_data_channels(self,channels=[]):
         """Get all channels or the ones specified"""
         self.stop()
-        while not self.is_stopped():time.sleep(0.05)
+        while not self.is_stopped(): time.sleep(0.05)
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels():
             getattr(self,f'channel{i}').get_data_raw()
