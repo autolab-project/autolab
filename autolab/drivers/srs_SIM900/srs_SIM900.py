@@ -24,15 +24,15 @@ class Driver():
         self.write('TERM LF')
         
         # Submodules
-        self.slotnames = []
+        self.slotnames = {}
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
-                #name = kwargs[key].split(',')[1].strip()
-                setattr(self,key,module(self,slot_num))
-                self.slotnames.append(key)
+                name = kwargs[key].split(',')[1].strip()
+                setattr(self,name,module(self,slot_num))
+                self.slotnames[key] = name
         
     
     def send_command_to_slot(self,slot,command):
