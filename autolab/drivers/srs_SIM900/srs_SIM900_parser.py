@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import srs_DG645 as MODULE
+import srs_SIM900 as MODULE
 from argparse import ArgumentParser
 
 
@@ -29,41 +29,37 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l VXI11 -i 192.168.0.4 -f 1000000 -p 0 -o 0.5 -a 1 -d 10e-6 -c AB,EF
-    load {MODULE.__name__} driver using VXI11 and local network address 192.168.0.4 and sets the frequency to 1MHz and acts on outputs AB and EF to set the polarity to 0 the offset to 0.5V amplitude to 1V and the delay to 10e-6s.
+    autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -c 3,5 -s 2
+    load {MODULE.__name__} driver using VISA and local network address 192.168.0.4 and set setpoint of SIM960(PID controller) module inserted in slots 3 and 5
     
     autolab-drivers -d nickname -f 80e6 -c A,B -a 0.5 
     Similar to previous one but using the device's nickname as defined in devices_index.ini and only for channel A and B. This will act only on B for instance if you do precise only B as channel argument.
     
     autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+    
+    Note: Arbitrary waveform available only using a python terminal
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency. This is applied to all of the outputs" )
-        parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on/acquire from. channels will be a list of outputs('AB','CD','EF','GH') or independant channels ('A','B','C','D','E','F','G','H'). WARNING: you can only change the relative delay between independant channels, you must act on outputs for other options. Pre-configured options only allow you to act on either outputs[single('AB') or several('AB','CD','GH')] or channels[single('A') or couple('A','B') only] with a single command => use several commands or -m option instead." )
-        parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude.")
-        parser.add_argument("-p", "--polarity", type=str, dest="polarity", default=None, help="Set the level polarity if 1, then up if 0, then down")
-        parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset.")
-        parser.add_argument("-d", "--delay", type=str, dest="delay", default=None, help="Set the delay (s).")
+        parser.add_argument("-c", "--channels",type=str, dest="channels", default=None, help="Set the slots to act on/acquire from." )
+        parser.add_argument("-p", "--setpoint",type=str, dest="setpoint", default=None, help="Setpoint value to be used (for SIM960 PID controller)" )
+        parser.add_argument("-r", "--relock",action="store_true", dest="lock", default=False, help="Lock (for SIM960 PID controller)" )
+        parser.add_argument("-u", "--unlock",action="store_true", dest="unlock", default=False, help="Unlock (for SIM960 PID controller)" )
+        parser.add_argument("-a", "--auto_lock",action="store_true", dest="auto_lock", default=False, help="Choose automatically to unlock and relock in order to decrease the output voltage (for SIM960 PID controller)" )
         
         return parser
 
     def do_something(self,args):
-        if args.frequency:
-            getattr(self.Instance,'set_frequency')(args.frequency)
-        if args.delay and len(args.channels[0])==1:  # modify the delay for channels 'A','B,...'
-            getattr(self.Instance,'set_delay_channels')(args.channels)
-            getattr(self.Instance,'set_delay')(args.delay)
-        elif args.channels:
-            for out in args.channels.split(','):
-                if args.amplitude:
-                    getattr(getattr(self.Instance,f'output{out}'),'set_amplitude')(args.amplitude)
-                if args.polarity:
-                    getattr(getattr(self.Instance,f'output{out}'),'set_polarity')(args.polarity)
-                if args.offset:
-                    getattr(getattr(self.Instance,f'output{out}'),'set_offset')(args.offset)
-                if args.delay:
-                    getattr(getattr(self.Instance,f'output{out}'),'set_delay')(args.delay)
+        if args.channels:
+            for chan in args.channels.split(','):
+                if args.setpoint:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'set_setpoint')(args.setpoint)
+                if args.relock:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'relock')()
+                elif args.unlock:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'set_output_manual')()
+                elif args.auto_lock:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'auto_lock')()
 
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
