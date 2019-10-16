@@ -282,9 +282,3 @@ class Driver_LOCAL(Driver) : #not used
 
 
 
-#ADDRESS = '192.168.0.3'
-
-    
-
-
-

@@ -11,7 +11,10 @@ class Driver_parser():
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
         Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
-        self.Instance     = Driver_class(address=args.address,**kwargs)
+        
+        # pass the argument board_index or libpath argument through port one
+        kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
+        self.Instance     = Driver_class(**kwargs)
         
         self.methods_list = self.utilities.list_methods(self.Instance)
         

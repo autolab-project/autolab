@@ -30,7 +30,7 @@ class utilities():
         methods_list.extend(class_meth);methods_list.extend(class_vars)
         return methods_list
     
-    def parsekwargs_connectiondependant(kwargs,Driver_class):
+    def parsekwargs_connectiondependant(self,kwargs,Driver_class):
         if Driver_class.__name__ == 'Driver_DLL':
             if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
         elif Driver_class.__name__ == 'Driver_GPIB':

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import exfo_PM1613 as MODULE
+import newport_XPS as MODULE
 from argparse import ArgumentParser
 
 
@@ -29,7 +29,7 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -i GPIB0::2::INSTR -l VISA -m some_methods,arg1,arg2
+    autolab-drivers -d {MODULE.__name__} -l SOCKET -i 192.168.0.8 -m some_methods,arg1,arg2
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
     autolab-drivers -d nickname -m some_methods1,arg1 some_methods2,arg1,arg2
@@ -64,5 +64,5 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def exit(self):
-        self.Instance.close()
+        #self.Instance.close()
         sys.exit()

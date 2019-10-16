@@ -30,9 +30,9 @@ class Driver():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
-                setattr(self,name,module(self,slot_num))
-                self.slotnames.append(name)
+                #name = kwargs[key].split(',')[1].strip()
+                setattr(self,key,module(self,slot_num))
+                self.slotnames.append(key)
         
     
     def send_command_to_slot(self,slot,command):
@@ -57,7 +57,7 @@ class Driver_VISA(Driver):
         rm = visa.ResourceManager()
         self.inst = rm.get_instrument(address)
         
-        Driver.__init__(self)
+        Driver.__init__(self, **kwargs)
         
     def close(self):
         self.inst.close()
@@ -75,7 +75,7 @@ class Driver_GPIB(Driver):
         import Gpib
         
         self.inst = Gpib.Gpib(int(address),int(board_index))
-        Driver.__init__(self)
+        Driver.__init__(self, **kwargs)
     
     def query(self,query):
         self.write(query)
@@ -108,8 +108,10 @@ class Module_SIM960():
         self.dev.send_command_to_slot(self.slot,f'MOUT {val}')
     def get_output_voltage(self):
         return float(self.dev.get_query_from_slot(self.slot,'OMON?'))
+    def set_setpoint(self,val):
+        self.dev.send_command_to_slot(self.slot,f'SETP {setpoint}')
 
-    def smart_relock(self,peculiar=False):
+    def auto_lock(self,peculiar=False):
         rep = self.get_output_voltage()
         if peculiar:                     # port 5
             if rep<1.5 or rep>8.5:
@@ -118,7 +120,7 @@ class Module_SIM960():
             if rep<-3.5 or rep>3.5:
                 self.re_lock(port)
                 
-    def re_lock(self):
+    def relock(self):
         self.set_output_manual()
         time.sleep(0.1)
         if peculiar:                     # port 5
@@ -128,65 +130,3 @@ class Module_SIM960():
         time.sleep(0.1)
         self.set_output_pid()
 
-
-
-if __name__ == '__main__':
-
-    from optparse import OptionParser
-    import inspect
-    import sys
-
-    usage = """usage: %prog [options] arg
-               
-               EXAMPLES:
-                   set_PIDSRS -i 5 -s 0.1
-                   set the setpoint of the module plugged in the port 5 to 0.1
-
-
-               """
-    parser = OptionParser(usage)
-    parser.add_option("-c", "--command", type="str", dest="com", default=None, help="Set the command to use." )
-    parser.add_option("-q", "--query", type="str", dest="que", default=None, help="Set the query to use." )
-    parser.add_option("-a", "--autolock", action = "store_true", dest="autolock", default=False, help="Enable auto locking." )
-    parser.add_option("-l", "--lock", type="str", dest="lock", default=None, help="Lock" )
-    parser.add_option("-u", "--unlock", type="str", dest="unlock", default=None, help="Unlock" )
-    parser.add_option("-i", "--port", type="str", dest="port", default='5', help="Port for the PID freme to apply the command to" )
-    parser.add_option("-s", "--setpoint", type="str", dest="setpoint", default=None, help="Setpoint value to be used" )
-    parser.add_option("-t", "--testout", action = "store_true", dest="testout", default=False, help="Test the output voltage and re-lock if needed" )
-    parser.add_option("-i", "--address", type="str", dest="address", default='2', help="Set gpib address to use for the communication" )
-    parser.add_option("-b", "--board_index", type='str', dest="board_index", default='0', help="Set the GPIB address to use to communicate." )
-    parser.add_option("-l", "--link", type="string", dest="link", default='GPIB', help="Set the connection type." )
-    parser.add_option("-p", "--port", type="str", dest="port", default='5', help="Port for the PID frame to apply the command to" )
-    (options, args) = parser.parse_args()
-    
-    ### Start the talker ###
-    classes = [name for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass) if obj.__module__ is __name__]
-    assert 'Driver_'+options.link in classes , "Not in " + str([a for a in classes if a.startwith('Driver_')])
-    Driver_LINK = getattr(sys.modules[__name__],'Driver_'+options.link)
-    I = Driver_LINK(address=options.address,board_index=options.board_index)
-    
-    if query:
-        print('\nAnswer to query:',query)
-        self.write(query)
-        rep = self.read()
-        print(rep,'\n')
-        self.exit()
-    elif command:
-        print('\nExecuting command',command)
-        self.write(command)
-        print('\n')
-        self.exit()
-    
-    if lock:
-        self.write('AMAN 1')
-    elif unlock:
-        self.write('AMAN 0')
-    if smart_relock:
-        self.smart_relock(port)
-    if auto_lock:
-        self.re_lock(port)
-    if setpoint:
-        self.write('SETP '+setpoint)
-    
-    I.close()
-    sys.exit()

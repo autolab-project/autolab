@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import exfo_PM1613 as MODULE
+import princeton_WINSPEC as MODULE
 from argparse import ArgumentParser
 
 
@@ -28,34 +28,42 @@ class Driver_parser():
 ----------------  Examples:  ----------------
 
 usage:    autolab-drivers [options] arg 
-        
-    autolab-drivers -d {MODULE.__name__} -i GPIB0::2::INSTR -l VISA -m some_methods,arg1,arg2
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+            
+    autolab-drivers -d {MODULE.__name__} -l SOCKET -i 192.168.0.2 -e 0.1 -o my_file_name
+    load {MODULE.__name__} driver using SOCKET communication protocol with address 192.168.0.2 and acquire data after 2 expositions of 0.1s each. Save those into my_file_name.txt.
     
-    autolab-drivers -d nickname -m some_methods1,arg1 some_methods2,arg1,arg2
-    Same as before using the nickname defined in devices_index.ini
-    
+    autolab-drivers -d nickname -a -o my_file_name
+    Similar to previous one using device's nickname defined in devices_index.ini, turn on auto vertical scale/exposure optimization loop (so as to maximize signal vertically), get and save the data.
+
     autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        #parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
-        #parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
-        #parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
-        #parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
-        
+        parser.add_argument("-e", "--exposure", type=str, dest="exposure", default=None, help="Set the exposure time in s")
+        parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file")
+        parser.add_argument("-a", "--auto_exposure", action = "store_true", dest="auto_exposure", default=False, help="Get data from camera using auto exposition mode (maximize signal vertically by adjusting the exposure)")
+        parser.add_argument("-F", "--force",action = "store_true", dest="force", default=False, help="Allows overwriting file")
         return parser
-    
+
     def do_something(self,args):
-        #if args.filename:
-            ##getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
-            #getattr(self.Instance,'get_data_traces')(traces=args.channels)
-            #getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels,FORCE=args.FORCE)
-  
+        if args.exposure:
+            getattr(self.Instance,'setExposureTime')(args.exposure)
+        if args.auto_exposure:
+            getattr(self.Instance,'setAutoExposureTimeEnabled')(True)
+        if args.filename:
+            getattr(self.Instance,'acquireSpectrum')()
+            data = getattr(self.Instance,'data')['spectrum']
+            temp_filename = f'{filename}_WINSPEC.txt'
+            if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
+                print(f'\nFile {temp_filename} already exists, change filename or remove old file\n')
+                return
+            f = savetxt(data)
+            print('WINSPEC data saved')
+        
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
-            
+
     def help(self):
         """Add to the help lists of module: classes, methods and arguments"""
         classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module

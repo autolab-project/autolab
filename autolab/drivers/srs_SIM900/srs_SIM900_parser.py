@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import exfo_PM1613 as MODULE
+import srs_SIM900 as MODULE
 from argparse import ArgumentParser
 
 
@@ -28,34 +28,43 @@ class Driver_parser():
 ----------------  Examples:  ----------------
 
 usage:    autolab-drivers [options] arg 
-        
-    autolab-drivers -d {MODULE.__name__} -i GPIB0::2::INSTR -l VISA -m some_methods,arg1,arg2
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+            
+    autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -c 3,5 -s 2
+    load {MODULE.__name__} driver using VISA and local network address 192.168.0.4 and set setpoint of SIM960(PID controller) module inserted in slots 3 and 5
     
-    autolab-drivers -d nickname -m some_methods1,arg1 some_methods2,arg1,arg2
-    Same as before using the nickname defined in devices_index.ini
+    autolab-drivers -d nickname -f 80e6 -c A,B -a 0.5 
+    Similar to previous one but using the device's nickname as defined in devices_index.ini and only for channel A and B. This will act only on B for instance if you do precise only B as channel argument.
     
     autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+    
+    Note: Arbitrary waveform available only using a python terminal
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        #parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
-        #parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
-        #parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
-        #parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
+        parser.add_argument("-c", "--channels",type=str, dest="channels", default=None, help="Set the slots to act on/acquire from." )
+        parser.add_argument("-p", "--setpoint",type=str, dest="setpoint", default=None, help="Setpoint value to be used (for SIM960 PID controller)" )
+        parser.add_argument("-r", "--relock",action="store_true", dest="lock", default=False, help="Lock (for SIM960 PID controller)" )
+        parser.add_argument("-u", "--unlock",action="store_true", dest="unlock", default=False, help="Unlock (for SIM960 PID controller)" )
+        parser.add_argument("-a", "--auto_lock",action="store_true", dest="auto_lock", default=False, help="Choose automatically to unlock and relock in order to decrease the output voltage (for SIM960 PID controller)" )
         
         return parser
-    
+
     def do_something(self,args):
-        #if args.filename:
-            ##getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
-            #getattr(self.Instance,'get_data_traces')(traces=args.channels)
-            #getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels,FORCE=args.FORCE)
-  
+        if args.channels:
+            for chan in args.channels.split(','):
+                if args.setpoint:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'set_setpoint')(args.setpoint)
+                if args.relock:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'relock')()
+                elif args.unlock:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'set_output_manual')()
+                elif args.auto_lock:
+                    getattr(getattr(self.Instance,f'slot{chan}'),'auto_lock')()
+
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
-            
+
     def help(self):
         """Add to the help lists of module: classes, methods and arguments"""
         classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module

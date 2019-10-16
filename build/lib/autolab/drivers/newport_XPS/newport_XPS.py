@@ -38,7 +38,7 @@ class Driver():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Driver_TCPIP(Driver):
+class Driver_SOCKET(Driver):
     
     def __init__(self,address='192.168.0.8',**kwargs):
     
