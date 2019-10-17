@@ -144,7 +144,7 @@ class Driver_CONN(Driver):
     def __init__(self,address='192.168.0.8',**kwargs):
         print('DUMMY DEVICE INSTANTIATED with address',address)
         
-        Driver.__init__(self,**kwargs)
+        Driver.__init__(self)
         
     
 class Slot() :

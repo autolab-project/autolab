@@ -95,7 +95,7 @@ class Driver_USB(Driver):
         assert self.ep_out is not None
         assert self.ep_in is not None
         
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
         
     def write(self,query):
         self.string = query + '\r\n'

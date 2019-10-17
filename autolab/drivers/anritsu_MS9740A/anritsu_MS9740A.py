@@ -46,7 +46,7 @@ class Driver_VISA(Driver):
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
     
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
     
     def close(self):
         self.controller.close()
