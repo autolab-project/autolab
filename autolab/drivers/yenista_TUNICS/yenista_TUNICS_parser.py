@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import yenista_OSICS as MODULE
+import yenista_TUNICS as MODULE
 from argparse import ArgumentParser
 
 
@@ -29,39 +29,32 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -c 3,5 -p 30
-    load {MODULE.__name__} driver using VISA and local network address 192.168.0.4 and set the power to 30 mW to slots 3 and 5
+    autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -w 1550.2 -p 10
+    load {MODULE.__name__} driver using VISA communication protocol with address GPIB... and set the wavelength to 1550.2nm and the power to 10mW.
     
-    autolab-drivers -d nickname -c 3 -w 1550.1
-    Similar to previous one but using the device's nickname as defined in the devices_index.ini, and set the wavelength to 1550.1
+    autolab-drivers -d nickname -a 100
+    Use now the device nickname as defined in devices_index.ini and set the pump current to 100mA.
     
     autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
-    Note: Arbitrary waveform available only using a python terminal
+    Note: you should provide either current or power at a time (same thing applies to frequency and wavelength)
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        parser.add_argument("-c", "--channels",type=str, dest="channels", default=None, help="Set the slots to act on/acquire from." )
-        parser.add_argument("-p", "--power",type=str, dest="power", default=None, help="Set the power in mW." )
-        parser.add_argument("-w", "--wavelength",type=str, dest="wavelength", default=None, help="Set the wavelength in nm." )
-        
+        parser.add_argument("-a", "--current", type=str, dest="current", default=None, help="Set the pump current in mA." )
+        parser.add_argument("-p", "--power", type=str, dest="power", default=None, help="Set the output power in mW." )
+        parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the operating frequency in GHz." )
+        parser.add_argument("-w", "--wavelength", type=str, dest="wavelength", default=None, help="Set the operating wavelength in nm." )
         return parser
 
     def do_something(self,args):
-        if args.channels:
-            for chan in args.channels.split(','):
-                assert f'slot{chan}' in getattr(self.Instance,f'{slotnames}').keys()
-                name_sub_module = getattr(self.Instance,f'{slotnames}')[f'slot{chan}']
-                sub_module = getattr(self.Instance,name_sub_module)
-                if args.power:
-                    func_name = 'setPower'
-                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
-                    getattr(sub_module,func_name)(args.power)
-                if args.wavelength:
-                    func_name = 'setWavelength'
-                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
-                    getattr(sub_module,func_name)(args.wavelength)
-
+        assert args.wavelength or args.frequency, "Please provide EITHER current OR power"
+        if args.wavelength: getattr(self.Instance,'setWavelength')(args.wavelength)
+        elif args.frequency: getattr(self.Instance,'setFrequency')(args.frequency)
+        assert args.current or args.power, "Please provide EITHER wavelength OR frequency"
+        if args.current: getattr(self.Instance,'setIntensity')(args.current)
+        elif args.power: getattr(self.Instance,'setPower')(args.power)
+        
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
