@@ -57,7 +57,7 @@ class Driver_VISA(Driver):
     
         r          = v.ResourceManager()
         self.scope = r.get_instrument(address)
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
 
     def query(self,query,length=1000000):
         self.write(query)
