@@ -380,12 +380,3 @@ class Module_SLD():
         return config
     
     
-    
-    
-    
-#ADDRESS = 'GPIB0::11::INSTR'
-        
-    
-    
-  
-  
