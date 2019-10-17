@@ -118,7 +118,7 @@ class Driver_VISA(Driver):
         self.controller = rm.open_resource(address)
         self.controller.timeout = self.TIMEOUT
         
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
     
     def close(self):
         try : self.controller.close()

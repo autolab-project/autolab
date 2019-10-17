@@ -53,7 +53,7 @@ class Driver_VXI11(Driver):
         import vxi11 as v
 
         self.inst = v.Instrument(address)
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
 
     def query(self, cmd, nbytes=1000000):
         """Send command 'cmd' and read 'nbytes' bytes as answer."""

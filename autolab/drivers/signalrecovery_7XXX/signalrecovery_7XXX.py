@@ -61,7 +61,7 @@ class Driver_VISA(Driver):
         
         rm = visa.ResourceManager()
         self.controller = rm.open_resource(address)
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
 
     def close(self):
         try : self.controller.close()
@@ -87,7 +87,7 @@ class Driver_SOCKET(Driver):
         
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.controller.connect((address,50000))    
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
         
     def write(self,command):
         self.controller.send(command.encode())
