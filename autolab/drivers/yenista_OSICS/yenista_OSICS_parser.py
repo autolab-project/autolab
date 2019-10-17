@@ -39,6 +39,8 @@ usage:    autolab-drivers [options] arg
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels",type=str, dest="channels", default=None, help="Set the slots to act on/acquire from." )
+        parser.add_argument("-p", "--power",type=str, dest="power", default=None, help="Set the power." )
+        parser.add_argument("-w", "--wavelength",type=str, dest="wavelength", default=None, help="Set the wavelength." )
         
         return parser
 
@@ -46,10 +48,16 @@ usage:    autolab-drivers [options] arg
         if args.channels:
             for chan in args.channels.split(','):
                 assert f'slot{chan}' in getattr(self.Instance,f'{slotnames}').keys()
-                module = getattr(self.Instance,getattr(self.Instance,f'{slotnames}')[f'slot{chan}'])
-                #if args.setpoint:
-                    #getattr(module,'set_setpoint')(args.setpoint)
-
+                name_sub_module = getattr(self.Instance,f'{slotnames}')[f'slot{chan}']
+                sub_module = getattr(self.Instance,name_sub_module)
+                if args.power:
+                    func_name = 'setPower'
+                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
+                    getattr(sub_module,func_name)(args.power)
+                if args.wavelength:
+                    func_name = 'setWavelength'
+                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
+                    getattr(sub_module,func_name)(args.wavelength)
 
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
