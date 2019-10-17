@@ -478,11 +478,4 @@ class Module_NSR1():
         config.append({'element':'action','name':'goHome','do':self.goHome,'help':'Go to home position'})
         return config
     
-#ADDRESS = '192.168.0.4'
-#PORT = 5001
 
-    
-    
-    
-    
-    

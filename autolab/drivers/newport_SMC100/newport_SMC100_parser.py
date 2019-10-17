@@ -29,7 +29,7 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -m some_methods,arg1,arg2
+    autolab-drivers -d {MODULE.__name__} -l VISA -i ASRL1::INSTR -m some_methods,arg1,arg2
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
     autolab-drivers -d nickname -m some_methods1,arg1 some_methods2,arg1,arg2
