@@ -155,8 +155,3 @@ class Module_FTB1750():
         
     
 
-if __name__ == '__main__' :
-    ADDRESS = '192.168.0.1'
-    PORT = 5024
-
-
