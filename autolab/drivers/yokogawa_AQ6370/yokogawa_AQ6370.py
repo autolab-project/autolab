@@ -60,7 +60,7 @@ class Driver_SOCKET(Driver):
         if not ans=='ready':
             print("problem with authentication")
         
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
 
     def send(self, msg):
         msg=msg+"\n"
