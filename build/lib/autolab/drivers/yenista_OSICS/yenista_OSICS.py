@@ -13,8 +13,8 @@ class Driver():
 
     def __init__(self,**kwargs):
         
-        self.write('*RST') # The input buffer is cleared. The command interpreter is reset and a reset instruction is sent to every module. The status and event registers are cleared. Sets the OPC bit to 1.
-        self.write('*CLS') # Clears the Event Status Register and the output queue. Sets the OPC bit to 1.
+        #self.write('*RST') # The input buffer is cleared. The command interpreter is reset and a reset instruction is sent to every module. The status and event registers are cleared. Sets the OPC bit to 1.
+        #self.write('*CLS') # Clears the Event Status Register and the output queue. Sets the OPC bit to 1.
         
         # Submodules loading
         self.slotnames = {}
@@ -24,9 +24,10 @@ class Driver():
                 slot_num = key[len(prefix):]
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
                 if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
-                else : name = f'{key}_{module}'
-                setattr(self,name,module(self,slot_num))
+                else : name = f'{key}_{module.__name__}'
+                #setattr(self,name,module(self,slot_num))
                 self.slotnames[slot_num] = name
+                print(self.slotnames)
 
 
     def getID(self):
@@ -50,9 +51,9 @@ class Driver_VISA(Driver):
         
         self.TIMEOUT = 60000 #ms
         
-        rm = visa.ResourceManager()
-        self.controller = rm.open_resource(address)
-        self.controller.timeout = self.TIMEOUT
+        #rm = visa.ResourceManager()
+        #self.controller = rm.open_resource(address)
+        #self.controller.timeout = self.TIMEOUT
         
         Driver.__init__(self,**kwargs)
         

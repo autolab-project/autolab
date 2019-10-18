@@ -10,7 +10,7 @@ class Driver_parser():
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
-        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.connection)
         
         # pass the argument board_index or libpath argument through port one
         kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
@@ -29,13 +29,13 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -w 1550.2 -p 10
+    autolab-drivers -D {MODULE.__name__} -C VISA -A GPIB0::2::INSTR -w 1550.2 -p 10
     load {MODULE.__name__} driver using VISA communication protocol with address GPIB... and set the wavelength to 1550.2nm and the power to 10mW.
     
-    autolab-drivers -d nickname -a 100
+    autolab-drivers -D nickname -a 100
     Use now the device nickname as defined in devices_index.ini and set the pump current to 100mA.
     
-    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
     Note: you should provide either current or power at a time (same thing applies to frequency and wavelength)

@@ -24,7 +24,7 @@ class Driver():
                 slot_num = key[len(prefix):]
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
                 if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
-                else : name = f'{key}_{module}'
+                else : name = f'{key}_{module.__name__}'
                 setattr(self,name,module(self,slot_num))
                 self.slotnames[slot_num] = name
 

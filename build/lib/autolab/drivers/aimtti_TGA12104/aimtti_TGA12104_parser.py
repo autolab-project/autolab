@@ -10,7 +10,7 @@ class Driver_parser():
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
-        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.connection)
         
         # pass the argument board_index or libpath argument through port one
         kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
@@ -29,13 +29,13 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l USB -a 0.5 -f 500 -c 1,2
+    autolab-drivers -D {MODULE.__name__} -C USB -a 0.5 -f 500 -c 1,2
     load {MODULE.__name__} driver using pyusb and set the amplitude to 0.5V and frequency to 500Hz to channels 1 and 2.
     
-    autolab-drivers -d nickname -a 0.5 -f 500 -c 1
+    autolab-drivers -D nickname -a 0.5 -f 500 -c 1
     same as before but using the device nickname as defined in devices_index.ini, only acting on channel 1
     
-    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])

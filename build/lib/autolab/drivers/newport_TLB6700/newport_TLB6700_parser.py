@@ -10,7 +10,7 @@ class Driver_parser():
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
-        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.connection)
         
         # pass the argument board_index or libpath argument through port one
         kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
@@ -29,16 +29,16 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l USB -w 1550.2 -p 10
+    autolab-drivers -D {MODULE.__name__} -C USB -w 1550.2 -p 10
     load {MODULE.__name__} driver using USB communication protocol with preconfigured vendor and deviceID and set the wavelength to 1550.2nm and the piezo to 10%.
     
-    autolab-drivers -d nickname -x 1550.2,1551.3,3
+    autolab-drivers -D nickname -x 1550.2,1551.3,3
     Use now the device nickname as defined in devices_index.ini and perform a wavelength scan from 1550.2nm to 1551.3nm at a velocity of 3nm/s. I no third argument specified will use the device's stored one.
 
-    autolab-drivers -d nickname -r 10,30.3,3
+    autolab-drivers -D nickname -r 10,30.3,3
     Use now the device nickname as defined in devices_index.ini and perform a piezo scan from 10% to 30% with a total period of 3s. I no third argument specified will go as fast as possible.
     
-    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])

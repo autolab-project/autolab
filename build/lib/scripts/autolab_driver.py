@@ -16,7 +16,7 @@ UTILITIES = drivers_parser_utilities.utilities()
 
 def main():
     # Initial parser for command line arguments (help finding the device and associated modules)
-    accepted_arguments = ['-C','-A','-D']
+    accepted_arguments = ['-D','-A','-C']
     args_to_pass,temp_args = init_argument_to_parse(accepted_arguments=accepted_arguments)    
     # Parser configuration can be use to write common options that won't be used by the first one
     parser = ArgumentParser(add_help=False)

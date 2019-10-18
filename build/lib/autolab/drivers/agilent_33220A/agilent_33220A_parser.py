@@ -27,7 +27,7 @@ class Driver_parser():
 
 ----------------  Examples:  ----------------
 
-usage:    autolab-drivers [options] arg 
+usage:    autolab-drivers [options] arg
             
     autolab-drivers -D {MODULE.__name__} -A TCPIP::192.168.0.4::INSTR -C VISA -a 0.5 -f 500
     load {MODULE.__name__} driver using VISA communication protocol with address TCPIP... and set the amplitude to 0.5V and frequency to 500Hz.
