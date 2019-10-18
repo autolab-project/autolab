@@ -10,7 +10,7 @@ class Driver_parser():
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
-        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.connection)
         
         # pass the argument board_index or libpath argument through port one
         kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
@@ -29,22 +29,22 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.3::INSTR -l VISA -a 1 -o 1 -f 50KHZ -c 1,2
+    autolab-drivers -D {MODULE.__name__} -A TCPIP::192.168.0.3::INSTR -C VISA -a 1 -o 1 -f 50KHZ -c 1,2
     set the frequency to 50 kHz, the amplitude to 1V, the offset to 1V for both channel 1 and 2
 
-    autolab-drivers -d nickname -p w10NS 1
+    autolab-drivers -D nickname -p w10NS 1
     set pulse mode to channel 1 with pulse width of 10NS (MS stands for microseconds), using the device nickname as defined in devices_index.ini
 
-    autolab-drivers -d nickname -p d10 2
+    autolab-drivers -D nickname -p d10 2
     set pulse mode to channel 2 with duty cycle of 10 purcent, using the device nickname as defined in devices_index.ini
     
-    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
         parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
-        parser.add_argument("-u", "--uniform", type=str, dest="uniform", default=None, help="Set dc mode on and set offset." )
+        parser.add_argument("-d", "--dc_mode", type=str, dest="dc_mode", default=None, help="Set dc mode on and set offset." )
         parser.add_argument("-p", "--pulsemode", type=str, dest="pulsemode", default=None, help="Set pulse mode and use argument as either the duty cycle or the pulse width depending on the first letter 'd' or 'w' (see examples)." )
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
         parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency. Values may be 50000 or 50KHZ" )
@@ -60,7 +60,7 @@ usage:    autolab-drivers [options] arg
                     getattr(getattr(self.Instance,f'channel{chan}'),'offset')(args.offset)
                 if args.frequency:
                     getattr(getattr(self.Instance,f'channel{chan}'),'frequency')(args.frequency)
-                if args.uniform:
+                if args.dc_mode:
                     getattr(getattr(self.Instance,f'channel{chan}'),'dc_mode')(args.uniform)
                 if args.pulsemode:
                     if args.pulsemode[0]=="d": 

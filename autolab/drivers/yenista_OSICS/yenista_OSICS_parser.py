@@ -10,7 +10,7 @@ class Driver_parser():
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
-        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.connection)
         
         # pass the argument board_index or libpath argument through port one
         kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
@@ -29,13 +29,13 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l VISA -i GPIB0::2::INSTR -c 3,5 -p 30
+    autolab-drivers -D {MODULE.__name__} -C VISA -A GPIB0::2::INSTR -c 3,5 -p 30
     load {MODULE.__name__} driver using VISA and local network address 192.168.0.4 and set the power to 30 mW to slots 3 and 5
     
-    autolab-drivers -d nickname -c 3 -w 1550.1
+    autolab-drivers -D nickname -c 3 -w 1550.1
     Similar to previous one but using the device's nickname as defined in the devices_index.ini, and set the wavelength to 1550.1
     
-    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
     Note: Arbitrary waveform available only using a python terminal

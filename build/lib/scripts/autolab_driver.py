@@ -32,8 +32,8 @@ def main():
     # for adding --options, or options that must go through kwargs
     parser_additionnal = ArgumentParser(add_help=False,parents=[parser])
     parser_additionnal.add_argument("-h","--useless",action='store_false',dest="useless", default=None, help="Useless, avoid breaking")
-    args_additionnal = parser_additionnal.parse_args()
-
+    args_additionnal, unknown = parser_additionnal.parse_known_args()
+    
     # Load devices_index.ini to find potentially defined devices (-D nickname option to use)
     local_config.check(PATHS)
     configparser = index.load(PATHS)
