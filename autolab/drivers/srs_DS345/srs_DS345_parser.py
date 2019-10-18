@@ -10,7 +10,7 @@ class Driver_parser():
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
-        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.connection)
         
         # pass the argument board_index or libpath argument through port one
         kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
@@ -29,13 +29,13 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -i TCPIP::192.168.0.4::INSTR -l VISA -a 0.5VP -f 500 -p 1 -o 0.2
+    autolab-drivers -D {MODULE.__name__} -A TCPIP::192.168.0.4::INSTR -C VISA -a 0.5VP -f 500 -p 1 -o 0.2
     load {MODULE.__name__} driver using VISA communication protocol with address TCPIP... and set the amplitude to 0.5Volts peak to peak (see help on function -a for other available units), the frequency to 500Hz, the phase to 1 degree and the offset to 0.2V.
     
-    autolab-drivers -d nickname -a 0.5 -f 500
+    autolab-drivers -D nickname -a 0.5 -f 500
     Similar to previous one but using the device's nickname as defined in devices_index.ini
     
-    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])

@@ -10,7 +10,7 @@ class Driver_parser():
         self.utilities = utilities
         """Set the connection up"""
         self.classes_list = self.utilities.list_classes(MODULE)
-        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.link)
+        Driver_class      = self.utilities.identify_device_class(MODULE,self.classes_list,args.connection)
         
         # pass the argument board_index or libpath argument through port one
         kwargs = self.utilities.parsekwargs_connectiondependant(kwargs=kwargs,Driver_class=Driver_class)
@@ -29,13 +29,13 @@ class Driver_parser():
 
 usage:    autolab-drivers [options] arg 
             
-    autolab-drivers -d {MODULE.__name__} -l VXI11 -i 192.168.0.4 -f 1000000 -p 0 -o 0.5 -a 1 -d 10e-6 -c AB,EF
+    autolab-drivers -D {MODULE.__name__} -C VXI11 -A 192.168.0.4 -f 1000000 -p 0 -o 0.5 -a 1 -d 10e-6 -c AB,EF
     load {MODULE.__name__} driver using VXI11 and local network address 192.168.0.4 and sets the frequency to 1MHz and acts on outputs AB and EF to set the polarity to 0 the offset to 0.5V amplitude to 1V and the delay to 10e-6s.
     
-    autolab-drivers -d nickname -f 80e6 -c A,B -a 0.5 
+    autolab-drivers -D nickname -f 80e6 -c A,B -a 0.5 
     Similar to previous one but using the device's nickname as defined in devices_index.ini and only for channel A and B. This will act only on B for instance if you do precise only B as channel argument.
     
-    autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
+    autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])

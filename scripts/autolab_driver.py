@@ -16,7 +16,7 @@ UTILITIES = drivers_parser_utilities.utilities()
 
 def main():
     # Initial parser for command line arguments (help finding the device and associated modules)
-    accepted_arguments = ['-C','-A','-D']
+    accepted_arguments = ['-D','-A','-C']
     args_to_pass,temp_args = init_argument_to_parse(accepted_arguments=accepted_arguments)    
     # Parser configuration can be use to write common options that won't be used by the first one
     parser = ArgumentParser(add_help=False)
@@ -32,8 +32,8 @@ def main():
     # for adding --options, or options that must go through kwargs
     parser_additionnal = ArgumentParser(add_help=False,parents=[parser])
     parser_additionnal.add_argument("-h","--useless",action='store_false',dest="useless", default=None, help="Useless, avoid breaking")
-    args_additionnal = parser_additionnal.parse_args()
-
+    args_additionnal, unknown = parser_additionnal.parse_known_args()
+    
     # Load devices_index.ini to find potentially defined devices (-D nickname option to use)
     local_config.check(PATHS)
     configparser = index.load(PATHS)
