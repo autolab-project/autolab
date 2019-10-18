@@ -50,8 +50,8 @@ usage:    autolab-drivers [options] arg
     def do_something(self,args):
         if args.channels:
             for chan in args.channels.split(','):
-                assert f'slot{chan}' in getattr(self.Instance,f'{slotnames}').keys()
-                name_sub_module = getattr(self.Instance,f'{slotnames}')[f'slot{chan}']
+                assert f'{chan}' in getattr(self.Instance,f'{slotnames}').keys()
+                name_sub_module = getattr(self.Instance,f'{slotnames}')[f'{chan}']
                 sub_module = getattr(self.Instance,name_sub_module)
                 if args.power:
                     func_name = 'setPower'
