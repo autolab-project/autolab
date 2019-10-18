@@ -51,7 +51,7 @@ usage:    autolab-drivers [options] arg
             getattr(self.Instance,'single')()
         if args.filename:
             getattr(self.Instance,'get_data_traces')(traces=args.channels.split(','),single=args.trigger)
-            getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels.split(','),FORCE=args.FORCE)
+            getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels.split(','),FORCE=args.force)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]

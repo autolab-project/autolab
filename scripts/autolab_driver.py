@@ -16,16 +16,16 @@ UTILITIES = drivers_parser_utilities.utilities()
 
 def main():
     # Initial parser for command line arguments (help finding the device and associated modules)
-    accepted_arguments = ['-l','-i','-d']
+    accepted_arguments = ['-C','-A','-D']
     args_to_pass,temp_args = init_argument_to_parse(accepted_arguments=accepted_arguments)    
     # Parser configuration can be use to write common options that won't be used by the first one
     parser = ArgumentParser(add_help=False)
-    parser.add_argument("-d", "--driver", type=str, dest="driver", default=None, help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_index.ini OR(if it is not) 2) Set the driver name to use." )
-    parser.add_argument("-l", "--link", type=str, dest="link", default=None, help="Set the link to use for the connection." )
-    parser.add_argument("-i", "--address", type=str, dest="address", default=None, help="Set the address to use for the communication." )
+    parser.add_argument("-D", "--driver", type=str, dest="driver", default=None, help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_index.ini OR(if it is not) 2) Set the driver name to use." )
+    parser.add_argument("-C", "--connection", type=str, dest="connection", default=None, help="Set the connection to use for the connection." )
+    parser.add_argument("-A", "--address", type=str, dest="address", default=None, help="Set the address to use for the communication." )
     
-    parser.add_argument("-s","--slot", nargs='+', dest="slot", default=None, help="Set the slot configuration." )
-    parser.add_argument("--port", type=int, dest="port", default=None, help="Argument used to address different things depending on the connection type. SOCKET: the port number used to communicate, GPIB: the gpib board index, DLL: the path to the dll library." )
+    parser.add_argument("-S","--slot", nargs='+', dest="slot", default=None, help="Set the slot configuration." )
+    parser.add_argument("-P","--port", type=int, dest="port", default=None, help="Argument used to address different things depending on the connection type. SOCKET: the port number used to communicate, GPIB: the gpib board index, DLL: the path to the dll library." )
     parser.add_argument("-m", "--methods", nargs='+', dest="methods", default=None, help="Set the methods to use." )
     args = parser.parse_args(args_to_pass)
 
@@ -34,7 +34,7 @@ def main():
     parser_additionnal.add_argument("-h","--useless",action='store_false',dest="useless", default=None, help="Useless, avoid breaking")
     args_additionnal = parser_additionnal.parse_args()
 
-    # Load devices_index.ini to find potentially defined devices (-i nickname option to use)
+    # Load devices_index.ini to find potentially defined devices (-D nickname option to use)
     local_config.check(PATHS)
     configparser = index.load(PATHS)
     # Load the device or the driver
@@ -43,10 +43,10 @@ def main():
         # WARNING will choose arguments provided by the user instead of devices_index.ini ones        
         # Mandatory arguments
         args.driver = section['driver']
-        if args.link: pass
+        if args.connection: pass
         else: 
             assert 'connection' in section.keys(), f"Connection section: Missing connection type for device '{args.driver}'"
-            args.link = section['connection']
+            args.connection = section['connection']
         
         kwargs = dict(section)
         del kwargs['driver']; del kwargs['connection']; 
@@ -62,10 +62,10 @@ def main():
     else:
         assert args.driver, f"Missing driver name to use"
         if len(temp_args)>1:
-            if not(temp_args[0] == '-h' and temp_args[1].startswith('-d')):
-                assert args.link and args.address, f"Missing address or connection type. Provided are, type: {args.link}, address: {args.address}"
+            if not(temp_args[0] == '-h' and temp_args[1].startswith('-D')):
+                assert args.connection and args.address, f"Missing address or connection type. Provided are, type: {args.connection}, address: {args.address}"
         else:
-            assert args.link and args.address, f"Missing address or connection type. Provided are, type: {args.link}, address: {args.address}"
+            assert args.connection and args.address, f"Missing address or connection type. Provided are, type: {args.connection}, address: {args.address}"
         kwargs = {}
     # Arguments processing (slot must be in kwargs dict)
     if args_additionnal.port: kwargs['port'] = args_additionnal.port
@@ -77,9 +77,9 @@ def main():
     # A path to sys path at index 0
     Driver_path = update_path(args)
     
-    # Second help for connection classes -l option
+    # Second help for connection classes -C option
     if len(temp_args)>1:
-        if temp_args[0] == '-h' and temp_args[1].startswith('-d'):
+        if temp_args[0] == '-h' and temp_args[1].startswith('-D'):
             Driver_module = import_module(f'{args.driver}',Driver_path)
             print_help_connections(Driver_module) 
         
@@ -127,12 +127,12 @@ def print_help_message():
 
 This is a very basic help message for usage of autolab-drivers. More info can be found on read the doc website. To display a more extensive further help please have a look at the section help below.
     
-    Usage:   autolab-drivers -d driver_name -l connection -i address -h
+    Usage:   autolab-drivers -D driver_name -C connection -A address -h
 
-Recquiered arguments to establish the connection with a device:
-    -d driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the devices_index.ini. See lower for the list of available drivers.
-    -l name of the connection to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
-    -i address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
+Recquired connection arguments (capital letters):
+    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the devices_index.ini. See lower for the list of available drivers.
+    -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
+    -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
     
     
 ----------------  Helps (-h option)  ----------------       
@@ -141,14 +141,14 @@ Three helps are configured:
     autolab-drivers -h
     This help message.
     
-    autolab-drivers -h -d driver_name
+    autolab-drivers -h -D driver_name
     Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
     
-    autolab-drivers -d driver_name -l connection -i address -h
+    autolab-drivers -D driver_name -C connection -A address -h
     Full help message about the driver.
     
     
-----------------  List of available drivers (-d option) ----------------
+----------------  List of available drivers (-D option) ----------------
  
     {available_drivers()}
     
@@ -160,7 +160,7 @@ def print_help_connections(driver_module):
 ----------------  Instrument category of {driver_module.__name__} (no option) ----------------
     {UTILITIES.get_category(driver_module=driver_module)}
 
-----------------  Connections types for {driver_module.__name__} (-l option) ----------------
+----------------  Connections types for {driver_module.__name__} (-C option) ----------------
 
     {available_connection_classes(driver_module)}
     

@@ -32,7 +32,8 @@ class Driver_VISA(Driver):
         
         rm        = v.ResourceManager()
         self.inst = rm.get_instrument(address)
-        Driver.__init__(self, **kwargs)
+        
+        Driver.__init__(self)
         
     def query(self,query):
         self.write(query)

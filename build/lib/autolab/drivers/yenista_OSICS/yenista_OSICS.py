@@ -9,7 +9,7 @@ Supported instruments (identified):
 class Driver():
 
     category = 'Optical frame'
-    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    slotNaming = 'slot<NUM> = <MODULE_NAME>'
 
     def __init__(self,**kwargs):
         
@@ -17,15 +17,16 @@ class Driver():
         self.write('*CLS') # Clears the Event Status Register and the output queue. Sets the OPC bit to 1.
         
         # Submodules loading
-        self.slotnames = []
+        self.slotnames = {}
         prefix = 'slot'
         for key in kwargs.keys():
-            if key.startswith(prefix):
+            if key.startswith(prefix) and not '_name' in key :
                 slot_num = key[len(prefix):]
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
+                if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
+                else : name = f'{key}_{module}'
                 setattr(self,name,module(self,slot_num))
-                self.slotnames.append(name)
+                self.slotnames[slot_num] = name
 
 
     def getID(self):
@@ -34,7 +35,7 @@ class Driver():
 
     def getDriverConfig(self):
         config = []
-        for name in self.slotnames :
+        for name in self.slotnames.values() :
             config.append({'element':'module','name':name,'object':getattr(self,name)})
         return config
 
@@ -379,12 +380,3 @@ class Module_SLD():
         return config
     
     
-    
-    
-    
-#ADDRESS = 'GPIB0::11::INSTR'
-        
-    
-    
-  
-  

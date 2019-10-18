@@ -19,21 +19,20 @@ class Driver():
     
     def __init__(self, **kwargs):
         
-        #self.write('CEOI ON')
-        #self.write('EOIX ON')
-        #self.write('TERM LF')
+        self.write('CEOI ON')
+        self.write('EOIX ON')
+        self.write('TERM LF')
         
         # Submodules
-        self.slotnames = []
+        self.slotnames = {}
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
                 slot_num = key[len(prefix):]
-                print(key)
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
-                self.slotnames.append(name)
+                self.slotnames[key] = name
         
     
     def send_command_to_slot(self,slot,command):
@@ -55,8 +54,8 @@ class Driver_VISA(Driver):
     def __init__(self, address='GPIB0::2::INSTR',**kwargs):
         import visa
         
-        #rm = visa.ResourceManager()
-        #self.inst = rm.get_instrument(address)
+        rm = visa.ResourceManager()
+        self.inst = rm.get_instrument(address)
         
         Driver.__init__(self, **kwargs)
         
@@ -109,6 +108,8 @@ class Module_SIM960():
         self.dev.send_command_to_slot(self.slot,f'MOUT {val}')
     def get_output_voltage(self):
         return float(self.dev.get_query_from_slot(self.slot,'OMON?'))
+    def set_setpoint(self,val):
+        self.dev.send_command_to_slot(self.slot,f'SETP {setpoint}')
 
     def auto_lock(self,peculiar=False):
         rep = self.get_output_voltage()
@@ -119,7 +120,7 @@ class Module_SIM960():
             if rep<-3.5 or rep>3.5:
                 self.re_lock(port)
                 
-    def re_lock(self):
+    def relock(self):
         self.set_output_manual()
         time.sleep(0.1)
         if peculiar:                     # port 5
@@ -129,44 +130,3 @@ class Module_SIM960():
         time.sleep(0.1)
         self.set_output_pid()
 
-
-
-if __name__ == '__main__':
-
-    from optparse import OptionParser
-    import inspect
-    import sys
-
-    usage = """usage: %prog [options] arg
-               
-               EXAMPLES:
-                   set_PIDSRS -i 5 -s 0.1
-                   set the setpoint of the module plugged in the port 5 to 0.1
-
-
-               """
-    parser = OptionParser(usage)
-
-    parser.add_option("-a", "--auto_lock", action = "store_true", dest="auto_lock", default=False, help="Enable auto locking." )
-    parser.add_option("-l", "--lock", type="str", dest="lock", default=None, help="Lock" )
-    parser.add_option("-u", "--unlock", type="str", dest="unlock", default=None, help="Unlock" )
-    parser.add_option("-i", "--port", type="str", dest="port", default='5', help="Port for the PID frame to apply the command to" )
-    parser.add_option("-s", "--setpoint", type="str", dest="setpoint", default=None, help="Setpoint value to be used" )
-
-
-    (options, args) = parser.parse_args()
-    
-
-    if lock:
-        self.write('AMAN 1')
-    elif unlock:
-        self.write('AMAN 0')
-    if auto_lock:
-        self.smart_relock(port)
-    if re_lock:
-        self.re_lock(port)
-    if setpoint:
-        self.write('SETP '+setpoint)
-    
-    I.close()
-    sys.exit()

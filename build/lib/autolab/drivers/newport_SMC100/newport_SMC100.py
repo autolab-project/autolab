@@ -145,6 +145,4 @@ class Module_ILS100CC() :
                        'read':self.getPosition,'write':self.setPosition, 'help':'Initiates an absolute move.'})
         return config
             
-if __name__ == '__main__' :
-    ADDRESS = "ASRL1::INSTR"
 

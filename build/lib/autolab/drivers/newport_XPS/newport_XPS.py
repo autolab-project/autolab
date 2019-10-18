@@ -20,10 +20,14 @@ class Driver():
         self.slotnames = []
         prefix = 'slot'        
         for key in kwargs.keys():
-            if key.startswith(prefix):
+            if key.startswith(prefix) and not '_name' in key :
+                slot_num = key[len(prefix):]
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
+                
                 calibpath = kwargs[key].split(',')[2].strip()
+                if prefix+in kwargs.keys(): : name = 
+                    
+                name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,name,calibpath))
                 self.slotnames.append(name)
 
@@ -474,11 +478,4 @@ class Module_NSR1():
         config.append({'element':'action','name':'goHome','do':self.goHome,'help':'Go to home position'})
         return config
     
-#ADDRESS = '192.168.0.4'
-#PORT = 5001
 
-    
-    
-    
-    
-    

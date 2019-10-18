@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import newport_SMC100 as MODULE
+import tektronix_TDS5104B as MODULE
 from argparse import ArgumentParser
 
 
@@ -25,37 +25,49 @@ class Driver_parser():
 ----------------  Driver informations:  ----------------
 {self.help()}
 
+----------------  Extra infos:  ----------------
+    Datas are recorded in int8 format
+    
+    Headers contains:
+    :WFMOUTPRE:BYT_NR 2;BIT_NR 16;ENCDG ASCII;BN_FMT RI;BYT_OR
+    MSB;WFID 'Ch1, DC coupling, 100.0mV/div, 4.000us/div, 10000
+    points, Sample mode';NR_PT 10000;PT_FMT Y;XUNIT 's';XINCR
+    4.0000E-9;XZERO - 20.0000E-6;PT_OFF 0;YUNIT 'V';YMULT
+    15.6250E-6;YOFF :”6.4000E+3;YZERO 0.0000
+    
+    To retrieve real value:
+    value_in_units = ((curve_in_dl - YOFf_in_dl) * YMUlt) + YZEro_in_units
+
 ----------------  Examples:  ----------------
 
 usage:    autolab-drivers [options] arg 
         
-    autolab-drivers -d {MODULE.__name__} -l VISA -i ASRL1::INSTR -m some_methods,arg1,arg2
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+    autolab-drivers -d {MODULE.__name__} -i 192.168.0.3 -l VXI11 -o my_output_file -c 1
+    Results in saving two files for the temporal trace of channel 1, the data and the scope parameters, called respectively my_output_file_TDS5104BCH1 and my_output_file_TDS5104BCH1.log
     
-    autolab-drivers -d nickname -m some_methods1,arg1 some_methods2,arg1,arg2
-    Same as before using the nickname defined in devices_index.ini
+    autolab-drivers -d nickname -o my_output_file -F -c 1,2
+    Same as previous one but with 4 output files, two for each channel (1 and 2) and using the device nickname as defined in devices_index.ini. If files with your filename already exist -F flag overwrite them.
     
     autolab-drivers -d nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
-        #parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
-        #parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
-        #parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
-        #parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
+        parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
+        parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
+        parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
         
         return parser
-    
+
     def do_something(self,args):
-        #if args.filename:
-            ##getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
-            #getattr(self.Instance,'get_data_traces')(traces=args.channels)
-            #getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels,FORCE=args.force)
+        if args.filename:
+            getattr(self.Instance,'get_data_channels')(channels=args.channels.split(','))
+            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels.split(','),FORCE=args.force)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
             message = self.utilities.parse_commands(self.Instance,methods,self.methods_list)
-            
+
+
     def help(self):
         """Add to the help lists of module: classes, methods and arguments"""
         classes_list = self.utilities.print_help_classes(self.classes_list)                  # display list of classes in module
@@ -64,5 +76,5 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def exit(self):
-        #self.Instance.close()
+        self.Instance.close()
         sys.exit()

@@ -54,7 +54,7 @@ usage:    autolab-drivers [options] arg
             getattr(self.Instance,'acquireSpectrum')()
             data = getattr(self.Instance,'data')['spectrum']
             temp_filename = f'{filename}_WINSPEC.txt'
-            if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
+            if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(args.force):
                 print(f'\nFile {temp_filename} already exists, change filename or remove old file\n')
                 return
             f = savetxt(data)

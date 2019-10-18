@@ -63,7 +63,7 @@ class Driver_SOCKET(Driver):
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.controller.connect((address,self.PORT))
         
-        Driver.__init__(self,camera)
+        Driver.__init__(self,camera,**kwargs)
         
     def write(self,command):
         self.controller.send(command.encode())
@@ -101,7 +101,7 @@ class Driver_LOCAL(Driver):
         from spectro32_utilities.spectro32_driver import Driver
         self.controller = Driver()
 
-        Driver.__init__(self,camera)
+        Driver.__init__(self,camera,**kwargs)
               
     def write(self,command):
         self.controller.command(command)

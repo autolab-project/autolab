@@ -50,7 +50,7 @@ usage:    autolab-drivers [options] arg
         if args.filename:
             #getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
             getattr(self.Instance,'get_data_traces')(traces=args.channels.split(','))
-            getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels.split(','),FORCE=args.FORCE)
+            getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels.split(','),FORCE=args.force)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
@@ -64,5 +64,5 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def exit(self):
-        self.Instance.close()
+        #self.Instance.close()
         sys.exit()

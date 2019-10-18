@@ -62,5 +62,5 @@ usage:    autolab-drivers [options] arg
         return classes_list + methods_list + methods_args
 
     def exit(self):
-        #I.close()
+        self.Instance.close()
         sys.exit()

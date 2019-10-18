@@ -41,7 +41,7 @@ class Driver_VISA(Driver):
         self.controller.write_termination = 0x00  #needed in order to read properly from the optical amplifier 
         self.controller.read_termination = 0x00
 
-        Driver.__init__(self, **kwargs)
+        Driver.__init__(self)
 
     def close(self):
         self.controller.close()

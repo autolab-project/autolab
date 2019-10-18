@@ -237,7 +237,3 @@ class Channel():
         config.append({'element':'variable','name':'4wireMode','read':self.get4wireModeState,'write':self.set4wireModeState,'type':bool,'help':'4 wire mode'})
         return config
         
-a = Driver_VISA()
-print(a.getID())
-
-#ADDRESS = 'GPIB0::10::INSTR'
