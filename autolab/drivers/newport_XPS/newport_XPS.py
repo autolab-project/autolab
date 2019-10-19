@@ -12,31 +12,31 @@ from XPS import XPS
 class Driver():
     
     category = 'Motion controller'
-    slotNaming = 'slot<NUM> = <MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
 
     def __init__(self,**kwargs):
         
         # Submodules
-        self.slotnames = []
+        self.slot_names = []
         prefix = 'slot'        
         for key in kwargs.keys():
             if key.startswith(prefix) and not '_name' in key :
                 slot_num = key[len(prefix):]
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
                 
-                calibpath = kwargs[key].split(',')[2].strip()
+                calibration_path = kwargs[key].split(',')[2].strip()
                 if prefix+in kwargs.keys(): : name = 
                     
                 name = kwargs[key].split(',')[1].strip()
-                setattr(self,name,module(self,name,calibpath))
-                self.slotnames.append(name)
+                setattr(self,name,module(self,name,calibration_path))
+                self.slot_names.append(name)
 
         
-    def getDriverConfig(self):
-        config = []
+    def get_driver_model(self):
+        model = []
         for name in self.slotnames :
-            config.append({'element':'module','name':name,'object':getattr(self,name)})
-        return config
+            model.append({'element':'module','name':name,'object':getattr(self,name)})
+        return model
 
     
     
@@ -98,42 +98,42 @@ class Module_NSR1():
     
     category = 'Rotation stage'
     
-    def __init__(self,dev,slot,calibPath):
+    def __init__(self,dev,slot,calibration_path):
         
         self.dev = dev
         self.NAME = slot
         self.SLOT = slot
         
-        self.calibPath = calibPath
-        assert os.path.exists(calibPath)
-        self.calibrationFunction = None
+        self.calibration_path = calibration_path
+        assert os.path.exists(calibration_path)
+        self.calibration_function = None
         
         self.calib = None
-        self.loadCalib()
+        self.load_calibration()
         
     #--------------------------------------------------------------------------
     # Calibration functions
     #--------------------------------------------------------------------------
     
-    def loadCalib(self):
-        try: self.calib = pd.read_csv(os.path.join(self.calibPath,'calib.csv'))
+    def load_calibration(self):
+        try: self.calib = pd.read_csv(os.path.join(self.calibration_path,'calib.csv'))
         except: pass
     
-    def setCalibrationGetPowerFunction(self,calibrationFunction):
-        self.calibrationFunction = calibrationFunction
+    def set_calibration_function(self,calibration_function):
+        self.calibration_function = calibration_function
         
     def calibrate(self):
         
-        assert self.calibrationFunction is not None
+        assert self.calibration_function is not None
         
-        def scan(listAngle):
+        def scan(list_angle):
             
             df = pd.DataFrame()
 
-            for angle_setpoint in listAngle :
-                self.setAngle(angle_setpoint)
-                angle=self.getAngle()
-                power=self.calibrationFunction()
+            for angle_setpoint in list_angle :
+                self.set_angle(angle_setpoint)
+                angle=self.get_angle()
+                power=self.calibration_function()
                 df=df.append({'angle':angle,'power':power})
                    
             df.sort_values(by=['angle'],inplace=True)
@@ -144,14 +144,14 @@ class Module_NSR1():
         ax=fig.add_subplot(111)
         
         # Homing
-        self.goHome()
+        self.go_home()
         
         # Fabrication de la liste des angles à explorer
-        listAngle = np.concatenate((np.arange(0,360,8),np.arange(4,360,8)))
-        listAngle = np.flipud(listAngle)
+        list_angle = np.concatenate((np.arange(0,360,8),np.arange(4,360,8)))
+        list_angle = np.flipud(list_angle)
         
         # Lancement du scan de mesure de puissance
-        df=scan(listAngle)
+        df=scan(list_angle)
         
         # Find transition
         derivative = np.diff(df.power)
@@ -192,15 +192,15 @@ class Module_NSR1():
         ax.set_ylabel('Power [a.u.]')
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, labels, loc=0)
-        filepath=os.path.join(self.calibPath,f'{date}_{self.NAME}_calib.jpg')
+        filepath=os.path.join(self.calibration_path,f'{date}_{self.NAME}_calib.jpg')
         fig.savefig(filepath,bbox_inches='tight',dpi=300)
         fig.close()
            
         # Enregistrement des données 
-        df.to_csv(os.path.join(self.calibPath,'calib.csv'))
+        df.to_csv(os.path.join(self.calibration_path,'calib.csv'))
         
         # Raffraichissement des donnees
-        self.loadCalib()
+        self.load_calibration()
         
 
         
@@ -211,9 +211,9 @@ class Module_NSR1():
     # Optional functions
     #--------------------------------------------------------------------------
         
-    def setSafeState(self):
-        self.setMin()
-        if self.getTransmission() < 0.2 :
+    def safe_state(self):
+        self.set_min()
+        if self.get_transmission() < 0.2 :
             return True
             
 
@@ -224,7 +224,7 @@ class Module_NSR1():
     # Technical functions
     #--------------------------------------------------------------------------
     
-    def getFilterState(self):
+    def get_filter_state(self):
         state=self.dev.query(['GroupStatusGet',self.SLOT])
         
         if 0 <= state <= 9 :
@@ -242,28 +242,28 @@ class Module_NSR1():
         else :
             return None
     
-    def checkReady(self):
+    def check_ready_state(self):
     
-        if self.getFilterState() in ['ENABLED','DISABLED'] :
+        if self.get_filter_state() in ['ENABLED','DISABLED'] :
             return True 
         else :
-            if self.getFilterState() == 'NOTINIT' :
+            if self.get_filter_state() == 'NOTINIT' :
                 self.dev.query(['GroupInitialize',self.SLOT])
-                if self.getFilterState() != 'NOTREF' :
+                if self.get_filter_state() != 'NOTREF' :
                     return False
-            if self.getFilterState() == 'NOTREF':
+            if self.get_filter_state() == 'NOTREF':
                 self.dev.query(['GroupHomeSearch',self.SLOT])
-                while self.getFilterState() == 'HOMING' :
+                while self.get_filter_state() == 'HOMING' :
                     time.sleep(0.5)
-                if self.getFilterState() in ['ENABLED','DISABLED'] :
-                    self.setEnabled(False)
+                if self.get_filter_state() in ['ENABLED','DISABLED'] :
+                    self.set_enabled(False)
                     return True
                 else :
                     return False
                 
     
-    def waitMoveEnding(self):
-        while self.getFilterState() == 'MOVING' :
+    def wait_move_ending(self):
+        while self.get_filter_state() == 'MOVING' :
             time.sleep(0.1)
         time.sleep(0.4) # Trop rapide sinon
         
@@ -272,15 +272,15 @@ class Module_NSR1():
         
         
         
-    def setEnabled(self,state):
+    def set_enabled(self,state):
         assert isinstance(state,bool)
         if state is True :
             self.dev.query(['GroupMotionEnable',self.SLOT])
         else :
             self.dev.query(['GroupMotionDisable',self.SLOT])       
 
-    def isEnabled(self):
-        state=self.getFilterState()
+    def is_enabled(self):
+        state=self.get_filter_state()
         if state in ['ENABLED','MOVING'] :
             return True
         else :
@@ -290,14 +290,14 @@ class Module_NSR1():
         
         
 
-    def setPositionerName(self,value):
+    def set_positioner_name(self,value):
         assert isinstance(value,str)
-        self.setData('positionerName',value)
+        self.set_data('positionerName',value)
         
-    def getPositionerName(self):
-        if 'positionerName' not in self.getDataList() :
-            self.setPositionerName('Pos')
-        return self.getData('positionerName')
+    def get_positioner_name(self):
+        if 'positionerName' not in self.get_dataList() :
+            self.set_positioner_name('Pos')
+        return self.get_data('positionerName')
     
     
     
@@ -308,10 +308,10 @@ class Module_NSR1():
     
     
     
-    def getParameters(self):
-        if self.checkReady() is True :
+    def get_parameters(self):
+        if self.check_ready_state() is True :
             params={}
-            temp=self.dev.query(['PositionerSGammaParametersGet',self.SLOT+'.'+self.getPositionerName()])       
+            temp=self.dev.query(['PositionerSGammaParametersGet',self.SLOT+'.'+self.get_positioner_name()])       
             params['velocity']=temp[0]
             params['acceleration']=temp[1]
             params['minJerkTime']=temp[2]
@@ -320,9 +320,9 @@ class Module_NSR1():
         else :
             raise ValueError('Not ready')
             
-    def setParameters(self,params):
-        if self.checkReady() is True :
-            self.dev.query(['PositionerSGammaParametersSet',self.SLOT+'.'+self.getPositionerName(),
+    def set_parameters(self,params):
+        if self.check_ready_state() is True :
+            self.dev.query(['PositionerSGammaParametersSet',self.SLOT+'.'+self.get_positioner_name(),
                                                              params['velocity'],
                                                              params['acceleration'],
                                                              params['minJerkTime'],
@@ -335,55 +335,55 @@ class Module_NSR1():
 
 
 
-    def setVelocity(self,value):
+    def set_velocity(self,value):
         assert isinstance(float(value),float)
         value=float(value)
-        params=self.getParameters()
+        params=self.get_parameters()
         params['velocity']=value
-        self.setParameters(params)
+        self.set_parameters(params)
     
-    def getVelocity(self):
-        return float(self.getParameters()['velocity'])
+    def get_velocity(self):
+        return float(self.get_parameters()['velocity'])
 
 
         
     
 
 
-    def setAcceleration(self,value):
+    def set_acceleration(self,value):
         assert isinstance(float(value),float)
         value=float(value)
-        params=self.getParameters()
+        params=self.get_parameters()
         params['acceleration']=value
-        self.setParameters(params)
+        self.set_parameters(params)
     
-    def getAcceleration(self):
-        return float(self.getParameters()['acceleration'])
+    def get_acceleration(self):
+        return float(self.get_parameters()['acceleration'])
     
 
 
 
     
     
-    def setAngle(self,value,forced=False):
+    def set_angle(self,value,forced=False):
         assert isinstance(float(value),float)
         value=float(value)
         
         if forced is False :
-            currAngle = self.getAngle()
-            if value > currAngle - 1.9 :
-                self.setAngle(value+20,forced=True)
+            curr_angle = self.get_angle()
+            if value > curr_angle - 1.9 :
+                self.set_angle(value+20,forced=True)
             
-        if self.checkReady() is True :
-            self.setEnabled(True)
+        if self.check_ready_state() is True :
+            self.set_enabled(True)
             self.dev.query(['GroupMoveAbsolute',self.SLOT,[value]])
-            self.waitMoveEnding()
-            self.setEnabled(False)
+            self.wait_move_ending()
+            self.set_enabled(False)
         else :
             raise ValueError('Not ready')
         
-    def getAngle(self):
-        if self.checkReady() is True :
+    def get_angle(self):
+        if self.check_ready_state() is True :
             value = float(self.dev.query(['GroupPositionCurrentGet',self.SLOT,1]))
             return value
         else :
@@ -394,27 +394,27 @@ class Module_NSR1():
     
     
 
-    def setTransmission(self,value):
+    def set_transmission(self,value):
         assert isinstance(float(value),float)
         value = float(value)
-        angle = self.getAngleFromTransmission(value)
-        self.setAngle(angle)
+        angle = self.get_angle_from_transmission(value)
+        self.set_angle(angle)
     
-    def getTransmission(self):
-        angle = self.getAngle()
-        return self.getTransmissionFromAngle(angle)
+    def get_transmission(self):
+        angle = self.get_angle()
+        return self.get_transmission_from_angle(angle)
 
         
-    def getTransmissionMax(self):
+    def get_transmission_max(self):
         return self.calib.transmission.max()
 
 
 
-    def getAngleFromTransmission(self,value):
+    def get_angle_from_transmission(self,value):
         ind = abs(self.calib.transmission-value).idxmin()
         return float(self.calib.loc[ind,'angle'])   
     
-    def getTransmissionFromAngle(self,value):
+    def get_transmission_from_angle(self,value):
         ind = abs(self.calib.angle-value).idxmin()
         return float(self.calib.loc[ind,'transmission'])   
 
@@ -429,53 +429,53 @@ class Module_NSR1():
     
       
     
-    def setMin(self):
-        self.setTransmission(0)
+    def set_min(self):
+        self.set_transmission(0)
         
-    def setMax(self):
-        self.setTransmission(1)
+    def set_max(self):
+        self.set_transmission(1)
 
 
 
             
     
-    def goHome(self):
+    def go_home(self):
         
-        self.setAngle(self.getAngle()+5) # In case we are at home - blocking
+        self.set_angle(self.get_angle()+5) # In case we are at home - blocking
         
         # Go to not init
         self.dev.query(['GroupKill',self.SLOT])
-        while self.getFilterState() != 'NOTINIT':
+        while self.get_filter_state() != 'NOTINIT':
             time.sleep(0.1)
                             
         # Go from not init to ref mode
         self.dev.query(['GroupInitialize',self.SLOT])
-        while self.getFilterState() != 'NOTREF':
+        while self.get_filter_state() != 'NOTREF':
             time.sleep(0.1)
         
         # Homing to get back to ready state
         self.dev.query(['GroupHomeSearch',self.SLOT])
-        while self.getFilterState() != 'ENABLED':
+        while self.get_filter_state() != 'ENABLED':
             time.sleep(0.1)
 
         # On le désactive
-        self.setEnabled(False)
-        while self.getFilterState() != 'DISABLED':
+        self.set_enabled(False)
+        while self.get_filter_state() != 'DISABLED':
             time.sleep(0.1)
             
             
             
             
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        config.append({'element':'variable','name':'velocity','type':float,'read':self.getVelocity,'write':self.setVelocity,'help':'Velocity of the filter during move'})
-        config.append({'element':'variable','name':'acceleration','type':float,'read':self.getAcceleration,'write':self.setAcceleration,'help':'Acceleration of the filter during move'})
-        config.append({'element':'variable','name':'angle','type':float,'read':self.getAngle,'write':self.setAngle,'help':'Current angle position'})
-        config.append({'element':'variable','name':'transmission','type':float,'read':self.getTransmission,'write':self.setTransmission,'help':'Current transmission of the filter'})
-        config.append({'element':'action','name':'setMin','do':self.setMin,'help':'Go to minimum transmission'})
-        config.append({'element':'action','name':'setMax','do':self.setMax,'help':'Go to maximum transmission'})
-        config.append({'element':'action','name':'goHome','do':self.goHome,'help':'Go to home position'})
-        return config
+        model = []
+        model.append({'element':'variable','name':'velocity','type':float,'read':self.get_velocity,'write':self.set_velocity,'help':'Velocity of the filter during move'})
+        model.append({'element':'variable','name':'acceleration','type':float,'read':self.get_acceleration,'write':self.set_acceleration,'help':'Acceleration of the filter during move'})
+        model.append({'element':'variable','name':'angle','type':float,'read':self.get_angle,'write':self.set_angle,'help':'Current angle position'})
+        model.append({'element':'variable','name':'transmission','type':float,'read':self.get_transmission,'write':self.set_transmission,'help':'Current transmission of the filter'})
+        model.append({'element':'action','name':'set_min','do':self.set_min,'help':'Go to minimum transmission'})
+        model.append({'element':'action','name':'set_max','do':self.set_max,'help':'Go to maximum transmission'})
+        model.append({'element':'action','name':'go_home','do':self.go_home,'help':'Go to home position'})
+        return model
     
 

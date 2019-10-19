@@ -11,12 +11,12 @@ Supported instruments (identified):
 class Driver():
     
     category = 'Motion controller'
-    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
     def __init__(self,**kwargs):
         
         # Submodules
-        self.slotnames = []
+        self.slot_names = []
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
@@ -24,15 +24,15 @@ class Driver():
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
-                self.slotnames.append(name)
+                self.slot_names.append(name)
 
 
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        for name in self.slotnames:
-            config.append({'element':'module','name':name,'object':getattr(self,name)})
-        return config
+        model = []
+        for name in self.slot_names:
+            model.append({'element':'module','name':name,'object':getattr(self,name)})
+        return model
     
 #################################################################################
 ############################## Connections classes ##############################
@@ -84,7 +84,7 @@ class Module_ILS100CC() :
     def write(self,command):
         self.dev.write(self.SLOT+command)
         
-    def getState(self):
+    def get_state(self):
         ans = self.query('TS?',unwrap=False)[-2:]
         if ans[0] == '0' :
             return 'NOTREF'
@@ -103,46 +103,46 @@ class Module_ILS100CC() :
         else :
             return 'UNKNOWN'
         
-    def getReady(self):
+    def set_ready_state(self):
         
         # On vérifie que l'on est pas dans le mode REF
-        state=self.getState()
+        state=self.get_state()
         if state == 'JOGGING' : 
             self.write('JD') # Sortie du mode Jogging   
         elif state == 'DISABLED' : 
             self.write('MM1') # Sortie du mode disabled  
-        self.waitReady()
+        self.wait_ready_state()
 
-    def waitReady(self):
-        while self.getState() != 'READY' :
+    def wait_ready_state(self):
+        while self.get_state() != 'READY' :
             time.sleep(0.1)
             
 
-    def getID(self):
+    def get_id(self):
         return self.query('ID?')
 
 
-    def getPosition(self):
+    def get_position(self):
         return self.query('PA?')
     
-    def setPosition(self,value):
-        self.getReady()
+    def set_position(self,value):
+        self.set_ready_state()
         self.write('PA'+str(value))
-        self.waitReady()
+        self.wait_ready_state()
 
 
-    def setAcceleration(self,value):
-        self.getReady()
+    def set_acceleration(self,value):
+        self.set_ready_state()
         self.write('AC'+str(value))
 
 
-    def getAcceleration(self):
+    def get_acceleration(self):
         return self.query('AC?')
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'position','type':str,
-                       'read':self.getPosition,'write':self.setPosition, 'help':'Initiates an absolute move.'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'position','type':str,
+                       'read':self.get_position,'write':self.set_position, 'help':'Initiates an absolute move.'})
+        return model
             
 

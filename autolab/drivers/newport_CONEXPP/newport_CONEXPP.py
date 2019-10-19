@@ -19,12 +19,12 @@ import pandas as pd
 class Driver():
     
     category = 'Motion controller'
-    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>,<CALIBRATION_PATH>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>,<CALIBRATION_PATH>'
     
     def __init__(self,**kwargs):
         
         # Submodules
-        self.slotnames = []
+        self.slot_names = []
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
@@ -33,13 +33,13 @@ class Driver():
                 name = kwargs[key].split(',')[1].strip()
                 calibpath = kwargs[key].split(',')[2].strip()
                 setattr(self,name,module(self,slot_num,name,calibpath))
-                self.slotnames.append(name)
+                self.slot_names.append(name)
         
         
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
         config = []
-        for name in self.slotnames :
+        for name in self.slot_names :
             config.append({'element':'module','name':name,'object':getattr(self,name)})
         return config
         
@@ -87,14 +87,14 @@ class Module_NSR1():
         self.NAME = name
         self.SLOT = slot
         
-        self.checkNOTREFstate()
+        self.check_notref_state()
     
         self.calibPath = calibPath
         assert os.path.exists(calibPath)
-        self.calibrationFunction = None
+        self.calibration_function = None
         
         self.calib = None
-        self.loadCalib()
+        self.load_calibration()
         
         
         
@@ -120,12 +120,12 @@ class Module_NSR1():
     # Drivers functions
     # =========================================================================
             
-    def getID(self):
+    def get_id(self):
         return self.query('ID?')
     
     
     
-    def getFilterState(self):
+    def get_filter_state(self):
         ans = self.query('TS?',unwrap=False)[-2:]
         if ans[0] == '0' :
             return 'REF'
@@ -144,31 +144,31 @@ class Module_NSR1():
 
 
         
-    def checkNOTREFstate(self):
+    def check_notref_state(self):
         
         # On vérifie que l'on est pas dans le mode REF
-        state=self.getFilterState()
+        state=self.get_filter_state()
         if state == 'REF' :
             self.write('OR') # Perfom Home search
-            while self.getFilterState() == 'HOMING' :
+            while self.get_filter_state() == 'HOMING' :
                 time.sleep(0.5)
         elif state == 'CONF' :    
             self.write('PW0') # Sortie du mode Configuration
-            self.checkNOTREFstate()
+            self.check_notref_state()
             
-    def waitMoveEnding(self):
-        while self.getFilterState() == 'MOVING' :
+    def wait_move_ending(self):
+        while self.get_filter_state() == 'MOVING' :
             time.sleep(0.1)
 
     
     
     
-    def setEnabled(self,value):
+    def set_enabled(self,value):
         assert isinstance(bool(value),bool)
         self.write('MM'+str(int(value)))
     
-    def isEnabled(self):
-        state=self.getFilterState()
+    def is_enabled(self):
+        state=self.get_filter_state()
         if state in ['ENABLED','MOVING'] :
             return True
         else :
@@ -185,21 +185,21 @@ class Module_NSR1():
     
  
     
-    def setVelocity(self,value):
+    def set_velocity(self,value):
         
         assert isinstance(int(value),int)
         value=int(value)
         
-        if value != self.getVelocity():
+        if value != self.get_velocity():
             
             # Go to not ref mode
             self.write('RS')
-            while self.getFilterState() != 'REF':
+            while self.get_filter_state() != 'REF':
                 time.sleep(0.1)
             
             # Go to config mode
             self.write('PW1')
-            while self.getFilterState() != 'CONF':
+            while self.get_filter_state() != 'CONF':
                 time.sleep(0.1)
             
             # Change value
@@ -207,38 +207,38 @@ class Module_NSR1():
 
             # Sortie du mode config
             self.write('PW0')
-            while self.getFilterState() != 'REF':
+            while self.get_filter_state() != 'REF':
                 time.sleep(0.1)
             
             # Homing to get back to ready state
             self.write('OR')
-            while self.getFilterState() != 'ENABLED':
+            while self.get_filter_state() != 'ENABLED':
                 time.sleep(0.1)
 
             # On le désactive
-            self.setEnabled(False)
-            while self.getFilterState() != 'DISABLED':
+            self.set_enabled(False)
+            while self.get_filter_state() != 'DISABLED':
                 time.sleep(0.1)
     
-    def getVelocity(self):
+    def get_velocity(self):
         return self.query('VA?')
     
     
-    def setAcceleration(self,value):
+    def set_acceleration(self,value):
         
         assert isinstance(int(value),int)
         value=int(value)
         
-        if value != self.getVelocity():
+        if value != self.get_velocity():
             
             # Go to not ref mode
             self.write('RS')
-            while self.getFilterState() != 'REF':
+            while self.get_filter_state() != 'REF':
                 time.sleep(0.1)
             
             # Go to config mode
             self.write('PW1')
-            while self.getFilterState() != 'CONF':
+            while self.get_filter_state() != 'CONF':
                 time.sleep(0.1)
             
             # Change value
@@ -246,21 +246,21 @@ class Module_NSR1():
 
             # Sortie du mode config
             self.write('PW0')
-            while self.getFilterState() != 'REF':
+            while self.get_filter_state() != 'REF':
                 time.sleep(0.1)
             
             # Homing to get back to ready state
             self.write('OR')
-            while self.getFilterState() != 'ENABLED':
+            while self.get_filter_state() != 'ENABLED':
                 time.sleep(0.1)
 
             # On le désactive
-            self.setEnabled(False)
-            while self.getFilterState() != 'DISABLED':
+            self.set_enabled(False)
+            while self.get_filter_state() != 'DISABLED':
                 time.sleep(0.1)
     
         
-    def getAcceleration(self):
+    def get_acceleration(self):
         return self.query('AC?')
     
             
@@ -268,21 +268,21 @@ class Module_NSR1():
     
     
     
-    def setAngle(self,value,forced=False):
+    def set_angle(self,value,forced=False):
         assert isinstance(float(value),float)
         value=float(value)
         
         if forced is False :
-            currAngle = self.getAngle()
-            if value > currAngle - 1.9 :
-                self.setAngle(value+20,forced=True)
+            curr_angle = self.get_angle()
+            if value > curr_angle - 1.9 :
+                self.set_angle(value+20,forced=True)
             
-        self.setEnabled(True)
+        self.set_enabled(True)
         self.write('PA'+str(value))
-        self.waitMoveEnding()
-        self.setEnabled(False)
+        self.wait_move_ending()
+        self.set_enabled(False)
         
-    def getAngle(self):
+    def get_angle(self):
         value = self.query('TP?')
         return value
        
@@ -291,56 +291,56 @@ class Module_NSR1():
     
     
     
-    def setMin(self):
-        self.setTransmission(0)
+    def set_min(self):
+        self.set_transmission(0)
         
-    def setMax(self):
-        self.setTransmission(1)
+    def set_max(self):
+        self.set_transmission(1)
 
 
 
 
 
-    def setTransmission(self,value):
+    def set_transmission(self,value):
         assert isinstance(float(value),float)
         value = float(value)
-        angle = self.getAngleFromTransmission(value)
-        self.setAngle(angle)
+        angle = self.get_angle_from_transmission(value)
+        self.set_angle(angle)
     
-    def getTransmission(self):
-        angle = self.getAngle()
-        return self.getTransmissionFromAngle(angle) 
+    def get_transmission(self):
+        angle = self.get_angle()
+        return self.get_transmission_from_angle(angle) 
 
-    def getTransmissionMax(self):
+    def get_transmission_max(self):
         return self.calib.transmission.max()
 
 
 
-    def getAngleFromTransmission(self,value):
+    def get_angle_from_transmission(self,value):
         ind = abs(self.calib.transmission-value).idxmin()
         return float(self.calib.loc[ind,'angle'])   
     
-    def getTransmissionFromAngle(self,value):
+    def get_transmission_from_angle(self,value):
         ind = abs(self.calib.angle-value).idxmin()
         return float(self.calib.loc[ind,'transmission'])   
 
 
     
-    def goHome(self):
+    def go_home(self):
                             
         # Go to not ref mode
         self.write('RS')
-        while self.getFilterState() != 'REF':
+        while self.get_filter_state() != 'REF':
             time.sleep(0.1)
         
         # Homing to get back to ready state
         self.write('OR')
-        while self.getFilterState() != 'ENABLED':
+        while self.get_filter_state() != 'ENABLED':
             time.sleep(0.1)
 
         # On le désactive
-        self.setEnabled(False)
-        while self.getFilterState() != 'DISABLED':
+        self.set_enabled(False)
+        while self.get_filter_state() != 'DISABLED':
             time.sleep(0.1)
             
             
@@ -348,25 +348,25 @@ class Module_NSR1():
     # Calibration functions
     # =========================================================================
     
-    def loadCalib(self):
+    def load_calibration(self):
         try: self.calib = pd.read_csv(os.path.join(self.calibPath,'calib.csv'))
         except: pass
     
-    def setCalibrationGetPowerFunction(self,calibrationFunction):
-        self.calibrationFunction = calibrationFunction
+    def set_calibration_function(self,calibration_function):
+        self.calibration_function = calibration_function
         
     def calibrate(self):
         
-        assert self.calibrationFunction is not None
+        assert self.calibration_function is not None
         
-        def scan(listAngle):
+        def scan(list_angle):
             
             df = pd.DataFrame()
 
-            for angle_setpoint in listAngle :
-                self.setAngle(angle_setpoint)
-                angle=self.getAngle()
-                power=self.calibrationFunction()
+            for angle_setpoint in list_angle :
+                self.set_angle(angle_setpoint)
+                angle=self.get_angle()
+                power=self.calibration_function()
                 df=df.append({'angle':angle,'power':power})
                    
             df.sort_values(by=['angle'],inplace=True)
@@ -377,14 +377,14 @@ class Module_NSR1():
         ax=fig.add_subplot(111)
         
         # Homing
-        self.goHome()
+        self.go_home()
         
         # Fabrication de la liste des angles à explorer
-        listAngle = np.concatenate((np.arange(0,360,8),np.arange(4,360,8)))
-        listAngle = np.flipud(listAngle)
+        list_angle = np.concatenate((np.arange(0,360,8),np.arange(4,360,8)))
+        list_angle = np.flipud(list_angle)
         
         # Lancement du scan de mesure de puissance
-        df=scan(listAngle)
+        df=scan(list_angle)
         
         # Find transition
         derivative = np.diff(df.power)
@@ -433,20 +433,20 @@ class Module_NSR1():
         df.to_csv(os.path.join(self.calibPath,'calib.csv'))
         
         # Raffraichissement des donnees
-        self.loadCalib()
+        self.load_calibration()
      
         
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        config.append({'element':'variable','name':'velocity','type':float,'read':self.getVelocity,'write':self.setVelocity,'help':'Velocity of the filter during move'})
-        config.append({'element':'variable','name':'acceleration','type':float,'read':self.getAcceleration,'write':self.setAcceleration,'help':'Acceleration of the filter during move'})
-        config.append({'element':'variable','name':'angle','type':float,'read':self.getAngle,'write':self.setAngle,'help':'Current angle position'})
-        config.append({'element':'variable','name':'transmission','type':float,'read':self.getTransmission,'write':self.setTransmission,'help':'Current transmission of the filter'})
-        config.append({'element':'action','name':'setMin','do':self.setMin,'help':'Go to minimum transmission'})
-        config.append({'element':'action','name':'setMax','do':self.setMax,'help':'Go to maximum transmission'})
-        config.append({'element':'action','name':'goHome','do':self.goHome,'help':'Go to home position'})
-        return config
+        model = []
+        model.append({'element':'variable','name':'velocity','type':float,'read':self.get_velocity,'write':self.set_velocity,'help':'Velocity of the filter during move'})
+        model.append({'element':'variable','name':'acceleration','type':float,'read':self.get_acceleration,'write':self.set_acceleration,'help':'Acceleration of the filter during move'})
+        model.append({'element':'variable','name':'angle','type':float,'read':self.get_angle,'write':self.set_angle,'help':'Current angle position'})
+        model.append({'element':'variable','name':'transmission','type':float,'read':self.get_transmission,'write':self.set_transmission,'help':'Current transmission of the filter'})
+        model.append({'element':'action','name':'set_min','do':self.set_min,'help':'Go to minimum transmission'})
+        model.append({'element':'action','name':'set_max','do':self.set_max,'help':'Go to maximum transmission'})
+        model.append({'element':'action','name':'go_home','do':self.go_home,'help':'Go to home position'})
+        return model
     
     
         

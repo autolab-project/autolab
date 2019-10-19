@@ -24,35 +24,35 @@ class Driver():
         self.write('SENS:POW:UNIT W')
         
         
-    def getID(self):
+    def get_id(self):
         return self.query('*IDN?')
     
-    def setAveragingState(self,state):
+    def set_averaging_state(self,state):
         assert isinstance(state,bool)
-        currentState=self.getAveragingState()
+        currentState=self.get_averaging_state()
         if state != currentState :
             self.write('SENS:AVER:STAT %i'%int(state))
             self.query('*OPC?')
     
-    def getAveragingState(self):
+    def get_averaging_state(self):
         return bool(self.query('SENS:AVER:STAT?'))
         
-    def setZero(self):
+    def zero(self):
         self.write('SENS:CORR:COLL:ZERO')
         self.query('*OPC?')
     
-    def getBufferSize(self):
+    def get_buffer_size(self):
         return int(self.query('SENS:AVER:COUN?'))
     
-    def setBufferSize(self, value):
+    def set_buffer_size(self, value):
         assert isinstance(int(value),int)
         value=int(value)
-        currentSize=self.getBufferSize()
-        if currentSize != value :
+        current_size=self.get_buffer_size()
+        if current_size != value :
             self.write('SENS:AVER:COUN %i'%value)
             self.query('*OPC?')
         
-    def getPower(self):
+    def get_power(self):
         while True :
             result=self.query('READ:ALL:POW:DC?')
             if isinstance(result,str) and '!' in result :
@@ -61,27 +61,27 @@ class Driver():
                 break
         return float(result)
 
-    def setWavelength(self,wavelength):
+    def set_wavelength(self,wavelength):
         assert isinstance(float(wavelength),float)
         wavelength=float(wavelength)
-        currentWavelength=self.getWavelength()
-        if wavelength != currentWavelength :
+        current_wavelength=self.get_wavelength()
+        if wavelength != current_wavelength :
             self.write('SENS:POW:WAVE %f'%wavelength)
             self.query('*OPC?')
     
-    def getWavelength(self):
+    def get_wavelength(self):
         return float(self.query('SENS:POW:WAVE?'))
     
     
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        config.append({'element':'variable','name':'averagingState','write':self.setAveragingState,'read':self.getAveragingState,'type':bool,'help':'This command activates or deactivates data averaging.'})
-        config.append({'element':'variable','name':'bufferSize','write':self.setBufferSize,'read':self.getBufferSize,'type':int,'help':'This command sets the number of power measurements that will be used to compute data averaging.'})
-        config.append({'element':'variable','name':'wavelength','write':self.setWavelength,'read':self.getWavelength,'type':float,'help':'The <numeric_value> parameter is an operating wavelength in nm. Any wavelength within the spectral range of the power meter optical detector at 0.01 nm resolution may be selected.'})
-        config.append({'element':'variable','name':'power','read':self.getPower,'type':str,'help':'This command returns the power of both channels in their respective current unit.'})
-        config.append({'element':'action','name':'zero','do':self.setZero, 'help':'This command performs an offset nulling measurement.'})       
-        return config
+        model = []
+        model.append({'element':'variable','name':'averaging','write':self.set_averaging_state,'read':self.get_averaging_state,'type':bool,'help':'This command activates or deactivates data averaging.'})
+        model.append({'element':'variable','name':'buffer_size','write':self.set_buffer_size,'read':self.get_buffer_size,'type':int,'help':'This command sets the number of power measurements that will be used to compute data averaging.'})
+        model.append({'element':'variable','name':'wavelength','write':self.set_wavelength,'read':self.get_wavelength,'type':float,'help':'The <numeric_value> parameter is an operating wavelength in nm. Any wavelength within the spectral range of the power meter optical detector at 0.01 nm resolution may be selected.'})
+        model.append({'element':'variable','name':'power','read':self.get_power,'type':str,'help':'This command returns the power of both channels in their respective current unit.'})
+        model.append({'element':'action','name':'zero','do':self.zero, 'help':'This command performs an offset nulling measurement.'})       
+        return model
 
 
 #################################################################################
