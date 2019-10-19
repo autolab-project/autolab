@@ -42,11 +42,11 @@ class Driver():
         self.write('RPT')
         
         
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'action','name':'run','do':self.run,'help':'Set run mode'})
-        config.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
+        return model
         
 
 #################################################################################
@@ -113,13 +113,13 @@ class Traces():
         stop  = self.get_stop_frequency()
         return linspace(start,stop,len(data))
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'start_wavelength','write':self.set_start_wavelength,'type':float,'help':'Start wavelength of the window'})
-        config.append({'element':'variable','name':'stop_wavelength','write':self.set_stop_wavelength,'type':float,'help':'Stop wavelength of the window'})
-        config.append({'element':'variable','name':'start_frequency','read':self.get_start_frequency,'type':float,'help':'Start frequency of the window'})
-        config.append({'element':'variable','name':'stop_frequency','read':self.get_stop_frequency,'type':float,'help':'Stop frequency of the window'})
-        config.append({'element':'variable','name':'spectrum','read':self.get_data_dataframe,'type':pandas.DataFrame,'help':'Current spectrum'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'start_wavelength','write':self.set_start_wavelength,'type':float,'help':'Start wavelength of the window'})
+        model.append({'element':'variable','name':'stop_wavelength','write':self.set_stop_wavelength,'type':float,'help':'Stop wavelength of the window'})
+        model.append({'element':'variable','name':'start_frequency','read':self.get_start_frequency,'type':float,'help':'Start frequency of the window'})
+        model.append({'element':'variable','name':'stop_frequency','read':self.get_stop_frequency,'type':float,'help':'Stop frequency of the window'})
+        model.append({'element':'variable','name':'spectrum','read':self.get_data_dataframe,'type':pandas.DataFrame,'help':'Current spectrum'})
+        return model
     
     

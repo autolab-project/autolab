@@ -41,10 +41,10 @@ class Driver():
             ch2 = str(self.conv.index(channels))
         self.write(f'DLAY{ch2},{ch1},{delay}')
 
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'frequency','type':float,'unit':'Hz','write':self.set_frequency,'read':self.get_frequency,'help':'Output frequency.'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'frequency','type':float,'unit':'Hz','write':self.set_frequency,'read':self.get_frequency,'help':'Output frequency.'})
+        return model
         
 #################################################################################
 ############################## Connections classes ##############################
@@ -91,11 +91,11 @@ class Output():
     def set_delay(self,delay):
         self.dev.set_delay(delay,channels=self.output)
             
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'amplitude','type':float,'unit':'V','write':self.set_amplitude,'read':self.get_amplitude,'help':'Voltage amplitude.'})
-        config.append({'element':'variable','name':'polarity','type':bool,'read':self.get_polarity,'write':self.set_polarity,'help':'Polarity state.'})
-        config.append({'element':'variable','name':'offset','type':float,'unit':'V','write':self.set_offset,'read':self.get_offset,'help':'Voltage offset'})
-        config.append({'element':'variable','name':'delay','type':float,'unit':'s','write':self.set_delay,'help':'Set the delay between the two channels of the given output'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'amplitude','type':float,'unit':'V','write':self.set_amplitude,'read':self.get_amplitude,'help':'Voltage amplitude.'})
+        model.append({'element':'variable','name':'polarity','type':bool,'read':self.get_polarity,'write':self.set_polarity,'help':'Polarity state.'})
+        model.append({'element':'variable','name':'offset','type':float,'unit':'V','write':self.set_offset,'read':self.get_offset,'help':'Voltage offset'})
+        model.append({'element':'variable','name':'delay','type':float,'unit':'s','write':self.set_delay,'help':'Set the delay between the two channels of the given output'})
+        return model
     

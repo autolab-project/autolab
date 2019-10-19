@@ -9,7 +9,7 @@ Supported instruments (identified):
 class Driver():
 
     category = 'Optical frame'
-    slotNaming = 'slot<NUM> = <MODULE_NAME>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>'
 
     def __init__(self,**kwargs):
         
@@ -17,7 +17,7 @@ class Driver():
         self.write('*CLS') # Clears the Event Status Register and the output queue. Sets the OPC bit to 1.
         
         # Submodules loading
-        self.slotnames = {}
+        self.slot_names = {}
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix) and not '_name' in key :
@@ -26,16 +26,16 @@ class Driver():
                 if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
                 else : name = f'{key}_{module.__name__}'
                 setattr(self,name,module(self,slot_num))
-                self.slotnames[slot_num] = name
+                self.slot_names[slot_num] = name
 
 
-    def getID(self):
+    def get_id(self):
         return self.query('*IDN?')
 
 
-    def getDriverConfig(self):
+    def get_driver_model(self):
         config = []
-        for name in self.slotnames.values() :
+        for name in self.slot_names.values() :
             config.append({'element':'module','name':name,'object':getattr(self,name)})
         return config
 
@@ -106,15 +106,15 @@ class Module_T100():
     # Optional functions
     #--------------------------------------------------------------------------
     
-    def setSafeState(self):
-        self.setOutputState(False)
-        if self.getOutputState() is False :
+    def safe_state(self):
+        self.set_output_state(False)
+        if self.get_output_state() is False :
             return True
             
 
-    def getID(self):
+    def get_id(self):
         result = self.query(self.prefix+'*IDN?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return result
         
         
@@ -122,7 +122,7 @@ class Module_T100():
     # Instrument variables
     #--------------------------------------------------------------------------
         
-    def cleanResult(self,result):
+    def clean_result(self,result):
         try:
             result=result.split(':')[1]
             result=result.split('=')[1]
@@ -134,26 +134,26 @@ class Module_T100():
     
 
 
-    def setWavelength(self,value):
+    def set_wavelength(self,value):
         self.write(self.prefix+f"L={value}")
         self.query('*OPC?')
         
-    def getWavelength(self):
+    def get_wavelength(self):
         result = self.query(self.prefix+'L?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return result
     
     
     
     
     
-    def setFrequency(self,value):
+    def set_frequency(self,value):
         self.write(self.prefix+f"F={value}")
         self.query('*OPC?')
         
-    def getFrequency(self):
+    def get_frequency(self):
         result = self.query(self.prefix+'F?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return result
     
     
@@ -161,18 +161,18 @@ class Module_T100():
     
     
     
-    def setPower(self,value):
+    def set_power(self,value):
         if value == 0 :
-            self.setOutputState(False)
+            self.set_output_state(False)
         else :
-            if self.getOutputState() is False :
-                self.setOutputState(True)
+            if self.get_output_state() is False :
+                self.set_output_state(True)
             self.write(self.prefix+f"P={value}")
             self.query('*OPC?')
             
-    def getPower(self):
+    def get_power(self):
         result = self.query(self.prefix+'P?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         if result == 'Disabled':
             return 0
         else :
@@ -183,18 +183,18 @@ class Module_T100():
 
 
     
-    def setIntensity(self,value):
+    def set_intensity(self,value):
         if value == 0 :
-            self.setOutputState(False)
+            self.set_output_state(False)
         else :
-            if self.getOutputState() is False :
-                self.setOutputState(True)
+            if self.get_output_state() is False :
+                self.set_output_state(True)
             self.write(self.prefix+f"I={value}")
             self.query('*OPC?')
         
-    def getIntensity(self):
+    def get_intensity(self):
         result = self.query(self.prefix+'I?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         if result == 'Disabled':
             return 0
         else :
@@ -204,62 +204,62 @@ class Module_T100():
     
     
     
-    def setCoherenceControlState(self,state):
+    def set_coherence_control_state(self,state):
         if state is True :
             self.write(self.prefix+'CTRL ON')
         else :
             self.write(self.prefix+'CTRL OFF')
         self.query('*OPC?')
         
-    def getCoherenceControlState(self):
+    def get_coherence_control_state(self):
         result = self.query(self.prefix+'CTRL?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return bool(int(result))
     
     
     
     
-    def setAutoPeakFindControlState(self,state):
+    def set_auto_peak_find_control_state(self,state):
         if state is True :
             self.write(self.prefix+'APF ON')
         else :
             self.write(self.prefix+'APF OFF')
         self.query('*OPC?')
         
-    def getAutoPeakFindControlState(self):
+    def get_auto_peak_find_control_state(self):
         result = self.query(self.prefix+'APF?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return bool(int(result))
     
     
     
     
     
-    def setOutputState(self,state):
+    def set_output_state(self,state):
         if state is True :
             self.write(self.prefix+"ENABLE")
         else :
             self.write(self.prefix+"DISABLE")
         self.query('*OPC?')
         
-    def getOutputState(self):
+    def get_output_state(self):
         result = self.query(self.prefix+'ENABLE?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return result == 'ENABLED'
     
     
     
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        config.append({'element':'variable','name':'wavelength','type':float,'unit':'nm','read':self.getWavelength,'write':self.setWavelength,'help':'Wavelength'})
-        config.append({'element':'variable','name':'frequency','type':float,'unit':'GHz','read':self.getFrequency,'write':self.setFrequency,'help':'Frequency'})
-        config.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.getPower,'write':self.setPower,'help':'Output power'})
-        config.append({'element':'variable','name':'intensity','type':float,'unit':'mA','read':self.getIntensity,'write':self.setIntensity,'help':'Current intensity'})
-        config.append({'element':'variable','name':'output','type':bool,'read':self.getOutputState,'write':self.setOutputState,'help':'Output state'})
-        config.append({'element':'variable','name':'coherenceControl','type':bool,'read':self.getCoherenceControlState,'write':self.setCoherenceControlState,'help':'Coherence control mode'})
-        config.append({'element':'variable','name':'autoPeakFindControl','type':bool,'read':self.getAutoPeakFindControlState,'write':self.setAutoPeakFindControlState,'help':'Auto peak find control'})
-        return config
+        model = []
+        model.append({'element':'variable','name':'wavelength','type':float,'unit':'nm','read':self.get_wavelength,'write':self.set_wavelength,'help':'Wavelength'})
+        model.append({'element':'variable','name':'frequency','type':float,'unit':'GHz','read':self.get_frequency,'write':self.set_frequency,'help':'Frequency'})
+        model.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.get_power,'write':self.set_power,'help':'Output power'})
+        model.append({'element':'variable','name':'intensity','type':float,'unit':'mA','read':self.get_intensity,'write':self.set_intensity,'help':'Current intensity'})
+        model.append({'element':'variable','name':'output','type':bool,'read':self.get_output_state,'write':self.set_output_state,'help':'Output state'})
+        model.append({'element':'variable','name':'coherence_control','type':bool,'read':self.get_coherence_control_state,'write':self.set_coherence_control_state,'help':'Coherence control mode'})
+        model.append({'element':'variable','name':'auto_peak_find_control','type':bool,'read':self.get_auto_peak_find_control_state,'write':self.set_auto_peak_find_control_state,'help':'Auto peak find control'})
+        return model
 
 
 
@@ -291,13 +291,13 @@ class Module_SLD():
     # Optional functions
     #--------------------------------------------------------------------------
         
-    def setSafeState(self):
-        self.setOutputState(False)
-        if self.getOutputState() is False :
+    def safe_state(self):
+        self.set_output_state(False)
+        if self.get_output_state() is False :
             return True
             
         
-    def getID(self):
+    def get_id(self):
         return self.dev.query(self.prefix+'*IDN?')
         
         
@@ -306,7 +306,7 @@ class Module_SLD():
     #--------------------------------------------------------------------------
 
         
-    def cleanResult(self,result):
+    def clean_result(self,result):
         try:
             result=result.split(':')[1]
             result=result.split('=')[1]
@@ -318,34 +318,34 @@ class Module_SLD():
     
 
         
-    def getWavelength(self):
+    def get_wavelength(self):
         result = self.query(self.prefix+'L?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return result
     
     
    
     
     
-    def setPower(self,value):
+    def set_power(self,value):
         if value < 5:
-            self.setOutputState(False)
+            self.set_output_state(False)
         elif 5<=value<10 :
-            if self.getOutputState() is False :
-                self.setOutputState(True)
+            if self.get_output_state() is False :
+                self.set_output_state(True)
             self.write(self.prefix+'P=LOW')
             self.query('*OPC?')
         else :
-            if self.getOutputState() is False :
-                self.setOutputState(True)
+            if self.get_output_state() is False :
+                self.set_output_state(True)
             self.write(self.prefix+'P=HIGH')
             self.query('*OPC?')   
             
             
         
-    def getPower(self):
+    def get_power(self):
         result = self.query(self.prefix+'P?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         if result == 'Disabled':
             return 0
         elif result == 'HIGH':
@@ -357,26 +357,26 @@ class Module_SLD():
   
     
     
-    def setOutputState(self,state):
+    def set_output_state(self,state):
         if state is True :
             self.write(self.prefix+"ENABLE")
         else :
             self.write(self.prefix+"DISABLE")
         self.query('*OPC?')
         
-    def getOutputState(self):
+    def get_output_state(self):
         result = self.query(self.prefix+'ENABLE?')
-        result = self.cleanResult(result)
+        result = self.clean_result(result)
         return result == 'ENABLED'
     
 
 
 
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        config.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.getPower,'write':self.setPower,'help':'Output power'})
-        config.append({'element':'variable','name':'output','type':bool,'read':self.getOutputState,'write':self.setOutputState,'help':'Output state'})
-        return config
+        model = []
+        model.append({'element':'variable','name':'power','type':float,'unit':'mW','read':self.get_power,'write':self.set_power,'help':'Output power'})
+        model.append({'element':'variable','name':'output','type':bool,'read':self.get_output_state,'write':self.set_output_state,'help':'Output state'})
+        return model
     
     

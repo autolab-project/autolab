@@ -33,15 +33,15 @@ class Driver():
         self.inst.write('*IDN?')
         self.read()
         
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
+        model = []
         
-        config.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':'Amplitude'})
-        config.append({'element':'variable','name':'offset','write':self.offset,'type':float,'help':'Offset'})
-        config.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':'Frequency'})
+        model.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':'Amplitude'})
+        model.append({'element':'variable','name':'offset','write':self.offset,'type':float,'help':'Offset'})
+        model.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':'Frequency'})
         
-        return config
+        return model
 
 
 #################################################################################

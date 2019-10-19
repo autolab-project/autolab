@@ -15,7 +15,7 @@ import time
 class Driver():
     
     category = 'Electrical frame'
-    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
     def __init__(self, **kwargs):
         
@@ -24,7 +24,7 @@ class Driver():
         self.write('TERM LF')
         
         # Submodules
-        self.slotnames = {}
+        self.slot_names = {}
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
@@ -32,7 +32,7 @@ class Driver():
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
-                self.slotnames[key] = name
+                self.slot_names[key] = name
         
     
     def send_command_to_slot(self,slot,command):

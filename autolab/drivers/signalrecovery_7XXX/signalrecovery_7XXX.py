@@ -16,39 +16,39 @@ class Driver():
     def __init__(self):
         pass 
 
-    def getID(self):
+    def get_id(self):
         return str(self.query('ID'))+' VER '+str(self.query('VER'))
 
-    def waitFourTimeConstant(self): # see manual why
-        time.sleep(4*self.getTimeConstant())
+    def wait_four_time_constant(self): # see manual why
+        time.sleep(4*self.get_time_constant())
 
-    def getMagnitude(self):
+    def get_magnitude(self):
         return float(self.query("MAG."))
 
-    def getPhase(self):
+    def get_phase(self):
         return float(self.query("PHA."))
     
-    def getRefFrequency(self):
+    def get_ref_frequency(self):
         return float(self.query('FRQ.'))
 
-    def getTimeConstant(self):
+    def get_time_constant(self):
         return float(self.query('TC.'))
     
-    def getSensitivity(self):
+    def get_sensitivity(self):
         return float(self.query('SEN.'))
     
     
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        config.append({'element':'variable','name':'timeConstant','type':float,'read':self.getTimeConstant, 'help':'Filter time constant control.'})        
-        config.append({'element':'variable','name':'sensitivity','type':float,'read':self.getSensitivity, 'help':'Full-scale sensitivity control.'})        
-        config.append({'element':'variable','name':'refFrequency','type':float,'read':self.getRefFrequency, 'unit':'Hz', 'help':'Reads reference frequency in Hertz.'})        
-        config.append({'element':'variable','name':'magnitude','type':float,'read':self.getMagnitude, 'unit':'V', 'help':'Reads magnitude in volts.'})        
-        config.append({'element':'variable','name':'phase','type':float,'read':self.getPhase, 'unit':'degrees', 'phase':'Reads Phase in degrees.'})
-        config.append({'element':'action','name':'waitFourTimeConstant','do':self.waitFourTimeConstant,
+        model = []
+        model.append({'element':'variable','name':'time_constant','type':float,'read':self.get_time_constant, 'help':'Filter time constant control.'})        
+        model.append({'element':'variable','name':'sensitivity','type':float,'read':self.get_sensitivity, 'help':'Full-scale sensitivity control.'})        
+        model.append({'element':'variable','name':'ref_frequency','type':float,'read':self.get_ref_frequency, 'unit':'Hz', 'help':'Reads reference frequency in Hertz.'})        
+        model.append({'element':'variable','name':'magnitude','type':float,'read':self.get_magnitude, 'unit':'V', 'help':'Reads magnitude in volts.'})        
+        model.append({'element':'variable','name':'phase','type':float,'read':self.get_phase, 'unit':'degrees', 'phase':'Reads Phase in degrees.'})
+        model.append({'element':'action','name':'wait_four_time_constant','do':self.wait_four_time_constant,
                        'help':'Wait four time constants. See manual.'})
-        return config
+        return model
     
     
     

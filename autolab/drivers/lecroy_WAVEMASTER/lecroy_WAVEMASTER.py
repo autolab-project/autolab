@@ -72,12 +72,12 @@ class Driver():
     def get_encoding(self):
         return self.encoding
   
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
+        model = []
         for num in range(1,self.nb_channels+1) :
-            config.append({'element':'module','name':f'channel{num}','object':getattr(self,f'channel{num}')})
-        return config
+            model.append({'element':'module','name':f'channel{num}','object':getattr(self,f'channel{num}')})
+        return model
     
 #################################################################################
 ############################## Connections classes ##############################
@@ -231,19 +231,19 @@ class Channel():
 
 
 
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'min','type':float,'unit':'V','read':self.get_min,'help':'Get minimum value of the current signal'})
-        config.append({'element':'variable','name':'max','type':float,'unit':'V','read':self.get_max,'help':'Get maximum value of the current signal'})
-        config.append({'element':'variable','name':'mean','type':float,'unit':'V','read':self.get_mean,'help':'Get mean value of the current signal'})
-        config.append({'element':'variable','name':'trace_raw','type':bytes,'read':self.get_data_raw,'help':'Get the current trace in bytes'})
-        config.append({'element':'variable','name':'trace','type':np.ndarray,'read':self.get_data,'help':'Get the current trace in numpy'})
-        config.append({'element':'variable','name':'verticalScale','type':float,'unit':'V/div','read':self.get_vertical_scale,'write':self.set_vertical_scale,'help':'Set the vertical scale of the channel'})
-        config.append({'element':'variable','name':'verticalOffset','type':float,'unit':'V','read':self.get_vertical_offset,'write':self.set_vertical_offset,'help':'Set the vertical offset of the channel'})
-        config.append({'element':'variable','name':'autoscaleIterations','type':int,'read':self.get_autoscale_iter,'write':self.set_autoscale_iter,'help':'Set the number of loops for the autoscale process. Set 0 to disable autoscale.'})
-        config.append({'element':'variable','name':'autoscaleFactor','type':float,'unit':float,'read':self.get_autoscale_factor,'write':self.set_autoscale_factor,'help':'For setting limits of the vertical scale, units are in number of scope divisions here. WARNING: Do not overpass 9 due to a security in the code! WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." '})
-        config.append({'element':'variable','name':'active','type':bool,'read':self.is_active,'help':'Returns the current state of the channel.'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'min','type':float,'unit':'V','read':self.get_min,'help':'Get minimum value of the current signal'})
+        model.append({'element':'variable','name':'max','type':float,'unit':'V','read':self.get_max,'help':'Get maximum value of the current signal'})
+        model.append({'element':'variable','name':'mean','type':float,'unit':'V','read':self.get_mean,'help':'Get mean value of the current signal'})
+        model.append({'element':'variable','name':'trace_raw','type':bytes,'read':self.get_data_raw,'help':'Get the current trace in bytes'})
+        model.append({'element':'variable','name':'trace','type':np.ndarray,'read':self.get_data,'help':'Get the current trace in numpy'})
+        model.append({'element':'variable','name':'vertical_scale','type':float,'unit':'V/div','read':self.get_vertical_scale,'write':self.set_vertical_scale,'help':'Set the vertical scale of the channel'})
+        model.append({'element':'variable','name':'vertical_offset','type':float,'unit':'V','read':self.get_vertical_offset,'write':self.set_vertical_offset,'help':'Set the vertical offset of the channel'})
+        model.append({'element':'variable','name':'autoscale_iterations','type':int,'read':self.get_autoscale_iter,'write':self.set_autoscale_iter,'help':'Set the number of loops for the autoscale process. Set 0 to disable autoscale.'})
+        model.append({'element':'variable','name':'autoscale_factor','type':float,'unit':float,'read':self.get_autoscale_factor,'write':self.set_autoscale_factor,'help':'For setting limits of the vertical scale, units are in number of scope divisions here. WARNING: Do not overpass 9 due to a security in the code! WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." '})
+        model.append({'element':'variable','name':'active','type':bool,'read':self.is_active,'help':'Returns the current state of the channel.'})
+        return model
 
 
    

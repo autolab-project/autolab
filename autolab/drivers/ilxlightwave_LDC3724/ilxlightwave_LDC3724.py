@@ -24,15 +24,15 @@ class Driver():
         self.las = LAS(self)
         
         
-    def getID(self):
+    def get_id(self):
         return self.query('*IDN?')
     
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'module','name':'tec','object':self.tec})
-        config.append({'element':'module','name':'las','object':self.las})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'module','name':'tec','object':self.tec})
+        model.append({'element':'module','name':'las','object':self.las})
+        return model
     
     
 #################################################################################
@@ -106,77 +106,77 @@ class LAS():
         return self.dev.query(command)
     
     
-    def getCurrent(self):
+    def get_current(self):
         return float(self.query('LAS:LDI?'))
 
-    def getCurrentSetpoint(self):
+    def get_current_setpoint(self):
         return float(self.query('LAS:SET:LDI?'))
         
-    def setCurrent(self,value):
+    def set_current(self,value):
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'LAS:LDI {value}')
         self.query('*OPC?')
         if value > 0 :
-            if self.isEnabled() is False :
-                self.setEnabled(True)
-            self.setMode('ILBW')
-            self.waitForConvergence(self.getCurrent,value)
+            if self.is_enabled() is False :
+                self.set_enabled(True)
+            self.set_mode('ILBW')
+            self.wait_for_convergence(self.get_current,value)
         elif value == 0 :
-            if self.isEnabled() is True :
-                self.setEnabled(False)
+            if self.is_enabled() is True :
+                self.set_enabled(False)
 
 
 
 
-    def setPower(self,value):
+    def set_power(self,value):
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'LAS:MDP {value}')
         self.query('*OPC?')
         if value > 0 :
-            if self.isEnabled() is False :
-                self.setEnabled(True)
-            self.setMode('MDP')
-            self.waitForConvergence(self.getPower,value)
+            if self.is_enabled() is False :
+                self.set_enabled(True)
+            self.set_mode('MDP')
+            self.wait_for_convergence(self.get_power,value)
         elif value == 0 :
-            if self.isEnabled() is True :
-                self.setEnabled(False)
+            if self.is_enabled() is True :
+                self.set_enabled(False)
 
-    def getPower(self):
+    def get_power(self):
         self.query('*OPC?')
         return float(self.query('LAS:MDP?'))
 
-    def getPowerSetpoint(self):
+    def get_power_setpoint(self):
         return float(self.query('LAS:SET:MDP?'))
     
     
     
     
-    def setEnabled(self,value):
+    def set_enabled(self,value):
         assert isinstance(value,bool)
         self.write(f'LAS:OUT {int(value)}')
         self.query('*OPC?')
         if value is True :
             mode = self.query('LAS:MODE?')
             if mode.startswith('I'):
-                self.waitForConvergence(self.getCurrent,
-                                        self.getCurrentSetpoint())
+                self.wait_for_convergence(self.get_current,
+                                        self.get_current_setpoint())
             elif mode.startswith('MD'):
-                self.waitForConvergence(self.getPower,
-                                        self.getPowerSetpoint())
+                self.wait_for_convergence(self.get_power,
+                                        self.get_power_setpoint())
         
-    def isEnabled(self):
+    def is_enabled(self):
         return bool(int(self.query('LAS:OUT?')))
 
     
     
     
-    def waitForConvergence(self,func,setPoint):
+    def wait_for_convergence(self,func,setpoint):
         tini = time.time()
         while True :
             try : 
-                if abs(func()-setPoint) < self.PRECISION*setPoint :
+                if abs(func()-setpoint) < self.PRECISION*setpoint :
                     break
                 else :
                     time.sleep(0.5)
@@ -188,30 +188,30 @@ class LAS():
             
             
             
-    def setMode(self,mode):
+    def set_mode(self,mode):
         assert isinstance(mode,str)
-        currMode = self.getMode()
-        enabledMode = self.isEnabled()
-        if currMode != mode :
+        curr_mode = self.get_mode()
+        enabled_mode = self.is_enabled()
+        if curr_mode != mode :
             self.write(f'LAS:MODE:{mode}')
             self.query('*OPC?')
-            self.setEnabled(enabledMode)
+            self.set_enabled(enabled_mode)
             
-    def getMode(self):
+    def get_mode(self):
         return self.query('LAS:MODE?')
         
         
     
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'help':'Current setpoint'})
-        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'write':self.setCurrent,'help':'Current'})
-        config.append({'element':'variable','name':'powerSetpoint','type':float,'unit':'mW','read':self.getPowerSetpoint,'help':'Output power setpoint'})
-        config.append({'element':'variable','name':'power','type':float,'unit':'mW','write':self.setPower,'read':self.getPower,'help':'Output power'})
-        config.append({'element':'variable','name':'output','type':bool,'read':self.isEnabled,'write':self.setEnabled,'help':'Output state'})
-        config.append({'element':'variable','name':'mode','type':str,'read':self.getMode,'write':self.setMode,'help':'Control mode'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'current_setpoint','type':float,'unit':'mA','read':self.get_current_setpoint,'help':'Current setpoint'})
+        model.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.get_current,'write':self.set_current,'help':'Current'})
+        model.append({'element':'variable','name':'power_setpoint','type':float,'unit':'mW','read':self.get_power_setpoint,'help':'Output power setpoint'})
+        model.append({'element':'variable','name':'power','type':float,'unit':'mW','write':self.set_power,'read':self.get_power,'help':'Output power'})
+        model.append({'element':'variable','name':'output','type':bool,'read':self.is_enabled,'write':self.set_enabled,'help':'Output state'})
+        model.append({'element':'variable','name':'mode','type':str,'read':self.get_mode,'write':self.set_mode,'help':'Control mode'})
+        return model
     
     
 
@@ -237,95 +237,95 @@ class TEC():
     
     
 
-    def getResistance(self):
+    def get_resistance(self):
         return float(self.query('TEC:R?'))
 
 
 
-    def setGain(self,value):
+    def set_gain(self,value):
         assert isinstance(int(value),int)
         value = int(value)
         self.write(f'TEC:GAIN {value}')
         self.query('*OPC?')
         
-    def getGain(self):
+    def get_gain(self):
         return int(float(self.query('TEC:GAIN?')))
    
     
 
     
-    def getCurrent(self):
+    def get_current(self):
         return float(self.query('TEC:ITE?'))
 
-    def getCurrentSetpoint(self):
+    def get_current_setpoint(self):
         return float(self.query('TEC:SET:ITE?'))
         
-    def setCurrent(self,value):
+    def set_current(self,value):
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'TEC:ITE {value}')
         self.query('*OPC?')
         if value > 0 :
-            if self.isEnabled() is False :
-                self.setEnabled(True)
-            self.setMode('ITE')
-            self.waitForConvergence(self.getCurrent,value)
+            if self.is_enabled() is False :
+                self.set_enabled(True)
+            self.set_mode('ITE')
+            self.wait_for_convergence(self.get_current,value)
         elif value == 0 :
-            if self.isEnabled() is True :
-                self.setEnabled(False)
+            if self.is_enabled() is True :
+                self.set_enabled(False)
 
 
 
 
-    def setTemperature(self,value):
+    def set_temperature(self,value):
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'TEC:T {value}')
         self.query('*OPC?')
         if value > 0 :
-            if self.isEnabled() is False :
-                self.setEnabled(True)
-            self.setMode('T')
-            self.waitForConvergence(self.getTemperature,value)
+            if self.is_enabled() is False :
+                self.set_enabled(True)
+            self.set_mode('T')
+            self.wait_for_convergence(self.get_temperature,value)
         elif value == 0 :
-            if self.isEnabled() is True :
-                self.setEnabled(False)
+            if self.is_enabled() is True :
+                self.set_enabled(False)
 
-    def getTemperature(self):
+    def get_temperature(self):
         return float(self.query('TEC:T?'))
 
-    def getTemperatureSetpoint(self):
+    def get_temperature_setpoint(self):
         return float(self.query('TEC:SET:T?'))
     
     
 
     
     
-    def setEnabled(self,value):
+    def set_enabled(self,value):
         assert isinstance(value,bool)
         self.write(f'TEC:OUT {int(value)}')
         self.query('*OPC?')
         if value is True :
             mode = self.query('TEC:MODE?')
             if mode.startswith('I'):
-                self.waitForConvergence(self.getCurrent,
-                                        self.getCurrentSetpoint())
+                self.wait_for_convergence(self.get_current,
+                                        self.get_current_setpoint())
             elif mode.startswith('T'):
-                self.waitForConvergence(self.getTemperature,
-                                        self.getTemperatureSetpoint())
+                self.wait_for_convergence(self.get_temperature,
+                                        self.get_temperature_setpoint())
         
-    def isEnabled(self):
+    def is_enabled(self):
         return bool(int(self.query('TEC:OUT?')))
     
     
     
     
     
-    def waitForConvergence(self,func,setPoint):
+    def wait_for_convergence(self,func,setpoint):
         tini = time.time()
         while True :
             try : 
-                if abs(func()-setPoint) < self.PRECISION*setPoint :
+                if abs(func()-setpoint) < self.PRECISION*setpoint :
                     break
                 else :
                     time.sleep(0.5)
@@ -337,31 +337,31 @@ class TEC():
             
             
             
-    def setMode(self,mode):
+    def set_mode(self,mode):
         assert isinstance(mode,str)
-        currMode = self.getMode()
-        enabledMode = self.isEnabled()
-        if currMode != mode :
+        curr_mode = self.get_mode()
+        enabled_mode = self.is_enabled()
+        if curr_mode != mode :
             self.write(f'TEC:MODE:{mode}')
             self.query('*OPC?')
-            self.setEnabled(enabledMode)
+            self.set_enabled(enabled_mode)
             
-    def getMode(self):
+    def get_mode(self):
         return self.query('TEC:MODE?')
     
     
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'resistance','type':float,'read':self.getResistance,'help':'Resistance'})
-        config.append({'element':'variable','name':'gain','type':int,'read':self.getGain,'write':self.setGain,'help':'Gain'})
-        config.append({'element':'variable','name':'currentSetpoint','type':float,'unit':'mA','read':self.getCurrentSetpoint,'help':'Current setpoint'})
-        config.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.getCurrent,'write':self.setCurrent,'help':'Current'})
-        config.append({'element':'variable','name':'temperatureSetpoint','type':float,'unit':'°C','read':self.getTemperatureSetpoint,'help':'Temperature setpoint'})
-        config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'write':self.setTemperature,'help':'Actual temperature'})
-        config.append({'element':'variable','name':'output','type':bool,'read':self.isEnabled,'write':self.setEnabled,'help':'Output state'})
-        config.append({'element':'variable','name':'mode','type':str,'read':self.getMode,'write':self.setMode,'help':'Control mode'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'resistance','type':float,'read':self.get_resistance,'help':'Resistance'})
+        model.append({'element':'variable','name':'gain','type':int,'read':self.get_gain,'write':self.set_gain,'help':'Gain'})
+        model.append({'element':'variable','name':'current_setpoint','type':float,'unit':'mA','read':self.get_current_setpoint,'help':'Current setpoint'})
+        model.append({'element':'variable','name':'current','type':float,'unit':'mA','read':self.get_current,'write':self.set_current,'help':'Current'})
+        model.append({'element':'variable','name':'temperature_setpoint','type':float,'unit':'°C','read':self.get_temperature_setpoint,'help':'Temperature setpoint'})
+        model.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.get_temperature,'write':self.set_temperature,'help':'Actual temperature'})
+        model.append({'element':'variable','name':'output','type':bool,'read':self.is_enabled,'write':self.set_enabled,'help':'Output state'})
+        model.append({'element':'variable','name':'mode','type':str,'read':self.get_mode,'write':self.set_mode,'help':'Control mode'})
+        return model
     
     
 

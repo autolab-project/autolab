@@ -16,37 +16,37 @@ class Driver():
         self.write('PM:AUTO 1') # Automatic range
         self.write('PM:UNITs 2') # for Watts
     
-    def getID(self):
+    def get_id(self):
         return self.query('*IDN?')
     
     
-    def setZero(self):
+    def zero(self):
         self.write('PM:ZEROSTOre')
         
         
         
-    def setAutoRange(self,value):
+    def set_auto_range(self,value):
         self.write(f'PM:AUTO {int(value)}')
         
-    def getAutoRange(self):
+    def get_auto_range(self):
         return bool(int(self.query('PM:AUTO?')))
         
         
         
         
-    def setZeroValue(self,value):
+    def set_zero_value(self,value):
         self.write(f'PM:ZEROVALue {float(value):.5f}')
         
-    def getZeroValue(self):
+    def get_zero_value(self):
         return float(self.query('PM:ZEROVALue?'))
 
 
 
 
-    def setWavelength(self, wavelength):     
+    def set_wavelength(self, wavelength):     
         self.write(f'PM:Lambda {int(wavelength)}')
 
-    def getWavelength(self):
+    def get_wavelength(self):
         return float(self.query('PM:Lambda?'))
 
 
@@ -54,24 +54,24 @@ class Driver():
 
 
 
-    def setBufferSize(self,value):
+    def set_buffer_size(self,value):
         self.write(f'PM:DS:SIZE {int(value)}')
     
-    def getBufferSize(self):
+    def get_buffer_size(self):
         return float(self.query('PM:DS:SIZE?'))
     
     
     
     
 
-    def setBufferInterval(self,value): #ms
+    def set_buffer_interval(self,value): #ms
         self.write(f'PM:DS:INT {int(value)*10}') 
     
-    def getBufferInterval(self):
+    def get_buffer_interval(self):
         return float(self.query('PM:DS:INT?'))/10 
     
     
-    def getPowerMean(self):
+    def get_power_mean(self):
 
         """
         Stores the power values at a certain wavelength.
@@ -84,17 +84,17 @@ class Driver():
         self.write('PM:DS:ENable 1')
         
         # On attend la fin de l'acquisition
-        bufferSize = self.getBufferSize()
-        bufferInterval = self.getBufferInterval()
-        while int(self.query('PM:DS:Count?')) < bufferSize :
-            time.sleep(bufferInterval)
+        buffer_size = self.get_buffer_size()
+        buffer_interval = self.get_buffer_interval()
+        while int(self.query('PM:DS:Count?')) < buffer_size :
+            time.sleep(buffer_interval)
         
         # On récupère les résultats de mesure
         mean=float(self.query('PM:STAT:MEAN?'))
         return mean        
     
 
-    def getPower(self):
+    def get_power(self):
         while True :
             power = float(self.query('PM:Power?'))
             if power < 100 :
@@ -104,41 +104,41 @@ class Driver():
         return power
         
 
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
+        model = []
         
-        config.append({'element':'action','name':'zero','do':self.setZero,                       
+        model.append({'element':'action','name':'zero','do':self.zero,                       
                        'help':'Sets the zeroing value with the present reading.'})
 
-        config.append({'element':'variable','name':'autorange','type':bool,
-                       'read':self.getAutoRange,'write':self.setAutoRange,
+        model.append({'element':'variable','name':'autorange','type':bool,
+                       'read':self.get_auto_range,'write':self.set_auto_range,
                        'help':'Auto range enable command.'})
 
-        config.append({'element':'variable','name':'zeroValue','type':float,
-                       'read':self.getZeroValue,'write':self.setZeroValue,
+        model.append({'element':'variable','name':'zero_value','type':float,
+                       'read':self.get_zero_value,'write':self.set_zero_value,
                        'help':'Sets the zeroing value.'})
 
-        config.append({'element':'variable','name':'bufferSize','type':int,
-                       'read':self.getBufferSize,'write':self.setBufferSize,
+        model.append({'element':'variable','name':'buffer_size','type':int,
+                       'read':self.get_buffer_size,'write':self.set_buffer_size,
                        'help':'Sets the size of the Data Store buffer.'})    
 
-        config.append({'element':'variable','name':'bufferInterval','type':int,
-                       'read':self.getBufferInterval,'write':self.setBufferInterval,
+        model.append({'element':'variable','name':'buffer_interval','type':int,
+                       'read':self.get_buffer_interval,'write':self.set_buffer_interval,
                        'help':'Set data store interval.'})   
     
-        config.append({'element':'variable','name':'wavelength','type':float,
-                       'read':self.getWavelength,'write':self.setWavelength,
+        model.append({'element':'variable','name':'wavelength','type':float,
+                       'read':self.get_wavelength,'write':self.set_wavelength,
                        'help':'Sets the wavelength for use when calculating power.'})      
 
-        config.append({'element':'variable','name':'power','type':float,
-                       'read':self.getPower,
+        model.append({'element':'variable','name':'power','type':float,
+                       'read':self.get_power,
                        'help':'Returns the power in the selected units.'})      
     
-        config.append({'element':'variable','name':'powerMean','type':float,
-                       'read':self.getPowerMean, 'help':'Mean power value at a certain wavelength.'})    
+        model.append({'element':'variable','name':'power_mean','type':float,
+                       'read':self.get_power_mean, 'help':'Mean power value at a certain wavelength.'})    
     
-        return config
+        return model
 
 
 #################################################################################

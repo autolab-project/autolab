@@ -10,12 +10,12 @@ Supported instruments (identified):
 class Driver():
     
     category = 'Optical frame'
-    slotNaming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
     
     def __init__(self,**kwargs):
         
         # Submodules
-        self.slotnames = []
+        self.slot_names = []
         prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix):
@@ -23,17 +23,17 @@ class Driver():
                 module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
                 name = kwargs[key].split(',')[1].strip()
                 setattr(self,name,module(self,slot_num))
-                self.slotnames.append(name)       
+                self.slot_names.append(name)       
         
-    def getID(self):
+    def get_id(self):
         return self.write('*IDN?')
     
     
-    def getDriverConfig(self):
-        config = []
-        for name in self.slotnames :
-            config.append({'element':'module','name':name,'object':getattr(self,name)})
-        return config
+    def get_driver_model(self):
+        model = []
+        for name in self.slot_names :
+            model.append({'element':'module','name':name,'object':getattr(self,name)})
+        return model
     
 #################################################################################
 ############################## Connections classes ##############################
@@ -91,15 +91,15 @@ class Module_FTB1750():
     
 
     
-    def setAveragingState(self,state):
+    def set_averaging_state(self,state):
         assert isinstance(state,bool)
-        currentState=self.getAveragingState()
-        if state != currentState :
+        current_state=self.get_averaging_state()
+        if state != current_state :
             state = int(state)
             self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:STAT {state}")
             self.dev.write('*OPC?')
     
-    def getAveragingState(self):
+    def get_averaging_state(self):
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:STAT?")
         return bool(int(ans))
 
@@ -107,15 +107,15 @@ class Module_FTB1750():
 
     
     
-    def getBufferSize(self):
+    def get_buffer_size(self):
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:COUN?")
         return int(ans)
     
-    def setBufferSize(self, value):
+    def set_buffer_size(self, value):
         assert isinstance(int(value),int)
         value=int(value)
-        currentSize=self.getBufferSize()
-        if currentSize != value :
+        current_size=self.get_buffer_size()
+        if current_size != value :
             self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:COUN {value}")
             self.dev.write('*OPC?')
 
@@ -124,34 +124,34 @@ class Module_FTB1750():
        
 
     
-    def getPower(self):
+    def get_power(self):
         ans = self.dev.write(f"LINS1:READ{self.SLOT}:SCAL:POW:DC?")
         return float(ans)
     
 
     
         
-    def setWavelength(self,wavelength):
+    def set_wavelength(self,wavelength):
         assert isinstance(float(wavelength),float)
         wavelength=float(wavelength)*1e-9
-        currentWavelength=self.getWavelength()
-        if wavelength != currentWavelength :
+        current_wavelength=self.get_wavelength()
+        if wavelength != current_wavelength :
             self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV {wavelength} nm")
             self.dev.write('*OPC?')
 
     
-    def getWavelength(self):
+    def get_wavelength(self):
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV?")
         return float(ans)*1e9
     
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'averaging','type':bool,'read':self.getAveragingState,'write':self.setAveragingState,'help':'Average or not the measure'})
-        config.append({'element':'variable','name':'bufferSize','type':int,'read':self.getBufferSize,'write':self.setBufferSize,'help':'Buffer size for the average'})
-        config.append({'element':'variable','name':'wavelength','type':float,'unit':'nm','read':self.getWavelength,'write':self.setWavelength,'help':'Wavelength of the measure'})
-        config.append({'element':'variable','name':'power','type':float,'unit':'W','read':self.getPower,'help':'Current power'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'averaging','type':bool,'read':self.get_averaging_state,'write':self.set_averaging_state,'help':'Average or not the measure'})
+        model.append({'element':'variable','name':'buffer_size','type':int,'read':self.get_buffer_size,'write':self.set_buffer_size,'help':'Buffer size for the average'})
+        model.append({'element':'variable','name':'wavelength','type':float,'unit':'nm','read':self.get_wavelength,'write':self.set_wavelength,'help':'Wavelength of the measure'})
+        model.append({'element':'variable','name':'power','type':float,'unit':'W','read':self.get_power,'help':'Current power'})
+        return model
         
     
 

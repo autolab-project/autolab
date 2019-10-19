@@ -17,53 +17,53 @@ class Driver():
     def wait(self):
         self.getID() # Not fantastic but programming interface really basic
              
-    def getID(self):
+    def get_id(self):
         return self.query('*IDN?')
     
-    def setFrequency(self,value):
+    def set_frequency(self,value):
         self.write(f"F={value}")
         self.wait()
         
-    def getFrequency(self):
+    def get_frequency(self):
         return self.query("F?")
 
-    def setWavelength(self,value):
+    def set_wavelength(self,value):
         self.write(f"L={value}")
         self.wait()
         
-    def getWavelength(self):
+    def get_wavelength(self):
         return self.query("L?")
     
-    def setPower(self,value):
+    def set_power(self,value):
         self.write(f"P={float(value)}")
-        if value == 0 : self.setOutput(False)
+        if value == 0 : self.set_output(False)
         else : 
-            if self.getOutput() is False : self.setOutput(True)
+            if self.get_output() is False : self.set_output(True)
         self.wait()
         
-    def getPower(self):
+    def get_power(self):
         ans=self.query("P?")
         if ans == 'DISABLED' : return 0
         else : return ans
     
-    def setIntensity(self,value):
+    def set_intensity(self,value):
         self.write(f"I={float(value)}")
-        if value == 0 : self.setOutput(False)
+        if value == 0 : self.set_output(False)
         else :
-            if self.getOutput() is False : self.setOutput(True)
+            if self.get_output() is False : self.set_output(True)
         self.wait()
         
-    def getIntensity(self):
+    def get_intensity(self):
         ans=self.query("I?")
         if isinstance(ans,str) is True and ans == 'DISABLED' : return 0
         else : return ans
         
-    def setOutput(self,state):
+    def set_output(self,state):
         if state is True : self.write("ENABLE")
         else : self.write("DISABLE")
         self.wait()
         
-    def getOutput(self):
+    def get_output(self):
         ans = self.query("P?")
         if ans == 'DISABLED' : return False
         else : return True
@@ -71,36 +71,36 @@ class Driver():
         
         
         
-    def getMotorSpeed(self):
+    def get_motor_speed(self):
         return self.query("MOTOR_SPEED?")   
  
     
-    def setMotorSpeed(self,value):  # from 1 to 100 nm/s
+    def set_motor_speed(self,value):  # from 1 to 100 nm/s
         self.write("MOTOR_SPEED={float(value)}")
         self.wait()
 
 
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
         config = []
 
         config.append({'element':'variable','name':'wavelength','unit':'nm','type':float,
-                       'read':self.getWavelength,'write':self.setWavelength})
+                       'read':self.get_wavelength,'write':self.set_wavelength})
     
         config.append({'element':'variable','name':'frequency','unit':'GHz','type':float,
-                       'read':self.getFrequency,'write':self.setFrequency})
+                       'read':self.get_frequency,'write':self.set_frequency})
 
         config.append({'element':'variable','name':'power','unit':'mW','type':float,
-                       'read':self.getPower,'write':self.setPower})
+                       'read':self.get_power,'write':self.set_power})
 
         config.append({'element':'variable','name':'intensity','unit':'mA','type':float,
-                       'read':self.getIntensity,'write':self.setIntensity})
+                       'read':self.get_intensity,'write':self.set_intensity})
     
         config.append({'element':'variable','name':'output','type':bool,
-                       'read':self.getOutput,'write':self.setOutput})
+                       'read':self.get_output,'write':self.set_output})
 
-        config.append({'element':'variable','name':'motorSpeed','unit':'nm/s','type':float,
-                       'read':self.getMotorSpeed,'write':self.setMotorSpeed})
+        config.append({'element':'variable','name':'motor_speed','unit':'nm/s','type':float,
+                       'read':self.get_motor_speed,'write':self.set_motor_speed})
     
         return config
 
