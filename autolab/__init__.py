@@ -40,7 +40,7 @@ from .core.web import report,help
 from .core.recorder import Recorder, Recorder_V2
 
 # GUI
-from .gui import gui
+from .core.gui import start as gui
 
     
 del os, shutil

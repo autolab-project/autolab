@@ -5,6 +5,7 @@ Created on Fri Oct 18 22:20:14 2019
 @author: qchat
 """
 
+import os
 
 import inspect
 from .utilities import emphasize, clean_string
@@ -273,6 +274,9 @@ class Variable(Element):
         import numpy as np
         
         assert self.readable, f"The variable {self.name} is not configured to be measurable"
+        
+        if os.path.isdir(path) :
+            path = os.path.join(path,self.get_address()+'.txt')
         
         if value is None : value = self() # New measure if value not provided
         

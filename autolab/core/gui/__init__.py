@@ -19,7 +19,7 @@ quentin.chateiller@c2n.upsaclay.fr
 #        t=AppThread()
 #        t.start()
         
-def gui():
+def start():
     
     from PyQt5 import QtWidgets
     
