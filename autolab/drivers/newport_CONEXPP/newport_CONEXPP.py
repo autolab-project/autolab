@@ -19,7 +19,7 @@ import pandas as pd
 class Driver():
     
     category = 'Motion controller'
-    slot_naming = 'slot<NUM> = <MODULE_NAME>,<CALIBRATION_PATH>'
+    slot_config = '<MODULE_NAME>,<CALIBRATION_PATH>'
     
     def __init__(self,**kwargs):
         
