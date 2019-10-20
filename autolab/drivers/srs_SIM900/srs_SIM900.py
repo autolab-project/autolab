@@ -15,7 +15,7 @@ import time
 class Driver():
     
     category = 'Electrical frame'
-    slot_naming = 'slot<NUM> = <MODULE_NAME>'
+    slot_config = '<MODULE_NAME>'
     
     def __init__(self, **kwargs):
         

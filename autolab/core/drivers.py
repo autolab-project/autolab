@@ -134,15 +134,15 @@ def driver_help(driver_name):
     mess += '='*len(submess)+'\n'+submess+'\n'+'='*len(submess)+'\n\n'
 
     # Connections types
-    mess += 'Available connection(s):\n'
+    mess += 'Connections types:\n'
     connections = get_connection_names(driver_lib)
     for connection in connections : 
         mess += f' - {connection}\n'
     mess += '\n'
     
     # Modules
-    if hasattr(get_driver_class(driver_lib),'slotNaming') :
-        mess += 'Available modules(s):\n'
+    if hasattr(get_driver_class(driver_lib),'slot_config') :
+        mess += 'Modules:\n'
         modules = get_module_names(driver_lib)
         for module in modules : 
             moduleClass = get_module_class(driver_lib,module)
@@ -151,20 +151,21 @@ def driver_help(driver_name):
             mess += '\n'
         mess += '\n'
     
-    mess += f'Configuration example(s) for devices_index.ini:\n\n'
+    mess += f'Configuration example(s) for local_config.ini:\n\n'
     
     # Arguments of Driver class
     driver_class_args = ''
     defaults_args = get_class_args(get_driver_class(driver_lib))
     for key,value in defaults_args.items() :
         driver_class_args += f'{key} = {value}\n'
-    if hasattr(get_driver_class(driver_lib),'slot_naming') :
-        driver_class_args += get_driver_class(driver_lib).slot_naming+'\n'
+    if hasattr(get_driver_class(driver_lib),'slot_config') :
+        driver_class_args += f'slot1 = {get_driver_class(driver_lib).slot_config}\n'
+        driver_class_args += 'slot1_name = my_<MODULE_NAME>\n'
         
     # Arguments of Driver_XXX classes
     for connection in connections :
         
-        mess += '[myDeviceName]\n'
+        mess += f'[my_{driver_name}]\n'
         mess += f'driver = {driver_name}\n'
         mess += f'connection = {connection}\n'
         

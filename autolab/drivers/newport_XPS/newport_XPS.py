@@ -12,7 +12,7 @@ from XPS import XPS
 class Driver():
     
     category = 'Motion controller'
-    slot_naming = 'slot<NUM> = <MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
+    slot_config = '<MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
 
     def __init__(self,**kwargs):
         
