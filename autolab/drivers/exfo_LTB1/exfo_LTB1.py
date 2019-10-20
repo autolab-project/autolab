@@ -10,20 +10,24 @@ Supported instruments (identified):
 class Driver():
     
     category = 'Optical frame'
-    slot_naming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>'
     
     def __init__(self,**kwargs):
         
-        # Submodules
-        self.slot_names = []
+        # Submodules loading
+        self.slot_names = {}
         prefix = 'slot'
         for key in kwargs.keys():
-            if key.startswith(prefix):
+            if key.startswith(prefix) and not '_name' in key :
                 slot_num = key[len(prefix):]
-                module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
-                setattr(self,name,module(self,slot_num))
-                self.slot_names.append(name)       
+                module_name = kwargs[key].strip()
+                module_class = globals()[f'Module_{module_name}']
+                if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
+                else : name = f'{key}_{module_name}'
+                setattr(self,name,module_class(self,slot_num))
+                self.slot_names[slot_num] = name
+                
+
         
     def get_id(self):
         return self.write('*IDN?')
@@ -31,7 +35,7 @@ class Driver():
     
     def get_driver_model(self):
         model = []
-        for name in self.slot_names :
+        for name in self.slot_names.values() :
             model.append({'element':'module','name':name,'object':getattr(self,name)})
         return model
     

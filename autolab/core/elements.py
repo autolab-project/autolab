@@ -20,17 +20,14 @@ class Element() :
         self._parent = parent
         self._help = None
         
-    def get_address(self):
+    def address(self):
     
         """ Returns the address of the given element.
         <module.submodule.variable> """
+        
+        if self._parent is not None : return self._parent.address()+'.'+self.name
+        else : return self.name
     
-        address = [self.name]
-        parent_element = self._parent
-        while parent_element is not None : 
-            address.append(parent_element.name)
-            parent_element = parent_element._parent
-        return '.'.join(address[::-1])
 
 
 
@@ -53,7 +50,7 @@ class Module(Element):
         
         # Help
         if 'help' in config.keys():
-            assert isinstance(config['help'],str), f"Module {self.get_address()} configuration: Help parameter must be a string"
+            assert isinstance(config['help'],str), f"Module {self.address()} configuration: Help parameter must be a string"
             self._help = config['help']
      
         # Loading instance
@@ -224,34 +221,34 @@ class Variable(Element):
         import pandas as pd
         
         # Type
-        assert 'type' in config.keys(), f"Variable {self.get_address()}: Missing variable type"
-        assert config['type'] in [int,float,bool,str,bytes,pd.DataFrame,np.ndarray], f"Variable {self.get_address()} configuration: Variable type not supported in usit"
+        assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
+        assert config['type'] in [int,float,bool,str,bytes,pd.DataFrame,np.ndarray], f"Variable {self.address()} configuration: Variable type not supported in usit"
         self.type = config['type']
         
         # Read and write function
-        assert 'read' in config.keys() or 'write' in config.keys(), f"Variable {self.get_address()} configuration: no 'read' nor 'write' functions provided"
+        assert 'read' in config.keys() or 'write' in config.keys(), f"Variable {self.address()} configuration: no 'read' nor 'write' functions provided"
         
         # Read function
         self.read_function = None
         if 'read' in config.keys():
-            assert inspect.ismethod(config['read']), f"Variable {self.get_address()} configuration: Read parameter must be a function"
+            assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
             
         # Write function
         self.write_function = None
         if 'write' in config.keys():
-            assert inspect.ismethod(config['write']), f"Variable {self.get_address()} configuration: Write parameter must be a function"
+            assert inspect.ismethod(config['write']), f"Variable {self.address()} configuration: Write parameter must be a function"
             self.write_function = config['write']
         
         # Unit
         self.unit = None
         if 'unit' in config.keys():
-            assert isinstance(config['unit'],str), f"Variable {self.get_address()} configuration: Unit parameter must be a string"
+            assert isinstance(config['unit'],str), f"Variable {self.address()} configuration: Unit parameter must be a string"
             self.unit = config['unit']
             
         # Help
         if 'help' in config.keys():
-            assert isinstance(config['help'],str), f"Variable {self.get_address()} configuration: Info parameter must be a string"
+            assert isinstance(config['help'],str), f"Variable {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
                 
         # Properties
@@ -276,7 +273,7 @@ class Variable(Element):
         assert self.readable, f"The variable {self.name} is not configured to be measurable"
         
         if os.path.isdir(path) :
-            path = os.path.join(path,self.get_address()+'.txt')
+            path = os.path.join(path,self.address()+'.txt')
         
         if value is None : value = self() # New measure if value not provided
         
@@ -349,13 +346,13 @@ class Action(Element):
         Element.__init__(self,parent,'action',config['name'])
         
         # Do function
-        assert 'do' in config.keys(), f"Action {self.get_address()}: Missing 'do' function"
-        assert inspect.ismethod(config['do']), f"Action {self.get_address()} configuration: Do parameter must be a function"
+        assert 'do' in config.keys(), f"Action {self.address()}: Missing 'do' function"
+        assert inspect.ismethod(config['do']), f"Action {self.address()} configuration: Do parameter must be a function"
         self.function = config['do'] 
         
         # Help
         if 'help' in config.keys():
-            assert isinstance(config['help'],str), f"Action {self.get_address()} configuration: Info parameter must be a string"
+            assert isinstance(config['help'],str), f"Action {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
         
         

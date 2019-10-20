@@ -67,11 +67,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function will create the first items in the tree, but will 
         associate only the ones already loaded in autolab """
         
-        for devName in autolab.devices.list() :
+        for devName in autolab.list_devices() :
             item = TreeWidgetItemModule(self.tree,devName,self)
             for i in range(5) :
                 item.setBackground(i, QtGui.QColor('#9EB7F5')) #vert
-            if devName in autolab.devices.get_loaded_devices() :
+            if devName in autolab.list_devices_loaded() :
                 self.associate(item)
         
         
@@ -120,19 +120,22 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         """ Function called to associate a main module to one item in the tree """
         
-        self.setStatus(f'Loading device {item.name}...')
+        
          
         # Try to get / instantiated the device
         check = False
         try : 
-            module = getattr(autolab.devices,item.name)
+            self.setStatus(f'Loading device {item.name}...')
+            module = autolab.get_device(item.name)
             check = True
+            self.clearStatus()
         except Exception as e : 
             self.setStatus(f'An error occured when loading device {item.name} : {str(e)}')
             
         # If success, load the entire module (submodules, variables, actions)
         if check is True : 
             item.load(module)
+            
                     
                 
             

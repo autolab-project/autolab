@@ -103,12 +103,7 @@ class Driver_VISA(Driver):
         except : pass
 
     def query(self,command):
-        result = self.controller.query(command)
-        result = result.strip('\n')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
-        return result
+        return self.controller.query(command).strip('\n')
     
     def write(self,command):
         self.controller.write(command)

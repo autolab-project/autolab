@@ -15,7 +15,7 @@ import time
 class Driver():
     
     category = 'Electrical frame'
-    slot_naming = 'slot<NUM> = <MODULE_NAME>,<SLOT_NAME>'
+    slot_naming = 'slot<NUM> = <MODULE_NAME>'
     
     def __init__(self, **kwargs):
         
@@ -23,16 +23,19 @@ class Driver():
         self.write('EOIX ON')
         self.write('TERM LF')
         
-        # Submodules
+        # Submodules loading
         self.slot_names = {}
         prefix = 'slot'
         for key in kwargs.keys():
-            if key.startswith(prefix):
+            if key.startswith(prefix) and not '_name' in key :
                 slot_num = key[len(prefix):]
-                module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
-                name = kwargs[key].split(',')[1].strip()
-                setattr(self,name,module(self,slot_num))
-                self.slot_names[key] = name
+                module_name = kwargs[key].strip()
+                module_class = globals()[f'Module_{module_name}']
+                if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
+                else : name = f'{key}_{module_name}'
+                setattr(self,name,module_class(self,slot_num))
+                self.slot_names[slot_num] = name
+                
         
     
     def send_command_to_slot(self,slot,command):

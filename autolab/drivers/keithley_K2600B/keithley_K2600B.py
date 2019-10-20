@@ -59,9 +59,6 @@ class Driver_VISA(Driver):
     def query(self,command):
         result = self.controller.query(command)
         result = result.strip('\n')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
         return result
     
     def write(self,command):

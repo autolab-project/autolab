@@ -68,7 +68,7 @@ class DataManager :
             
             path = str(QtWidgets.QFileDialog.getExistingDirectory(self.gui, 
                                                               "Select Directory",
-                                                              paths.USER_LAST_CUSTOM_FOLDER_PATH))
+                                                              paths.USER_LAST_CUSTOM_FOLDER))
      
             if path != '' :
                 self.gui.statusBar.showMessage(f'Saving data...',5000)
@@ -105,7 +105,7 @@ class DataManager :
     def newDataset(self,config):
         
         """ This function creates and returns a new empty dataset """
-        
+
         dataset = Dataset(self.gui,config)
         self.datasets.append(dataset)
         self.gui.progressBar.setMaximum(config['nbpts'])
@@ -132,7 +132,7 @@ class DataManager :
             
             # Updagte progress bar
             self.gui.progressBar.setValue(len(dataset))
-                
+            
             # Executed after the first start of a new config scan
             if self.initialized is False :
                 self.updateDisplayableResults()
@@ -197,8 +197,9 @@ class Dataset():
         
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
-        
-        return self.data.loc[:,varList]
+
+        if varList[0] == varList[1] : return self.data.loc[:,[varList[0]]]
+        else : return self.data.loc[:,varList]
     
     
     

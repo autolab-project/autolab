@@ -35,21 +35,21 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         self.module = module
         
         # Submodules
-        subModuleNames = self.module.getModuleList()
+        subModuleNames = self.module.list_modules()
         for subModuleName in subModuleNames : 
             subModule = getattr(self.module,subModuleName)
             item = TreeWidgetItemModule(self, subModuleName,self.gui)
             item.load(subModule)
             
         # Variables
-        varNames = self.module.getVariableList()
+        varNames = self.module.list_variables()
         for varName in varNames : 
             variable = getattr(self.module,varName)
             TreeWidgetItemVariable(self, variable,self.gui)
             
         
         # Actions
-        actNames = self.module.getActionList()
+        actNames = self.module.list_actions()
         for actName in actNames : 
             action = getattr(self.module,actName)
             TreeWidgetItemAction(self, action,self.gui)
@@ -130,13 +130,13 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         
         self.monitor = None
         
-        # Signal creation and associations in autolab.devices instances         
+        # Signal creation and associations in autolab devices instances         
         self.readSignal = ReadSignal()
         self.readSignal.signal.connect(self.writeGui)
-        self.variable._readSignal = self.readSignal
+        self.variable._read_signal = self.readSignal
         self.writeSignal = WriteSignal()
         self.writeSignal.signal.connect(self.valueEdited)
-        self.variable._writeSignal = self.writeSignal
+        self.variable._write_signal = self.writeSignal
         
         # Main - Column 1 : Creation of a READ button
         if self.variable.readable and self.variable.type in [int,float,bool,str] :
@@ -273,7 +273,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         saveAction = menu.addAction("Read and save as...")
         
         monitoringAction.setEnabled( self.variable.readable and self.variable.numerical )
-        scanParameterAction.setEnabled(self.variable.parameterAllowed)
+        scanParameterAction.setEnabled(self.variable.parameter_allowed)
         scanMeasureStepAction.setEnabled(self.variable.readable)
         saveAction.setEnabled(self.variable.readable)
         scanSetStepAction.setEnabled(self.variable.writable)
@@ -295,15 +295,16 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def saveValue(self):
         
         path = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value", 
-                                        os.path.join(paths.USER_LAST_CUSTOM_FOLDER_PATH,f'{self.variable.name}.txt'), 
+                                        os.path.join(paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'), 
                                         "Text file (*.txt)")[0]
         if path != '' :
-            paths.USER_LAST_CUSTOM_FOLDER_PATH = path
+            paths.USER_LAST_CUSTOM_FOLDER = path
             try : 
+                self.gui.statusbar.showMessage(f"Saving value of {self.variable.name}...",5000)
                 self.variable.save(path)
-                self.gui.statusBar.showMessage(f"Value of {self.name} successfully read and save at {path}",5000)
+                self.gui.statusbar.showMessage(f"Value of {self.variable.name} successfully read and save at {path}",5000)
             except Exception as e :
-                self.gui.statusBar.showMessage(f"An error occured: {str(e)}",10000)
+                self.gui.statusbar.showMessage(f"An error occured: {str(e)}",10000)
             
 
 

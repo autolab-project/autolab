@@ -23,7 +23,7 @@ class Driver() :
         self.write(f"CPU="+str(value))
         
     def get_power(self):
-        return self.query('CPU?')
+        return float(self.query('CPU?').split('=')[1])
     
     def get_driver_model(self):
         model = []
@@ -49,9 +49,6 @@ class Driver_VISA(Driver):
     def query(self,command):
         result = self.controller.query(command) 
         result = result.strip('\x00')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
         return result
 
     def write(self,command):

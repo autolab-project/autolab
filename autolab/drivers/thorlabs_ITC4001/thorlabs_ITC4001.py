@@ -16,7 +16,6 @@ class Driver():
 
     def amplitude(self,amplitude):
         self.write(f'SOUR:CURR {amplitude}\n')
-        print(f'\nSetting current to: {amplitude}V\n')
             
     def get_driver_model(self):
         config = []        

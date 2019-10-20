@@ -49,7 +49,7 @@ class DataManager :
         
         """ This function save the data in a file, in the provided path """
         
-        df = pd.DataFrame({'Time [s]':self.xlist,f'{self.gui.variable.name}':self.ylist})
+        df = pd.DataFrame({'Time [s]':self.xlist,f'{self.gui.variable.address()}':self.ylist})
         df.to_csv(os.path.join(path,'data.txt'),index=False)
         
         

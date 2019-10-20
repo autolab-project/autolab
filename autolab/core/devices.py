@@ -14,7 +14,7 @@ from .utilities import emphasize
 DEVICES = {}
 
 
-def get_element_by_address(self,address):
+def get_element_by_address(address):
     
     """ Returns the Element located at the provided address """
     
@@ -55,6 +55,14 @@ def list_devices():
 
 
 
+def list_devices_loaded():
+    
+    ''' Returns the list of the loaded devices '''
+    
+    return list(DEVICES.keys())
+
+
+
 def show_devices():
     
     ''' Display the help of the devices, that consists in a list of available
@@ -83,7 +91,7 @@ class Device(Module):
         assert device_name not in DEVICES.keys(), f'Device {device_name} is already open.'
         
         Module.__init__(self,None,{'name':device_name,
-                                   'object':autolab.get_driver_from_config(device_name),
+                                   'object':autolab.get_driver_by_config(device_name),
                                    'help':f'Device {device_name}'})
 
         DEVICES[self.name] = self

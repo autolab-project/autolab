@@ -21,7 +21,7 @@ class FigureManager :
         matplotlib.rcParams.update({'font.size': 12})
         self.ax = self.fig.add_subplot(111)        
         self.ax.set_xlabel('Time [s]')
-        ylabel = f'{self.gui.variable.getAddress()}'
+        ylabel = f'{self.gui.variable.address()}'
         if self.gui.variable.unit is not None :
             ylabel += f' ({self.gui.variable.unit})'
         self.ax.set_ylabel(ylabel)
