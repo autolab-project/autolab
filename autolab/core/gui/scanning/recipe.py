@@ -80,7 +80,7 @@ class RecipeManager :
                 item.setText(1,'Do action')
                             
             # Column 3 : Element address
-            item.setText(2,step['element'].getAddress())
+            item.setText(2,step['element'].address())
             
             # Column 4 : Value if stepType is 'set'
             value = step['value']

@@ -17,7 +17,7 @@ from .utilities import emphasize
 # DRIVERS INSTANTIATION
 # =============================================================================
 
-def get_driver_from_config(config_name,**kwargs):
+def get_driver_by_config(config_name,**kwargs):
     
     ''' Returns a driver instance using the configuration config_name, overwritted by kwargs '''
     

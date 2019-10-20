@@ -16,26 +16,23 @@ class Driver():
 
     def __init__(self,**kwargs):
         
-        # Submodules
-        self.slot_names = []
-        prefix = 'slot'        
+        # Submodules loading
+        self.slot_names = {}
+        prefix = 'slot'
         for key in kwargs.keys():
             if key.startswith(prefix) and not '_name' in key :
                 slot_num = key[len(prefix):]
-                module = globals()[ 'Module_'+kwargs[key].split(',')[0].strip() ]
-                
-                calibration_path = kwargs[key].split(',')[2].strip()
-                if prefix+in kwargs.keys(): : name = 
-                    
-                name = kwargs[key].split(',')[1].strip()
-                setattr(self,name,module(self,name,calibration_path))
-                self.slot_names.append(name)
+                module_name, name_in_xps, calib_path = [a.strip() for a in kwargs[key].split(',')]
+                module_class = globals()[f'Module_{module_name}']
+                if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
+                else : name = f'{key}_{module_name}'
+                setattr(self,name,module_class(self,name_in_xps,calib_path))
+                self.slot_names[slot_num] = name
 
         
     def get_driver_model(self):
-        model = []
-        for name in self.slotnames :
-            model.append({'element':'module','name':name,'object':getattr(self,name)})
+        model = [{'element':'module','name':name,'object':getattr(self,name)}
+                 for name in self.slot_names.values() ]
         return model
 
     

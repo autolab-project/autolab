@@ -103,6 +103,7 @@ class FigureManager :
         
         datas = [getattr(curve,f'get_{axe}data')() for curve in self.curves]
         if len(datas)>0 :
+            min([min(data) for data in datas])
             minValue = min([min(data) for data in datas])
             maxValue = max([max(data) for data in datas])
             if (minValue,maxValue) != self.getRange(axe) :
@@ -122,6 +123,7 @@ class FigureManager :
         state = getattr(self.gui,f'logScale_{axe}_checkBox').isChecked()
         self.setLogScale(axe,state)
         self.redraw()
+        
         
     
     def isLogScaleEnabled(self,axe):
@@ -217,34 +219,39 @@ class FigureManager :
         self.setLabel('y',variable_y)
         
         # Load the last results data
-        data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y])       
+        try :
+            data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y])       
+        except :
+            data = None
         
         # Plot them
-        for i in range(len(data)) :
-                            
-            # Data
-            subdata = data[i]
-            subdata = subdata.astype(float)
-            x = subdata.loc[:,variable_x]
-            y = subdata.loc[:,variable_y]
+        if data is not None :
             
-            # Apprearance:    
-            if i == (len(data)-1) :      
-                color = 'r'
-                alpha = 1
-            else:
-                color = 'k'
-                alpha = (self.nbtraces-(len(data)-1-i))/self.nbtraces
+            for i in range(len(data)) :
+                                
+                # Data
+                subdata = data[i]
+                subdata = subdata.astype(float)
+                x = subdata.loc[:,variable_x]
+                y = subdata.loc[:,variable_y]
+                
+                # Apprearance:    
+                if i == (len(data)-1) :      
+                    color = 'r'
+                    alpha = 1
+                else:
+                    color = 'k'
+                    alpha = (self.nbtraces-(len(data)-1-i))/self.nbtraces
+                
+                # Plot
+                curve = self.ax.plot(x,y,'x-',color=color,alpha=alpha)[0]
+                self.curves.append(curve)
             
-            # Plot
-            curve = self.ax.plot(x,y,'x-',color=color,alpha=alpha)[0]
-            self.curves.append(curve)
+            # Autoscale
+            if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
+            if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
             
-        # Autoscale
-        if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
-        if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
-        
-        self.redraw()
+            self.redraw()
         
         
         
@@ -276,7 +283,7 @@ class FigureManager :
         """ This function is called when the displayed result has been changed in
         the combo box. It proceeds to the change. """
         
-        self.clearData()
+        self.clearData()        
         
         if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1 : 
             self.reloadData()

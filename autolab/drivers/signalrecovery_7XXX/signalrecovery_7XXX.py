@@ -23,19 +23,19 @@ class Driver():
         time.sleep(4*self.get_time_constant())
 
     def get_magnitude(self):
-        return float(self.query("MAG."))
+        return float(self.query("MAG.").split('=')[1])
 
     def get_phase(self):
-        return float(self.query("PHA."))
+        return float(self.query("PHA.").split('=')[1])
     
     def get_ref_frequency(self):
-        return float(self.query('FRQ.'))
+        return float(self.query('FRQ.').split('=')[1])
 
     def get_time_constant(self):
-        return float(self.query('TC.'))
+        return float(self.query('TC.').split('=')[1])
     
     def get_sensitivity(self):
-        return float(self.query('SEN.'))
+        return float(self.query('SEN.').split('=')[1])
     
     
     def get_driver_model(self):
@@ -70,9 +70,6 @@ class Driver_VISA(Driver):
     def query(self,command):
         result = self.controller.query(command)
         result = result.strip('\n')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
         return result
     
     def write(self,command):
@@ -98,9 +95,6 @@ class Driver_SOCKET(Driver):
         self.controller.send(command.encode())
         result = self.controller.recv(self.BUFFER_SIZE).decode()
         result = result.strip('\n\x00)\x00')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
         return result
     
     def close(self):

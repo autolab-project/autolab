@@ -304,11 +304,11 @@ class ConfigManager :
         and export the current scan configuration in it """
 
         path = QtWidgets.QFileDialog.getSaveFileName(self.gui, "Export AUTOLAB configuration file", 
-                                                     os.path.join(paths.USER_LAST_CUSTOM_FOLDER_PATH,'config.conf'), 
+                                                     os.path.join(paths.USER_LAST_CUSTOM_FOLDER,'config.conf'), 
                                                      "AUTOLAB configuration file (*.conf)")[0]
 
         if path != '' :
-            paths.USER_LAST_CUSTOM_FOLDER_PATH = path
+            paths.USER_LAST_CUSTOM_FOLDER = path
             
             try : 
                 self.export(path)
@@ -331,7 +331,7 @@ class ConfigManager :
         configPars['parameter'] = {}
         if self.config['parameter']['element'] is not None :
             configPars['parameter']['name'] = self.config['parameter']['name']
-            configPars['parameter']['address'] = self.config['parameter']['element'].getAddress()
+            configPars['parameter']['address'] = self.config['parameter']['element'].address()
         configPars['parameter']['nbpts'] = str(self.config['nbpts'])
         configPars['parameter']['start_value'] = str(self.config['range'][0])
         configPars['parameter']['end_value'] = str(self.config['range'][1])
@@ -341,7 +341,7 @@ class ConfigManager :
         for i in range(len(self.config['recipe'])) :
             configPars['recipe'][f'{i+1}_name'] = self.config['recipe'][i]['name']
             configPars['recipe'][f'{i+1}_stepType'] = self.config['recipe'][i]['stepType']
-            configPars['recipe'][f'{i+1}_address'] = self.config['recipe'][i]['element'].getAddress()
+            configPars['recipe'][f'{i+1}_address'] = self.config['recipe'][i]['element'].address()
             if self.config['recipe'][i]['stepType'] == 'set' :
                 value = self.config['recipe'][i]['value']
                 if self.config['recipe'][i]['element'].type in [str] :
@@ -361,7 +361,7 @@ class ConfigManager :
         and import the current scan configuration from it """
         
         path = QtWidgets.QFileDialog.getOpenFileName(self.gui, "Import AUTOLAB configuration file", 
-                                                     paths.USER_LAST_CUSTOM_FOLDER_PATH,
+                                                     paths.USER_LAST_CUSTOM_FOLDER,
                                                      "AUTOLAB configuration file (*.conf)")[0]
         if path != '' :
             
@@ -374,7 +374,7 @@ class ConfigManager :
                 config = {}
                 
                 if 'address' in configPars['parameter'] :
-                    element = autolab.devices.getElementByAddress(configPars['parameter']['address'])
+                    element = autolab.get_element_by_address(configPars['parameter']['address'])
                     assert element is not None, f"Parameter {configPars['parameter']['address']} not found."
                     assert 'name' in configPars['parameter'], f"Parameter name not found."
                     config['parameter'] = {'element':element,'name':configPars['parameter']['name']}
@@ -407,7 +407,7 @@ class ConfigManager :
                         
                         assert f'{i}_address' in configPars['recipe'], f"Missing address in step {i} ({name})."
                         address = configPars['recipe'][f'{i}_address']
-                        element = autolab.devices.getElementByAddress(address)
+                        element = autolab.get_element_by_address(address)
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
                         

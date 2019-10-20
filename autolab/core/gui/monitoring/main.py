@@ -114,15 +114,15 @@ class Monitor(QtWidgets.QMainWindow):
         
         # Make sure the monitoring is paused
         if self.monitorManager.isPaused() is False :
-            self.monitorManager.pauseButtonClicked()
+            self.pauseButtonClicked()
         
         # Ask the path of the output folder
-        path = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory",paths.USER_LAST_CUSTOM_FOLDER_PATH))
+        path = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory",paths.USER_LAST_CUSTOM_FOLDER))
         
         # Save the given path for future, the data and the figure if the path provided is valid
         if path != '' :
             
-            paths.USER_LAST_CUSTOM_FOLDER_PATH = path
+            paths.USER_LAST_CUSTOM_FOLDER = path
             self.statusBar.showMessage('Saving data...',5000)
             
             try : 

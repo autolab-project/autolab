@@ -32,7 +32,7 @@ class ParameterManager :
         if parameter is not None :
             name = self.gui.configManager.getParameterName()
             self.gui.parameterName_lineEdit.setEnabled(True)
-            address = parameter.getAddress()
+            address = parameter.address()
             unit = parameter.unit
         else :
             name = ''

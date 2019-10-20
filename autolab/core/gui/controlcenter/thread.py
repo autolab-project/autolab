@@ -28,9 +28,9 @@ class ThreadManager :
         self.gui.tree.setEnabled(False)
         
         # Status writing
-        if intType == 'read' : status = f'Reading {item.variable.getAddress()}...'
-        elif intType == 'write' : status = f'Writing {item.variable.getAddress()}...'
-        elif intType == 'execute' : status = f'Executing {item.action.getAddress()}...'
+        if intType == 'read' : status = f'Reading {item.variable.address()}...'
+        elif intType == 'write' : status = f'Writing {item.variable.address()}...'
+        elif intType == 'execute' : status = f'Executing {item.action.address()}...'
         self.gui.setStatus(status)
 
         # Thread configuration

@@ -15,7 +15,7 @@ class Driver():
         self.write('MW')
         
     def wait(self):
-        self.getID() # Not fantastic but programming interface really basic
+        self.getID() # Not fantastic but the tunics API is really basic
              
     def get_id(self):
         return self.query('*IDN?')
@@ -25,14 +25,14 @@ class Driver():
         self.wait()
         
     def get_frequency(self):
-        return self.query("F?")
+        return float(self.query("F?").split('=')[1])
 
     def set_wavelength(self,value):
         self.write(f"L={value}")
         self.wait()
         
     def get_wavelength(self):
-        return self.query("L?")
+        return float(self.query("L?").split('=')[1])
     
     def set_power(self,value):
         self.write(f"P={float(value)}")
@@ -44,7 +44,7 @@ class Driver():
     def get_power(self):
         ans=self.query("P?")
         if ans == 'DISABLED' : return 0
-        else : return ans
+        else : return float(ans.split('=')[1])
     
     def set_intensity(self,value):
         self.write(f"I={float(value)}")
@@ -55,8 +55,8 @@ class Driver():
         
     def get_intensity(self):
         ans=self.query("I?")
-        if isinstance(ans,str) is True and ans == 'DISABLED' : return 0
-        else : return ans
+        if ans == 'DISABLED' : return 0
+        else : return float(ans.split('=')[1])
         
     def set_output(self,state):
         if state is True : self.write("ENABLE")
@@ -69,10 +69,8 @@ class Driver():
         else : return True
         
         
-        
-        
     def get_motor_speed(self):
-        return self.query("MOTOR_SPEED?")   
+        return float(self.query("MOTOR_SPEED?").split('=')[1])
  
     
     def set_motor_speed(self,value):  # from 1 to 100 nm/s
@@ -127,9 +125,6 @@ class Driver_VISA(Driver):
     def query(self,command):
         result = self.controller.query(command)
         result = result.strip('\n')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
         return result
     
     def write(self,command):
