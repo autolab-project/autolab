@@ -298,11 +298,10 @@ def list_driver_config():
 def load_drivers_infos():
     
     ''' Return the current autolab drivers informations : 
-        - the paths of the drivers              ['paths']
+        - the paths of the drivers
     '''
     
     paths = autolab.paths
-    infos = {}
     
     # Drivers : make a directory of the paths
     driver_dir_paths = []
@@ -312,13 +311,13 @@ def load_drivers_infos():
                             if os.path.isdir(os.path.join(driver_source,driver_name))
                             and f'{driver_name}.py' in os.listdir(os.path.join(driver_source,driver_name))]
 
-    infos['paths'] = {}
+    infos = {}
     for driver_dir_path in driver_dir_paths : 
         driver_name = os.path.basename(driver_dir_path)
-        assert driver_name not in infos['paths'].keys(), f"Each driver must have a unique name. ({driver_name})"
-        infos['paths'][driver_name] = driver_dir_path
+        assert driver_name not in infos.keys(), f"Each driver must have a unique name. ({driver_name})"
+        infos[driver_name] = driver_dir_path
         
-    return infos['paths']
+    return infos
 
 
 def load_config_infos():
@@ -327,14 +326,12 @@ def load_config_infos():
     '''
     
     paths = autolab.paths
-    infos = {}
     
     config = configparser.ConfigParser()
     config.read(paths.LOCAL_CONFIG)
     assert len(set(config.sections())) == len(config.sections()), f"Each device must have a unique name."
-    infos['config'] = config
     
-    return infos['config']
+    return config
 
 
 
