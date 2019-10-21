@@ -49,11 +49,11 @@ usage:    autolab-drivers [options] arg
 
     def do_something(self,args):
         assert args.wavelength or args.frequency, "Please provide EITHER current OR power"
-        if args.wavelength: getattr(self.Instance,'setWavelength')(args.wavelength)
-        elif args.frequency: getattr(self.Instance,'setFrequency')(args.frequency)
+        if args.wavelength: getattr(self.Instance,'set_wavelength')(args.wavelength)
+        elif args.frequency: getattr(self.Instance,'set_frequency')(args.frequency)
         assert args.current or args.power, "Please provide EITHER wavelength OR frequency"
-        if args.current: getattr(self.Instance,'setIntensity')(args.current)
-        elif args.power: getattr(self.Instance,'setPower')(args.power)
+        if args.current: getattr(self.Instance,'set_intensity')(args.current)
+        elif args.power: getattr(self.Instance,'set_power')(args.power)
         
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
