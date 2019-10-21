@@ -61,12 +61,15 @@ usage:    autolab-drivers [options] arg
                 if args.frequency:
                     getattr(getattr(self.Instance,f'channel{chan}'),'frequency')(args.frequency)
                 if args.dc_mode:
-                    getattr(getattr(self.Instance,f'channel{chan}'),'dc_mode')(args.uniform)
+                    getattr(getattr(self.Instance,f'channel{chan}'),'set_mode')('DC')
+                    getattr(getattr(self.Instance,f'channel{chan}'),'offset')(args.dc_mode)
                 if args.pulsemode:
                     if args.pulsemode[0]=="d": 
-                        getattr(getattr(self.Instance,f'channel{chan}'),'pulse_mode')(duty_cycle=args.pulsemode[1:])
+                        getattr(getattr(self.Instance,f'channel{chan}'),'set_mode')('PULS')
+                        getattr(getattr(self.Instance,f'channel{chan}'),'set_pulse_duty_cycle')(args.pulsemode[1:])
                     elif args.pulsemode[0]=="w":
-                        getattr(getattr(self.Instance,f'channel{chan}'),'pulse_mode')(width=args.pulsemode[1:])
+                        getattr(getattr(self.Instance,f'channel{chan}'),'set_mode')('PULS')
+                        getattr(getattr(self.Instance,f'channel{chan}'),'set_pulse_width')(args.pulsemode[1:])
                     else: print("pulse mode argument must start with either 'd' or 'w'")
         
         if args.methods:

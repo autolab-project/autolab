@@ -44,6 +44,8 @@ class Driver():
         
     def get_driver_model(self):
         model = []
+        for i in ['A','B','C']:
+            model.append({'element':'module','name':f'line{i}','object':getattr(self,f'trace{i}'), 'help':'Traces'})
         model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode'})
         model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
         return model
