@@ -20,8 +20,13 @@ class Driver():
         
     
     def idn(self):
-        self.write('*IDN?')
-        self.read()
+        return self.query('*IDN?')
+        
+    def get_driver_model(self):
+        model = []
+        for i in range(1,self.nb_channels+1):
+            model.append({'element':'module','name':f'channel{i}','object':getattr(self,f'channel{i}'), 'help':'Channels to address command to'})
+        return model
 
 
 #################################################################################
@@ -48,28 +53,55 @@ class Driver_VISA(Driver):
 ############################## Connections classes ##############################
 #################################################################################
 
+
 class Channel():
     def __init__(self,dev,channel):
         self.channel = int(channel)
         self.dev     = dev
-        
+
+
+    def arbitrary_mode(self,waveform,round_factor=4):
+        assert len(waveform) <= 524288, "Don't overcome Sample max of 524288"
+        waveform = ''.join([str(round(waveform[i],round_factor))+',' for i in range(len(waveform))])[:-1]
+        self.dev.write(f'DATA{self.channel} VOLATILE,{waveform}')
     def amplitude(self,amplitude):
         self.dev.write(f':VOLT{self.channel} {amplitude}')
     def offset(self,offset):
         self.dev.write(f':VOLT{self.channel}:OFFS {offset}')
     def frequency(self,frequency):
         self.dev.write(f':FREQ{self.channel} {frequency}')
+    
     def dc_mode(self,offset):
         self.dev.write(f':FUNC{self.channel} DC')
         self.offset(offset=offset)
-    def arbitrary_mode(self,waveform,round_factor=4):
-        assert len(waveform) <= 524288, "Don't overcome Sample max of 524288"
-        waveform = ''.join([str(round(waveform[i],round_factor))+',' for i in range(len(waveform))])[:-1]
-        self.dev.write(f'DATA{self.channel} VOLATILE,{waveform}')
     def pulse_mode(self,width=None,duty_cycle=None):
         assert not(duty_cycle and width), "Please provide either duty_cycle OR width"
         self.dev.write(f':FUNC{self.channel} PULS')
-        if duty_cycle: self.dev.write(f':PULS:DCYC{self.channel} {width}')
-        if width:      self.dev.write(f':PULS:WIDT{self.channel} {width}')
-        
-        
+        if duty_cycle: 
+        if width:      
+    
+    def set_mode(self,mode_name):
+        self.dev.write(f':FUNC{self.channel} {mode_name}')
+    def get_mode(self):
+        return self.dev.query(f':FUNC{self.channel}?')
+    
+    def set_pulse_duty_cycle(self,pulse_duty_cycle):
+        self.dev.write(f':PULS:DCYC{self.channel} {pulse_duty_cycle}')
+    def set_pulse_width(self,pulse_width):
+        self.dev.write(f':PULS:WIDT{self.channel} {pulse_width}')
+    
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'mode','write':self.set_mode,'read':self.get_mode,'type':str,'help':"Set the instrument operation mode (possibilities are: 'SIN','SQU','RAMP','PULS','NOIS','DC','USER'). Note: use 'USER' for arbitrary functions"})
+        model.append({'element':'variable','name':'pulse_duty_cycle','write':self.set_pulse_duty_cycle,'type':float,'help':"Set the duty cycle for pulse mode"})
+        model.append({'element':'variable','name':'pulse_width','write':self.set_pulse_width,'type':float,'help':"Set the pulse width for pulse mode"})
+        model.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':"Set the amplitude"})
+        model.append({'element':'variable','name':'offset','write':self.offset,'type':float,'help':"Set the offset"})
+        model.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':"Set the frequency"})
+        model.append({'element':'variable','name':'','write':,'read':,'type':,'help':""})
+
+        return model
+    
+    
+    
