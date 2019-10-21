@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using VISA communication protocol with address GPIB... and set the power to 10dBm
     
     autolab-drivers -D nickname -p 1
-    same as before but using the device nickname as defined in devices_index.ini
+    same as before but using the device nickname as defined in local_config.ini
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

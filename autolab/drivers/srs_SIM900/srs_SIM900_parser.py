@@ -33,13 +33,13 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using VISA and local network address 192.168.0.4 and set setpoint of SIM960(PID controller) to 2V module inserted in slots 3 and 5
     
     autolab-drivers -D nickname -c 2 -r 
-    Similar to previous one but using the device's nickname as defined in devices_index.ini and set output to pid control.
+    Similar to previous one but using the device's nickname as defined in local_config.ini and set output to pid control.
     
     autolab-drivers -D nickname -c 2 -u
-    Similar to previous one but using the device's nickname as defined in devices_index.ini and set output to manual.
+    Similar to previous one but using the device's nickname as defined in local_config.ini and set output to manual.
     
     autolab-drivers -D nickname -c 2 -a
-    Similar to previous one but using the device's nickname as defined in devices_index.ini and set output to manual to unlock and try relock.
+    Similar to previous one but using the device's nickname as defined in local_config.ini and set output to manual to unlock and try relock.
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
@@ -58,16 +58,25 @@ usage:    autolab-drivers [options] arg
     def do_something(self,args):
         if args.channels:
             for chan in args.channels.split(','):
-                assert f'slot{chan}' in getattr(self.Instance,f'{slotnames}').keys()
-                module = getattr(self.Instance,getattr(self.Instance,f'{slotnames}')[f'slot{chan}'])
+                assert f'{chan}' in getattr(self.Instance,f'slot_names').keys()
+                name_sub_module = getattr(self.Instance,f'slot_names')[f'{chan}']
+                sub_module = getattr(self.Instance,name_sub_module)
                 if args.setpoint:
-                    getattr(module,'set_setpoint')(args.setpoint)
+                    func_name = 'set_setpoint'
+                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
+                    getattr(sub_module,func_name)(args.setpoint)
                 if args.relock:
-                    getattr(module,'relock')()
+                    func_name = 'relock'
+                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
+                    getattr(sub_module,func_name)()
                 elif args.unlock:
-                    getattr(module,'set_output_manual')()
+                    func_name = 'set_output_manual'
+                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
+                    getattr(sub_module,func_name)()
                 elif args.auto_lock:
-                    getattr(module,'auto_lock')()
+                    func_name = 'auto_lock'
+                    assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
+                    getattr(sub_module,func_name)()
 
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]

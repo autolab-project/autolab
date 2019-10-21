@@ -31,7 +31,7 @@ class Driver():
     def get_exposure(self):
         return float(self.query('EXPTIME?'))
     def get_nb_frames(self):
-        self.write('NBFRAMES?')
+        return int(self.query('NBFRAMES?'))
     def list_cameras(self):
         return self.query('LISTCAMS?')
     
@@ -40,7 +40,7 @@ class Driver():
     def save_data_remote(self):
         self.write('SAVEDATA')
     def save_data(self,filename,FORCE=False):
-        temp_filename = f'{filename}_spectro32{self.camera}.txt'
+        temp_filename = f'{filename}_SPECTRO32{self.camera}.txt'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return

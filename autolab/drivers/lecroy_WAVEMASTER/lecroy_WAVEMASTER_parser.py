@@ -38,7 +38,7 @@ usage:    autolab-drivers [options] arg
     Results in saving two files for the trace 1, the data and the scope parameters, called respectively my_output_file_DSACHAN1 and my_output_file_DSACHAN1.log
     
     autolab-drivers -D nickname -o my_output_file -f WORD 
-    Same as previous will save all channels as None are specified and using the device nickname as defined in devices_index.ini. the encoding is set to WORD
+    Same as previous will save all channels as None are specified and using the device nickname as defined in local_config.ini. the encoding is set to WORD
     
     autolab-drivers -D nickname -o my_output_file -a 5,1,3 -b 8
     Vertical autoscale will be enabled for channels 1 and 3. They will both go through the optimization loop 5 times, and aiming 8 vertical divisions.

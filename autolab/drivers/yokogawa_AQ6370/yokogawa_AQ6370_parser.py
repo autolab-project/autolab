@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     Results in saving one file for the trace A, the data as seen on the scope and acquire ascii traces A and C in two different files my_output_file_AQ6370TRA.txt (and _AQ6370TRC).
     
     autolab-drivers -D nickname -o my_output_file -c A,B,C
-    Same as previous one but with 3 output files on per trace (A, B and C) and using the device nickname as defined in devices_index.ini
+    Same as previous one but with 3 output files on per trace (A, B and C) and using the device nickname as defined in local_config.ini
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

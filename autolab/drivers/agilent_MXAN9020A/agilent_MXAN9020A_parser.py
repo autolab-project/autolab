@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     Results in saving two files for the trace 1, the data and the scope parameters, called respectively my_output_file_DSACHAN1 and my_output_file_DSACHAN1.log
     
     autolab-drivers -D nickname -o my_output_file -c 1,3,6
-    Same as previous one but with 6 output files, two for each trace (1,3 and 6) and using the device nickname as defined in devices_index.ini
+    Same as previous one but with 6 output files, two for each trace (1,3 and 6) and using the device nickname as defined in local_config.ini
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

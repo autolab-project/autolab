@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using SOCKET communication protocol with address 192.168.0.2 and acquire data from Camera1 after 2 expositions of 0.1s each. Save those into my_file_name.txt.
     
     autolab-drivers -D nickname -a
-    Similar to previous one using device's nickname defined in devices_index.ini, get and save the data using auto vertical scale/exposure optimization loop (so as to maximize signal vertically).
+    Similar to previous one using device's nickname defined in local_config.ini, get and save the data using auto vertical scale/exposure optimization loop (so as to maximize signal vertically).
 
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

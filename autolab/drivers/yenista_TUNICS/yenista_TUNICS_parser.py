@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using VISA communication protocol with address GPIB... and set the wavelength to 1550.2nm and the power to 10mW.
     
     autolab-drivers -D nickname -a 100
-    Use now the device nickname as defined in devices_index.ini and set the pump current to 100mA.
+    Use now the device nickname as defined in local_config.ini and set the pump current to 100mA.
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

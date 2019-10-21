@@ -22,7 +22,7 @@ class Driver():
         self.write('HORizontal:RECOrdlength?')
         length = self.read()
         self.write('DAT:STAR 1')
-        self.write('DAT:STOP '+str(length))
+        self.write(f'DAT:STOP {length}')
         
         for i in range(1,self.nb_channels+1):
             setattr(self,f'channel{i}',Channel(self,i))
