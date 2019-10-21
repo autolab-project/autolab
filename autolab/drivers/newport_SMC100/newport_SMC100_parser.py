@@ -47,6 +47,15 @@ usage:    autolab-drivers [options] arg
         return parser
     
     def do_something(self,args):
+        #if args.channels:
+            #for chan in args.channels.split(','):
+                #assert f'{chan}' in getattr(self.Instance,f'slot_names').keys()
+                #name_sub_module = getattr(self.Instance,f'slot_names')[f'{chan}']
+                #sub_module = getattr(self.Instance,name_sub_module)
+                #if args.power:
+                    #func_name = 'setPower'
+                    #assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
+                    #getattr(sub_module,func_name)(args.power)
         #if args.filename:
             ##getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
             #getattr(self.Instance,'get_data_traces')(traces=args.channels)

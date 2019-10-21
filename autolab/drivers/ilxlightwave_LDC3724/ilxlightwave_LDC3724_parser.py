@@ -47,11 +47,11 @@ usage:    autolab-drivers [options] arg
 
     def do_something(self,args):
         if args.current:
-            getattr(getattr(self.Instance,'las'),'setCurrent')(args.current)
+            getattr(getattr(self.Instance,'las'),'set_current')(args.current)
         elif args.power:
-            getattr(getattr(self.Instance,'las'),'setPower')(args.power)
+            getattr(getattr(self.Instance,'las'),'set_power')(args.power)
         if args.temperature:
-            getattr(getattr(self.Instance,'tec'),'setTemperature')(args.temperature)
+            getattr(getattr(self.Instance,'tec'),'set_temperature')(args.temperature)
             
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]

@@ -275,6 +275,7 @@ def get_driver_config(config_name):
     ''' Returns the config associated with config_name '''
     
     assert config_name in list_driver_configs(), f"Configuration {config_name} not found"
+    DRIVERS_CONFIG = load_config_infos()
     return DRIVERS_CONFIG[config_name]
 
 
@@ -283,6 +284,7 @@ def list_driver_configs():
     
     ''' Returns the list of available configuration names '''
     
+    DRIVERS_CONFIG = load_config_infos()
     return list(DRIVERS_CONFIG.sections())
 
 
