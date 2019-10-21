@@ -24,14 +24,14 @@ class Driver():
     def parameter_buffer(self,value):
         pass
     
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
-        config.append({'element':'variable','name':'chronometer','type':float,'read':self.chronometer,'unit':'s','help':'Elapsed time since chronometer reset'})
-        config.append({'element':'action','name':'reset_chronometer','do':self.reset_chronometer,'help':'Reset the chronometer time'})
-        config.append({'element':'variable','name':'parameter_buffer','type':float,'write':self.parameter_buffer,'help':'Parameter buffer for monitoring in the scanning panel. Does nothing with the input value'})
+        model = []
+        model.append({'element':'variable','name':'chronometer','type':float,'read':self.chronometer,'unit':'s','help':'Elapsed time since chronometer reset'})
+        model.append({'element':'action','name':'reset_chronometer','do':self.reset_chronometer,'help':'Reset the chronometer time'})
+        model.append({'element':'variable','name':'parameter_buffer','type':float,'write':self.parameter_buffer,'help':'Parameter buffer for monitoring in the scanning panel. Does nothing with the input value'})
         
-        return config
+        return model
         
         
     

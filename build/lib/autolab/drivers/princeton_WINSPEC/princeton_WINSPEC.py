@@ -19,20 +19,19 @@ class Driver():
     
     def __init__(self):
                         
-        self.minCountsAllowed=5000
-        self.maxCountsAllowed=61000
-        self.nbPixelsFitBaseline=10 # en % du spectre à chaque extrémité
+        self.min_counts_allowed=5000
+        self.max_counts_allowed=61000
         
         # Defaults
-        self.autoBackgroundRemoval = False
-        self.autoExposureTime = True
+        self.auto_background_removal = False
+        self.auto_exposure_time = True
 		
-        self.data = {'exposureTime':None,'spectrum':None}
+        self.data = {'exposure_time':None,'spectrum':None}
         self.write('Initialize')
                 
         
         
-    def isConnected(self):
+    def is_connected(self):
         try :
             return bool(int(self.query('STATE?')))
         except :
@@ -43,42 +42,42 @@ class Driver():
 
         
         
-    def getExposureTime(self):
-        if self.data['exposureTime'] is None :
-            self.data['exposureTime'] = float(self.query('EXPTIME?'))
-        return self.data['exposureTime']
+    def get_exposure_time(self):
+        if self.data['exposure_time'] is None :
+            self.data['exposure_time'] = float(self.query('EXPTIME?'))
+        return self.data['exposure_time']
 
-    def setExposureTime(self,value):
+    def set_exposure_time(self,value):
         value=float(value)
         self.write(f'EXPTIME={value}')
-        self.data['exposureTime'] = float(self.query('EXPTIME?'))
+        self.data['exposure_time'] = float(self.query('EXPTIME?'))
         
         
         
         
         
     
-    def isAutoExposureTimeEnabled(self):
-        return self.autoExposureTime
+    def is_auto_exposure_time_enabled(self):
+        return self.auto_exposure_time
     
-    def setAutoExposureTimeEnabled(self,value):
+    def set_auto_exposure_time_enabled(self,value):
         assert isinstance(value,bool)
-        self.autoExposureTime = value
+        self.auto_exposure_time = value
         
         
         
         
         
         
-    def getSpectrum(self):
+    def get_spectrum(self):
         if self.data['spectrum'] is None :
-            self.acquireSpectrum()
+            self.acquire_spectrum()
         return self.data['spectrum']
     
     
-    def acquireSpectrum(self):
+    def acquire_spectrum(self):
             
-        if self.isAutoExposureTimeEnabled() :
+        if self.is_auto_exposure_time_enabled() :
             
             while True :
                 
@@ -86,20 +85,20 @@ class Driver():
                 spectrum = pd.read_json(self.query('SPECTRUM?'))
         
                 # Récupération des données
-                maxValue=max(spectrum['counts'])
+                max_value=max(spectrum['counts'])
                 
                 # Reduction du temps d'exposition
-                if maxValue>self.maxCountsAllowed : 
-                    exposureTime_save = self.getExposureTime()
-                    self.setExposureTime(self.getExposureTime()/10)
-                    if self.getExposureTime() == exposureTime_save :
+                if max_value>self.max_counts_allowed : 
+                    exposure_time_save = self.get_exposure_time()
+                    self.set_exposure_time(self.get_exposure_time()/10)
+                    if self.get_exposure_time() == exposure_time_save :
                         break
                 
                 # Augmentation du temps d'exposition
-                elif maxValue<self.minCountsAllowed : 
-                    exposureTime_save = self.getExposureTime()
-                    self.setExposureTime(self.getExposureTime()*self.maxCountsAllowed/maxValue*0.9)
-                    if self.getExposureTime() == exposureTime_save :
+                elif max_value<self.min_counts_allowed : 
+                    exposure_time_save = self.get_exposure_time()
+                    self.set_exposure_time(self.get_exposure_time()*self.max_counts_allowed/max_value*0.9)
+                    if self.get_exposure_time() == exposure_time_save :
                         break
                     
                 else :
@@ -114,17 +113,17 @@ class Driver():
 		
         self.data['spectrum'].sort_index(inplace=True)
         
-        if self.isAutoBackgroundRemovalEnabled():
+        if self.is_auto_background_removal_enabled():
             self.data['spectrum']['CountsWithoutBackground'] =(self.data['spectrum'].counts - self.getBackground())
-            self.data['spectrum']['power']=self.data['spectrum']['CountsWithoutBackground']/self.getExposureTime()
+            self.data['spectrum']['power']=self.data['spectrum']['CountsWithoutBackground']/self.get_exposure_time()
         else:
-            self.data['spectrum']['power']=self.data['spectrum']['counts']/self.getExposureTime()
+            self.data['spectrum']['power']=self.data['spectrum']['counts']/self.get_exposure_time()
 
             
             
     def getBackground(self):
         if self.data['spectrum'] is None :
-            self.acquireSpectrum()
+            self.acquire_spectrum()
             self.data['spectrum'].sort_index(inplace=True)
 
         total_rows = len(self.data['spectrum'].index)
@@ -134,17 +133,17 @@ class Driver():
         return mean_background
     
     
-    def isAutoBackgroundRemovalEnabled(self):
-        return self.autoBackgroundRemoval
+    def is_auto_background_removal_enabled(self):
+        return self.auto_background_removal
     
     
     
-    def setAutoBackgroundRemovalEnabled(self,value):
+    def set_auto_background_removal_enabled(self,value):
         assert isinstance(value,bool)
-        self.autoBackgroundRemoval = value
+        self.auto_background_removal = value
     
     
-    def getTemperature(self):
+    def get_temperature(self):
         return float(self.query('TEMP?'))
     
     
@@ -154,9 +153,9 @@ class Driver():
 
         
         
-    def getMainPeakWavelength(self):
+    def get_main_peak_wavelength(self):
         if self.data['spectrum'] is None :
-            self.acquireSpectrum()
+            self.acquire_spectrum()
         power = self.data['spectrum']['power']
         idx = (power-power.max()).abs().idxmin()
         return self.data['spectrum']['wavelength'].loc[idx]
@@ -165,33 +164,33 @@ class Driver():
     
     
     
-    def getMaxPower(self):
+    def get_max_power(self):
         if self.data['spectrum'] is None :
-            self.acquireSpectrum()
+            self.acquire_spectrum()
         return self.data['spectrum']['power'].max()
     
     
     
     
     
-    def getIntegratedPower(self):
+    def get_integrated_power(self):
         if self.data['spectrum'] is None :
-            self.acquireSpectrum()
+            self.acquire_spectrum()
         return np.trapz(self.data['spectrum']['power'],self.data['spectrum']['wavelength'])
     
     
     
     
-    def getMainPeakFWHM(self):
+    def get_main_peak_fwhm(self):
         
         if self.data['spectrum'] is None :
-            self.acquireSpectrum()
+            self.acquire_spectrum()
         
         power = self.data['spectrum']['power']
         
         # Recherche du max        
         idxMax=(power-power.max()).abs().idxmin()
-        halfPower=self.getMaximumPower()/2
+        halfPower=self.get_max_power()/2
                       
         # Recherche autour du pic
         for i in np.arange(idxMax,min(power.index.values),-1):
@@ -208,19 +207,19 @@ class Driver():
     
     
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'exposureTime','unit':'s','type':float,'read':self.getExposureTime,'write':self.setExposureTime,'help':'Exposure time of the camera'})
-        config.append({'element':'variable','name':'autoExposureTime','type':bool,'read':self.isAutoExposureTimeEnabled,'write':self.setAutoExposureTimeEnabled,'help':'Enable or not the auto exposure time mode'})
-        config.append({'element':'variable','name':'autoBackgroundRemoval','type':bool,'read':self.isAutoBackgroundRemovalEnabled,'write':self.setAutoBackgroundRemovalEnabled,'help':'Enable or not the auto background removal mode'})
-        config.append({'element':'variable','name':'spectrum','read':self.getSpectrum,'type':pd.DataFrame,'help':'Spectrum acquired'})
-        config.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.getTemperature,'help':'Temperature of the camera'})
-        config.append({'element':'variable','name':'mainPeakWavelength','type':float,'unit':'nm','read':self.getMainPeakWavelength,'help':'Wavelength of the main peak in the spectrum'})
-        config.append({'element':'variable','name':'mainPeakFWHM','type':float,'unit':'nm','read':self.getMainPeakFWHM,'help':'FWHM of the main peak in the spectrum'})
-        config.append({'element':'variable','name':'maxPower','type':float,'read':self.getMaxPower,'help':'Maximum power of the main peak in the spectrum'})
-        config.append({'element':'variable','name':'integratedPower','type':float,'read':self.getIntegratedPower,'help':'Integrated power of the spectrum'})
-        config.append({'element':'action','name':'acquire','do':self.acquireSpectrum,'help':'Acquire a spectrum'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'exposure_time','unit':'s','type':float,'read':self.get_exposure_time,'write':self.set_exposure_time,'help':'Exposure time of the camera'})
+        model.append({'element':'variable','name':'auto_exposure_time','type':bool,'read':self.is_auto_exposure_time_enabled,'write':self.set_auto_exposure_time_enabled,'help':'Enable or not the auto exposure time mode'})
+        model.append({'element':'variable','name':'auto_background_removal','type':bool,'read':self.is_auto_background_removal_enabled,'write':self.set_auto_background_removal_enabled,'help':'Enable or not the auto background removal mode'})
+        model.append({'element':'variable','name':'spectrum','read':self.get_spectrum,'type':pd.DataFrame,'help':'Spectrum acquired'})
+        model.append({'element':'variable','name':'temperature','type':float,'unit':'°C','read':self.get_temperature,'help':'Temperature of the camera'})
+        model.append({'element':'variable','name':'main_peak_wavelength','type':float,'unit':'nm','read':self.get_main_peak_wavelength,'help':'Wavelength of the main peak in the spectrum'})
+        model.append({'element':'variable','name':'main_peak_peak_fwhm','type':float,'unit':'nm','read':self.get_main_peak_fwhm,'help':'FWHM of the main peak in the spectrum'})
+        model.append({'element':'variable','name':'max_power','type':float,'read':self.get_max_power,'help':'Maximum power of the main peak in the spectrum'})
+        model.append({'element':'variable','name':'integrated_power','type':float,'read':self.get_integrated_power,'help':'Integrated power of the spectrum'})
+        model.append({'element':'action','name':'acquire','do':self.acquire_spectrum,'help':'Acquire a spectrum'})
+        return model
     
     
     

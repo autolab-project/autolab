@@ -56,7 +56,7 @@ def get_driver(driver_name, connection_type, **kwargs):
 
 def load_driver_lib(driver_name):
     
-    ''' Returns a driver library (that contains Driver, Driver_XXX, Module_XXX '''
+    ''' Returns a driver library (that contains Driver, Driver_XXX, Module_XXX) '''
     
     assert driver_name in DRIVERS_INFOS['paths'].keys(), f'Driver {driver_name} not found.'
     driver_dir_path = DRIVERS_INFOS['paths'][driver_name]
@@ -291,14 +291,13 @@ def list_driver_config():
 
 
 # =============================================================================
-# DRIVERS INFOS
+# DRIVERS and CONFIG INFOS
 # =============================================================================
 
 
 def load_drivers_infos():
     
-    ''' Return the current autolab drivers inforamations : 
-        - the content of the local_config file  ['config']
+    ''' Return the current autolab drivers informations : 
         - the paths of the drivers              ['paths']
     '''
     
@@ -319,19 +318,29 @@ def load_drivers_infos():
         assert driver_name not in infos['paths'].keys(), f"Each driver must have a unique name. ({driver_name})"
         infos['paths'][driver_name] = driver_dir_path
         
+    return infos['paths']
 
-    # Devices : returns the content of the DeviceIndex .ini file
+
+def load_config_infos():
+    ''' Return the current autolab drivers informations:
+        - the content of the local_config file  ['config']
+    '''
+    
+    paths = autolab.paths
+    infos = {}
+    
     config = configparser.ConfigParser()
     config.read(paths.LOCAL_CONFIG)
     assert len(set(config.sections())) == len(config.sections()), f"Each device must have a unique name."
     infos['config'] = config
     
-    return infos
+    return infos['config']
 
 
 
 
 
 # Loading the drivers informations at startup
-DRIVERS_INFOS = load_drivers_infos()     
+DRIVERS_INFOS = load_drivers_infos()
+CONFIG_INFOS  = load_config_infos()
         

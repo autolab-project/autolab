@@ -16,9 +16,8 @@ class Driver():
 
     def amplitude(self,amplitude):
         self.write(f'SOUR:CURR {amplitude}\n')
-        print(f'\nSetting current to: {amplitude}V\n')
             
-    def getDriverConfig(self):
+    def get_driver_model(self):
         config = []        
         config.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':"Set the pumping current value"})
         return config

@@ -14,24 +14,24 @@ class Driver() :
     def __init__(self):
         pass
 
-    def getID(self):
+    def get_id(self):
         return self.query('*IDN?')
     
-    def setResol(self,value):
+    def set_resol(self,value):
         self.write(f'RES {value}')
         self.query('*OPC?')
     
-    def getResol(self):
+    def get_resol(self):
         return self.query('RES?')
     
-    def setSpan(self, value):
+    def set_span(self, value):
         self.write(f'SPN {value}')
         self.query('*OPC?')
         
-    def getSpan(self):
+    def get_span(self):
         return self.query('SPN?')
     
-    def singleweep(self):    #single sweep measurement
+    def single_sweep(self):    #single sweep measurement
         self.write('SSI')
         self.query('*OPC?')
         

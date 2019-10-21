@@ -16,19 +16,19 @@ class Driver() :
     def __init__(self):
         pass
         
-    def getID(self):
+    def get_id(self):
         return self.query('*IDN?')
     
-    def setPower(self, value):             # For this model range is from 20dBm to 30dBm, 200=20dBm here 
+    def set_power(self, value):             # For this model range is from 20dBm to 30dBm, 200=20dBm here 
         self.write(f"CPU="+str(value))
         
-    def getPower(self):
-        return self.query('CPU?')
+    def get_power(self):
+        return float(self.query('CPU?').split('=')[1])
     
-    def getDriverConfig(self):
-        config = []
-        config.append({'element':'variable','name':'power','type':float,'read':self.getPower,'write':self.setPower, 'help':'Set power.'})
-        return config
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'power','type':float,'read':self.get_power,'write':self.set_power, 'help':'Set power.'})
+        return model
     
 #################################################################################
 ############################## Connections classes ##############################
@@ -49,9 +49,6 @@ class Driver_VISA(Driver):
     def query(self,command):
         result = self.controller.query(command) 
         result = result.strip('\x00')
-        if '=' in result : result = result.split('=')[1]
-        try : result = float(result)
-        except: pass
         return result
 
     def write(self,command):

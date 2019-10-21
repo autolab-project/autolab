@@ -8,10 +8,10 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),'autolab
 import paths
 import index
 import drivers_parser_utilities
-import config as local_config
+#import config as local_config
+import autolab
 
 
-PATHS     = paths.Paths()
 UTILITIES = drivers_parser_utilities.utilities()
 
 def main():
@@ -20,7 +20,7 @@ def main():
     args_to_pass,temp_args = init_argument_to_parse(accepted_arguments=accepted_arguments)    
     # Parser configuration can be use to write common options that won't be used by the first one
     parser = ArgumentParser(add_help=False)
-    parser.add_argument("-D", "--driver", type=str, dest="driver", default=None, help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_index.ini OR(if it is not) 2) Set the driver name to use." )
+    parser.add_argument("-D", "--driver", type=str, dest="driver", default=None, help="Set the nickname or driver to use: 1) uses nickname if it is defined in local_config.ini OR(if it is not) 2) Set the driver name to use." )
     parser.add_argument("-C", "--connection", type=str, dest="connection", default=None, help="Set the connection to use for the connection." )
     parser.add_argument("-A", "--address", type=str, dest="address", default=None, help="Set the address to use for the communication." )
     
@@ -34,13 +34,13 @@ def main():
     parser_additionnal.add_argument("-h","--useless",action='store_false',dest="useless", default=None, help="Useless, avoid breaking")
     args_additionnal, unknown = parser_additionnal.parse_known_args()
     
-    # Load devices_index.ini to find potentially defined devices (-D nickname option to use)
-    local_config.check(PATHS)
-    configparser = index.load(PATHS)
+    # Load local_config.ini to find potentially defined devices (-D nickname option to use)
+    configparser = autolab.CONFIG_INFOS
+    
     # Load the device or the driver
     if args.driver in configparser.sections():
         section = configparser[args.driver]
-        # WARNING will choose arguments provided by the user instead of devices_index.ini ones        
+        # WARNING will choose arguments provided by the user instead of local_config.ini ones        
         # Mandatory arguments
         args.driver = section['driver']
         if args.connection: pass
@@ -103,7 +103,7 @@ def import_module(name,Driver_path):
     return module
 
 def update_path(args):
-    Driver_path = [os.path.join(PATHS.DRIVERS_PATHS[key],args.driver) for key in PATHS.DRIVERS_PATHS.keys() if os.path.exists(os.path.join(PATHS.DRIVERS_PATHS[key],args.driver))]
+    Driver_path = [os.path.join(paths.DRIVER_SOURCES[key],args.driver) for key in paths.DRIVER_SOURCES.keys() if os.path.exists(os.path.join(paths.DRIVER_SOURCES[key],args.driver))]
     assert len(Driver_path) != 0, f"Warning: No driver found, full path was: {Driver_path}"
     assert len(Driver_path) == 1, f"Warning: More than one folder found with paths: {Driver_path}"
     Driver_path = Driver_path[0]
@@ -130,7 +130,7 @@ This is a very basic help message for usage of autolab-drivers. More info can be
     Usage:   autolab-drivers -D driver_name -C connection -A address -h
 
 Recquired connection arguments (capital letters):
-    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the devices_index.ini. See lower for the list of available drivers.
+    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See lower for the list of available drivers.
     -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
     -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
     
@@ -172,12 +172,12 @@ def print_help_connections(driver_module):
 
 def available_drivers():
     s = ''; flag = 0
-    for key in PATHS.DRIVERS_PATHS.keys():
+    for key in paths.DRIVER_SOURCES.keys():
         if flag !=0:
-            s = s + f'\n\n    - Location (do not specify in the command):  {PATHS.DRIVERS_PATHS[key]}\n    '
+            s = s + f'\n\n    - Location (do not specify in the command):  {paths.DRIVER_SOURCES[key]}\n    '
         else:
-            s = s + f'- Location (do not specify in the command):  {PATHS.DRIVERS_PATHS[key]}\n    '
-        temp = [i for i in os.listdir(PATHS.DRIVERS_PATHS[key]) if i and not i.startswith('_')]; temp.sort();
+            s = s + f'- Location (do not specify in the command):  {paths.DRIVER_SOURCES[key]}\n    '
+        temp = [i for i in os.listdir(paths.DRIVER_SOURCES[key]) if i and not i.startswith('_')]; temp.sort();
         if len(temp)==0: s=s+'None'
         else: s = s + ', '.join(temp) 
         flag = flag + 1

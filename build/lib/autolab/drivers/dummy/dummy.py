@@ -30,19 +30,19 @@ class Driver():
         
         self.verbose = False
         
-    def setSleep(self,value):
+    def set_sleep(self,value):
         self.sleep = value
         
-    def getSleep(self):
+    def get_sleep(self):
         return self.sleep
     
-    def setVerbose(self,value):
+    def set_verbose(self,value):
         self.verbose = value
         
-    def getVerbose(self):
+    def get_verbose(self):
         return self.verbose
     
-    def getAmplitude(self):
+    def get_amplitude(self):
         time.sleep(self.sleep)
         #raise ValueError('Test error')
         #self.count += 1
@@ -57,18 +57,18 @@ class Driver():
 
         return value
     
-    def setPhrase(self,phrase):
+    def set_phrase(self,phrase):
         time.sleep(self.sleep)
         assert isinstance(phrase,str)
         self.phrase = phrase
         if self.verbose : print('set phrase',self.phrase)
         
-    def getPhrase(self):
+    def get_phrase(self):
         time.sleep(self.sleep)
         if self.verbose : print('get phrase',self.phrase)
         return self.phrase
     
-    def setAmplitude(self,value):
+    def set_amplitude(self,value):
         time.sleep(self.sleep)
         self.amp = value
         if self.verbose : print('set amplitude',self.amp)
@@ -77,18 +77,18 @@ class Driver():
     def close(self):
         if self.verbose : print('DUMMY DEVICE CLOSED')
         
-    def getPhase(self):
+    def get_phase(self):
         time.sleep(self.sleep)
         value = np.random.uniform(-1, 1)
         if self.verbose : print('get phase',value)
         return value
     
-    def doSth(self):
+    def do_sth(self):
         time.sleep(self.sleep)
         if self.verbose : print('do sth')
         #raise ValueError('Test error')
         
-    def getDataframe(self):
+    def get_dataframe(self):
         df = pd.DataFrame()
         d = {'e':1,'f':2}
         df=df.append(d,ignore_index=True)
@@ -96,47 +96,39 @@ class Driver():
         if self.verbose : print('get dataframe',d)
         return df
     
-    def setOption(self,value):
+    def set_option(self,value):
         time.sleep(self.sleep)
         self.option = bool(value)
         if self.verbose : print('set option',self.option)
         
-    def getOption(self):
+    def get_option(self):
         time.sleep(self.sleep)
         if self.verbose : print('get option',self.option)
         return self.option
     
-    def getArray(self):
+    def get_array(self):
         time.sleep(self.sleep)
         return np.ones((3,4))
     
-    def getDriverConfig(self):
+    def get_driver_model(self):
         
-        config = []
+        model = []
         
         for i in range(10) :
             if hasattr(self,f'slot{i}') :
-                config.append({'element':'module','name':f'slot{i}','object':getattr(self,f'slot{i}')})
+                model.append({'element':'module','name':f'slot{i}','object':getattr(self,f'slot{i}')})
         
-        config.append({'element':'variable','name':'amplitude','type':float,'unit':'V',
-                       'read':self.getAmplitude,'write':self.setAmplitude,
-                       'help':'This is the amplitude of the device...'})
-        config.append({'element':'variable','name':'phrase','type':str,
-                       'read':self.getPhrase,'write':self.setPhrase})
-        config.append({'element':'variable','name':'phase','type':float,'read':self.getPhase})
-        config.append({'element':'action','name':'something','do':self.doSth,
-                       'help':'This do something...'})
-        config.append({'element':'variable','name':'dataframe','type':pd.DataFrame,
-                       'read':self.getDataframe})
-        config.append({'element':'variable','name':'option','type':bool,
-                       'read':self.getOption,'write':self.setOption})
-        config.append({'element':'variable','name':'array','type':np.ndarray,
-                       'read':self.getArray})
-        config.append({'element':'variable','name':'sleep','type':float,
-                       'read':self.getSleep,'write':self.setSleep})
-        config.append({'element':'variable','name':'verbose','type':bool,
-                       'read':self.getVerbose,'write':self.setVerbose})
-        return config
+        model.append({'element':'variable','name':'amplitude','type':float,'unit':'V','read':self.get_amplitude,'write':self.set_amplitude,'help':'This is the amplitude of the device...'})
+        model.append({'element':'variable','name':'phrase','type':str,'read':self.get_phrase,'write':self.set_phrase})
+        model.append({'element':'variable','name':'phase','type':float,'read':self.get_phase})
+        model.append({'element':'action','name':'something','do':self.do_sth,'help':'This do something...'})
+        model.append({'element':'variable','name':'dataframe','type':pd.DataFrame,'read':self.get_dataframe})
+        model.append({'element':'variable','name':'option','type':bool,'read':self.get_option,'write':self.set_option})
+        model.append({'element':'variable','name':'array','type':np.ndarray,'read':self.get_array})
+        model.append({'element':'variable','name':'sleep','type':float,'read':self.get_sleep,'write':self.set_sleep})
+        model.append({'element':'variable','name':'verbose','type':bool,'read':self.get_verbose,'write':self.set_verbose})
+        
+        return model
     
     
 class Driver_CONN(Driver):
@@ -153,20 +145,20 @@ class Slot() :
         self.dev = dev
         self.num = num
         
-    def getPower(self):
+    def get_power(self):
         time.sleep(self.dev.sleep)
         value = np.random.uniform()
         if self.dev.verbose : print(f'slot {self.num} get power',value)
         return value
     
-    def getWavelength(self):
+    def get_wavelength(self):
         time.sleep(self.dev.sleep)
         value = np.random.uniform()
         if self.dev.verbose : print(f'slot {self.num} get wavelength',value)
         return value
 
-    def getDriverConfig(self):
+    def get_driver_model(self):
         config = []
-        config.append({'element':'variable','name':'power','type':float,'read':self.getPower,'unit':'W'})
-        config.append({'element':'variable','name':'wavelength','type':float,'read':self.getWavelength,'unit':'nm'})
+        config.append({'element':'variable','name':'power','type':float,'read':self.get_power,'unit':'W'})
+        config.append({'element':'variable','name':'wavelength','type':float,'read':self.get_wavelength,'unit':'nm'})
         return config
