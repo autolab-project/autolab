@@ -26,6 +26,14 @@ class Driver():
     def RFenable(self):
         self.write('R3')
 
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'amplitude','write':self.set_rfamp,'type':float,'help':"set the amplitude"})
+        model.append({'element':'variable','name':'frequency','write':self.set_frequency,'type':float,'help':"Set the frequency"})
+        model.append({'element':'action','name':'RFenable','read':self.RFenable,'type':float,'help':"Enable RF output"})
+        model.append({'element':'action','name':'RFdisable','read':self.RFdisable,'type':float,'help':"Disable RF output"})
+
+        return model
 
 #################################################################################
 ############################## Connections classes ##############################

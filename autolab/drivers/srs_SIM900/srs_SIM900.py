@@ -51,6 +51,13 @@ class Driver():
     def idn(self):
         return self.query('*IDN?')
 
+
+    def get_driver_model(self):
+        config = []
+        for name in self.slot_names.values() :
+            config.append({'element':'module','name':name,'object':getattr(self,name)})
+        return config
+
 #################################################################################
 ############################## Connections classes ##############################
 class Driver_VISA(Driver):
@@ -107,7 +114,7 @@ class Module_SIM960():
         self.dev.send_command_to_slot(self.slot,'AMAN 0')
     def set_output_pid(self):
         self.dev.send_command_to_slot(self.slot,'AMAN 1')
-    def set_output_manual_voltage(self):
+    def set_output_manual_voltage(self,val):
         self.dev.send_command_to_slot(self.slot,f'MOUT {val}')
     def get_output_voltage(self):
         return float(self.dev.get_query_from_slot(self.slot,'OMON?'))
@@ -132,4 +139,17 @@ class Module_SIM960():
             self.set_output_manual_voltage(0)
         time.sleep(0.1)
         self.set_output_pid()
+
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'setpoint','type':float,'write':self.set_setpoint,'help':'Setpoint value to be used in Volts'})
+        model.append({'element':'variable','name':'output_voltage','read':self.get_output_voltage,'help':'Get the ouptut voltage'})
+        model.append({'element':'variable','name':'output_manual_voltage','type':float,'write':self.set_output_manual_voltage,'help':'Set the manual output voltage value'})
+        model.append({'element':'action','name':'PID_on','read':self.set_output_pid,'help':'Set output mode to PID'})
+        model.append({'element':'action','name':'PID_off','read':self.set_output_manual,'help':'Set output mode to manual'})
+        model.append({'element':'action','name':'relock','read':self.relock,'help':'Try to relock'})
+        model.append({'element':'action','name':'auto_lock','read':self.auto_lock,'help':'Choose automatically to unlock and relock in order to decrease the output voltage'})
+        return model
+
 

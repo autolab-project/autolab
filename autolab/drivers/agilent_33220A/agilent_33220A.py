@@ -36,7 +36,6 @@ class Driver():
     def get_driver_model(self):
         
         model = []
-        
         model.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':'Amplitude'})
         model.append({'element':'variable','name':'offset','write':self.offset,'type':float,'help':'Offset'})
         model.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':'Frequency'})

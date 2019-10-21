@@ -26,7 +26,13 @@ class Driver():
         
     def idn(self):
         self.write('*IDN?\r\n')
-
+        return self.read()
+        
+    def get_driver_model(self):
+        model = []
+        for num in range(1,self.nb_channels+1) :
+            model.append({'element':'module','name':f'channel{num}','object':getattr(self,f'channel{num}')})
+        return model
 
 #################################################################################
 ############################## Connections classes ##############################
@@ -90,3 +96,10 @@ class Channel():
         """ Change the period in s """
         self.dev.write_to_channel(self.channel,f'WAVPER {val}')
 
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':"set the amplitude"})
+        model.append({'element':'variable','name':'period','write':self.period,'type':float,'help':"Set the period"})
+        model.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':"Set the frequency"})
+        return model
