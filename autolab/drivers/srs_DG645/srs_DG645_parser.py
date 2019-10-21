@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using VXI11 and local network address 192.168.0.4 and sets the frequency to 1MHz and acts on outputs AB and EF to set the polarity to 0 the offset to 0.5V amplitude to 1V and the delay to 10e-6s.
     
     autolab-drivers -D nickname -f 80e6 -c A,B -a 0.5 
-    Similar to previous one but using the device's nickname as defined in devices_index.ini and only for channel A and B. This will act only on B for instance if you do precise only B as channel argument.
+    Similar to previous one but using the device's nickname as defined in local_config.ini and only for channel A and B. This will act only on B for instance if you do precise only B as channel argument.
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using VISA and local network address 192.168.0.4 and set the power to 30 mW to slots 3 and 5
     
     autolab-drivers -D nickname -c 3 -w 1550.1
-    Similar to previous one but using the device's nickname as defined in the devices_index.ini, and set the wavelength to 1550.1
+    Similar to previous one but using the device's nickname as defined in the local_config.ini, and set the wavelength to 1550.1
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
@@ -50,8 +50,10 @@ usage:    autolab-drivers [options] arg
     def do_something(self,args):
         if args.channels:
             for chan in args.channels.split(','):
-                assert f'{chan}' in getattr(self.Instance,f'{slotnames}').keys()
-                name_sub_module = getattr(self.Instance,f'{slotnames}')[f'{chan}']
+                print(chan)
+                #print()
+                assert f'{chan}' in getattr(self.Instance,f'slot_names').keys()
+                name_sub_module = getattr(self.Instance,f'slot_names')[f'{chan}']
                 sub_module = getattr(self.Instance,name_sub_module)
                 if args.power:
                     func_name = 'setPower'

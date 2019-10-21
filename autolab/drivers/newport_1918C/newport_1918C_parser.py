@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     In this particular case the --port option indicate the dll library location. Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
     autolab-drivers -D nickname -m some_methods1,arg1 some_methods2,arg1,arg2
-    Same as before using the nickname defined in devices_index.ini
+    Same as before using the nickname defined in local_config.ini
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

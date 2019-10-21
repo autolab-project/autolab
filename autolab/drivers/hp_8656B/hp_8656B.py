@@ -15,10 +15,10 @@ class Driver():
         pass
 
     def set_frequency(self, frequency):
-        self.write('FR' + frequency + 'HZ')
+        self.write(f'FR{frequency}HZ')
 
     def set_rfamp(self, amplitude):
-        self.write('AP' + amplitude + 'MV')
+        self.write(f'AP{amplitude}MV')
 
     def RFdisable(self):
         self.write('R2')

@@ -35,7 +35,7 @@ def main():
     args_additionnal, unknown = parser_additionnal.parse_known_args()
     
     # Load local_config.ini to find potentially defined devices (-D nickname option to use)
-    configparser = autolab.CONFIG_INFOS
+    configparser = autolab.DRIVERS_CONFIG
     
     # Load the device or the driver
     if args.driver in configparser.sections():

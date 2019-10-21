@@ -33,10 +33,10 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using USB communication protocol with preconfigured vendor and deviceID and set the wavelength to 1550.2nm and the piezo to 10%.
     
     autolab-drivers -D nickname -x 1550.2,1551.3,3
-    Use now the device nickname as defined in devices_index.ini and perform a wavelength scan from 1550.2nm to 1551.3nm at a velocity of 3nm/s. I no third argument specified will use the device's stored one.
+    Use now the device nickname as defined in local_config.ini and perform a wavelength scan from 1550.2nm to 1551.3nm at a velocity of 3nm/s. I no third argument specified will use the device's stored one.
 
     autolab-drivers -D nickname -r 10,30.3,3
-    Use now the device nickname as defined in devices_index.ini and perform a piezo scan from 10% to 30% with a total period of 3s. I no third argument specified will go as fast as possible.
+    Use now the device nickname as defined in local_config.ini and perform a piezo scan from 10% to 30% with a total period of 3s. I no third argument specified will go as fast as possible.
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

@@ -77,7 +77,7 @@ class Driver():
 
     def save_data_local(self,filename,FORCE=False,camera=CAMERA):
         data = eval(self.data.deepcopy())
-        temp_filename = f'{filename}_spectro32{self.camera}.txt'
+        temp_filename = f'{filename}_SPECTRO32{self.camera}.txt'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return

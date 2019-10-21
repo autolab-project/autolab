@@ -28,6 +28,7 @@ class Driver():
                 else : name = f'{key}_{module_name}'
                 setattr(self,name,module_class(self,slot_num))
                 self.slot_names[slot_num] = name
+                print(self.slot_names)
 
 
     def get_id(self):

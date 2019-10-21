@@ -58,9 +58,8 @@ def load_driver_lib(driver_name):
     
     ''' Returns a driver library (that contains Driver, Driver_XXX, Module_XXX) '''
     
-    assert driver_name in DRIVERS_INFOS['paths'].keys(), f'Driver {driver_name} not found.'
-    driver_dir_path = DRIVERS_INFOS['paths'][driver_name]
-    
+    driver_dir_path = get_driver_path(driver_name)
+        
     # Loading preparation
     driver_path = os.path.join(driver_dir_path,f'{driver_name}.py')
 
@@ -91,7 +90,7 @@ def list_drivers():
     
     ''' Returns the list of available drivers '''
     
-    return list(DRIVERS_INFOS['paths'].keys())
+    return list(DRIVERS_PATH.keys())
 
 
 
@@ -268,25 +267,38 @@ def get_class_args(clas):
 
 
 # =============================================================================
-# DRIVERS CONFIG
+# DRIVERS CONFIG and PATH
 # =============================================================================
 
 def get_driver_config(config_name):
     
     ''' Returns the config associated with config_name '''
     
-    assert config_name in list_driver_config(), f"Configuration {config_name} not found"
-    return DRIVERS_INFOS['config'][config_name]
+    assert config_name in list_driver_configs(), f"Configuration {config_name} not found"
+    return DRIVERS_CONFIG[config_name]
 
 
 
-def list_driver_config():
+def list_driver_configs():
     
     ''' Returns the list of available configuration names '''
     
-    return list(DRIVERS_INFOS['config'].sections())
+    return list(DRIVERS_CONFIG.sections())
 
 
+def get_driver_path(driver_name):
+    
+    ''' Returns the config associated with driver_name '''
+    
+    assert driver_name in DRIVERS_PATH.keys(), f'Driver {driver_name} not found.'
+    return DRIVERS_PATH[driver_name]
+
+
+def list_driver_paths():
+    
+    ''' Returns the list of available configuration names '''
+    
+    return list(DRIVERS_PATH.sections())
 
 
 
@@ -338,6 +350,6 @@ def load_config_infos():
 
 
 # Loading the drivers informations at startup
-DRIVERS_INFOS = load_drivers_infos()
-CONFIG_INFOS  = load_config_infos()
+DRIVERS_PATH   = load_drivers_infos()
+DRIVERS_CONFIG = load_config_infos()
         

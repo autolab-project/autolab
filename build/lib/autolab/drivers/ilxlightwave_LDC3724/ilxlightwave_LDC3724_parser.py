@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using VISA communication protocol with address TCPIP... and set the current to 30mA and the temperature to 20.1 degree celcius.
     
     autolab-drivers -D nickname -p 30 -t 20.1
-    same as before but using the device nickname as defined in devices_index.ini and set the power setpoint to 30mW
+    same as before but using the device nickname as defined in local_config.ini and set the power setpoint to 30mW
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.

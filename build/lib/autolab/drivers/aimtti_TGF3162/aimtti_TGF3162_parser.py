@@ -33,7 +33,7 @@ usage:    autolab-drivers [options] arg
     load {MODULE.__name__} driver using socket and set the channel 1 and 2 amplitude to 0.5V and frequency to 80MHz.
     
     autolab-drivers -D nickname -a 0.5 -f 80e6 -c 1
-    same as before but using the device nickname as defined in devices_index.ini and only for channel 1.
+    same as before but using the device nickname as defined in local_config.ini and only for channel 1.
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
