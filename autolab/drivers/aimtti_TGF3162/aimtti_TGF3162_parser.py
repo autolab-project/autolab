@@ -45,12 +45,15 @@ usage:    autolab-drivers [options] arg
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude." )
         parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
         parser.add_argument("-p", "--period", type=str, dest="period", default=None, help="Set the period." )
+        parser.add_argument("-n", "--set_mode", type=str, dest="set_mode", default=None, help="Switch to the requested mode. Accepted values are: SINE,SQUARE,RAMP,TRIANG,PULSE,NOISE,PRBSPN7,PRBSPN9,PRBSPN11,PRBSPN15,PRBSPN20,PRBSPN23,PRBSPN29,PRBSPN31 or ARB" )
         
         return parser
 
     def do_something(self,args):
         if args.channels:
             for chan in args.channels.split(','):
+                if args.set_mode:
+                    getattr(getattr(self.Instance,f'channel{chan}'),'set_mode')(args.set_mode)
                 if args.amplitude:
                     getattr(getattr(self.Instance,f'channel{chan}'),'amplitude')(args.amplitude)
                 if args.frequency:

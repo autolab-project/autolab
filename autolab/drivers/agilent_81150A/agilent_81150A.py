@@ -93,13 +93,12 @@ class Channel():
 
     def get_driver_model(self):
         model = []
-        model.append({'element':'variable','name':'mode','write':self.set_mode,'read':self.get_mode,'type':str,'help':"Set the instrument operation mode (possibilities are: 'SIN','SQU','RAMP','PULS','NOIS','DC','USER'). Note: use 'USER' for arbitrary functions"})
+        model.append({'element':'variable','name':'mode','write':self.set_mode,'read':self.get_mode,'type':str,'help':"Set the instrument operation mode (possibilities are: SIN, SQU, RAMP, PULS, NOIS, DC, USER). Note: use USER for arbitrary functions"})
         model.append({'element':'variable','name':'pulse_duty_cycle','write':self.set_pulse_duty_cycle,'type':float,'help':"Set the duty cycle for pulse mode"})
         model.append({'element':'variable','name':'pulse_width','write':self.set_pulse_width,'type':float,'help':"Set the pulse width for pulse mode"})
         model.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':"Set the amplitude"})
         model.append({'element':'variable','name':'offset','write':self.offset,'type':float,'help':"Set the offset"})
         model.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':"Set the frequency"})
-        model.append({'element':'variable','name':'','write':,'read':,'type':,'help':""})
 
         return model
     
