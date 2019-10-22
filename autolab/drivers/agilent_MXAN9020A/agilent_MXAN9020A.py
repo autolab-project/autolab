@@ -49,6 +49,14 @@ class Driver():
     def ensure_scope_stopped(self):
         self.query('INIT:CONT OFF;*OPC?')
         
+    def get_driver_model(self):
+        model = []
+        for i in range(1,self.nb_channels+1):
+            model.append({'element':'module','name':f'line{i}','object':getattr(self,f'trace{i}'), 'help':'Traces'})
+        model.append({'element':'action','name':'ensure_scope_stopped','do':self.ensure_scope_stopped,'help':'Returns only if the scope is stopped'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
+        return model
+
 
 #################################################################################
 ############################## Connections classes ##############################
@@ -106,3 +114,9 @@ class Traces():
         
         savetxt(temp_filename,(self.frequencies,self.data))
 
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'spectrum','read':self.get_data_dataframe,'type':pandas.DataFrame,'help':'Current spectrum'})
+        return model
+    
