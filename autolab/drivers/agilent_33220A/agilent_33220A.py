@@ -30,8 +30,8 @@ class Driver():
         self.write(f'DATA VOLATILE,{s}')
 
     def idn(self):
-        self.inst.write('*IDN?')
-        self.read()
+        self.write('*IDN?')
+        return self.read()
         
     def get_driver_model(self):
         

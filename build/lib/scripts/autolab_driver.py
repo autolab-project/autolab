@@ -95,6 +95,10 @@ def main():
     
     # Finally, execute functions according to the arguments provided
     Instance.do_something(args)
+    
+    # Closes properly
+    Instance.exit()
+    sys.exit()
 
 def import_module(name,Driver_path):
     try: module = __import__(name)
