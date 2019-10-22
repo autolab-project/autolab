@@ -16,7 +16,7 @@ class Driver():
     category = 'Spectrum analyser'
     
     def __init__(self):
-
+        
         for i in ['A','B','C']:
             setattr(self,f'trace{i}',Traces(self,i))
     
@@ -71,7 +71,24 @@ class Driver_VISA(Driver):
     def read(self,length=10000000):
         rep = self.scope.read()
         return rep
+
+class Driver_GPIB(Driver):
+    def __init__(self,address=19,board_index=0,**kwargs):
+        import Gpib
         
+        self.inst = Gpib.Gpib(int(board_index),int(address))
+        Driver.__init__(self)
+    
+    def query(self,query):
+        self.write(query)
+        return self.read()
+    def write(self,query):
+        self.inst.write(query)
+    def read(self):
+        return self.inst.read()
+    def close(self):
+        """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
+        Gpib.gpib.close(self.inst.id)
 ############################## Connections classes ##############################
 #################################################################################
 
@@ -83,8 +100,8 @@ class Traces():
         self.data_dict = {}
         
     def get_data(self):
-        self.data        = self.query(f"LDAT{self.trace}").split(',')[1:]
-        self.data        = [float(self.data[i]) for i in range(len(self.data))]
+        self.data        = self.dev.query(f"LDAT{self.trace}").split(',')[1:]
+        self.data        = [float(val) for val in self.data]
         self.frequencies = self.get_frequencies(self.data)
         return self.frequencies,self.data
     

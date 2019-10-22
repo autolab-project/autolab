@@ -41,9 +41,13 @@ class utilities():
     
     def parsekwargs_connectiondependant(self,kwargs,Driver_class):
         if Driver_class.__name__ == 'Driver_DLL':
-            if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
+            try: 
+                if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
+            except: pass
         elif Driver_class.__name__ == 'Driver_GPIB':
-            if kwargs['port']: kwargs['board_index'] = kwargs['port']; del kwargs['port']
+            try: 
+                if kwargs['port']: kwargs['board_index'] = kwargs['port']; del kwargs['port']
+            except: pass
         return kwargs
     
     def identify_device_class(self,module,classes_list,link):

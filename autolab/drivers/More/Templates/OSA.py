@@ -77,7 +77,7 @@ class Driver_GPIB(Driver):
     def __init__(self,address=2,board_index=0,**kwargs):
         import Gpib
         
-        self.inst = Gpib.Gpib(int(address),int(board_index))
+        self.inst = Gpib.Gpib(int(board_index),int(address))
         Driver.__init__(self)
     
     def query(self,query):
