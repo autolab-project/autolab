@@ -36,7 +36,7 @@
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Introduction" href="introduction.html" /> 
+    <link rel="next" title="Installation" href="installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -81,13 +81,11 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command_line.html">Command-line operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Low-level interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="high_level/index.html">High-level interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="configuration.html">Device configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command_line_advanced.html">Advanced operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="drivers.html">Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help_report.html">Help and bugs/suggestions report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
 </ul>
 
@@ -155,31 +153,58 @@
             
   <div class="section" id="welcome-to-autolab-s-documentation">
 <h1>Welcome to Autolab’s documentation!<a class="headerlink" href="#welcome-to-autolab-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Autolab is a python package dedicated for scientific experiments control and automation.</p>
-<p>This package provides a set of drivers to communicate with scientific laboratory instruments in a user-friendly and straightforward way. The general control of these instruments can be done easily, either by command-line or through a graphical user interface (GUI). The GUI also contains useful tools to automate a scientific experiment, such as the monitoring in time of a variable, or the scan of a parameter with the execution of a custom recipe.</p>
-<p>This is an example of basic instrument interaction by command-line in Python:</p>
+<p>Autolab is a Python package created to control easily your laboratory instruments and to quickly automate your scientific experiments.</p>
+<p>This package provides a set of (&gt;40) drivers, and three level of interfaces to use them:</p>
+<ul class="simple">
+<li><p><strong>A low-level interface</strong>: a raw access to the package’s drivers.</p></li>
+</ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="go">[&#39;tunics&#39;,&#39;powermeter_exfo&#39;,&#39;winspec&#39;]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">tunics</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">powermeter_exfo</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;exfo_LTB1&#39;</span><span class="p">,</span><span class="s1">&#39;TELNET&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;192.168.1.14&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">set_wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">get_wavelength</span><span class="p">()</span>
+<span class="go">1550</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">get_current_power</span><span class="p">()</span>
 <span class="go">156.89e-6</span>
 </pre></div>
 </div>
-<p>Graphical scanning interface:</p>
+<p>Autolab can store locally the configuration informations required to instantiate a driver, to facilitate its further use.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver_by_config</span><span class="p">(</span><span class="s1">&#39;myTunics&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver_by_config</span><span class="p">(</span><span class="s1">&#39;powermeter_exfo&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">set_wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">get_wavelength</span><span class="p">()</span>
+<span class="go">1550</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">get_current_power</span><span class="p">()</span>
+<span class="go">156.89e-6</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>A high-level interface</strong>: a modelization of the instruments stored locally with Modules, Variables and Actions objects, for a user-friendly and straightforward way to communicate with the instrument.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;myTunics&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;powermeter_exfo&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">()</span>
+<span class="go">1550</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>
+<span class="go">156.89e-6</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>A graphical interface</strong>: a user-friendly GUI based on the high-level interface, that allows the user to interact even more easily with his instruments through three panels: A Control Panel, a Monitor and a Scanner.</p></li>
+</ul>
 <div class="align-center figure align-default">
 <a class="reference internal image-reference" href="_images/scanning1.png"><img alt="_images/scanning1.png" src="_images/scanning1.png" style="width: 609.0px; height: 383.5px;" /></a>
 </div>
+<p>You find this package useful ? Please help us to improve its visibility by adding a star on the <a class="reference external" href="https://github.com/qcha41/autolab">GitHub page of this project</a> ! :-)</p>
 <p>Table of contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command_line.html">Command-line operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Low-level interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="high_level/index.html">High-level interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="configuration.html">Device configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command_line_advanced.html">Advanced operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="drivers.html">Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help_report.html">Help and bugs/suggestions report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
 </ul>
 </div>
@@ -193,7 +218,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

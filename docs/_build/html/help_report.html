@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Installation &mdash; Autolab  documentation</title>
+  <title>Help and bugs/suggestions report &mdash; Autolab  documentation</title>
   
 
   
@@ -36,8 +36,8 @@
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Low-level interface" href="low_level/index.html" />
-    <link rel="prev" title="Welcome to Autolab’s documentation!" href="index.html" /> 
+    <link rel="next" title="About" href="about.html" />
+    <link rel="prev" title="Scanning" href="gui/scanning.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,15 +82,11 @@
             
             
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#installation-procedure">Installation procedure</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Low-level interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="high_level/index.html">High-level interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="help_report.html">Help and bugs/suggestions report</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Help and bugs/suggestions report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
 </ul>
 
@@ -137,13 +133,13 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Installation</li>
+      <li>Help and bugs/suggestions report</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/help_report.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -156,34 +152,17 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
-<p>This package is working on Python version 3.6+.</p>
-<p>Required packages:</p>
-<ul class="simple">
-<li><p>numpy</p></li>
-<li><p>pandas</p></li>
-<li><p>PyQt5</p></li>
-</ul>
-<p>Optional packages (depending on the drivers and connections types you will use):</p>
-<ul class="simple">
-<li><p>pyvisa</p></li>
-<li><p>python-vxi11</p></li>
-</ul>
-</div>
-<div class="section" id="installation-procedure">
-<h2>Installation procedure<a class="headerlink" href="#installation-procedure" title="Permalink to this headline">¶</a></h2>
-<p>This project is hosted in the global python repository PyPi at the following address : <a class="reference external" href="https://pypi.org/project/autolab/">https://pypi.org/project/autolab/</a>
-To install the Autolab python package on your computer, we then advice you to use the Python package manager <code class="docutils literal notranslate"><span class="pre">pip</span></code> in a Python environnement:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">autolab</span>
+  <div class="section" id="help-and-bugs-suggestions-report">
+<h1>Help and bugs/suggestions report<a class="headerlink" href="#help-and-bugs-suggestions-report" title="Permalink to this headline">¶</a></h1>
+<p>In case you need some help to use Autolab, you can open directly this documentation in your web browser by calling the function <code class="docutils literal notranslate"><span class="pre">help</span></code> of the package:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>If the package is already installed, you can upgrade it with the following command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">autolab</span> <span class="o">--</span><span class="n">upgrade</span>
+<p>If you encounter some problems or bugs, or if you have any suggestion to improve this package, or one of its driver, please open an Issue on the GitHub page of this project:
+<a class="reference external" href="https://github.com/qcha41/autolab/issues/new">https://github.com/qcha41/autolab/issues/new</a></p>
+<p>You can also directly call the function <code class="docutils literal notranslate"><span class="pre">report</span></code> of the package, which will open this page on your web browser:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
 </pre></div>
-</div>
 </div>
 </div>
 
@@ -195,10 +174,10 @@ To install the Autolab python package on your computer, we then advice you to us
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="low_level/index.html" class="btn btn-neutral float-right" title="Low-level interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="about.html" class="btn btn-neutral float-right" title="About" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Autolab’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="gui/scanning.html" class="btn btn-neutral float-left" title="Scanning" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

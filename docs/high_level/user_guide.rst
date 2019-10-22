@@ -1,7 +1,7 @@
-.. _commandline:
+.. _userguide_high:
 
-Command-line operation
-======================
+User guide
+==========
 
 To start using Autolab, open a Python shell and import the package:
 
@@ -44,7 +44,7 @@ You can close all existing connections (with all instruments) by calling the fun
 Device architecture
 -------------------
 
-As explained in the section :ref:`introduction`, a device is represented in Autolab by a hierarchy of three **Elements**: the **Modules**, the **Variables** and the **Actions**.
+As explained in the section :ref:`presentation`, a device is represented in Autolab by a hierarchy of three **Elements**: the **Modules**, the **Variables** and the **Actions**.
 
 You can retrieve this hierarchy in the object ``autolab.devices``, where you can navigate between these **Elements** directly with relative attributes. For instance, to access the **Variable** ``wavelength`` of the **Module** (**Device**) ``myTunics``, simply execute the following command:
 
@@ -117,30 +117,13 @@ With all these commands, you can now create your own Python script. Here is an e
 	wl_list = []
 	power_list = []
 	for wl in range(1550,1560,0.01) :
-		myTunics.wavelength(wl)
-		power = myPowerMeter.line1.power()
-		wl_list.append(wl)
-		power_list.append(power)
+	    myTunics.wavelength(wl)
+	    power = myPowerMeter.line1.power()
+	    wl_list.append(wl)
+	    power_list.append(power)
 	
 	# Turn off the light source
 	myTunics.output(False)
 
 
-Help and bugs/suggestions report
---------------------------------
 
-In case you need some help to use Autolab, you can open directly this documentation in your web browser by calling the function ``help`` of the package:
-
-.. code-block:: python
-
-	>>> autolab.help()
-
-	
-If you encounter some problems or bugs, or if you have any suggestion to improve this package, or one of its driver, please open an Issue on the GitHub page of this project: 
-https://github.com/qcha41/autolab/issues/new
-
-You can also directly call the function ``report`` of the package, which will open this page on your web browser:
-
-.. code-block:: python
-
-	>>> autolab.report()

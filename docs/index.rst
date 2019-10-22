@@ -6,43 +6,66 @@
 Welcome to Autolab's documentation!
 ===================================
 
-Autolab is a python package dedicated for scientific experiments control and automation. 
+Autolab is a Python package created to control easily your laboratory instruments and to quickly automate your scientific experiments.
 
-This package provides a set of drivers to communicate with scientific laboratory instruments in a user-friendly and straightforward way. The general control of these instruments can be done easily, either by command-line or through a graphical user interface (GUI). The GUI also contains useful tools to automate a scientific experiment, such as the monitoring in time of a variable, or the scan of a parameter with the execution of a custom recipe.
+This package provides a set of (>40) drivers, and three level of interfaces to use them: 
 
-This is an example of basic instrument interaction by command-line in Python:
+* **A low-level interface**: a raw access to the package's drivers.
 
 .. code-block:: python
 
 	>>> import autolab
-	>>> autolab.devices.list()
-	['tunics','powermeter_exfo','winspec']
-	>>> autolab.devices.tunics.wavelength(1550)
-	>>> autolab.devices.powermeter_exfo.power()
+	>>> laserSource = autolab.get_driver('yenista_TUNICS','VISA',address='GPIB0::12::INSTR')
+	>>> powerMeter = autolab.get_driver('exfo_LTB1','TELNET',address='192.168.1.14')
+	>>> laserSource.set_wavelength(1550)
+	>>> laserSource.get_wavelength()
+	1550
+	>>> powerMeter.get_current_power()
 	156.89e-6
 
-Graphical scanning interface:
+Autolab can store locally the configuration informations required to instantiate a driver, to facilitate its further use.
 
+.. code-block:: python
+
+	>>> laserSource = autolab.get_driver_by_config('myTunics')
+	>>> powerMeter = autolab.get_driver_by_config('powermeter_exfo')
+	>>> laserSource.set_wavelength(1550)
+	>>> laserSource.get_wavelength()
+	1550
+	>>> powerMeter.get_current_power()
+	156.89e-6
+	
+* **A high-level interface**: a modelization of the instruments stored locally with Modules, Variables and Actions objects, for a user-friendly and straightforward way to communicate with the instrument.
+	
+.. code-block:: python
+
+	>>> laserSource = autolab.get_device('myTunics')
+	>>> powerMeter = autolab.get_device('powermeter_exfo')
+	>>> laserSource.wavelength(1550)
+	>>> laserSource.wavelength()
+	1550
+	>>> powerMeter.power()
+	156.89e-6
+
+* **A graphical interface**: a user-friendly GUI based on the high-level interface, that allows the user to interact even more easily with his instruments through three panels: A Control Panel, a Monitor and a Scanner.
+	
 .. figure:: gui/scanning.png
 	:scale: 50 %
 	:figclass: align-center	
 	
 	
-You find this package useful ? Please add a star on the `GitHub page of this project
-<https://github.com/qcha41/autolab>`_ ! :-)
+You find this package useful ? Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ ! :-)
 	
 Table of contents:
 
 .. toctree::
    :maxdepth: 1
    
-   introduction
    installation
-   command_line
+   low_level/index
+   high_level/index
    gui/index
-   configuration
-   command_line_advanced
-   drivers
+   help_report
    about
    
 

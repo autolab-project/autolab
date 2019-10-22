@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Device configuration &mdash; Autolab  documentation</title>
+  <title>Driver configuration &mdash; Autolab  documentation</title>
   
 
   
@@ -17,27 +17,27 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
   
     
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
     
-    <script type="text/javascript" src="_static/js/theme.js"></script>
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
     
 
   
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="author" title="About these documents" href="about.html" />
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Advanced operation" href="command_line_advanced.html" />
-    <link rel="prev" title="Scanning" href="gui/scanning.html" /> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Drivers" href="create_drivers.html" />
+    <link rel="prev" title="User guide" href="userguide.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -51,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> Autolab
+            <a href="../index.html" class="icon icon-home"> Autolab
           
 
           
@@ -64,7 +64,7 @@
 
           
 <div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
@@ -82,19 +82,23 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command_line.html">Command-line operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Device configuration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#driver-availability">Driver availability</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#autolab-configuration-file">Autolab configuration file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#check-your-configuration">Check your configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Low-level interface</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="userguide.html">User guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Driver configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#driver-availability">Driver availability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#autolab-configuration-file">Autolab configuration file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-your-configuration">Check your configuration</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="command_line_advanced.html">Advanced operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="drivers.html">Drivers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l2"><a class="reference internal" href="create_drivers.html">Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html">Advanced operation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../high_level/index.html">High-level interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui/index.html">Graphical User Interface (GUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../help_report.html">Help and bugs/suggestions report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
 </ul>
 
             
@@ -109,7 +113,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Autolab</a>
+          <a href="../index.html">Autolab</a>
         
       </nav>
 
@@ -138,15 +142,17 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="../index.html">Docs</a> &raquo;</li>
         
-      <li>Device configuration</li>
+          <li><a href="index.html">Low-level interface</a> &raquo;</li>
+        
+      <li>Driver configuration</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/configuration.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/low_level/configuration.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -159,8 +165,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="device-configuration">
-<span id="configuration"></span><h1>Device configuration<a class="headerlink" href="#device-configuration" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="driver-configuration">
+<span id="configuration"></span><h1>Driver configuration<a class="headerlink" href="#driver-configuration" title="Permalink to this headline">¶</a></h1>
 <p>We will here describe the procedure to configure a new instrument.</p>
 <blockquote>
 <div><ol class="arabic simple">
@@ -176,7 +182,7 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">drivers</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>If a driver is available for your instrument, go to the next step. If not, please visit the section <a class="reference internal" href="drivers.html#drivers"><span class="std std-ref">Drivers</span></a> to create a compatible driver and thus contribute to the Autolab package.</p>
+<p>If a driver is available for your instrument, go to the next step. If not, please visit the section <a class="reference internal" href="create_drivers.html#drivers"><span class="std std-ref">Drivers</span></a> to create a compatible driver and thus contribute to the Autolab package.</p>
 </div>
 <div class="section" id="autolab-configuration-file">
 <h2>Autolab configuration file<a class="headerlink" href="#autolab-configuration-file" title="Permalink to this headline">¶</a></h2>
@@ -237,7 +243,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span>
 </pre></div>
 </div>
-<p>If this doesn’t raise any error, you are ready to use your new device in Autolab ! See sections <a class="reference internal" href="command_line.html#commandline"><span class="std std-ref">Command-line operation</span></a> and <a class="reference internal" href="gui/index.html#gui"><span class="std std-ref">Graphical User Interface (GUI)</span></a> to continue.</p>
+<p>If this doesn’t raise any error, you are ready to use your new device in Autolab ! See sections <a class="reference internal" href="userguide.html#userguide-low"><span class="std std-ref">User guide</span></a> and <a class="reference internal" href="../gui/index.html#gui"><span class="std std-ref">Graphical User Interface (GUI)</span></a> to continue.</p>
 </div>
 </div>
 
@@ -249,10 +255,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="command_line_advanced.html" class="btn btn-neutral float-right" title="Advanced operation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="create_drivers.html" class="btn btn-neutral float-right" title="Drivers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="gui/scanning.html" class="btn btn-neutral float-left" title="Scanning" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="userguide.html" class="btn btn-neutral float-left" title="User guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

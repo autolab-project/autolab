@@ -1,6 +1,6 @@
 .. _configuration:
 
-Device configuration
+Driver configuration
 ========================
 
 We will here describe the procedure to configure a new instrument.
@@ -94,4 +94,4 @@ Now, try to instantiate a connection to the device by accessing the its attribut
 
 	>>> autolab.devices.myTunics
 	
-If this doesn't raise any error, you are ready to use your new device in Autolab ! See sections :ref:`commandline` and :ref:`gui` to continue.
+If this doesn't raise any error, you are ready to use your new device in Autolab ! See sections :ref:`userguide_low` and :ref:`gui` to continue.

@@ -1,7 +1,7 @@
-.. _introduction:
+.. _presentation:
 
-Introduction
-============
+Presentation
+------------
 
 Autolab provides a set of drivers to communicate with several laboratory instruments. In this Python package, a physical instrument is fully described with a hierarchy of three particular *Elements*: the *Modules*, the *Variables* and the *Actions*.
 
@@ -35,6 +35,6 @@ Some instruments are a bit more complex, in the sense that they can host several
 			|-- Position (Variable)
 			|-- Homing (Action)		
 			
-We will see in the sections :ref:`commandline` and :ref:`gui` how this modelization is useful to provide a user-friendly and straightforward remote control of your instrument.
+We will see in the sections :ref:`userguide_high` and :ref:`gui` how this modelization is useful to provide a user-friendly and straightforward remote control of your instrument.
 
 First of all, let's install the package on your computer.
