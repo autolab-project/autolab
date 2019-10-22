@@ -32,7 +32,6 @@ class utilities():
         for key in vars(I).keys():
             try:    # explicit to avoid visa and inspect.getmembers issue
                 for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod):
-                    print(name,obj)
                     if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__':
                         class_vars.append(f'I.{key}.{name}')
             except: pass

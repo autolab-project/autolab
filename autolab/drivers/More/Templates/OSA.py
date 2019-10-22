@@ -32,14 +32,14 @@ class Driver():
         if single: self.single()
         self.ensure_scope_stopped()
         if traces == []: traces = list(range(1,self.nb_traces+1))
-        for i in traces():
+        for i in traces:
             if not(getattr(self,f'trace{i}').is_active()): continue
             getattr(self,f'trace{i}').get_data()
         self.set_previous_trigger_state(previous_trigger_state)
         
     def save_data_traces(self,filename,traces=[],FORCE=False):
         if traces == []: traces = list(range(1,self.nb_traces+1))
-        for i in traces():
+        for i in traces:
             getattr(self,f'trace{i}').save_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions
