@@ -335,7 +335,10 @@ class ScanThread(QtCore.QThread):
         if stepType == 'set' :
             element(stepInfos['value'])
         if stepType == 'action' :
-            element()
+            if stepInfos['value'] is not None :
+                element(stepInfos['value'])
+            else :
+                element()
             
         self.finishStepSignal.emit(stepInfos['name'])
         

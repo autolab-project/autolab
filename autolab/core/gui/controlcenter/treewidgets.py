@@ -69,29 +69,72 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
     
     def __init__(self,itemParent,action,gui) :
         
-        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[action.name,'Action'])
+        displayName = f'{action.name}'
+        if action.unit is not None :
+            displayName += f' ({action.unit})'
+        
+        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[displayName,'Action'])
         self.setTextAlignment(1,QtCore.Qt.AlignHCenter)
         
         self.gui = gui
         self.action = action     
         
-        # Main - Column 1 : actionread button
-        self.execButton = QtWidgets.QPushButton()
-        self.execButton.setText("Execute")
-        self.execButton.pressed.connect(self.execute)
-        self.gui.tree.setItemWidget(self, 2, self.execButton)
+        if self.action.has_parameter :
+            if self.action.type in [int,float,str] : 
+                self.executable = True
+                self.has_value = True
+            else : 
+                self.executable = False
+                self.has_value = False
+        else : 
+            self.executable = True
+            self.has_value = False
+            
+        # Main - Column 2 : actionread button
+        if self.executable is True : 
+            self.execButton = QtWidgets.QPushButton()
+            self.execButton.setText("Execute")
+            self.execButton.pressed.connect(self.execute)
+            self.gui.tree.setItemWidget(self, 2, self.execButton)
+        
+        # Main - Column 3 : QlineEdit if the action has a parameter
+        if self.has_value :
+            self.valueWidget = QtWidgets.QLineEdit()
+            self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
+            self.gui.tree.setItemWidget(self, 3, self.valueWidget)
                
         # Tooltip
         if self.action._help is None : tooltip = 'No help available for this action'
         else : tooltip = self.action._help
         self.setToolTip(0,tooltip)
         
+        
+    def readGui(self):
+        
+        """ This function returns the value in good format of the value in the GUI """
+        
+        value = self.valueWidget.text()
+        if value == '' :
+            self.gui.statusbar.showMessage(f"Action {self.action.name} requires a value for its parameter",10000)
+        else : 
+            try : 
+                value = self.action.type(value)
+                return value
+            except :
+                self.gui.statusbar.showMessage(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000)
+            
+        
+        
     def execute(self):
         
         """ Start a new thread to execute the associated action """
         
-        self.gui.threadManager.start(self,'execute')
-
+        if self.has_value :
+            value = self.readGui()
+            if value is not None : self.gui.threadManager.start(self,'execute',value=value)
+        else : 
+            self.gui.threadManager.start(self,'execute')
+                
 
 
     def menu(self,position):
@@ -138,14 +181,14 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.writeSignal.signal.connect(self.valueEdited)
         self.variable._write_signal = self.writeSignal
         
-        # Main - Column 1 : Creation of a READ button
+        # Main - Column 2 : Creation of a READ button
         if self.variable.readable and self.variable.type in [int,float,bool,str] :
             self.readButton = QtWidgets.QPushButton()
             self.readButton.setText("Read")
             self.readButton.pressed.connect(self.read)
             self.gui.tree.setItemWidget(self, 2, self.readButton)
         
-        # Main - column 2 : Creation of a VALUE widget, depending on the type, and if the variable is readable
+        # Main - column 3 : Creation of a VALUE widget, depending on the type, and if the variable is readable
         
         ## QLineEdit or QLabel 
         if self.variable.type in [int,float,str] : 
@@ -176,7 +219,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.valueWidget.setEnabled(False)
             self.gui.tree.setItemWidget(self, 3, widget)
             
-        # Main - column 3 : indicator (status of the actual value : known or not known)
+        # Main - column 4 : indicator (status of the actual value : known or not known)
         if self.variable.type in [int,float,str,bool] :
             self.indicator = QtWidgets.QLabel()
             self.gui.tree.setItemWidget(self, 4, self.indicator)
@@ -211,12 +254,18 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         
         if self.variable.type in [int,float,str] :
             value = self.valueWidget.text()
-            value = self.variable.type(value)
+            if value == '' :
+                self.gui.statusbar.showMessage(f"Variable {self.variable.name} requires a value to be set",10000)
+            else :
+                try : 
+                    value = self.variable.type(value)
+                    return value
+                except : 
+                    self.gui.statusbar.showMessage(f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",10000)
+        
         elif self.variable.type in [bool] :
             value = self.valueWidget.isChecked()
-            
-        return value
-
+            return value
 
 
     def setValueKnownState(self,state):
@@ -240,13 +289,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def write(self):
         
         """ Start a new thread to WRITE the associated variable """
-        try :
-            value = self.readGui()
+        value = self.readGui()
+        if value is not None :
             self.gui.threadManager.start(self,'write',value=value)
-        except :
-            pass
-        
-        
+
+
         
         
     def valueEdited(self):

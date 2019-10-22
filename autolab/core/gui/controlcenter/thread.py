@@ -95,7 +95,11 @@ class InteractionThread(QtCore.QThread):
             elif self.intType == 'write' : 
                 self.item.variable(self.value)
                 if self.item.variable.readable : self.item.variable()
-            elif self.intType == 'execute' : self.item.action()
+            elif self.intType == 'execute' : 
+                if self.value is not None :
+                    self.item.action(self.value)
+                else :
+                    self.item.action()
             
         except Exception as e:
             error = e
