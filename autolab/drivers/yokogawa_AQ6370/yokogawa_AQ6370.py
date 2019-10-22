@@ -19,20 +19,21 @@ class Driver():
         
         for i in ['A','B','C','D','E','F','G']:
             setattr(self,f'trace{i}',Traces(self,i))
-    
+            
+        
     ### User utilities
     def get_data_traces(self,traces=[],single=None):
         """Get all traces or the ones specified"""
         if single: self.single()
         while not self.is_scope_stopped(): time.sleep(0.05)
         if traces == []: traces = ['A','B','C','D','E','F','G']
-        for i in traces():
+        for i in traces:
             #if not(getattr(self,f'trace{i}').is_active()): continue
             getattr(self,f'trace{i}').get_data()
         
     def save_data_traces(self,filename,traces=[],FORCE=False):
         if traces == []: traces = ['A','B','C','D','E','F','G']
-        for i in traces():
+        for i in traces:
             getattr(self,f'trace{i}').save_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions
@@ -72,12 +73,12 @@ class Driver_SOCKET(Driver):
         Driver.__init__(self)
 
     def send(self, msg):
-        msg=msg+"\n"
+        msg=(msg+"\n").encode()
         self.sock.send(msg)
     def recv(self, length=2048):
         msg=''
         while not msg.endswith('\r\n'):
-            msg=msg+self.sock.recv(length)
+            msg=msg+self.sock.recv(length).decode()
         msg = msg[:-2]
         return msg
     def query(self,msg,length=2048):

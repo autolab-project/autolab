@@ -26,12 +26,12 @@ class Driver():
         """Get all traces or the ones specified"""
         #if single: self.single()   # must verify whether finished sweeping
         if traces == []: traces = ['A','B','C']
-        for i in traces():
+        for i in traces:
             getattr(self,f'trace{i}').get_data()
         
     def save_data_traces(self,filename,traces=[],FORCE=False):
         if traces == []: traces = ['A','B','C']
-        for i in traces():
+        for i in traces:
             getattr(self,f'trace{i}').save_data(filename=filename,FORCE=FORCE)
         
     ### Trigger functions

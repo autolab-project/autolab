@@ -35,14 +35,14 @@ class Driver():
         """Get all channels or the ones specified"""
         self.stop()
         if channels == []: channels = list(range(1,self.nb_channels+1))
-        for i in channels():
+        for i in channels:
             getattr(self,f'channel{i}').get_data_raw()
             getattr(self,f'channel{i}').get_log_data()
         self.run()
         
     def save_data_channels(self,filename,channels=[],FORCE=False):
         if channels == []: channels = list(range(1,self.nb_channels+1))
-        for i in channels():
+        for i in channels:
             getattr(self,f'channel{i}').save_data_raw(filename=filename,FORCE=FORCE)
             getattr(self,f'channel{i}').save_log_data(filename=filename,FORCE=FORCE)
         
