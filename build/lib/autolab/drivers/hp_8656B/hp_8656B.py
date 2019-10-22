@@ -15,10 +15,10 @@ class Driver():
         pass
 
     def set_frequency(self, frequency):
-        self.write('FR' + frequency + 'HZ')
+        self.write(f'FR{frequency}HZ')
 
     def set_rfamp(self, amplitude):
-        self.write('AP' + amplitude + 'MV')
+        self.write(f'AP{amplitude}MV')
 
     def RFdisable(self):
         self.write('R2')
@@ -26,6 +26,14 @@ class Driver():
     def RFenable(self):
         self.write('R3')
 
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'amplitude','write':self.set_rfamp,'type':float,'help':"set the amplitude"})
+        model.append({'element':'variable','name':'frequency','write':self.set_frequency,'type':float,'help':"Set the frequency"})
+        model.append({'element':'action','name':'RFenable','do':self.RFenable,'type':float,'help':"Enable RF output"})
+        model.append({'element':'action','name':'RFdisable','do':self.RFdisable,'type':float,'help':"Disable RF output"})
+
+        return model
 
 #################################################################################
 ############################## Connections classes ##############################

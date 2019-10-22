@@ -77,6 +77,11 @@ class Driver():
         model = []
         for num in range(1,self.nb_channels+1) :
             model.append({'element':'module','name':f'channel{num}','object':getattr(self,f'channel{num}')})
+        
+        model.append({'element':'variable','name':'is_stopped','read':self.is_stopped, 'type':bool,'help':'Query whether scope is stopped'})
+        model.append({'element':'variable','name':'encoding','write':self.set_encoding,'read':self.get_encoding, 'type':str,'help':'Set the data encoding too use. Accepted values are: BYTE, WORD, ... Default value is BYTE'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set stop mode for trigger'})
         return model
     
 #################################################################################
@@ -147,7 +152,7 @@ class Channel():
     
     
     def save_data_raw(self,filename,FORCE=False):
-        temp_filename = f'{filename}_lecroyC{self.channel}'
+        temp_filename = f'{filename}_WAVEMASTERCH{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -155,7 +160,7 @@ class Channel():
         f.write(self.data_raw)
         f.close()
     def save_log_data(self,filename,FORCE=False):
-        temp_filename = f'{filename}_DSACHAN{self.channel}.log'
+        temp_filename = f'{filename}_WAVEMASTERCH{self.channel}.log'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -217,11 +222,11 @@ class Channel():
             k = k+1
             
     def set_autoscale_iter(self,val):
-        self.autoscale_iter = val
+        self.autoscale_iter = int(val)
     def get_autoscale_iter(self):
         return self.autoscale_iter
     def set_autoscale_factor(self,val):
-        self.autoscale_factor = val
+        self.autoscale_factor = float(val)
     def get_autoscale_factor(self):
         return self.autoscale_factor
            

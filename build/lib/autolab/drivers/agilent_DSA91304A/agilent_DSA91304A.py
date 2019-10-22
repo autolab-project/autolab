@@ -7,7 +7,7 @@ Supported instruments (identified):
 """
 
 import os
-from numpy import frombuffer,int8
+from numpy import frombuffer,int8,ndarray
 
 
 class Driver():
@@ -58,7 +58,7 @@ class Driver():
         self.write('*RST')
     def idn(self):
         self.write("*IDN?")
-        print(self.read())
+        return self.read()
 
     def set_type(self,val):
         """Argument type must be a string (BYTE or ASCII)"""
@@ -68,6 +68,15 @@ class Driver():
         return self.type
     
     
+    def get_driver_model(self):
+        model = []
+        for i in range(1,self.nb_channels+1):
+            model.append({'element':'module','name':f'channel{i}','object':getattr(self,f'channel{i}'), 'help':'Channels'})
+        model.append({'element':'variable','name':'encoding','write':self.set_type,'read':self.get_type, 'type':str,'help':'Set the data encoding too use. Accepted values are: BYTE, ASCII. Default value is BYTE'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set stop mode for trigger'})
+        model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode for trigger'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
+        return model
     
 #################################################################################
 ############################## Connections classes ##############################
@@ -113,7 +122,7 @@ class Channel():
         return frombuffer(self.get_data_raw(),int8)
         
     def save_data_raw(self,filename,FORCE=False):
-        temp_filename = f'{filename}_DSACHAN{self.channel}'
+        temp_filename = f'{filename}_DSA91304ACH{self.channel}'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -121,7 +130,7 @@ class Channel():
         f.write(self.data_raw)
         f.close()
     def save_log_data(self,filename,FORCE=False):
-        temp_filename = f'{filename}_DSACHAN{self.channel}.log'
+        temp_filename = f'{filename}_DSA91304ACH{self.channel}.log'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
             print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
             return
@@ -134,4 +143,10 @@ class Channel():
     def save_data_numerical(self):
         return array_of_float
 
-    
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'trace_raw','type':bytes,'read':self.get_data_raw,'help':'Get the current trace in bytes'})
+        model.append({'element':'variable','name':'trace','type':ndarray,'read':self.get_data,'help':'Get the current trace in a numpy array of integers'})
+        return model
+

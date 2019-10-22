@@ -22,7 +22,13 @@ class Driver():
 
     def idn(self):
         self.write('*IDN?')
-        self.read()
+        return self.read()
+        
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':"set the amplitude"})
+        model.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':"Set the frequency"})
+        return model
 
 #################################################################################
 ############################## Connections classes ##############################

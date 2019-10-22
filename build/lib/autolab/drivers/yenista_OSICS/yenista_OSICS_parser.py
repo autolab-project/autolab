@@ -50,17 +50,15 @@ usage:    autolab-drivers [options] arg
     def do_something(self,args):
         if args.channels:
             for chan in args.channels.split(','):
-                print(chan)
-                #print()
                 assert f'{chan}' in getattr(self.Instance,f'slot_names').keys()
                 name_sub_module = getattr(self.Instance,f'slot_names')[f'{chan}']
                 sub_module = getattr(self.Instance,name_sub_module)
                 if args.power:
-                    func_name = 'setPower'
+                    func_name = 'set_power'
                     assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
                     getattr(sub_module,func_name)(args.power)
                 if args.wavelength:
-                    func_name = 'setWavelength'
+                    func_name = 'set_wavelength'
                     assert hasattr(sub_module,func_name), "Module has no attribute {func_name}, are you addressing the right slot?"
                     getattr(sub_module,func_name)(args.wavelength)
 

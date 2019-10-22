@@ -3,10 +3,12 @@
 
 import inspect
 from functools import partial
+import warnings
 
 class utilities():
     def __init__(self):
-        pass
+        warnings.filterwarnings("ignore")  # to remove a deprecation warning (VISA and inspect...)
+        
     def print_help_classes(self,classes_list):
         return f'\n[Classes]\n{", ".join(classes_list)}\n'
     def print_help_methods(self,methods_list):
@@ -26,7 +28,15 @@ class utilities():
     def list_methods(self,I):
         methods_list = []
         class_meth = [f'I.{name}' for name,obj in inspect.getmembers(I,inspect.ismethod) if name != '__init__']
-        class_vars = [f'I.{key}.{name}' for key in vars(I).keys() for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod) if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__']
+        class_vars = [] 
+        for key in vars(I).keys():
+            try:    # explicit to avoid visa and inspect.getmembers issue
+                for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod):
+                    print(name,obj)
+                    if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__':
+                        class_vars.append(f'I.{key}.{name}')
+            except: pass
+        #class_vars = [f'I.{key}.{name}' for key in vars(I).keys() for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod) if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__']  # issue with visa open instruments
         methods_list.extend(class_meth);methods_list.extend(class_vars)
         return methods_list
     

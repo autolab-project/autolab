@@ -16,18 +16,18 @@ class Driver():
     def __init__(self):
         pass
     def amplitude(self,amplitude):
-        self.write('VOLT '+str(amplitude))
+        self.write(f'VOLT {amplitude}')
     def offset(self,offset):
-        self.write('VOLT:OFFS '+str(offset))
+        self.write(f'VOLT:OFFS {offset}')
     def frequency(self,frequency):
-        self.write('FREQ '+str(frequency))
+        self.write(f'FREQ {frequency}')
     def ramp(self,ramp):
         l   = list(zeros(5000) - 1)
         lll = list(ones(5000))
         ll  = list(linspace(-1,1,100+ramp))
         l.extend(ll);l.extend(lll)
         s = str(l)[1:-1]
-        self.write('DATA VOLATILE,'+s)
+        self.write(f'DATA VOLATILE,{s}')
 
     def idn(self):
         self.inst.write('*IDN?')
@@ -36,7 +36,6 @@ class Driver():
     def get_driver_model(self):
         
         model = []
-        
         model.append({'element':'variable','name':'amplitude','write':self.amplitude,'type':float,'help':'Amplitude'})
         model.append({'element':'variable','name':'offset','write':self.offset,'type':float,'help':'Offset'})
         model.append({'element':'variable','name':'frequency','write':self.frequency,'type':float,'help':'Frequency'})

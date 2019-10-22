@@ -7,7 +7,7 @@ Supported instruments (identified):
 """
 
 import os
-from numpy import frombuffer,int8
+from numpy import frombuffer,int8,ndarray
 
 
 class Driver():
@@ -60,7 +60,17 @@ class Driver():
         self.write(':STOP')
     def single(self):
         self.write(':SINGLE')
-        
+
+
+    def get_driver_model(self):
+        model = []
+        for i in range(1,self.nb_channels+1):
+            model.append({'element':'module','name':f'channel{i}','object':getattr(self,f'channel{i}'), 'help':'Channels'})
+        model.append({'element':'variable','name':'encoding','write':self.set_type,'read':self.get_type, 'type':str,'help':'Set the data encoding too use. Accepted values are: BYTE, ASCII. Default value is BYTE'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set stop mode for trigger'})
+        model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode for trigger'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
+        return model
         
 #################################################################################
 ############################## Connections classes ##############################
@@ -133,3 +143,10 @@ class Channel():
     def is_active(self):
         return bool(float(self.query(':'+chan[i]+':DISP?')))
 
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'trace_raw','type':bytes,'read':self.get_data_raw,'help':'Get the current trace in bytes'})
+        model.append({'element':'variable','name':'trace','type':ndarray,'read':self.get_data,'help':'Get the current trace in a numpy array of integers'})
+        return model
+    

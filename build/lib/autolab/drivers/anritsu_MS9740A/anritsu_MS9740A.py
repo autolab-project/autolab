@@ -35,7 +35,13 @@ class Driver() :
         self.write('SSI')
         self.query('*OPC?')
         
-        
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'resolution','write':self.set_resol,'read':self.get_resol,'type':float,'help':"Resolution"})
+        model.append({'element':'variable','name':'span','write':self.set_span,'read':self.get_span,'type':float,'help':"Span"})
+        model.append({'element':'action','name':'single_sweep','do':self.single_sweep,'help':"Perform a single sweep"})
+
+        return model
            
 #################################################################################
 ############################## Connections classes ##############################

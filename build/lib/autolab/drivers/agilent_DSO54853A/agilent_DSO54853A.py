@@ -8,7 +8,7 @@ Supported instruments (identified):
 
 import os
 import time
-from numpy import frombuffer,int8
+from numpy import frombuffer,int8,ndarray
 
 
 class Driver():
@@ -60,7 +60,18 @@ class Driver():
         self.write(f':WAVEFORM:FORMAT {self.type}')
     def get_type(self):
         return self.type
-    
+
+
+    def get_driver_model(self):
+        model = []
+        for i in range(1,self.nb_channels+1):
+            model.append({'element':'module','name':f'channel{i}','object':getattr(self,f'channel{i}'), 'help':'Channels'})
+        model.append({'element':'variable','name':'encoding','write':self.set_type,'read':self.get_type, 'type':str,'help':'Set the data encoding too use. Accepted values are: BYTE, ASCII. Default value is BYTE'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set stop mode for trigger'})
+        model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode for trigger'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
+        return model
+
 #################################################################################
 ############################## Connections classes ##############################
 class Driver_VXI11(Driver):
@@ -102,7 +113,7 @@ class Channel():
         self.dev.write(f':WAVEFORM:PREAMBLE?')
         self.log_data = self.dev.read()
         return self.log_data
-    def get_raw_data(self):
+    def get_data(self):
         return frombuffer(self.get_data_raw(),int8)
         
     def save_data_raw(self,filename,FORCE=False):
@@ -121,10 +132,15 @@ class Channel():
         f = open(temp_filename,'w')
         f.write(self.log_data)
         f.close()
-    
-    
+        
     def get_data_numerical(self):
         return array_of_float
     def save_data_numerical(self):
         return array_of_float
 
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'trace_raw','type':bytes,'read':self.get_data_raw,'help':'Get the current trace in bytes'})
+        model.append({'element':'variable','name':'trace','type':ndarray,'read':self.get_data,'help':'Get the current trace in a numpy array of integers'})
+        return model

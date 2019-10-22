@@ -45,7 +45,7 @@ usage:    autolab-drivers [options] arg
 
     def do_something(self,args):
         if args.power:
-            getattr(self.Instance,'setPower')(args.power)
+            getattr(self.Instance,'set_power')(args.power)
             
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]

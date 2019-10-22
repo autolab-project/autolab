@@ -51,7 +51,7 @@ def list_devices():
     
     ''' Returns the list of the available devices names '''
     
-    return list(autolab.list_driver_config())
+    return list(autolab.list_driver_configs())
 
 
 

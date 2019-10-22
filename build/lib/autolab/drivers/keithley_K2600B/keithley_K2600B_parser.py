@@ -41,6 +41,7 @@ usage:    autolab-drivers [options] arg
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on." )
         parser.add_argument("-v", "--voltage", type=str, dest="voltage", default=None, help="Set the voltage in V." )
+        parser.add_argument("-a", "--current", type=str, dest="current", default=None, help="Set the current in A." )
         
         return parser
 
@@ -48,7 +49,9 @@ usage:    autolab-drivers [options] arg
         if args.channels:
             for chan in args.channels.split(','):
                 if args.voltage:
-                    getattr(getattr(self.Instance,f'channel{chan}'),'setVoltage')(args.voltage)
+                    getattr(getattr(self.Instance,f'channel{chan}'),'set_voltage')(args.voltage)
+                if args.current:
+                    getattr(getattr(self.Instance,f'channel{chan}'),'set_current')(args.current)
             
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
