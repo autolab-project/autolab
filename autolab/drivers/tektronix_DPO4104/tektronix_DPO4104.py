@@ -59,8 +59,8 @@ class Driver():
         for i in range(1,self.nb_channels+1):
             model.append({'element':'module','name':f'channel{i}','object':getattr(self,f'channel{i}'), 'help':'Channels'})
         model.append({'element':'variable','name':'is_stopped','read':self.is_stopped, 'type':bool,'help':'Query whether scope is stopped'})
-        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set single mode'})
-        model.append({'element':'action','name':'run','do':self.run,'help':'Set single mode'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set stop mode for trigger'})
+        model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode for trigger'})
         return model
 
 #################################################################################
