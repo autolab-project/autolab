@@ -77,6 +77,11 @@ class Driver():
         model = []
         for num in range(1,self.nb_channels+1) :
             model.append({'element':'module','name':f'channel{num}','object':getattr(self,f'channel{num}')})
+        
+        model.append({'element':'variable','name':'is_stopped','read':self.is_stopped, 'type':bool,'help':'Query whether scope is stopped'})
+        model.append({'element':'variable','name':'encoding','write':self.set_encoding,'read':self.get_encoding, 'type':str,'help':'Set the data encoding too use. Accepted values are: BYTE, WORD, ... Default value is BYTE'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Stop the mode'})
         return model
     
 #################################################################################

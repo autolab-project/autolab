@@ -66,6 +66,21 @@ class Driver():
 
     def idn(self):
         self.write('*IDN?')
+        return self.read()
+
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'set_piezo','type':float,'write':self.set_piezo,'help':'Set the voltage to apply to the piezo in purcent'})
+        model.append({'element':'variable','name':'wavelength','write':self.wavelength,'type':float,'help':'Set the wavelength value'})
+        model.append({'element':'variable','name':'scan_start_wavelength','type':float,'write':self.set_scan_start_wavelength,'help':'Set start wavelength for wavelength scan'})
+        model.append({'element':'variable','name':'scan_stop_wavelength','type':float,'write':self.set_scan_stop_wavelength,'help':'Set stop wavelength for wavelength scan'})
+        model.append({'element':'variable','name':'scan_forward_velocity','type':float,'write':self.set_scan_forward_velocity,'help':'Set forward velocity in nm/s for wavelength scan'})
+        model.append({'element':'variable','name':'scan_backward_velocity','type':float,'write':self.set_scan_backward_velocity,'help':'Set backward velocity in nm/s for wavelength scan'})
+        model.append({'element':'action','name':'start_scan_wavelength','do':self.start_scan_wavelength,'help':'Start scan wavelength'})
+        model.append({'element':'action','name':'wavelength_tracking_on','do':self.set_wavelength_tracking_enabled,'help':'Enable wavelength tracking'})
+        model.append({'element':'action','name':'wavelength_tracking_off','do':self.set_wavelength_tracking_disabled,'help':'Disable wavelength tracking'})
+        return model
 
 
 #################################################################################
@@ -79,13 +94,10 @@ class Driver_USB(Driver):
         dev = usb.core.find(idVendor=0x104d,idProduct=0x100a)
         dev.reset()
         dev.set_configuration()
-
         interface = 0
         if dev.is_kernel_driver_active(interface) is True:
-            # tell the kernel to detach
-            dev.detach_kernel_driver(interface)
-            # claim the device
-            usb.util.claim_interface(dev, interface)
+            dev.detach_kernel_driver(interface)  # tell the kernel to detach
+            usb.util.claim_interface(dev, interface)  # claim the device
 
         cfg = dev.get_active_configuration()
         intf = cfg[(0,0)]

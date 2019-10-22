@@ -71,15 +71,6 @@ class Channel():
     def frequency(self,frequency):
         self.dev.write(f':FREQ{self.channel} {frequency}')
     
-    def dc_mode(self,offset):
-        self.dev.write(f':FUNC{self.channel} DC')
-        self.offset(offset=offset)
-    def pulse_mode(self,width=None,duty_cycle=None):
-        assert not(duty_cycle and width), "Please provide either duty_cycle OR width"
-        self.dev.write(f':FUNC{self.channel} PULS')
-        if duty_cycle: 
-        if width:      
-    
     def set_mode(self,mode_name):
         self.dev.write(f':FUNC{self.channel} {mode_name}')
     def get_mode(self):

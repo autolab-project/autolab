@@ -41,7 +41,16 @@ class Driver():
         self.send('*TRG')
     def is_scope_stopped(self):
         return '1' in self.query(':STATUS:OPER:COND?')
-        
+
+
+    def get_driver_model(self):
+        model = []
+        for i in ['A','B','C','D','E','F','G']:
+            model.append({'element':'module','name':f'line{i}','object':getattr(self,f'trace{i}'), 'help':'Traces'})
+        model.append({'element':'variable','name':'is_stopped','read':self.is_scope_stopped, 'type':bool,'help':'Query whether scope is stopped'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
+        return model
+
 
 #################################################################################
 ############################## Connections classes ##############################
@@ -109,4 +118,10 @@ class Traces():
         
         savetxt(temp_filename,(self.frequencies,self.data))
 
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'spectrum','read':self.get_data_dataframe,'type':pandas.DataFrame,'help':'Current spectrum'})
+        return model
+    
 

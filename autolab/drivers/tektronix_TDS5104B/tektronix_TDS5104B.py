@@ -8,7 +8,7 @@ Supported instruments (identified):
 
 import os
 import time
-from numpy import frombuffer,int8
+from numpy import frombuffer,int8,ndarray
 
 
 class Driver():
@@ -54,6 +54,16 @@ class Driver():
         self.scope.write('ACQUIRE:STATE OFF')
     def is_stopped(self):
         return '0' in self.query('ACQUIRE:STATE?')
+
+
+    def get_driver_model(self):
+        model = []
+        for i in range(1,self.nb_channels+1):
+            model.append({'element':'module','name':f'channel{i}','object':getattr(self,f'channel{i}'), 'help':'Channels'})
+        model.append({'element':'variable','name':'is_stopped','read':self.is_stopped, 'type':bool,'help':'Query whether scope is stopped'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set single mode'})
+        model.append({'element':'action','name':'run','do':self.run,'help':'Set single mode'})
+        return model
 
 
 #################################################################################
@@ -127,3 +137,8 @@ class Channel():
         return array_of_float
 
 
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'trace_raw','type':bytes,'read':self.get_data_raw,'help':'Get the current trace in bytes'})
+        model.append({'element':'variable','name':'trace','type':ndarray,'read':self.get_data,'help':'Get the current trace in numpy'})
+        return model
