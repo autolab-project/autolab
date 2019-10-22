@@ -84,7 +84,6 @@ class Driver_SOCKET(Driver):
     def query(self,msg,length=2048):
         """Sends question and returns answer"""
         self.send(msg)
-        #time.sleep(1)
         return(self.recv(length))
     def close(self):
         self.sock.close()
@@ -101,6 +100,8 @@ class Traces():
     def get_data(self):
         self.data        = self.dev.query(f":TRAC:DATA:Y? TR{self.trace}", length=100000).split(',')
         self.frequencies = self.get_frequencies()
+        self.data        = [float(val) for val in self.data]
+        self.frequencies = [float(val) for val in self.frequencies]
         return self.frequencies,self.data
     def get_data_dataframe(self):
         frequencies,data              = self.get_data()
