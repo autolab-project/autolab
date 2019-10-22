@@ -8,7 +8,7 @@ Supported instruments (identified):
 
 import os
 import time
-from numpy import savetxt
+from numpy import savetxt,ndarray
 
 
 class Driver():
@@ -35,8 +35,10 @@ class Driver():
     def list_cameras(self):
         return self.query('LISTCAMS?')
     
-    def auto_exposure(self):
-        self.write('AUTOEXP')
+    def enable_auto_exposure(self):
+        self.write('AUTOEXPEN')
+    def disable_auto_exposure(self):
+        self.write('AUTOEXPDIS')
     def save_data_remote(self):
         self.write('SAVEDATA')
     def save_data(self,filename,FORCE=False):
@@ -49,6 +51,17 @@ class Driver():
         [self.lambd.append(self.data[i]) for i in range(len(self.data))]
         f = savetxt(temp_filename,self.lambd)  ## squeeze
         print('Spectro32 data saved')
+
+
+    def get_driver_model(self):
+        model = []
+        model.append({'element':'variable','name':'exposure','type':float,'read':self.get_exposure,'write':self.set_exposure,'help':'Manage the camera exposure time'})
+        model.append({'element':'variable','name':'nb_frames','type':int,'read':self.get_nb_frames,'write':self.set_nb_frames,'help':'Manage the number of frames to be acquired'})
+        model.append({'element':'variable','name':'camera','type':str,'read':self.list_cameras,'write':self.set_camera,'help':'Manage cameras'})
+        model.append({'element':'variable','name':'trace','type':ndarray,'read':self.get_data,'help':'Get the current trace in a numpy array'})
+        model.append({'element':'action','name':'enable_auto_exposure','read':self.enable_auto_exposure,'help':'Enable auto exposure mode'})
+        model.append({'element':'action','name':'disable_auto_exposure','read':self.disable_auto_exposure,'help':'Disable auto exposure mode'})
+        return model
 
 
 #################################################################################

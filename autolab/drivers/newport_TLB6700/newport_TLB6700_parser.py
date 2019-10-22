@@ -44,7 +44,7 @@ usage:    autolab-drivers [options] arg
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-w", "--wavelength", type=str, dest="wavelength", default=None, help="Set the wavelength value." )
         parser.add_argument("-x", "--scan_wavelength", type=str, dest="scan_wavelength", default=None, help="Set the wavelength scan values and start a scan. Arguments are:  min,max,speed (1 is the start wavelength, 2 is the stop wavelength, 3 is the scan speed in nm/s)." )
-        parser.add_argument("-p", "--piezo", type=str, dest="piezo", default=None, help="Set the current to apply to the piezo." )
+        parser.add_argument("-p", "--piezo", type=str, dest="piezo", default=None, help="Set the voltage to apply to the piezo in purcent." )
         parser.add_argument("-r", "--scan_piezo", type=str,dest="scan_piezo", default=None, help="Set the values for the piezo scan and start a scan. Arguments are: min,max,time_scan (1 is the piezo start value, 2 is the piezo stop value, 3 is the total scan period)." )
         return parser
 
@@ -60,6 +60,7 @@ usage:    autolab-drivers [options] arg
                 getattr(self.Instance,'set_scan_backward_velocity')(scan_wavelength[2])
             elif len(scan_wavelength)!=2:
                 print('Please provide 2 or 3 values for the scan')
+                sys.exit()
             getattr(self.Instance,'set_scan_start_wavelength')(scan_wavelength[0])
             getattr(self.Instance,'set_scan_stop_wavelength')(scan_wavelength[1])
             getattr(self.Instance,'start_scan_wavelength')()  # starts wavelength scan

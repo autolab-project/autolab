@@ -144,12 +144,12 @@ class Module_SIM960():
     def get_driver_model(self):
         model = []
         model.append({'element':'variable','name':'setpoint','type':float,'write':self.set_setpoint,'help':'Setpoint value to be used in Volts'})
-        model.append({'element':'variable','name':'output_voltage','read':self.get_output_voltage,'help':'Get the ouptut voltage'})
+        model.append({'element':'variable','name':'output_voltage','type':float,'read':self.get_output_voltage,'help':'Get the ouptut voltage'})
         model.append({'element':'variable','name':'output_manual_voltage','type':float,'write':self.set_output_manual_voltage,'help':'Set the manual output voltage value'})
-        model.append({'element':'action','name':'PID_on','read':self.set_output_pid,'help':'Set output mode to PID'})
-        model.append({'element':'action','name':'PID_off','read':self.set_output_manual,'help':'Set output mode to manual'})
-        model.append({'element':'action','name':'relock','read':self.relock,'help':'Try to relock'})
-        model.append({'element':'action','name':'auto_lock','read':self.auto_lock,'help':'Choose automatically to unlock and relock in order to decrease the output voltage'})
+        model.append({'element':'action','name':'PID_on','do':self.set_output_pid,'help':'Set output mode to PID'})
+        model.append({'element':'action','name':'PID_off','do':self.set_output_manual,'help':'Set output mode to manual'})
+        model.append({'element':'action','name':'relock','do':self.relock,'help':'Try to relock'})
+        model.append({'element':'action','name':'auto_lock','do':self.auto_lock,'help':'Choose automatically to unlock and relock in order to decrease the output voltage'})
         return model
 
 

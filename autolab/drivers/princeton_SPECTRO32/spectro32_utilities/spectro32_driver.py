@@ -20,6 +20,7 @@ class Driver():
         self.exposure          = 0.01
         self.nb_frames         = 1
         self.data              = None
+        self.auto_exposure     = False
         
         ### Initiate necessary libraries ###
         self.pvcam = pvcam_Manis.Init_PVCam()
@@ -47,8 +48,10 @@ class Driver():
             self.CAM = self.get_camera(camera)
         elif command.startswith('LISTCAMS?'):
             return self.list_cameras()
-        elif command.startswith('AUTOEXP'):
-            return self.get_data_auto_exposure()
+        elif command.startswith('AUTOEXPEN'):
+            return self.set_auto_exposure_enabled()
+        elif command.startswith('AUTOEXPDIS'):
+            return self.set_auto_exposure_disabled()
         elif command.startswith('SAVEDATA'):
             return self.save_data_local()
 
@@ -67,6 +70,32 @@ class Driver():
     def get_data(self):
         data = self.CAM.acq(frames=self.nb_frames, exposure=self.exposure)
         self.data = [list(data[i].squeeze()) for i in xrange(len(data))]
+        
+        if self.auto_exposure:
+            while True :
+
+                # Récupération des données
+                maxValue=max(self.data[0])
+                
+                # Reduction du temps d'exposition
+                if maxValue>self.maxCountsAllowed : 
+                    exposureTime_save = self.getExposureTime()
+                    self.setExposureTime(self.getExposureTime()/10)
+                    if self.getExposureTime() == exposureTime_save :
+                        break
+                # Augmentation du temps d'exposition
+                elif maxValue<self.minCountsAllowed : 
+                    exposureTime_save = self.getExposureTime()
+                    self.setExposureTime(self.getExposureTime()*self.maxCountsAllowed/maxValue*0.9)
+                    if self.getExposureTime() == exposureTime_save :
+                        break
+                else :
+                    break
+                
+                # Mesure spectre
+                data = self.CAM.acq(frames=self.nb_frames, exposure=self.exposure)
+                self.data = [list(data[i].squeeze()) for i in xrange(len(data))]
+    
     
     def get_camera(self,camera='Camera1'):
         ### Initiate communication with the requested camera ###
@@ -75,7 +104,7 @@ class Driver():
         print('Got: %s' %camera)
         return CAM
 
-    def save_data_local(self,filename,FORCE=False,camera=CAMERA):
+    def save_data_local(self,filename,FORCE=False):
         data = eval(self.data.deepcopy())
         temp_filename = f'{filename}_SPECTRO32{self.camera}.txt'
         if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
@@ -91,26 +120,8 @@ class Driver():
     def list_cameras(self):
         return self.pvcam.listCameras()
     
-    def get_data_auto_exposure(self):
-        while True :
-            # Mesure spectre
-            self.get_data()
-
-            # Récupération des données
-            maxValue=max(self.data[0])
-            
-            # Reduction du temps d'exposition
-            if maxValue>self.maxCountsAllowed : 
-                exposureTime_save = self.getExposureTime()
-                self.setExposureTime(self.getExposureTime()/10)
-                if self.getExposureTime() == exposureTime_save :
-                    break
-            # Augmentation du temps d'exposition
-            elif maxValue<self.minCountsAllowed : 
-                exposureTime_save = self.getExposureTime()
-                self.setExposureTime(self.getExposureTime()*self.maxCountsAllowed/maxValue*0.9)
-                if self.getExposureTime() == exposureTime_save :
-                    break
-            else :
-                break
+    def set_auto_exposure_enabled(self):
+        self.auto_exposure = True
+    def set_auto_exposure_disabled(self):
+        self.auto_exposure = False
 
