@@ -222,7 +222,7 @@ class Variable(Element):
         
         # Type
         assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
-        assert config['type'] in [int,float,bool,str,bytes,pd.DataFrame,np.ndarray], f"Variable {self.address()} configuration: Variable type not supported in usit"
+        assert config['type'] in [int,float,bool,str,bytes,pd.DataFrame,np.ndarray], f"Variable {self.address()} configuration: Variable type not supported in autolab"
         self.type = config['type']
         
         # Read and write function
@@ -345,15 +345,30 @@ class Action(Element):
         
         Element.__init__(self,parent,'action',config['name'])
         
+        import pandas as pd
+        import numpy as np
+        
         # Do function
         assert 'do' in config.keys(), f"Action {self.address()}: Missing 'do' function"
         assert inspect.ismethod(config['do']), f"Action {self.address()} configuration: Do parameter must be a function"
         self.function = config['do'] 
         
+        # Argument
+        self.type = None
+        self.unit = None
+        if 'param_type' in config.keys():
+            assert config['param_type'] in [int,float,bool,str,bytes,pd.DataFrame,np.ndarray], f"Action {self.address()} configuration: Argument type not supported in autolab"
+            self.type = config['param_type']
+            if 'param_unit' in config.keys():
+                assert isinstance(config['param_unit'],str), f"Action {self.address()} configuration: Argument unit parameter must be a string"
+                self.unit = config['param_unit']
+        
         # Help
         if 'help' in config.keys():
             assert isinstance(config['help'],str), f"Action {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
+        
+        self.has_parameter = self.type is not None
         
         
         
@@ -367,17 +382,31 @@ class Action(Element):
         
         display+=f"Driver function: '{self.function.__name__}'\n"
         
+        if self.has_parameter : 
+            display += f'Parameter: YES (type: {self.type.__name__}) '
+            if self.unit is not None : display += f'(unit: {self.unit})'
+            display += '\n'
+        else :
+            display += 'Parameter: NO\n'
+            
+        
         print(display)
                
     
     
-    def __call__(self):
+    def __call__(self,value=None):
         
         """ Executes the action """
         
         # DO FUNCTION
         assert self.function is not None, f"The action {self.name} is not configured to be actionable"
-        self.function()
+        if self.has_parameter :
+            assert value is not None, f"The action {self.name} requires an argument"
+            self.function(value)
+        else :
+            assert value is None, f"The action {self.name} doesn't require an argument"
+            self.function()
+            
             
     
         
