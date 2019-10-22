@@ -68,4 +68,3 @@ usage:    autolab-drivers [options] arg
 
     def exit(self):
         self.Instance.close()
-        sys.exit()
