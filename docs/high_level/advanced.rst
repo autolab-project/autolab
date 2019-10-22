@@ -3,11 +3,6 @@ Advanced operation
 
 Autolab can also be used directly from a Windows or Linux terminal to perform a single shot operation quickly without opening a Python shell.
 
-
-
-Devices
--------
-
 To read, write or save the value of a *Variable*, or to execute an *Action*, use the command ``autolab-devices`` in your **Windows** or **Linux** terminal, with the following general format:
 
 .. code-block:: none
@@ -41,9 +36,11 @@ The operations available are listed below:
 
 	.. code-block:: none
 
-		>>> autolab-devices autolab-devices myLinearStage.goHome
+		>>> autolab-devices myLinearStage.goHome
 	
+	* To display the help of any element, provide its address with the option ``-h`` or ``--help`` :
 
- 
-Drivers
--------
+	.. code-block:: none
+
+		>>> autolab-devices myLinearStage.goHome -h
+
