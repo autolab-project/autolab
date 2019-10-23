@@ -15,7 +15,7 @@ class Driver():
         self.write('MW')
         
     def wait(self):
-        self.getID() # Not fantastic but the tunics API is really basic
+        self.get_id() # Not fantastic but the tunics API is really basic
              
     def get_id(self):
         return self.query('*IDN?')
@@ -134,6 +134,24 @@ class Driver_VISA(Driver):
         return self.controller.read()
 
 
+class Driver_GPIB(Driver):
+    def __init__(self,address=23,board_index=0,**kwargs):
+        import Gpib
+        
+        self.inst = Gpib.Gpib(int(board_index),int(address))
+        Driver.__init__(self)
+    
+    def query(self,query):
+        self.write(query)
+        return self.read()
+    def write(self,query):
+        self.inst.write(query)
+    def read(self,length=1000000000):
+        return self.inst.read().decode().strip('\n')
+    def close(self):
+        """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
+        #Gpib.gpib.close(self.inst.id)
+        pass
 ############################## Connections classes ##############################
 #################################################################################
         
