@@ -120,8 +120,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         """ Function called to associate a main module to one item in the tree """
         
-        
-         
         # Try to get / instantiated the device
         check = False
         try : 

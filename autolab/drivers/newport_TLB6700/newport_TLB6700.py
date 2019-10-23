@@ -71,7 +71,7 @@ class Driver():
 
     def get_driver_model(self):
         model = []
-        model.append({'element':'variable','name':'set_piezo','type':float,'write':self.set_piezo,'help':'Set the voltage to apply to the piezo in purcent'})
+        model.append({'element':'variable','name':'set_piezo','type':float,'write':self.set_piezo,'help':'Set the voltage to apply to the piezo in percent'})
         model.append({'element':'variable','name':'wavelength','write':self.wavelength,'type':float,'help':'Set the wavelength value'})
         model.append({'element':'variable','name':'scan_start_wavelength','type':float,'write':self.set_scan_start_wavelength,'help':'Set start wavelength for wavelength scan'})
         model.append({'element':'variable','name':'scan_stop_wavelength','type':float,'write':self.set_scan_stop_wavelength,'help':'Set stop wavelength for wavelength scan'})

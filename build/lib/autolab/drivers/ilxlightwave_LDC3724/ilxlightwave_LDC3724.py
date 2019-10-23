@@ -69,7 +69,7 @@ class Driver_GPIB(Driver):
     def __init__(self,address=2,board_index=0,**kwargs):
         import Gpib
         
-        self.inst = Gpib.Gpib(int(address),int(board_index))
+        self.inst = Gpib.Gpib(int(board_index),int(address))
         Driver.__init__(self)
     
     def query(self,query):
@@ -77,11 +77,12 @@ class Driver_GPIB(Driver):
         return self.read()
     def write(self,query):
         self.inst.write(query)
-    def read(self):
-        return self.inst.read()
+    def read(self,length=1000000000):
+        return self.inst.read().decode().strip('\r\n')
     def close(self):
         """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
-        Gpib.gpib.close(self.inst.id) 
+        #Gpib.gpib.close(self.inst.id)
+        pass
 ############################## Connections classes ##############################
 #################################################################################
 
@@ -112,7 +113,7 @@ class LAS():
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'LAS:LDI {value}')
-        self.query('*OPC?')
+        #self.query('*OPC?')
         if value > 0 :
             if self.is_enabled() is False :
                 self.set_enabled(True)
@@ -129,7 +130,7 @@ class LAS():
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'LAS:MDP {value}')
-        self.query('*OPC?')
+        #self.query('*OPC?')
         if value > 0 :
             if self.is_enabled() is False :
                 self.set_enabled(True)
@@ -140,7 +141,7 @@ class LAS():
                 self.set_enabled(False)
 
     def get_power(self):
-        self.query('*OPC?')
+        #self.query('*OPC?')
         return float(self.query('LAS:MDP?'))
 
     def get_power_setpoint(self):
@@ -152,7 +153,7 @@ class LAS():
     def set_enabled(self,value):
         assert isinstance(value,bool)
         self.write(f'LAS:OUT {int(value)}')
-        self.query('*OPC?')
+        #self.query('*OPC?')
         if value is True :
             mode = self.query('LAS:MODE?')
             if mode.startswith('I'):
@@ -190,7 +191,7 @@ class LAS():
         enabled_mode = self.is_enabled()
         if curr_mode != mode :
             self.write(f'LAS:MODE:{mode}')
-            self.query('*OPC?')
+            #self.query('*OPC?')
             self.set_enabled(enabled_mode)
             
     def get_mode(self):
@@ -242,7 +243,7 @@ class TEC():
         assert isinstance(int(value),int)
         value = int(value)
         self.write(f'TEC:GAIN {value}')
-        self.query('*OPC?')
+        #self.query('*OPC?')
         
     def get_gain(self):
         return int(float(self.query('TEC:GAIN?')))
@@ -260,7 +261,7 @@ class TEC():
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'TEC:ITE {value}')
-        self.query('*OPC?')
+        #self.query('*OPC?')
         if value > 0 :
             if self.is_enabled() is False :
                 self.set_enabled(True)
@@ -277,7 +278,7 @@ class TEC():
         assert isinstance(float(value),float)
         value = float(value)
         self.write(f'TEC:T {value}')
-        self.query('*OPC?')
+        #self.query('*OPC?')
         if value > 0 :
             if self.is_enabled() is False :
                 self.set_enabled(True)
@@ -300,7 +301,7 @@ class TEC():
     def set_enabled(self,value):
         assert isinstance(value,bool)
         self.write(f'TEC:OUT {int(value)}')
-        self.query('*OPC?')
+        #self.query('*OPC?')
         if value is True :
             mode = self.query('TEC:MODE?')
             if mode.startswith('I'):
@@ -339,7 +340,7 @@ class TEC():
         enabled_mode = self.is_enabled()
         if curr_mode != mode :
             self.write(f'TEC:MODE:{mode}')
-            self.query('*OPC?')
+            #self.query('*OPC?')
             self.set_enabled(enabled_mode)
             
     def get_mode(self):

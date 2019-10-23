@@ -33,9 +33,9 @@ class Driver():
     ### User utilities
     def get_data_channels(self,channels=[],single=False):
         """Get all channels or the ones specified"""
-        previous_trigger_state = self.get_previous_trigger_state()    #1 WARNING previous trigger state in memory or returned
-        if single: self.single()
+        previous_trigger_state = self.get_previous_trigger_state()
         self.stop()
+        if single: self.single()
         while not self.is_stopped(): time.sleep(0.05)
         if channels == []: channels = list(range(1,self.nb_channels+1))
         for i in channels:
@@ -55,12 +55,16 @@ class Driver():
         self.write("TRMD SINGLE")
     def stop(self):
         self.write("TRMD STOP")
+    def auto(self):
+        self.write("TRMD AUTO")
+    def normal(self):
+        self.write("TRMD NORMAL")
     def is_stopped(self):
         return 'STOP' in self.query('TRMD?')
     def get_previous_trigger_state(self):
         return self.query('TRMD?')
         
-    def set_previous_trigger_state(self,previous_trigger_state):                 # go to 1 WARNING
+    def set_previous_trigger_state(self,previous_trigger_state):
         self.write(previous_trigger_state)
         
     ### Cross-channel settings 
@@ -82,6 +86,8 @@ class Driver():
         model.append({'element':'variable','name':'encoding','write':self.set_encoding,'read':self.get_encoding, 'type':str,'help':'Set the data encoding too use. Accepted values are: BYTE, WORD, ... Default value is BYTE'})
         model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
         model.append({'element':'action','name':'stop','do':self.stop,'help':'Set stop mode for trigger'})
+        model.append({'element':'action','name':'auto','do':self.auto,'help':'Set auto mode for trigger'})
+        model.append({'element':'action','name':'normal','do':self.normal,'help':'Set normal mode for trigger'})
         return model
     
 #################################################################################
@@ -141,7 +147,7 @@ class Channel():
             self.do_autoscale()
         self.dev.write(f'C{self.channel}:WF? DAT1')
         self.data_raw = self.dev.read_raw()
-        self.data_raw = self.data[self.data.find(b'#')+11:-1]
+        self.data_raw = self.data_raw[self.data_raw.find(b'#')+11:-1]
         return self.data_raw
     def get_data(self):
         if self.dev.encoding=='BYTE': return frombuffer(self.get_data_raw(),int8)
@@ -195,17 +201,27 @@ class Channel():
         
     def do_autoscale(self):
         k = 1
-        while k <= self.autoscale_iter():
+        import time
+        while k <= self.autoscale_iter:
             mi = self.get_min()
             ma = self.get_max()
-            diff = abs(mi) + abs(ma)
+            offs = abs(mi) + abs(ma)
+            diff = ma - mi
+            print(mi,ma,offs)
             
-            val = round((-1)*diff/2. + abs(mi),3)
+            val = round((-1)*offs/2.,3)  #+abs(mi)
+            
+            print(diff, self.autoscale_factor)
+            
+            
             self.set_vertical_offset(val)
             new_channel_amp  = round(diff/self.autoscale_factor,3)
+            time.sleep(1)
+            print(new_channel_amp)
+            
             if new_channel_amp<0.005: new_channel_amp = 0.005 # if lower than the lowest possible 5mV/div
             self.set_vertical_scale(new_channel_amp)
-            
+            time.sleep(1)
             self.dev.single()
             print('Optimisation loop index:', k,self.autoscale_iter)
             if k==self.autoscale_iter:

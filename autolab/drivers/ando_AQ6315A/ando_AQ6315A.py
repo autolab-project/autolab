@@ -9,6 +9,7 @@ Supported instruments (identified):
 import os
 from numpy import savetxt,linspace
 import pandas
+import time
 
 
 class Driver():
@@ -24,7 +25,8 @@ class Driver():
     ### User utilities
     def get_data_traces(self,traces=[],single=None):
         """Get all traces or the ones specified"""
-        #if single: self.single()   # must verify whether finished sweeping
+        if single: self.single()   # must verify whether finished sweeping
+        while not self.is_scope_stopped(): time.sleep(0.05)
         if traces == []: traces = ['A','B','C']
         for i in traces:
             getattr(self,f'trace{i}').get_data()
@@ -40,12 +42,14 @@ class Driver():
         return s
     def run(self):
         self.write('RPT')
-        
+    def is_scope_stopped(self):
+        return '0' in self.query('SWEEP?')
         
     def get_driver_model(self):
         model = []
         for i in ['A','B','C']:
             model.append({'element':'module','name':f'line{i}','object':getattr(self,f'trace{i}'), 'help':'Traces'})
+        model.append({'element':'variable','name':'is_stopped','read':self.is_scope_stopped, 'type':bool,'help':'Query whether scope is stopped'})
         model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode'})
         model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
         return model
@@ -71,7 +75,10 @@ class Driver_VISA(Driver):
     def read(self,length=10000000):
         rep = self.scope.read()
         return rep
-
+    def close(self):
+        try : self.scope.close()
+        except : pass
+    
 class Driver_GPIB(Driver):
     def __init__(self,address=19,board_index=0,**kwargs):
         import Gpib
@@ -84,11 +91,12 @@ class Driver_GPIB(Driver):
         return self.read()
     def write(self,query):
         self.inst.write(query)
-    def read(self):
-        return self.inst.read()
+    def read(self,length=1000000000):
+        return self.inst.read(length).decode().strip('\r\n')
     def close(self):
         """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
-        Gpib.gpib.close(self.inst.id)
+        #Gpib.gpib.close(self.inst.id)
+        pass
 ############################## Connections classes ##############################
 #################################################################################
 
@@ -101,7 +109,7 @@ class Traces():
         
     def get_data(self):
         self.data        = self.dev.query(f"LDAT{self.trace}").split(',')[1:]
-        self.data        = [float(val) for val in self.data]
+        self.data        = [float(val.replace(' ','')) for val in self.data]
         self.frequencies = self.get_frequencies(self.data)
         return self.frequencies,self.data
     

@@ -57,11 +57,12 @@ class Driver_VISA(Driver):
         rep = self.inst.read()
         return rep
     
+    
 class Driver_GPIB(Driver):
     def __init__(self,address=19,board_index=0,**kwargs):
         import Gpib
         
-        self.inst = Gpib.Gpib(int(address),int(board_index))
+        self.inst = Gpib.Gpib(int(board_index),int(address))
         Driver.__init__(self)
     
     def query(self,query):
@@ -69,11 +70,12 @@ class Driver_GPIB(Driver):
         return self.read()
     def write(self,query):
         self.inst.write(query)
-    def read(self):
-        return self.inst.read()
+    def read(self,length=1000000000):
+        return self.inst.read(length).decode().strip('\n')
     def close(self):
         """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
-        Gpib.gpib.close(self.inst.id)
+        #Gpib.gpib.close(self.inst.id)
+        pass
 ############################## Connections classes ##############################
 #################################################################################
 

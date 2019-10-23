@@ -44,15 +44,18 @@ def main():
         assert element._element_type == 'variable', f"This element is not a Variable"
         assert element.readable is True, f"This element is not readable"
         value = element()
-        element.save(os.path.join(args.path,element.name+'.txt'),value=value)
+        element.save(args.path,value=value)
         
     elif args.value is not None :
-        assert element._element_type == 'variable', f"This element is not a Variable"
-        assert element.writable is True, f"This element is not writable"
-        element(args.value)
+        if element._element_type == 'variable' :
+            assert element.writable is True, f"This variable is not writable"
+            element(args.value)
+        elif element._element_type == 'action' :
+            assert element.has_parameter, f"This action has no parameter"
+            element(args.value)
         
     else :
-        assert element._elementt_ype in ['variable','action'], f"Please provide a Variable or Action element"
+        assert element._element_type in ['variable','action'], f"Please provide a Variable or Action element"
         if element._element_type == 'variable' :
             print(element())
         elif element._element_type == 'action' :
