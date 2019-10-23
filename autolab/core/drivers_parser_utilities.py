@@ -96,6 +96,6 @@ class utilities():
                     else:
                         NAME = partial(NAME,is_there_equal[0])
             message = NAME()
-            if message or message==0: print('Return:  ',message)
+            if message is not None: print('Return:  ',message)
         print()
 

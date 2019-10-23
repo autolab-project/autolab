@@ -50,10 +50,10 @@ usage:    autolab-drivers [options] arg
         parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the channels to act on/acquire from." )
         parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
         parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
-        parser.add_argument("-t", "--trigger", type=str, dest="trigger",action="store_true", help="Trigger the scope once" )
+        parser.add_argument("-t", "--trigger", dest="trigger",action="store_true", help="Trigger the scope once" )
         parser.add_argument("-f", "--format", type=str, dest="format", default=None, help="Change data encoding" )
-        parser.add_option("-a", "--auto_scale", type="string", dest="auto_scale", default=None, help="To allow auto modification of the vertical gain. Argument is a list of: auto_scale iteration number, all the channels to apply spe mode to. Note if no channel specified, all the channels are corrected. WARNING: Specifying more than one channel to apply auto_scale to will result in different trigger events for the acquiered channels.")
-        parser.add_option("-b", "--auto_fact", type="float", dest="auto_fact", default=None, help="For setting limits of the vertical gain, units are in number of scope divisions here. WARNING: Do not overpass 9 due to a security in the code! WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." )
+        parser.add_argument("-a", "--auto_scale", type=str, dest="auto_scale", default=None, help="To allow auto modification of the vertical gain. Argument is a list of: auto_scale iteration number, all the channels to apply spe mode to. Note if no channel specified, all the channels are corrected. WARNING: Specifying more than one channel to apply auto_scale to will result in different trigger events for the acquired channels.")
+        parser.add_argument("-b", "--auto_fact", type=float, dest="auto_fact", default=None, help="For setting limits of the vertical gain, units are in number of scope divisions here. WARNING: Do not overpass 9 due to a security in the code! WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." )
 
         return parser
 
@@ -63,14 +63,19 @@ usage:    autolab-drivers [options] arg
         if args.trigger and not args.filename:
             getattr(self.Instance,'single')()
         if args.auto_scale: # test must be located before args.filename's one
-            for chan in arg.auto_scale.split(',')[1:]:
+            for chan in args.auto_scale.split(',')[1:]:
                 getattr(getattr(self.Instance,f'channel{chan}'),'set_autoscale_iter')(args.auto_scale.split(',')[0])
         if args.auto_fact: # test must be located before args.filename's one
             for chan in range(1,getattr(self.Instance,'nb_channels')+1):
                 getattr(getattr(self.Instance,f'channel{chan}'),'set_autoscale_factor')(args.auto_fact) # all channels instances
         if args.filename:
-            getattr(self.Instance,'get_data_channels')(channels=args.channels.split(','),single=args.trigger)
-            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=args.channels.split(','),FORCE=args.force)
+            acq_channels = args.channels.split(',')    # Sort channels for auto ones to be acquired first
+            for chan_auto in args.auto_scale.split(',')[1:]:
+                if chan_auto in acq_channels:
+                    acq_channels.remove(chan_auto)
+                    acq_channels.insert(0,chan_auto)
+            getattr(self.Instance,'get_data_channels')(channels=acq_channels,single=args.trigger)
+            getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=acq_channels,FORCE=args.force)
   
         if args.methods:
             methods = [args.methods[i].split(',') for i in range(len(args.methods))]
