@@ -84,8 +84,8 @@ class Driver_GPIB(Driver):
         return self.read()
     def write(self,query):
         self.inst.write(query)
-    def read(self):
-        return self.inst.read()
+    def read(self,length=1000000000):
+        return self.inst.read(length).decode().replace('\r\n','')
     def close(self):
         """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
         Gpib.gpib.close(self.inst.id)
@@ -101,7 +101,7 @@ class Traces():
         
     def get_data(self):
         self.data        = self.dev.query(f"LDAT{self.trace}").split(',')[1:]
-        self.data        = [float(val) for val in self.data]
+        self.data        = [float(val.replace(' ','')) for val in self.data]
         self.frequencies = self.get_frequencies(self.data)
         return self.frequencies,self.data
     
