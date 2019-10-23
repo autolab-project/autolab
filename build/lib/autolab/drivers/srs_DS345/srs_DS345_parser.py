@@ -40,9 +40,9 @@ usage:    autolab-drivers [options] arg
             """
         parser = ArgumentParser(usage=usage,parents=[parser])
         parser.add_argument("-p", "--phase", type=str, dest="phase", default=None, help="Set the phase value in degree." )
-        parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value." )
+        parser.add_argument("-o", "--offset", type=str, dest="offset", default=None, help="Set the offset value in Volts." )
         parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude. Note: The units can be VP(Vpp), VR (Vrms), or DB (dBm)." )
-        parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency." )
+        parser.add_argument("-f", "--frequency", type=str, dest="frequency", default=None, help="Set the frequency in Hz." )
         
         return parser
 
