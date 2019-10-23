@@ -9,6 +9,7 @@ Supported instruments (identified):
 import os
 from numpy import savetxt,linspace
 import pandas
+import time
 
 
 class Driver():
@@ -24,7 +25,8 @@ class Driver():
     ### User utilities
     def get_data_traces(self,traces=[],single=None):
         """Get all traces or the ones specified"""
-        #if single: self.single()   # must verify whether finished sweeping
+        if single: self.single()   # must verify whether finished sweeping
+        while not self.is_scope_stopped(): time.sleep(0.05)
         if traces == []: traces = ['A','B','C']
         for i in traces:
             getattr(self,f'trace{i}').get_data()
@@ -40,12 +42,14 @@ class Driver():
         return s
     def run(self):
         self.write('RPT')
-        
+    def is_scope_stopped(self):
+        return '0' in self.query('SWEEP?')
         
     def get_driver_model(self):
         model = []
         for i in ['A','B','C']:
             model.append({'element':'module','name':f'line{i}','object':getattr(self,f'trace{i}'), 'help':'Traces'})
+        model.append({'element':'variable','name':'is_stopped','read':self.is_scope_stopped, 'type':bool,'help':'Query whether scope is stopped'})
         model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode'})
         model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
         return model

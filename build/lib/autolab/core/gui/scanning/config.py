@@ -100,15 +100,25 @@ class ConfigManager :
         """ This function add a step to the scan recipe """
         
         if self.gui.scanManager.isStarted() is False :
+            
             if name is None : name = self.getUniqueName(element.name)
-            if stepType == 'set' and value is None: 
-                if element.type in [int,float] :
-                    value = 0
-                elif element.type in [str] :
-                    value = ''
-                elif element.type in [bool]:
-                    value = False
-            step = {'stepType':stepType,'element':element,'name':name,'value':value}
+            step = {'stepType':stepType,'element':element,'name':name,'value':None}
+            
+            # Value
+            if stepType == 'set' : setValue = True
+            elif stepType == 'action' and element.type in [int,float,str] : setValue = True
+            else : setValue = False
+            
+            if setValue is True :
+                if value is None : 
+                    if element.type in [int,float] :
+                        value = 0
+                    elif element.type in [str] :
+                        value = ''
+                    elif element.type in [bool]:
+                        value = False
+                step['value'] = value
+            
             self.config['recipe'].append(step)
             self.gui.recipeManager.refresh()
             self.gui.dataManager.clear()
@@ -342,7 +352,8 @@ class ConfigManager :
             configPars['recipe'][f'{i+1}_name'] = self.config['recipe'][i]['name']
             configPars['recipe'][f'{i+1}_stepType'] = self.config['recipe'][i]['stepType']
             configPars['recipe'][f'{i+1}_address'] = self.config['recipe'][i]['element'].address()
-            if self.config['recipe'][i]['stepType'] == 'set' :
+            stepType = self.config['recipe'][i]['stepType']
+            if stepType == 'set' or (stepType == 'action' and self.config['recipe'][i]['element'].type in [int,float,str]) :
                 value = self.config['recipe'][i]['value']
                 if self.config['recipe'][i]['element'].type in [str] :
                     valueStr = f'{value}'
@@ -411,7 +422,7 @@ class ConfigManager :
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
                         
-                        if step['stepType']=='set' :
+                        if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str]) :
                             assert f'{i}_value' in configPars['recipe'], f"Missing value in step {i} ({name})."
                             value = configPars['recipe'][f'{i}_value']
                             if element.type in [int]:
