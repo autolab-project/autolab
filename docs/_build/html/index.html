@@ -82,8 +82,8 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Low-level interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="high_level/index.html">High-level interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Low-level interface (Drivers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="high_level/index.html">High-level interface (Devices)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="help_report.html">Help and bugs/suggestions report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
@@ -156,7 +156,7 @@
 <p>Autolab is a Python package dedicated to laboratory instruments control and to scientific experiments automation.</p>
 <p>This package provides a set of standardized drivers for more than 40 instruments, that can be used through three different interfaces:</p>
 <ul class="simple">
-<li><p>A <a class="reference internal" href="low_level/index.html#lowlevel"><span class="std std-ref">Low-level interface</span></a>, which provides a raw access to the package’s drivers functions. The instantiation of a <strong>Driver</strong> requires some configuration information (ex <cite>yenista_TUNICS</cite> here) that can be saved locally to simplify the user scripts (ex <cite>my_powermeter</cite> here).</p></li>
+<li><p>A <a class="reference internal" href="low_level/index.html#lowlevel"><span class="std std-ref">Low-level interface (Drivers)</span></a>, which provides a raw access to the package’s drivers functions. The instantiation of a <strong>Driver</strong> requires some configuration information (ex <cite>yenista_TUNICS</cite> here) that can be saved locally to simplify the user scripts (ex <cite>my_powermeter</cite> here).</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
 
@@ -174,7 +174,7 @@
 </pre></div>
 </div>
 <ul class="simple">
-<li><p>A <a class="reference internal" href="high_level/index.html#highlevel"><span class="std std-ref">High-level interface</span></a>, which is an abstraction layer of the low-level interface using local configurations, that provides a simple and straightforward way to communicate with an instrument through a <strong>Device</strong> object (a hierarchy of Modules, Variables and Actions objects).</p></li>
+<li><p>A <a class="reference internal" href="high_level/index.html#highlevel"><span class="std std-ref">High-level interface (Devices)</span></a>, which is an abstraction layer of the low-level interface using local configurations, that provides a simple and straightforward way to communicate with an instrument through a <strong>Device</strong> object (a hierarchy of Modules, Variables and Actions objects).</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>       <span class="c1"># Create the Device &#39;my_tunics&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>                        <span class="c1"># Set the Variable &#39;wavelength&#39;</span>
@@ -200,8 +200,8 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Low-level interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="high_level/index.html">High-level interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Low-level interface (Drivers)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="high_level/index.html">High-level interface (Devices)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="help_report.html">Help and bugs/suggestions report</a></li>
 <li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>

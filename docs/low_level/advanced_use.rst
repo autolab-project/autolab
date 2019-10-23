@@ -1,3 +1,3 @@
-Advanced operation
+Advanced use
 ==================
 

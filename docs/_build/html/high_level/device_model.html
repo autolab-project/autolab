@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Presentation &mdash; Autolab  documentation</title>
+  <title>Device modelization &mdash; Autolab  documentation</title>
   
 
   
@@ -36,8 +36,8 @@
     <link rel="author" title="About these documents" href="../about.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="User guide" href="user_guide.html" />
-    <link rel="prev" title="High-level interface" href="index.html" /> 
+    <link rel="next" title="Open and use a Device" href="open_and_use.html" />
+    <link rel="prev" title="High-level interface (Devices)" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,11 +83,11 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../low_level/index.html">Low-level interface</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">High-level interface</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Presentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="user_guide.html">User guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html">Advanced operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../low_level/index.html">Low-level interface (Drivers)</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">High-level interface (Devices)</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Device modelization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="open_and_use.html">Open and use a Device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_use.html">Advanced use</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../gui/index.html">Graphical User Interface (GUI)</a></li>
@@ -138,15 +138,15 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-          <li><a href="index.html">High-level interface</a> &raquo;</li>
+          <li><a href="index.html">High-level interface (Devices)</a> &raquo;</li>
         
-      <li>Presentation</li>
+      <li>Device modelization</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/high_level/presentation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/high_level/device_model.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -159,14 +159,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="presentation">
-<span id="id1"></span><h1>Presentation<a class="headerlink" href="#presentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="device-modelization">
+<span id="presentation"></span><h1>Device modelization<a class="headerlink" href="#device-modelization" title="Permalink to this headline">¶</a></h1>
+<p>The high-level interface of Autolab</p>
 <p>Autolab provides a set of drivers to communicate with several laboratory instruments. In this Python package, a physical instrument is fully described with a hierarchy of three particular <em>Elements</em>: the <em>Modules</em>, the <em>Variables</em> and the <em>Actions</em>.</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>A <em>Module</em> is an <em>Element</em> that consists in a group of <em>Variables</em>, <em>Actions</em>, and sub-<em>Modules</em>.</p></li>
-<li><p>A <em>Variable</em> is an <em>Element</em> that refers to a physical quantity, whose the value can be either set and/or read from an instrument (wavelength of an optical source, position of a linear stage, optical power measured with a power meter, spectrum measured with a spectrometer…). Depending on the nature of the physical quantity, it can optionally have a unit.</p></li>
-<li><p>An <em>Action</em> is an <em>Element</em> that refers to a particular operation that can be performed by an instrument. (homing of a linear stage, the zeroing of a power meter, the acquisition of a spectrum with a spectrometer…)</p></li>
+<li><p>A <em>Variable</em> is an <em>Element</em> that refers to a physical quantity, whose the value can be either set and/or read from an instrument (wavelength of an optical source, position of a linear stage, optical power measured with a power meter, spectrum measured with a spectrometer…). Depending on the nature of the physical quantity, it may have a unit.</p></li>
+<li><p>An <em>Action</em> is an <em>Element</em> that refers to a particular operation that can be performed by an instrument. (homing of a linear stage, the zeroing of a power meter, the acquisition of a spectrum with a spectrometer…). An <em>Action</em> may have a parameter.</p></li>
 </ul>
 </div></blockquote>
 <div class="admonition note">
@@ -190,7 +191,7 @@
                 <span class="o">|--</span> <span class="n">Homing</span> <span class="p">(</span><span class="n">Action</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>We will see in the sections <a class="reference internal" href="user_guide.html#userguide-high"><span class="std std-ref">User guide</span></a> and <a class="reference internal" href="../gui/index.html#gui"><span class="std std-ref">Graphical User Interface (GUI)</span></a> how this modelization is useful to provide a user-friendly and straightforward remote control of your instrument.</p>
+<p>We will see in the sections <a class="reference internal" href="open_and_use.html#userguide-high"><span class="std std-ref">Open and use a Device</span></a> and <a class="reference internal" href="../gui/index.html#gui"><span class="std std-ref">Graphical User Interface (GUI)</span></a> how this modelization is useful to provide a user-friendly and straightforward remote control of your instrument.</p>
 <p>First of all, let’s install the package on your computer.</p>
 </div>
 
@@ -202,10 +203,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="user_guide.html" class="btn btn-neutral float-right" title="User guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="open_and_use.html" class="btn btn-neutral float-right" title="Open and use a Device" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral float-left" title="High-level interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral float-left" title="High-level interface (Devices)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

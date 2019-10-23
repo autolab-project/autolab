@@ -1,7 +1,7 @@
 .. _configuration:
 
-Driver configuration
-========================
+Save a driver configuration
+===========================
 
 We will here describe the procedure to configure a new instrument.
 

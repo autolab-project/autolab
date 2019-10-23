@@ -1,7 +1,7 @@
 .. _userguide_high:
 
-User guide
-==========
+Open and use a Device
+=====================
 
 To start using Autolab, open a Python shell and import the package:
 

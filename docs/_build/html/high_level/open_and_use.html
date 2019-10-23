@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>User guide &mdash; Autolab  documentation</title>
+  <title>Open and use a Device &mdash; Autolab  documentation</title>
   
 
   
@@ -36,8 +36,8 @@
     <link rel="author" title="About these documents" href="../about.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Advanced operation" href="advanced.html" />
-    <link rel="prev" title="Presentation" href="presentation.html" /> 
+    <link rel="next" title="Advanced use" href="advanced_use.html" />
+    <link rel="prev" title="Device modelization" href="device_model.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,17 +83,17 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../low_level/index.html">Low-level interface</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">High-level interface</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="presentation.html">Presentation</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">User guide</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="../low_level/index.html">Low-level interface (Drivers)</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">High-level interface (Devices)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="device_model.html">Device modelization</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Open and use a Device</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#device-architecture">Device architecture</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#variables">Variables</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#actions">Actions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#script-example">Script example</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html">Advanced operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_use.html">Advanced use</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../gui/index.html">Graphical User Interface (GUI)</a></li>
@@ -144,15 +144,15 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-          <li><a href="index.html">High-level interface</a> &raquo;</li>
+          <li><a href="index.html">High-level interface (Devices)</a> &raquo;</li>
         
-      <li>User guide</li>
+      <li>Open and use a Device</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/high_level/user_guide.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/high_level/open_and_use.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -165,8 +165,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="user-guide">
-<span id="userguide-high"></span><h1>User guide<a class="headerlink" href="#user-guide" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="open-and-use-a-device">
+<span id="userguide-high"></span><h1>Open and use a Device<a class="headerlink" href="#open-and-use-a-device" title="Permalink to this headline">¶</a></h1>
 <p>To start using Autolab, open a Python shell and import the package:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
 </pre></div>
@@ -175,7 +175,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">help</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>To configure a new device on your system, see the section <a class="reference internal" href="../low_level/configuration.html#configuration"><span class="std std-ref">Driver configuration</span></a>.</p>
+<p>To configure a new device on your system, see the section <a class="reference internal" href="../low_level/save_config.html#configuration"><span class="std std-ref">Save a driver configuration</span></a>.</p>
 <p>To establish a connection to a given device, just call the corresponding attribute name in <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span>
 </pre></div>
@@ -194,7 +194,7 @@
 </div>
 <div class="section" id="device-architecture">
 <h2>Device architecture<a class="headerlink" href="#device-architecture" title="Permalink to this headline">¶</a></h2>
-<p>As explained in the section <a class="reference internal" href="presentation.html#presentation"><span class="std std-ref">Presentation</span></a>, a device is represented in Autolab by a hierarchy of three <strong>Elements</strong>: the <strong>Modules</strong>, the <strong>Variables</strong> and the <strong>Actions</strong>.</p>
+<p>As explained in the section <a class="reference internal" href="device_model.html#presentation"><span class="std std-ref">Device modelization</span></a>, a device is represented in Autolab by a hierarchy of three <strong>Elements</strong>: the <strong>Modules</strong>, the <strong>Variables</strong> and the <strong>Actions</strong>.</p>
 <p>You can retrieve this hierarchy in the object <code class="docutils literal notranslate"><span class="pre">autolab.devices</span></code>, where you can navigate between these <strong>Elements</strong> directly with relative attributes. For instance, to access the <strong>Variable</strong> <code class="docutils literal notranslate"><span class="pre">wavelength</span></code> of the <strong>Module</strong> (<strong>Device</strong>) <code class="docutils literal notranslate"><span class="pre">myTunics</span></code>, simply execute the following command:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">myTunics</span><span class="o">.</span><span class="n">wavelength</span>
 </pre></div>
@@ -267,10 +267,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="advanced.html" class="btn btn-neutral float-right" title="Advanced operation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="advanced_use.html" class="btn btn-neutral float-right" title="Advanced use" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="presentation.html" class="btn btn-neutral float-left" title="Presentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="device_model.html" class="btn btn-neutral float-left" title="Device modelization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

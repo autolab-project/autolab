@@ -1,5 +1,5 @@
-Advanced operation
-==================
+Advanced use
+============
 
 Autolab can also be used directly from a **Windows** or **Linux** terminal to perform a quick single-shot operation without opening a Python shell.
 
