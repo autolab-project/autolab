@@ -1,3 +1,5 @@
+.. _highlevel:
+
 High-level interface
 ====================
 

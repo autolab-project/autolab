@@ -153,45 +153,44 @@
             
   <div class="section" id="welcome-to-autolab-s-documentation">
 <h1>Welcome to Autolab’s documentation!<a class="headerlink" href="#welcome-to-autolab-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Autolab is a Python package created to control easily your laboratory instruments and to quickly automate your scientific experiments.</p>
-<p>This package provides a set of (&gt;40) drivers, and three level of interfaces to use them:</p>
+<p>Autolab is a Python package dedicated to laboratory instruments control and to scientific experiments automation.</p>
+<p>This package provides a set of standardized drivers for more than 40 instruments, that can be used through three different interfaces:</p>
 <ul class="simple">
-<li><p><strong>A low-level interface</strong>: a raw access to the package’s drivers.</p></li>
+<li><p>A <a class="reference internal" href="low_level/index.html#lowlevel"><span class="std std-ref">Low-level interface</span></a>, which provides a raw access to the package’s drivers functions. The instantiation of a <strong>Driver</strong> requires some configuration information (ex <cite>yenista_TUNICS</cite> here) that can be saved locally to simplify the user scripts (ex <cite>my_powermeter</cite> here).</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
+
 <span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;exfo_LTB1&#39;</span><span class="p">,</span><span class="s1">&#39;TELNET&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;192.168.1.14&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">set_wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">get_wavelength</span><span class="p">()</span>
 <span class="go">1550</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver_by_config</span><span class="p">(</span><span class="s1">&#39;my_powermeter&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">get_current_power</span><span class="p">()</span>
 <span class="go">156.89e-6</span>
-</pre></div>
-</div>
-<p>Autolab can store locally the configuration informations required to instantiate a driver, to facilitate its further use.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver_by_config</span><span class="p">(</span><span class="s1">&#39;myTunics&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver_by_config</span><span class="p">(</span><span class="s1">&#39;powermeter_exfo&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">set_wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">get_wavelength</span><span class="p">()</span>
-<span class="go">1550</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">get_current_power</span><span class="p">()</span>
-<span class="go">156.89e-6</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver_by_config</span><span class="p">(</span><span class="s1">&#39;my_stage&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span><span class="o">.</span><span class="n">go_home</span><span class="p">()</span>
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><strong>A high-level interface</strong>: a modelization of the instruments stored locally with Modules, Variables and Actions objects, for a user-friendly and straightforward way to communicate with the instrument.</p></li>
+<li><p>A <a class="reference internal" href="high_level/index.html#highlevel"><span class="std std-ref">High-level interface</span></a>, which is an abstraction layer of the low-level interface using local configurations, that provides a simple and straightforward way to communicate with an instrument through a <strong>Device</strong> object (a hierarchy of Modules, Variables and Actions objects).</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;myTunics&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;powermeter_exfo&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>       <span class="c1"># Create the Device &#39;my_tunics&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>                        <span class="c1"># Set the Variable &#39;wavelength&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">()</span>                            <span class="c1"># Read the Variable &#39;wavelength&#39;</span>
 <span class="go">1550</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_powermeter&#39;</span><span class="p">)</span>    <span class="c1"># Create the Device &#39;my_powermeter&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>                                  <span class="c1"># Read the Variable &#39;power&#39;</span>
 <span class="go">156.89e-6</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_stage&#39;</span><span class="p">)</span>              <span class="c1"># Create the Device &#39;my_stage&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span><span class="o">.</span><span class="n">home</span><span class="p">()</span>                                        <span class="c1"># Execute the Action &#39;home&#39;</span>
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><strong>A graphical interface</strong>: a user-friendly GUI based on the high-level interface, that allows the user to interact even more easily with his instruments through three panels: A Control Panel, a Monitor and a Scanner.</p></li>
+<li><p>A <a class="reference internal" href="gui/index.html#gui"><span class="std std-ref">Graphical User Interface (GUI)</span></a>, a user-friendly GUI based on the high-level interface, that allows the user to interact even more easily with his instruments through three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).</p></li>
 </ul>
 <div class="align-center figure align-default">
 <a class="reference internal image-reference" href="_images/scanning1.png"><img alt="_images/scanning1.png" src="_images/scanning1.png" style="width: 609.0px; height: 383.5px;" /></a>

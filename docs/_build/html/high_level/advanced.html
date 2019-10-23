@@ -161,41 +161,41 @@
             
   <div class="section" id="advanced-operation">
 <h1>Advanced operation<a class="headerlink" href="#advanced-operation" title="Permalink to this headline">¶</a></h1>
-<p>Autolab can also be used directly from a Windows or Linux terminal to perform a single shot operation quickly without opening a Python shell.</p>
-<p>To read, write or save the value of a <em>Variable</em>, or to execute an <em>Action</em>, use the command <code class="docutils literal notranslate"><span class="pre">autolab-devices</span></code> in your <strong>Windows</strong> or <strong>Linux</strong> terminal, with the following general format:</p>
+<p>Autolab can also be used directly from a <strong>Windows</strong> or <strong>Linux</strong> terminal to perform a quick single-shot operation without opening a Python shell.</p>
+<p>To read, write or save the value of a <em>Variable</em>, or to execute an <em>Action</em>, use the command <code class="docutils literal notranslate"><span class="pre">autolab-devices</span></code> in your terminal with the following general format:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>autolab-devices &lt;ELEMENT_ADDRESS&gt; &lt;OPTIONS&gt;
 </pre></div>
 </div>
-<p>The <strong>Element address</strong> indicates the address of the desired <em>Variable</em> or the <em>Action</em> in the Autolab device hierarchy, using a point separator. This command will establish a connection to your instrument, perform the required operation, and finally close the connection to your instrument.</p>
-<p>The operations available are listed below:</p>
+<p>The <strong>Element address</strong> indicates the address of the desired <em>Variable</em> or <em>Action</em> in the Autolab Device hierarchy, using a point separator. This command will establish a connection to your instrument, perform the requested operation, and finally close properly the connection.</p>
+<p>The available operations are listed below:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>To read and print the value of a readable <em>Variable</em> in the terminal, provide its address without any options:</p></li>
+<li><p><strong>To read and print</strong> the value of a readable <em>Variable</em> in the terminal, provide its address without any options:</p></li>
 </ul>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab-devices myTunics.wavelength
 1550.00
 </pre></div>
 </div>
 <ul class="simple">
-<li><p>To read and save the value of a readable <em>Variable</em> in a file, provide its address with the option <code class="docutils literal notranslate"><span class="pre">-p</span></code> or <code class="docutils literal notranslate"><span class="pre">--path</span></code> with the desired output file path:</p></li>
+<li><p><strong>To read and save</strong> the value of a readable <em>Variable</em> in a file, provide its address with the option <code class="docutils literal notranslate"><span class="pre">-p</span></code> or <code class="docutils literal notranslate"><span class="pre">--path</span></code> with the desired output file or folder path:</p></li>
 </ul>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab-devices myPowerMeter.line1.power -p .\data\power.txt
 </pre></div>
 </div>
 <ul class="simple">
-<li><p>To set the value of a writable <em>Variable</em>, provide its address and the option <code class="docutils literal notranslate"><span class="pre">-v</span></code> or <code class="docutils literal notranslate"><span class="pre">--value</span></code> with the desired value:</p></li>
+<li><p><strong>To set</strong> the value of a writable <em>Variable</em>, provide its address and the option <code class="docutils literal notranslate"><span class="pre">-v</span></code> or <code class="docutils literal notranslate"><span class="pre">--value</span></code> with the desired value:</p></li>
 </ul>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab-devices myTunics.wavelength -v 1551
 </pre></div>
 </div>
 <ul class="simple">
-<li><p>To execute an <em>Action</em>, provide its address without any options:</p></li>
+<li><p><strong>To execute</strong> an <em>Action</em>, provide its address without any options (or with the option <code class="docutils literal notranslate"><span class="pre">-v</span></code> or <code class="docutils literal notranslate"><span class="pre">--value</span></code> with the desired value if the <em>Action</em> has a parameter):</p></li>
 </ul>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab-devices myLinearStage.goHome
 </pre></div>
 </div>
 <ul class="simple">
-<li><p>To display the help of any element, provide its address with the option <code class="docutils literal notranslate"><span class="pre">-h</span></code> or <code class="docutils literal notranslate"><span class="pre">--help</span></code> :</p></li>
+<li><p><strong>To display the help</strong> of any element, provide its address with the option <code class="docutils literal notranslate"><span class="pre">-h</span></code> or <code class="docutils literal notranslate"><span class="pre">--help</span></code> :</p></li>
 </ul>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab-devices myLinearStage.goHome -h
 </pre></div>
