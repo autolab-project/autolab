@@ -63,7 +63,7 @@ usage:    autolab-drivers [options] arg
                 if args.dc_mode:
                     import time
                     getattr(getattr(self.Instance,f'channel{chan}'),'set_mode')('DC')
-                    time.sleep(0.02)     # so ugly.., makes a difference at display 
+                    time.sleep(0.03)     # so ugly.., makes a difference at display 
                     getattr(getattr(self.Instance,f'channel{chan}'),'offset')(args.dc_mode)
                 if args.pulsemode:
                     if args.pulsemode[0]=="d": 
