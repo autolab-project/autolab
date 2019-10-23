@@ -36,7 +36,7 @@ usage:    autolab-drivers [options] arg
     set pulse mode to channel 1 with pulse width of 10NS (MS stands for microseconds), using the device nickname as defined in local_config.ini
 
     autolab-drivers -D nickname -p d10 2
-    set pulse mode to channel 2 with duty cycle of 10 purcent, using the device nickname as defined in local_config.ini
+    set pulse mode to channel 2 with duty cycle of 10 percent, using the device nickname as defined in local_config.ini
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
     Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
