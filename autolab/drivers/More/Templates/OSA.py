@@ -89,7 +89,8 @@ class Driver_GPIB(Driver):
         return self.inst.read(length).decode().strip('\r\n') #replace \r\n with the characters at the end of the line to remove 
     def close(self):
         """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
-        Gpib.gpib.close(self.inst.id)
+        #Gpib.gpib.close(self.inst.id)
+        pass
 ############################## Connections classes ##############################
 #################################################################################
 
