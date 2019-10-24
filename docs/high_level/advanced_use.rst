@@ -32,7 +32,7 @@ The available operations are listed below:
 
 		>>> autolab-devices myTunics.wavelength -v 1551
 	
-	* **To execute** an **Action**, provide its address without any options (or with the option ``-v`` or ``--value`` with the desired value if the *Action* has a parameter):
+	* **To execute** an **Action**, provide its address without any options (or with the option ``-v`` or ``--value`` with the desired value if the **Action** has a parameter):
 
 	.. code-block:: none
 
