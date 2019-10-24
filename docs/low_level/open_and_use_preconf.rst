@@ -2,6 +2,10 @@
 Open and use a pre-configured Driver
 ----------------------------------
 
+.. warning::
+
+	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the :ref:`highlevel`. 
+
 To see the list of the available driver configurations stored in the Autolab configuration file, call the function ``list_driver_configs``. It will returns the list of the blocks names (nicknames) in the configuration file.
 
 .. code-block:: python
