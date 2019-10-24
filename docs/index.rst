@@ -60,8 +60,9 @@ Table of contents:
    
    installation
    low_level/index
-   high_level/index
+   high_level
    gui/index
+   shell/index
    help_report
    about
    

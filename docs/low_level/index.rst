@@ -16,7 +16,6 @@ Table of contents:
    save_config
    open_and_use_preconf
    create_driver
-   advanced_use
    
 
 
