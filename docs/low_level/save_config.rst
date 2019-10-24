@@ -31,7 +31,7 @@ Each block is represented by a header, which is the nickname of your instrument 
 
 Configuration elements:
 
-* **Device nickname** (mandatory): In squared brackets, indicate the local name of your instrument, as it will be displayed in Autolab.
+* **Instrument nickname** (mandatory): In squared brackets, indicate the local name of your instrument, as it will be displayed in Autolab.
 * **Parameter "driver"** (mandatory): Name of the associated Autolab driver.
 * **Parameter "connection"** (mandatory): Type of the connection use to communicate with your instrument (ex: VISA, TELNET,...). 
 * **Other driver-dependent parameters**: Depending on the driver, you may have to provide an address (Visa or IP address,...), a communication port, a slot configuration, or others options.
