@@ -5,7 +5,7 @@ Open and use a driver
 
 The low-level interface provides a raw access to instantiate and use directly a driver implemented in Autolab, through a *Driver* object
 
-To see the list of available drivers sorted by categories, simply use the function `show_drivers` of Autolab. If you just want the list, call the `list_drivers` function.
+To see the list of available drivers sorted by categories, simply use the function ``show_drivers`` of Autolab. If you just want the list, call the ``list_drivers`` function.
 
 .. code-block:: python
 
@@ -17,7 +17,7 @@ To see the list of available drivers sorted by categories, simply use the functi
 
 	The driver of your instrument is missing ? Please contribute to Autolab by creating yourself a new driver, following the provided guidelines : :ref:`create_driver`
 	
-To get more information about one particular driver (connection types, modules, required configuration, ...), call the function `driver_help` of Autolab, with the name of the driver.
+To get more information about one particular driver (connection types, modules, required configuration, ...), call the function ``driver_help`` of Autolab, with the name of the driver.
 
 .. code-block:: python
 
@@ -25,9 +25,9 @@ To get more information about one particular driver (connection types, modules, 
 
 The instantiation of a *Driver* object requires a particular configuration : 
 
-* The name of the driver: one of the name appearing in the `list_drivers` function (ex: 'yenista_TUNICS').
+* The name of the driver: one of the name appearing in the ``list_drivers`` function (ex: 'yenista_TUNICS').
 * The connection type: indicates the library to use to communicate with the instrument. The *Driver* may have one or several connection types implemented (ex: 'VISA', 'TELNET', ...).
-* Driver-dependent arguments: call the `driver_help` function to know them (ex: address, port, number of channel, module configuration, ...).
+* Driver-dependent arguments: call the ``driver_help`` function to know them (ex: address, port, number of channel, module configuration, ...).
 
 .. code-block:: python
 
