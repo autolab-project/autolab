@@ -71,8 +71,6 @@ class Driver():
     def set_encoding(self,encoding):
         self.encoding = encoding
         self.write('CFMT DEF9,'+self.encoding+',BIN')
-        if encoding=='BYTE':dtype=int8;NUM=256;LIM=217          # 15% less than the maximal number possible
-        elif encoding=='WORD':dtype=int16;NUM=65536;LIM=55700   # 15% less than the maximal number possible
     def get_encoding(self):
         return self.encoding
   
@@ -143,6 +141,7 @@ class Channel():
     
     
     def get_data_raw(self):
+        print(self.channel)
         if self.autoscale:
             self.do_autoscale()
         self.dev.write(f'C{self.channel}:WF? DAT1')

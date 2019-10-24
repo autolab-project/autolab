@@ -69,11 +69,12 @@ usage:    autolab-drivers [options] arg
             for chan in range(1,getattr(self.Instance,'nb_channels')+1):
                 getattr(getattr(self.Instance,f'channel{chan}'),'set_autoscale_factor')(args.auto_fact) # all channels instances
         if args.filename:
-            acq_channels = args.channels.split(',')    # Sort channels for auto ones to be acquired first
-            for chan_auto in args.auto_scale.split(','):
-                if chan_auto in acq_channels:
-                    acq_channels.remove(chan_auto)
-                    acq_channels.insert(0,chan_auto)
+            acq_channels = args.channels.split(',')
+            if args.auto_scale:      # Sort channels for auto ones to be acquired first
+                for chan_auto in args.auto_scale.split(','):
+                    if chan_auto in acq_channels:
+                        acq_channels.remove(chan_auto)
+                        acq_channels.insert(0,chan_auto)
             getattr(self.Instance,'get_data_channels')(channels=acq_channels,single=args.trigger)
             getattr(self.Instance,'save_data_channels')(filename=args.filename,channels=acq_channels,FORCE=args.force)
   

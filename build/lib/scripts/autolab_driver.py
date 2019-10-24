@@ -35,7 +35,7 @@ def main():
     args_additionnal, unknown = parser_additionnal.parse_known_args()
     
     # Load local_config.ini to find potentially defined devices (-D nickname option to use)
-    configparser = autolab.DRIVERS_CONFIG
+    configparser = autolab.load_driver_configs()
     
     # Load the device or the driver
     if args.driver in configparser.sections():
@@ -49,14 +49,16 @@ def main():
             args.connection = section['connection']
         
         kwargs = dict(section)
-        del kwargs['driver']; del kwargs['connection']; 
+        try: del kwargs['driver']; del kwargs['connection']
+        except: pass
         
         # Additionnal arguments
         if args.address: pass
         else: 
             if 'address' in section.keys():
                 args.address = section['address']
-                del kwargs['address']      
+        try: del kwargs['address']
+        except: pass
         # section slot* goes to kwargs (potentially overwriten by user lower)
         # -- options must be passed to kwargs (see lower)
     else:
