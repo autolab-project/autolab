@@ -123,6 +123,12 @@ If a **Variable** is writable (write function provided in the driver), its curre
 	>>> lightSource.wavelength(1549)
 	>>> lightSource.output(True)
 	
+To save locally the value of a readable **Variable**, use its function `save` with the path of the desired output directory (default filename), or file:
+
+.. code-block:: python
+
+	>>> lightSource.wavelength.save('.\mesures\')
+	>>> lightSource.wavelength.save('.\mesures\power.txt')
 
 Use an Action
 -------------
