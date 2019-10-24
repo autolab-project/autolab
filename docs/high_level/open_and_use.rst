@@ -76,7 +76,7 @@ To close a **Device**, simply call its the function ``close``. This object will 
 
 	>>> lightSource.close()
 	
-Navigation in Device
+Navigation in a Device
 --------------------
 
 The navigation in the hierarchy of **Elements** of a given **Device** is based on relative attributes. For instance, to access the **Variable** ``wavelength`` of the **Module** (**Device**) ``my_tunics``, simply execute the following command:
