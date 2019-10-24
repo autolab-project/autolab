@@ -54,7 +54,7 @@ These interfaces are also usable through:
 	:scale: 50 %
 	:figclass: align-center	
 	
-* :ref:`shell_scripts`, to perform a quick single-shot operation without opening explicitely a Python shell. This can be done through 3 different shell scripts.
+* 3 :ref:`shell_scripts`, to perform a quick single-shot operation without opening explicitely a Python shell.
 
 .. code-block:: 
 
