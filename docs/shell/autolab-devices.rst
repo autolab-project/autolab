@@ -1,9 +1,6 @@
 autolab-devices
 ===============
 
-This way of interacting wan be seen as a shortcut
-This page present another way to interact the high-level interface from a **Windows** or **Linux** terminal.
-
 To read, write or save the value of a **Variable**, or to execute an **Action**, use the command ``autolab-devices`` in your terminal with the following general format:
 
 .. code-block:: none
