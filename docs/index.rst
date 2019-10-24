@@ -6,7 +6,7 @@
 Welcome to Autolab's documentation!
 ===================================
 
-Autolab is a Python package dedicated to laboratory instruments control and to scientific experiments automation.
+Autolab is a Python package dedicated to laboratory instruments remote control and to scientific experiments automation.
 
 This package provides a set of standardized drivers for more than 40 instruments, that can be used through three different interfaces: 
 
@@ -32,6 +32,8 @@ This package provides a set of standardized drivers for more than 40 instruments
 	
 .. code-block:: python
 
+	>>> import autolab
+
 	>>> laserSource = autolab.get_device('my_tunics')	# Create the Device 'my_tunics'
 	>>> laserSource.wavelength(1550)			# Set the Variable 'wavelength'
 	>>> laserSource.wavelength()				# Read the Variable 'wavelength'
@@ -44,11 +46,20 @@ This package provides a set of standardized drivers for more than 40 instruments
 	>>> stage = autolab.get_device('my_stage')		# Create the Device 'my_stage'
 	>>> stage.home()					# Execute the Action 'home'
 
+These interfaces are also usable through:
+
 * A :ref:`gui`, a user-friendly GUI based on the high-level interface, that allows the user to interact even more easily with his instruments through three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
 	
 .. figure:: gui/scanning.png
 	:scale: 50 %
 	:figclass: align-center	
+	
+* A :ref:`shell`, to perform a quick single-shot operation without opening explicitely a Python shell. This can be done through 3 different shell scripts.
+
+.. code-block:: 
+
+	>>> autolab-devices my_tunics.wavelength -v 1551
+
 	
 	
 You find this package useful ? Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ ! :-)
@@ -60,8 +71,9 @@ Table of contents:
    
    installation
    low_level/index
-   high_level/index
+   high_level
    gui/index
+   shell/index
    help_report
    about
    
