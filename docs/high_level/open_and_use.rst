@@ -3,6 +3,9 @@
 Open and use a Device
 =====================
 
+What is a Device ?
+------------------
+
 The high-level interface of Autolab is an abstraction layer of its low-level interface, which allows to communicate easily with laboratory instruments without knowing the structure of its associated **Driver**.
 
 In this approach, an instrument is fully described with a hierarchy of three particular **Elements**: the **Modules**, the **Variables** and the **Actions**.
@@ -73,8 +76,8 @@ To close a **Device**, simply call its the function ``close``. This object will 
 
 	>>> lightSource.close()
 	
-Device architecture
--------------------
+Navigation in Device
+--------------------
 
 The navigation in the hierarchy of **Elements** of a given **Device** is based on relative attributes. For instance, to access the **Variable** ``wavelength`` of the **Module** (**Device**) ``my_tunics``, simply execute the following command:
 
@@ -101,8 +104,8 @@ Every **Element** in Autolab is provided with a function ``help`` that can be ca
 	
 Let's see now how to use concretely these **Elements**.
 
-Variables
----------
+Use a Variable
+--------------
 
 If a **Variable** is readable (read function provided in the driver), its current value can be read by calling its attribute:
 
@@ -121,8 +124,8 @@ If a **Variable** is writable (write function provided in the driver), its curre
 	>>> lightSource.output(True)
 	
 
-Actions
--------
+Use an Action
+-------------
 
 You can execute an **Action** simply by calling its attribute:
 
