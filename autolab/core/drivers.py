@@ -11,8 +11,7 @@ import autolab
 import configparser
 from .utilities import emphasize
 
-
-
+    
 # =============================================================================
 # DRIVERS INSTANTIATION
 # =============================================================================
@@ -267,16 +266,22 @@ def get_class_args(clas):
 
 
 # =============================================================================
-# DRIVERS CONFIG and PATH
+# DRIVERS CONFIGS
 # =============================================================================
-
-def get_driver_config(config_name):
     
-    ''' Returns the config associated with config_name '''
+def load_driver_configs():
     
-    assert config_name in list_driver_configs(), f"Configuration {config_name} not found"
-    DRIVERS_CONFIG = load_config_infos()
-    return DRIVERS_CONFIG[config_name]
+    ''' Return the current autolab drivers informations:
+        - the content of the local_config file  ['config']
+    '''
+    
+    paths = autolab.paths
+    
+    config = configparser.ConfigParser()
+    config.read(paths.LOCAL_CONFIG)
+    assert len(set(config.sections())) == len(config.sections()), f"Each device must have a unique name."
+    
+    return config
 
 
 
@@ -284,9 +289,97 @@ def list_driver_configs():
     
     ''' Returns the list of available configuration names '''
     
-    DRIVERS_CONFIG = load_config_infos()
-    return list(DRIVERS_CONFIG.sections())
+    drivers_configs = load_driver_configs()
+    return list(drivers_configs.sections())
 
+
+
+def get_driver_config(config_name):
+    
+    ''' Returns the config associated with config_name '''
+    
+    assert config_name in list_driver_configs(), f"Configuration {config_name} not found"
+    drivers_configs = load_driver_configs()
+    return drivers_configs[config_name]
+
+
+
+def set_driver_config(config_name,modify=False,**kwargs):
+    
+    ''' Add a new driver config (kwargs) or modify an existing one in the configuration file.
+    Set the option modify=True to apply changes in an existing config (for safety) '''
+    
+    if modify is False :
+        assert config_name not in list_driver_configs(), f'Configuration "{config_name}" already exists. Please set the option modify=True to apply changes, or delete the configuration first.'
+    
+    driver_configs = load_driver_configs()
+    
+    if config_name not in driver_configs.sections():
+        driver_configs.add_section(config_name)
+    
+    for key,value in kwargs.items() :
+        driver_configs.set(config_name, key, str(value))
+        
+    for key in ['driver', 'connection'] :
+        assert key in driver_configs[config_name].keys(), f'Missing parameter "{key}" in the configuration'
+    assert driver_configs.get(config_name, 'driver') in list_drivers(), f'Driver "{driver_configs.get(config_name, "driver")}" does not exist'
+        
+    with open(autolab.paths.LOCAL_CONFIG, 'w') as file:
+        driver_configs.write(file)
+     
+
+def show_driver_config(config_name):
+    
+    ''' Display a driver_config as it appears in the configuration file '''
+    
+    assert config_name in list_driver_configs(), f'Configuration "{config_name}" does not exist.'
+    
+    driver_configs = load_driver_configs()
+    mess = f'\n[{config_name}]\n'
+    for key,value in driver_configs[config_name].items() :
+        mess += f'{key} = {value}\n'
+    print(mess)
+
+        
+        
+def remove_driver_config(config_name):
+    
+    ''' Remove a driver_config from the configuration file '''
+    
+    assert config_name in list_driver_configs(), f'Configuration "{config_name}" does not exist.'
+    
+    driver_configs = load_driver_configs()
+    driver_configs.remove_section(config_name)
+
+    with open(autolab.paths.LOCAL_CONFIG, 'w') as file:
+        driver_configs.write(file)
+
+
+def remove_driver_config_parameter(config_name,param_name):
+    
+    ''' Remove a parameter of a driver_config in the configuration file '''
+    
+    assert config_name in list_driver_configs(), f'Configuration "{config_name}" does not exist.'
+    
+    driver_configs = load_driver_configs()
+    assert param_name in driver_configs[config_name].keys(), f'The parameter "{param_name}" does not exist.'
+    assert param_name not in ['driver','connection'], f'The parameter "{param_name}" is mandatory.'
+    
+    driver_configs = load_driver_configs()
+    driver_configs.remove_option(config_name,param_name)
+    
+    with open(autolab.paths.LOCAL_CONFIG, 'w') as file:
+        driver_configs.write(file)
+    
+
+
+
+
+
+
+# =============================================================================
+# DRIVERS PATHS
+# =============================================================================
 
 def get_driver_path(driver_name):
     
@@ -294,6 +387,7 @@ def get_driver_path(driver_name):
     
     assert driver_name in DRIVERS_PATH.keys(), f'Driver {driver_name} not found.'
     return DRIVERS_PATH[driver_name]
+
 
 
 def list_driver_paths():
@@ -304,12 +398,7 @@ def list_driver_paths():
 
 
 
-# =============================================================================
-# DRIVERS and CONFIG INFOS
-# =============================================================================
-
-
-def load_drivers_infos():
+def load_drivers_paths():
     
     ''' Return the current autolab drivers informations : 
         - the paths of the drivers
@@ -334,24 +423,12 @@ def load_drivers_infos():
     return infos
 
 
-def load_config_infos():
-    ''' Return the current autolab drivers informations:
-        - the content of the local_config file  ['config']
-    '''
-    
-    paths = autolab.paths
-    
-    config = configparser.ConfigParser()
-    config.read(paths.LOCAL_CONFIG)
-    assert len(set(config.sections())) == len(config.sections()), f"Each device must have a unique name."
-    
-    return config
+
 
 
 
 
 
 # Loading the drivers informations at startup
-DRIVERS_PATH   = load_drivers_infos()
-DRIVERS_CONFIG = load_config_infos()
+DRIVERS_PATH   = load_drivers_paths()
         
