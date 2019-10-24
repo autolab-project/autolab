@@ -31,21 +31,7 @@ To start the GUI in a Python shell, call the function ``gui`` of the package:
 
 	>>> import autolab
 	>>> autolab.gui()
-		
-To start the GUI directly from a Windows of Linux terminal (in a Python environment), juste enter the command ``autolab``:
-
-Windows:
-
-.. code-block:: none
-
-	C:\Users\qchat> autolab
 	
-Linux:
-
-.. code-block:: none
-
-	quentin@myComputer:~$ autolab
-
 
 .. toctree::
    :maxdepth: 1

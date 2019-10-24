@@ -3,7 +3,11 @@
 Open and use a Driver
 =====================
 
-The low-level interface provides a raw access to instantiate and use directly a driver implemented in Autolab, through a *Driver* object
+The low-level interface provides a raw access to instantiate and use directly a driver implemented in Autolab, through a **Driver** object.
+
+.. warning::
+
+	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the :ref:`highlevel`. 
 
 To see the list of available drivers sorted by categories, simply use the function ``show_drivers`` of Autolab. If you just want the list, call the ``list_drivers`` function.
 
@@ -33,7 +37,7 @@ The instantiation of a *Driver* object is done through the function ``get_driver
 
 	>>> laserSource = autolab.get_driver('yenista_TUNICS','VISA',address='GPIB0::12::INSTR')
 	
-You are now ready to use the functions implemented in the *Driver*:
+You are now ready to use the functions implemented in the **Driver** class:
 
 .. code-block:: python
 

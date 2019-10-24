@@ -11,7 +11,7 @@ In case you need some help to use Autolab, you can open directly this documentat
 If you encounter some problems or bugs, or if you have any suggestion to improve this package, or one of its driver, please open an Issue on the GitHub page of this project: 
 https://github.com/qcha41/autolab/issues/new
 
-You can also directly call the function ``report`` of the package, which will open this page on your web browser:
+You can also directly call the function ``report`` of the package, which will open this page in your web browser:
 
 .. code-block:: python
 
