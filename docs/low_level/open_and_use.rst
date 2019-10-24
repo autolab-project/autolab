@@ -7,7 +7,7 @@ The low-level interface provides a raw access to instantiate and use directly a 
 
 .. warning::
 
-	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the :ref:`highlevel`. 
+	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the :ref:`highlevel`. 
 
 To see the list of available drivers sorted by categories, simply use the function ``show_drivers`` of Autolab. If you just want the list, call the ``list_drivers`` function.
 
