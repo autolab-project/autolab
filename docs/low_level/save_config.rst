@@ -31,10 +31,10 @@ Each block is represented by a header, which is the nickname of your instrument 
 
 Configuration elements:
 
-* *Device nickname* (mandatory): In squared brackets, indicate the local name of your instrument, as it will be displayed in Autolab.
-* *Parameter "driver"* (mandatory): Name of the associated Autolab driver.
-* *Parameter "connection"* (mandatory): Type of the connection use to communicate with your instrument (ex: VISA, TELNET,...). 
-* *Other driver-dependent parameters*: Depending on the driver, you may have to provide an address (Visa or IP address,...), a communication port, a slot configuration, or others options.
+* **Device nickname** (mandatory): In squared brackets, indicate the local name of your instrument, as it will be displayed in Autolab.
+* **Parameter "driver"** (mandatory): Name of the associated Autolab driver.
+* **Parameter "connection"** (mandatory): Type of the connection use to communicate with your instrument (ex: VISA, TELNET,...). 
+* **Other driver-dependent parameters**: Depending on the driver, you may have to provide an address (Visa or IP address,...), a communication port, a slot configuration, or others options.
 
 To see a concrete example of the block you have to append in the configuration file, call the function ``driver_help`` of the corresponding driver. You can copy and paste this exemple into the configuration file ``local_config.ini``, and customize the value of the parameters to suit those of your instrument. Here is an example for the Yenista Tunics light source:
 
