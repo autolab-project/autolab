@@ -1,6 +1,6 @@
 .. _create_driver:
 
-Create your own driver
+Create your own Driver
 ======================
 
 **   !!!! OLD VERSION !!!! **
