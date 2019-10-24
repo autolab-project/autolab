@@ -32,12 +32,6 @@ To start the GUI in a Python shell, call the function ``gui`` of the package:
 	>>> import autolab
 	>>> autolab.gui()
 	
-Linux:
-
-.. code-block:: none
-
-	quentin@myComputer:~$ autolab
-
 
 .. toctree::
    :maxdepth: 1
