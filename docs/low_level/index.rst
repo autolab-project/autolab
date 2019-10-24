@@ -5,6 +5,12 @@ Low-level interface (Drivers)
 
 In Autolab, a **Driver** refers to a Python class dedicated to communicate with one particular instrument. This class contains functions that perform particular operations, and may also contain subclasses in case some modules or channels are present in the instrument. Autolab comes with a set of more than 40 different **Drivers**, which are ready to use. 
 
+.. warning::
+
+	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of how the drivers are made before using it, or prefer the :ref:`highlevel`. 
+   
+	Some functions of the drivers are not dedicated to be called by the user. 
+
 The first part of this section explains how to configure and open a **Driver**, and how to use it to communicate with your instrument. Then, we explain how to save locally the configuration of a **Driver** to simplify its further use. Finally, we present the guidelines to use for the creation of new driver files, to contribute to the Autolab Python package.
 
 Table of contents:
