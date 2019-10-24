@@ -43,10 +43,10 @@ This hierarchy is implemented for each instrument in its drivers files.
 Open a Device
 -----------------------
 
-To use this interface, you need to store locally the configuration of your intruments (see :re:`configuration`).
+To use this interface, you need to store locally the configuration of your intruments (see :ref:`configuration`).
 
 For a given instrument, the associated hierarchy of **Elements** is implemented in the drivers files, and is thus ready to use.
-Each **Elements** is represented by a name. The name of the top-level **Module**, the **Device**, is the nickname of the instrument in the configuration file (see :re:`configuration`).
+Each **Elements** is represented by a name. The name of the top-level **Module**, the **Device**, is the nickname of the instrument in the configuration file (see :ref:`configuration`).
 
 To see the list of the available **Devices**, simply use the function ``list_devices`` of Autolab. 
 
