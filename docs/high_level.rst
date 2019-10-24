@@ -1,7 +1,7 @@
-.. _userguide_high:
+.. _highlevel:
 
-Open and use a Device
-=====================
+High-level interface (Devices)
+==============================
 
 What is a Device ?
 ------------------
@@ -40,7 +40,7 @@ Some instruments are a bit more complex, in the sense that they can host several
 			
 This hierarchy is implemented for each instrument in its drivers files.
 
-Open and close a Device
+Open a Device
 -----------------------
 
 To use this interface, you need to store locally the configuration of your intruments (see :re:`configuration`).
