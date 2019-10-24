@@ -7,7 +7,7 @@ In Autolab, a **Driver** refers to a Python class dedicated to communicate with 
 
 .. warning::
 
-	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of how the drivers are made before using it, or prefer the :ref:`highlevel`. 
+	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the :ref:`highlevel`. 
    
 	Some functions of the drivers are not dedicated to be called by the user. 
 
