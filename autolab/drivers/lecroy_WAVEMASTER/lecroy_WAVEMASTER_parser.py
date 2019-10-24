@@ -52,7 +52,7 @@ usage:    autolab-drivers [options] arg
         parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
         parser.add_argument("-t", "--trigger", dest="trigger",action="store_true", help="Trigger the scope once" )
         parser.add_argument("-f", "--format", type=str, dest="format", default=None, help="Change data encoding" )
-        parser.add_argument("-a", "--auto_scale", type=str, dest="auto_scale", default=None, help="To allow auto modification of the vertical gain. Argument is a list of all the channels to apply spe mode to. Note if no channel specified. WARNING: Specifying more than one channel to apply auto_scale to will result in different trigger events for the acquired channels.")
+        parser.add_argument("-a", "--auto_scale", type=str, dest="auto_scale", default=None, help="To allow auto modification of the vertical gain. Argument is a list of all the channels to apply spe mode to. Note if no channel specified. Note: it will work best if your scope triggers (i.e. not on AUTO trigger mode with no relevant trigger signal). WARNING: Specifying more than one channel to apply auto_scale to will result in different trigger events for the acquired channels.")
         parser.add_argument("-b", "--auto_fact", type=float, dest="auto_fact", default=None, help="For setting limits of the vertical gain, units are in number of scope divisions here. WARNING: code security avoid traces too close from screen extrema (at 9 divisions) and result in endless looping. WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." )
 
         return parser
