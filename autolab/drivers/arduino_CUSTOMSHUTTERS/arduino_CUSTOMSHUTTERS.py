@@ -19,12 +19,12 @@ class Driver():
         self.queue = []
     
         # Angle configuration : True = Shutter closed  ; False = Shutter open
-        self.shutter1 = Shutter(1,{True:30,False:60})
-        self.shutter2 = Shutter(2,{True:125,False:85})
-        self.shutter3 = Shutter(3,{True:25,False:70})
+        self.shutter1 = Shutter(self,1,{True:30,False:60})
+        self.shutter2 = Shutter(self,2,{True:125,False:85})
+        self.shutter3 = Shutter(self,3,{True:25,False:70})
                 
         # Close every shutters at startup
-        self.set_safe_state()       
+        self.safe_state()       
         
         
     
@@ -40,7 +40,7 @@ class Driver():
         
         ''' Returns the shutter object with corresponding num '''
         
-        return getattr(self,'shuter{num}')
+        return getattr(self,f'shutter{num}')
         
     
     
@@ -85,8 +85,7 @@ class Driver():
         ''' Set the given global_state '''
         
         assert isinstance(global_state,str)
-        assert len(global_state) == len(self.config)
-        
+        assert len(global_state) == 3
         for i in range(len(global_state)):
             if global_state[i] in ['0','1'] :
                 num = i+1
@@ -105,17 +104,24 @@ class Driver():
             for j in range(3) :
                 self.get_shutter(j+1).set_angle(round(np.random.random()*180),execute=False)
         
-        self.inst.timeout = 10000
+        for j in range(3) :
+            self.get_shutter(j+1).set_state(True, execute=False)
+            self.get_shutter(j+1).set_state(True, execute=False)
+                
+        self.inst.timeout = 15000
         self.execute_queue()
         self.inst.timeout = 5000
         
-        self.safe_state()
         
         
         
     def get_driver_model(self):
         
         model = []
+        
+        for i in range(3):
+            model.append({'element':'module','name':f'shutter{i+1}','object':getattr(self,f'shutter{i+1}')})
+        
         model.append({'element':'variable','name':'global_state','type':str,'write':self.set_global_state,'help':'Global state of the shutters : "0x1" = Close shutter 1 and open shutter 3'})
         model.append({'element':'action','name':'safe_state','do':self.safe_state,'help':'Close every shutters'})
         model.append({'element':'action','name':'invert','do':self.invert,'help':'Invert every shutter state'})
@@ -143,7 +149,7 @@ class Shutter :
         
         ''' Set the angle of the shutter '''
         
-        self.master.query(f'SRV{self.num}={angle}')
+        self.master.append_instruction(f'SRV{self.num}={angle}')
         if execute is True : self.master.execute_queue()
         
         
@@ -191,7 +197,7 @@ class Driver_VISA(Driver):
         import visa 
         
         self.BAUDRATE = 115200 
-        
+
         # Instantiation
         rm = visa.ResourceManager()
         self.inst = rm.open_resource(address)
