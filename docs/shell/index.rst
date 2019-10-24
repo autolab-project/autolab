@@ -1,3 +1,5 @@
+.. _shell_scripts:
+
 Shell scripts
 =================
 
