@@ -1,6 +1,6 @@
 .. _userguide_low:
 
-Open and use a driver
+Open and use a Driver
 =====================
 
 The low-level interface provides a raw access to instantiate and use directly a driver implemented in Autolab, through a *Driver* object
