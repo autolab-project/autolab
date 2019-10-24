@@ -2,14 +2,14 @@
 Open and use a pre-configured Driver
 ----------------------------------
 
-To see the list of the available driver configurations, call the function ``list_driver_configs``. It will returns the list of the blocks names (nicknames) in the configuration file.
+To see the list of the available driver configurations stored in the Autolab configuration file, call the function ``list_driver_configs``. It will returns the list of the blocks names (nicknames) in the configuration file.
 
 .. code-block:: python
 
 	>>> autolab.list_driver_configs()
 	['my_tunics']
 
-To communicate with an instrument whose the configuration has been stored in the Autolab configuration file, simply call the function ``get_driver_by_config`` with the nickname of your instrument.
+To instantiate a *Driver* using one of the available configurations, simply call the function ``get_driver_by_config`` with the nickname of your instrument.
 
 .. code-block:: python
 
@@ -22,3 +22,11 @@ You are now ready to use the functions implemented in the *Driver*:
 	>>> laserSource.set_wavelength(1550)
 	>>> laserSource.get_wavelength()
 	1550
+
+.. note::
+
+	You can instantiate a *Driver* using one of the available configuration and overwrite in the same time some of its parameters values, by providing them in the ``get_driver_by_config``:
+	
+	.. code-block:: python
+
+		>>> laserSource = autolab.get_driver_by_config('my_tunics',address='GPIB::9::INSTR')
