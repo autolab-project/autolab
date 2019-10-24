@@ -35,7 +35,6 @@ class Driver():
         """Get all channels or the ones specified"""
         previous_trigger_state = self.get_previous_trigger_state()
         self.stop()
-        print(single)
         if single: self.single()
         while not self.is_stopped(): time.sleep(0.05)
         if channels == []: channels = list(range(1,self.nb_channels+1))
@@ -91,25 +90,25 @@ class Driver():
     
 #################################################################################
 ############################## Connections classes ##############################
-class Driver_VISA(Driver):
-    def __init__(self, address='GPIB0::2::INSTR', **kwargs):
-        import visa as v
+#class Driver_VISA(Driver):
+    #def __init__(self, address='GPIB0::2::INSTR', **kwargs):
+        #import visa as v
         
-        rm        = v.ResourceManager()
-        self.inst = rm.get_instrument(address)
-        Driver.__init__(self, **kwargs)
+        #rm        = v.ResourceManager()
+        #self.inst = rm.get_instrument(address)
+        #Driver.__init__(self, **kwargs)
     
-    def query(self,command):
-        self.write(command)
-        return self.read()
-    def read(self):
-        return self.inst.read()
-    def read_raw(self):
-        return self.inst.read_raw()
-    def write(self,command):
-        self.inst.write(command)
-    def close(self):
-        self.inst.close()
+    #def query(self,command):
+        #self.write(command)
+        #return self.read()
+    #def read(self):
+        #return self.inst.read()
+    #def read_raw(self):
+        #return self.inst.read_raw()
+    #def write(self,command):
+        #self.inst.write(command)
+    #def close(self):
+        #self.inst.close()
 
 class Driver_VXI11(Driver):
     def __init__(self, address='192.168.0.1', **kwargs):
@@ -142,7 +141,6 @@ class Channel():
     
     
     def get_data_raw(self):
-        print(self.channel)
         if self.autoscale:
             self.do_autoscale()
         self.dev.write(f'C{self.channel}:WF? DAT1')
