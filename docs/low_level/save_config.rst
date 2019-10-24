@@ -3,24 +3,9 @@
 Save a driver configuration
 ===========================
 
-To communicate more easily with your instrument, the full configuration that has to be provided in the ``get_driver`` function can be stored locally and read automatically by Autolab. This page describe the procedure to configure a new instrument locally, and how to use it after in Autolab.
-	
-Driver availability
--------------------
+To communicate more easily with your instrument, the full configuration that has to be provided in the ``get_driver`` function can be stored locally and read automatically by Autolab. This page describes the procedure to configure a new instrument locally, and how to use it after in Autolab.
 
-The first thing to do is to check whether a driver is available in Autolab for your instrument. Call the function ``driver_help`` of Autolab to get the list of available drivers:
-
-.. code-block:: python
-
-	>>> import autolab
-	>>> autolab.list_drivers()
-
-If a driver is available for your instrument, go to the next step. If not, please visit the section :ref:`create_driver` to create a compatible driver and thus contribute to the Autolab package.
-
-Autolab configuration file
---------------------------
-
-The configuration of a *Driver* is stored locally in a configuration file named ``local_config.ini``. This file is located in the local directory of Autolab, which is automatically created in your home directory the first time you use the package (import the package or run the GUI). The following messages will then be displayed, indicating the exact paths of the local folder and of the configuration file.
+The configuration of a *Driver* is stored locally in a configuration file named ``local_config.ini``. This file is located in the local directory of Autolab, which is automatically created in your home directory the first time you use the package (import it or run the GUI). The following messages will then be displayed, indicating the exact paths of the local folder and of the configuration file.
 
 .. code-block:: python
 
@@ -62,7 +47,7 @@ To see a concrete example of the block you have to append in the configuration f
 	
 Save the configuration file, and go back to Autolab. You don't need to restart Autolab, the configuration file will be read automatically.
 
-Load a pre-configured Driver
+Open and use pre-configured Driver
 ----------------------------
 
 To see the list of the available driver configurations, call the function ``list_driver_configs``. It will returns the list of the blocks names (nicknames) in the configuration file.
