@@ -5,7 +5,7 @@ Save a Driver configuration
 
 To communicate more easily with your instrument, the full configuration that has to be provided in the ``get_driver`` function can be stored locally and read automatically by Autolab. This page describes the procedure to configure a new instrument locally, and how to use it after in Autolab.
 
-The configuration of a *Driver* is stored locally in a configuration file named ``local_config.ini``. This file is located in the local directory of Autolab, which is automatically created in your home directory the first time you use the package (import it or run the GUI). The following messages will then be displayed, indicating the exact paths of the local folder and of the configuration file.
+The configuration of a **Driver** is stored locally in a configuration file named ``local_config.ini``. This file is located in the local directory of Autolab, which is automatically created in your home directory the first time you use the package (import it or run the GUI). The following messages will then be displayed, indicating the exact paths of the local folder and of the configuration file.
 
 .. code-block:: python
 
@@ -16,7 +16,7 @@ The configuration of a *Driver* is stored locally in a configuration file named 
 
 	Do not move or rename the local folder nor the configuration file.
 	
-This configuration file is structured in blocks, each of them containing the configuration that you usually pass in the function ``get_driver`` to instantiate a *Driver*. 
+This configuration file is structured in blocks, each of them containing the configuration that you usually pass in the function ``get_driver`` to instantiate a **Driver**. 
 
 .. code-block:: none
 
