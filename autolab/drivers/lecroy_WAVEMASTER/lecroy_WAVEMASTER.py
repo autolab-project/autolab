@@ -35,7 +35,6 @@ class Driver():
         """Get all channels or the ones specified"""
         previous_trigger_state = self.get_previous_trigger_state()
         self.stop()
-        print(single)
         if single: self.single()
         while not self.is_stopped(): time.sleep(0.05)
         if channels == []: channels = list(range(1,self.nb_channels+1))
@@ -142,7 +141,6 @@ class Channel():
     
     
     def get_data_raw(self):
-        print(self.channel)
         if self.autoscale:
             self.do_autoscale()
         self.dev.write(f'C{self.channel}:WF? DAT1')
