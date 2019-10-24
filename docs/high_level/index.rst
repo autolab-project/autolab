@@ -3,7 +3,7 @@
 High-level interface (Devices)
 ==============================
 
-The high-level interface of Autolab offers an abstraction layer of its low-level interface that provides a simple and straightforward way to communicate with an instrument through a **Device** object (a hierarchy of Modules, Variables and Actions objects). 
+The high-level interface of Autolab offers an abstraction layer of its low-level interface that provides a simple and straightforward way to communicate with an instrument through a **Device** object (a hierarchy of **Modules**, **Variables** and **Actions** objects). 
 
 Table of contents:
 
