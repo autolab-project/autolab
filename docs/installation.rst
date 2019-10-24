@@ -39,7 +39,7 @@ If the package is already installed, you can upgrade it with the following comma
 	pip install autolab --upgrade
 	
 
-Import the Autolab package in a Python shell to check the installation is correct.
+Import the Autolab package in a Python shell to check that the installation is correct.
 
 .. code-block:: python
 
