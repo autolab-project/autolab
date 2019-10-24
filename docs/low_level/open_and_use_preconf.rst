@@ -9,13 +9,13 @@ To see the list of the available driver configurations stored in the Autolab con
 	>>> autolab.list_driver_configs()
 	['my_tunics']
 
-To instantiate a *Driver* using one of the available configurations, simply call the function ``get_driver_by_config`` with the nickname of your instrument.
+To instantiate a **Driver** using one of the available configurations, simply call the function ``get_driver_by_config`` with the nickname of your instrument.
 
 .. code-block:: python
 
 	>>> laserSource = autolab.get_driver_by_config('my_tunics')
 
-You are now ready to use the functions implemented in the *Driver*:
+You are now ready to use the functions implemented in the **Driver**:
 
 .. code-block:: python
 
