@@ -10,7 +10,7 @@ Autolab is a Python package dedicated to laboratory instruments control and to s
 
 This package provides a set of standardized drivers for more than 40 instruments, that can be used through three different interfaces: 
 
-* A :ref:`lowlevel`, which provides a raw access to the package's drivers functions. The instantiation of a **Driver** requires some configuration information (ex `yenista_TUNICS` here) that can be saved locally to simplify the user scripts (ex `my_powermeter` here).
+* A `My cool internal link <lowlevel_>`_, which provides a raw access to the package's drivers functions. The instantiation of a **Driver** requires some configuration information (ex `yenista_TUNICS` here) that can be saved locally to simplify the user scripts (ex `my_powermeter` here).
 
 .. code-block:: python
 
