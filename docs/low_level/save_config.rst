@@ -18,7 +18,7 @@ The configuration of a *Driver* is stored locally in a configuration file named 
 	
 This configuration file is structured in blocks, each of them containing the configuration that you usually pass in the function ``get_driver`` to instantiate a *Driver*. 
 
-.. code-block:: 
+.. code-block:: none
 
 	[<NICKNAME_OF_YOUR_DEVICE>]			
 	driver = <DRIVER_NAME>
@@ -38,7 +38,7 @@ Configuration elements:
 
 To see a concrete example of the block you have to append in the configuration file, call the function ``driver_help`` of the corresponding driver. You can copy and paste this exemple into the configuration file ``local_config.ini``, and customize the value of the parameters to suit those of your instrument. Here is an example for the Yenista Tunics light source:
 
-.. code-block:: 
+.. code-block:: none
 
 	[my_tunics]
 	driver = yenista_TUNICS
