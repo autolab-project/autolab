@@ -1,6 +1,6 @@
 .. _configuration:
 
-Save a driver configuration
+Save a Driver configuration
 ===========================
 
 To communicate more easily with your instrument, the full configuration that has to be provided in the ``get_driver`` function can be stored locally and read automatically by Autolab. This page describes the procedure to configure a new instrument locally, and how to use it after in Autolab.
@@ -46,27 +46,3 @@ To see a concrete example of the block you have to append in the configuration f
 	address = GPIB0::2::INSTR
 	
 Save the configuration file, and go back to Autolab. You don't need to restart Autolab, the configuration file will be read automatically.
-
-Open and use pre-configured Driver
-----------------------------
-
-To see the list of the available driver configurations, call the function ``list_driver_configs``. It will returns the list of the blocks names (nicknames) in the configuration file.
-
-.. code-block:: python
-
-	>>> autolab.list_driver_configs()
-	['my_tunics']
-
-To communicate with an instrument whose the configuration has been stored in the Autolab configuration file, simply call the function ``get_driver_by_config`` with the nickname of your instrument.
-
-.. code-block:: python
-
-	>>> laserSource = autolab.get_driver_by_config('my_tunics')
-
-You are now ready to use the functions implemented in the *Driver*:
-
-.. code-block:: python
-
-	>>> laserSource.set_wavelength(1550)
-	>>> laserSource.get_wavelength()
-	1550
