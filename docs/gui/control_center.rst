@@ -15,7 +15,7 @@ A tooltip will be displayed when passing the mouse over the *Elements* (if provi
 Actions
 #######
 
-A button **Execute** is present in each *Action* line. Clicking the button executes the associated action.
+A button **Execute** is present in each *Action* line. Clicking the button executes the associated action. If the *Action* has a parameter, fill its value in the associated widget.
 
 
 
