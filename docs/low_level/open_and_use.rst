@@ -23,11 +23,11 @@ To get more information about one particular driver (connection types, modules, 
 
 	>>> autolab.driver_help('yenista_TUNICS')
 
-The instantiation of a *Driver* object requires a particular configuration : 
+The instantiation of a *Driver* object is done through the function ``get_driver``, and requires a particular configuration : 
 
 * The name of the driver: one of the name appearing in the ``list_drivers`` function (ex: 'yenista_TUNICS').
-* The connection type: indicates the library to use to communicate with the instrument. The *Driver* may have one or several connection types implemented (ex: 'VISA', 'TELNET', ...).
-* Driver-dependent arguments: call the ``driver_help`` function to know them (ex: address, port, number of channel, module configuration, ...).
+* The connection type: it indicates the library to use to communicate with the instrument. The available connection types are listed in the help function ``driver_help`` (ex: 'VISA', 'TELNET', ...).
+* Driver-dependent arguments: they are listed in the help function ``driver_help`` (ex: address, port, number of channel, module configuration, ...).
 
 .. code-block:: python
 
