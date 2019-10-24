@@ -25,7 +25,7 @@ You are now ready to use the functions implemented in the *Driver*:
 
 .. note::
 
-	You can instantiate a *Driver* using one of the available configuration and overwrite in the same time some of its parameters values, by providing them in the ``get_driver_by_config``:
+	You can overwrite some of the parameters values of a configuration by simply providing them in the ``get_driver_by_config`` function:
 	
 	.. code-block:: python
 
