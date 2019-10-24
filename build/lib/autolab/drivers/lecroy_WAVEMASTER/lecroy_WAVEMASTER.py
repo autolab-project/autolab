@@ -138,12 +138,12 @@ class Channel():
     def __init__(self,dev,channel):
         self.channel          = int(channel)
         self.dev              = dev
-        self.autoscale_iter   = 0
+        self.autoscale        = False
         self.autoscale_factor = 8
     
     
     def get_data_raw(self):
-        if self.autoscale_iter:
+        if self.autoscale:
             self.do_autoscale()
         self.dev.write(f'C{self.channel}:WF? DAT1')
         self.data_raw = self.dev.read_raw()
@@ -200,47 +200,52 @@ class Channel():
         return float(self.dev.query(f'C{self.channel}:VDIV?').split(' ')[1])
         
     def do_autoscale(self):
+        fact       = 0
+        target     = self.autoscale_factor * 0.1
+        acceptance = 0.05
+        
+        mi = self.get_min()
+        ma = self.get_max()
+        val = round((-1)*(mi+ma)/2.,3)
+        self.set_vertical_offset(val)
+        VDIV = self.get_vertical_scale()
+        OFST = self.get_vertical_offset()
+        R_MI = -(5*VDIV)-OFST
+        R_MA =   5*VDIV -OFST
+        r_diff = R_MA - R_MI
+        fact = (ma-mi)/r_diff
+        
         k = 1
-        import time
-        while k <= self.autoscale_iter:
+        while abs(target-fact)>acceptance or mi<R_MI or ma>R_MA or abs(R_MI-mi)<0.10*VDIV*10:            
+            # compute new channel amplitude as distance from target
+            new_channel_amp  = VDIV + VDIV * round(fact-target,3)
+            if mi<R_MI or ma>R_MA or abs(R_MI-mi)<0.10*VDIV*10:
+                new_channel_amp = new_channel_amp + new_channel_amp * 0.5                    
+            if new_channel_amp<0.005: new_channel_amp = 0.005 # if lower than the lowest possible 5mV/div
+            self.set_vertical_scale(new_channel_amp)  # set_vertical_scale do change vertical_offset...
+            self.set_vertical_offset(val)             # must do this then
+            
+            # trig for a eventual new iteration
+            self.dev.single()
+            print(f'Optimisation loop, index: {k}, distance from target ({acceptance}): {round(abs(target-fact),3)}')
+            k = k + 1
+            
             mi = self.get_min()
             ma = self.get_max()
-            offs = abs(mi) + abs(ma)
-            diff = ma - mi
-            print(mi,ma,offs)
-            
-            val = round((-1)*offs/2.,3)  #+abs(mi)
-            
-            print(diff, self.autoscale_factor)
-            
-            
+            val = round((-1)*(mi+ma)/2.,3)
             self.set_vertical_offset(val)
-            new_channel_amp  = round(diff/self.autoscale_factor,3)
-            time.sleep(1)
-            print(new_channel_amp)
+            VDIV = self.get_vertical_scale()
+            OFST = self.get_vertical_offset()
+            R_MI = -(5*VDIV)-OFST
+            R_MA =   5*VDIV -OFST
+            r_diff = R_MA - R_MI
+            fact = (ma-mi)/r_diff
             
-            if new_channel_amp<0.005: new_channel_amp = 0.005 # if lower than the lowest possible 5mV/div
-            self.set_vertical_scale(new_channel_amp)
-            time.sleep(1)
-            self.dev.single()
-            print('Optimisation loop index:', k,self.autoscale_iter)
-            if k==self.autoscale_iter:
-                VDIV = self.get_vertical_scale()
-                OFST = self.get_vertical_offset()
-                R_MI = -(4.5 * VDIV) - OFST
-                R_MA =   4.5 * VDIV  - OFST
-                mi = self.get_min()
-                ma = self.get_max()
-                if mi<R_MI or ma>R_MA:                        #if trace out of the screen optimize again
-                    print('(SCOPE)   Min:',R_MI,' Max:',R_MA)
-                    print('(TRACE)   Min:',mi,' Max:',ma)
-                    k = k-1
-            k = k+1
             
-    def set_autoscale_iter(self,val):
-        self.autoscale_iter = int(val)
-    def get_autoscale_iter(self):
-        return self.autoscale_iter
+    def set_autoscale_enable(self):
+        self.autoscale = True
+    def set_autoscale_disable(self):
+        self.autoscale = False
     def set_autoscale_factor(self,val):
         self.autoscale_factor = float(val)
     def get_autoscale_factor(self):
@@ -261,9 +266,10 @@ class Channel():
         model.append({'element':'variable','name':'trace','type':np.ndarray,'read':self.get_data,'help':'Get the current trace in numpy'})
         model.append({'element':'variable','name':'vertical_scale','type':float,'unit':'V/div','read':self.get_vertical_scale,'write':self.set_vertical_scale,'help':'Set the vertical scale of the channel'})
         model.append({'element':'variable','name':'vertical_offset','type':float,'unit':'V','read':self.get_vertical_offset,'write':self.set_vertical_offset,'help':'Set the vertical offset of the channel'})
-        model.append({'element':'variable','name':'autoscale_iterations','type':int,'read':self.get_autoscale_iter,'write':self.set_autoscale_iter,'help':'Set the number of loops for the autoscale process. Set 0 to disable autoscale.'})
-        model.append({'element':'variable','name':'autoscale_factor','type':float,'unit':float,'read':self.get_autoscale_factor,'write':self.set_autoscale_factor,'help':'For setting limits of the vertical scale, units are in number of scope divisions here. WARNING: Do not overpass 9 due to a security in the code! WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." '})
+        model.append({'element':'variable','name':'autoscale_factor','type':float,'unit':float,'read':self.get_autoscale_factor,'write':self.set_autoscale_factor,'help':'For setting limits of the vertical scale, units are in number of scope divisions here. WARNING: code security avoid traces too close from screen extrema (at 9 divisions) and result in endless looping. WARNING: the number of vertical divisions might depend on the scope (8 or 10 usually)." '})
         model.append({'element':'variable','name':'active','type':bool,'read':self.is_active,'help':'Returns the current state of the channel.'})
+        model.append({'element':'action','name':'autoscale_enable','do':self.set_autoscale_enable,'help':'Enable autoscale mode.'})
+        model.append({'element':'action','name':'autoscale_disable','do':self.set_autoscale_disable,'help':'Disnable autoscale mode.'})
         return model
 
 
