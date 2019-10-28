@@ -25,11 +25,13 @@ class Driver():
     ### User utilities
     def get_data_traces(self,traces=[],single=None):
         """Get all traces or the ones specified"""
+        self.stop()
         if single: self.single()   # must verify whether finished sweeping
         while not self.is_scope_stopped(): time.sleep(0.05)
         if traces == []: traces = ['A','B','C']
         for i in traces:
             getattr(self,f'trace{i}').get_data()
+        self.run()
         
     def save_data_traces(self,filename,traces=[],FORCE=False):
         if traces == []: traces = ['A','B','C']
@@ -42,6 +44,8 @@ class Driver():
         return s
     def run(self):
         self.write('RPT')
+    def stop(self):
+        self.write('STP')
     def is_scope_stopped(self):
         return '0' in self.query('SWEEP?')
         
@@ -50,8 +54,9 @@ class Driver():
         for i in ['A','B','C']:
             model.append({'element':'module','name':f'line{i}','object':getattr(self,f'trace{i}'), 'help':'Traces'})
         model.append({'element':'variable','name':'is_stopped','read':self.is_scope_stopped, 'type':bool,'help':'Query whether scope is stopped'})
-        model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode'})
-        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode'})
+        model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode for trigger'})
+        model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
+        model.append({'element':'action','name':'stop','do':self.stop,'help':'Set stop mode for trigger'})
         return model
         
 
@@ -92,7 +97,8 @@ class Driver_GPIB(Driver):
     def write(self,query):
         self.inst.write(query)
     def read(self,length=1000000000):
-        return self.inst.read(length).decode().strip('\r\n')
+        msg = self.inst.read(length)
+        return ''.join([chr(lett) for lett in msg]).strip('\r\n')  # from binary to string (used instead of decode() beacause of some weird bytes that may be there)
     def close(self):
         """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
         #Gpib.gpib.close(self.inst.id)
