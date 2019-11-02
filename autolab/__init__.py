@@ -17,7 +17,7 @@ from .core import paths
 # LOCAL STRUCTURE
 if os.path.exists(paths.USER_FOLDER) is False :    # LOCAL FOLDER
     os.mkdir(paths.USER_FOLDER)
-    print(f'INFORMATION: The local folder AUTOLAB has been created : {paths.USER_FOLDER_PATH}')
+    print(f'INFORMATION: The local folder AUTOLAB has been created : {paths.USER_FOLDER}')
 
 if os.path.exists(paths.LOCAL_CONFIG) is False : # LOCAL CONFIG
     shutil.copyfile(paths.LOCAL_CONFIG_TEMPLATE,paths.LOCAL_CONFIG)

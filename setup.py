@@ -29,7 +29,7 @@ setup(
         'console_scripts': [
             'autolab = scripts.autolab:main',
             'autolab-device = scripts.autolab_device:main',
-            'autolab-drivers = scripts.autolab_driver:main',
+            'autolab-driver = scripts.autolab_driver:main',
         ]},
     include_package_data=True,
     package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:

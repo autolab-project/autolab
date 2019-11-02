@@ -9,7 +9,7 @@ import os
 
 import inspect
 from .utilities import emphasize, clean_string
-
+import autolab
 
 class Element() :
 
@@ -28,7 +28,6 @@ class Element() :
         if self._parent is not None : return self._parent.address()+'.'+self.name
         else : return self.name
     
-
 
 
 
@@ -94,6 +93,7 @@ class Module(Element):
                 self._act[name] = Action(self,config_line)
 
 
+
     def get_module(self,name):
         
         """ Returns the submodule of the given name """
@@ -154,6 +154,7 @@ class Module(Element):
     
 
     def __getattr__(self,attr):
+        
         if attr in self._var.keys() : return self._var[attr]
         elif attr in self._act.keys() : return self._act[attr]
         elif attr in self._mod.keys() : return self._mod[attr]
@@ -161,6 +162,27 @@ class Module(Element):
         
         
         
+    def sub_hierarchy(self,level=0):
+        
+        ''' Returns a list of the sub hierarchy of this module '''
+        
+        h = []
+        
+        from .devices import Device
+        if isinstance(self,Device) : h.append([self.name,'Device/Module',level])
+        else : h.append([self.name,'Module',level])
+        
+        for mod in self.list_modules() :
+            h += self.get_module(mod).sub_hierarchy(level+1)
+        for var in self.list_variables() :
+            h.append([var,'Variable',level+1])
+        for act in self.list_actions() :
+            h.append([act,'Action',level+1])
+            
+        return h
+        
+        
+    
     def help(self):
         
         """ This function prints informations for the user about the availables 
@@ -169,31 +191,16 @@ class Module(Element):
         display ='\n'+emphasize(f'Module {self.name}')+'\n'
         if self._help is not None : 
             display+=f'Help: {self._help}\n'
-        
-        display += '\n* Submodules: '
-        mod_list = self.list_modules()
-        if len(mod_list)>0 :
-            for mod_name in mod_list : 
-                display += f'\n  - {mod_name}'
-            display += '\n'
-        else : display+='None\n'
-        
-        display += '\n* Variables: '
-        var_list = self.list_variables()
-        if len(var_list)>0 :
-            for var_name in var_list : 
-                display += f'\n  - {var_name}'
-            display += '\n'
-        else : display+='None'
-        
-        display += '\n* Actions: '
-        act_list = self.list_actions()
-        if len(act_list)>0 :
-            for act_name in act_list : 
-                display += f'\n  - {act_name}'
-            display += '\n'
-        else : display+='None'
-
+            
+        display += '\nAttribute hierarchy:'
+            
+        hierarchy = self.sub_hierarchy()
+        for i, h_step in enumerate(hierarchy):
+            if i == 0 : prefix = ''
+            else : prefix = '|- '
+            txt = ' '*3*h_step[2] + f'{prefix}{h_step[0]}'
+            display += '\n' + txt + ' '*(30-len(txt)) + f'({h_step[1]})'
+            
         print(display)
         
         
@@ -320,14 +327,14 @@ class Variable(Element):
                 
         # GET FUNCTION
         if value is None:
-            assert self.readable, f"The variable {self.name} is readable"
+            assert self.readable, f"The variable {self.name} is not readable"
             answer = self.read_function()
             if self._read_signal is not None : self._read_signal.emit(answer)
             return answer
             
         # SET FUNCTION
         else : 
-            assert self.writable, f"The variable {self.name} is writable"
+            assert self.writable, f"The variable {self.name} is not writable"
             self.write_function(value)
             if self._write_signal is not None : self._write_signal.emit()
   
