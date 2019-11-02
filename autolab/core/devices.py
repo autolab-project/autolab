@@ -110,7 +110,7 @@ class Device(Module):
         
         """ For auto-completion """
         
-        return  self.getModuleList() + self.getVariableList() + self.getActionList() + ['close','help','instance']
+        return  self.list_modules() + self.list_variables() + self.list_actions() + ['close','help','instance']
  
         
     

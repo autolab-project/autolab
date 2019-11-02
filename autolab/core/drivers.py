@@ -9,7 +9,7 @@ import inspect
 import importlib
 import autolab
 import configparser
-from .utilities import emphasize
+from .utilities import emphasize,underline
 
     
 # =============================================================================
@@ -129,50 +129,100 @@ def driver_help(driver_name):
     # Name and category if available
     submess = f'Driver "{driver_name}"'
     if hasattr(driver_lib.Driver,'category') : submess += f' ({driver_lib.Driver.category})'
-    mess += '='*len(submess)+'\n'+submess+'\n'+'='*len(submess)+'\n\n'
+    mess += emphasize(submess,sign='=') + '\n'
 
-    # Connections types
-    mess += 'Connections types:\n'
-    connections = get_connection_names(driver_lib)
-    for connection in connections : 
-        mess += f' - {connection}\n'
-    mess += '\n'
     
-    # Modules
+    # Load list of all parameters
+    params = {}
+    params['driver'] = driver_name
+    params['connection'] = {}
+    for conn in get_connection_names(driver_lib) : 
+        params['connection'][conn] = get_class_args(get_connection_class(driver_lib,conn))
+    params['other'] = get_class_args(get_driver_class(driver_lib))
     if hasattr(get_driver_class(driver_lib),'slot_config') :
-        mess += 'Modules:\n'
-        modules = get_module_names(driver_lib)
-        for module in modules : 
-            moduleClass = get_module_class(driver_lib,module)
-            mess += f' - {module}'
-            if hasattr(moduleClass,'category') : mess += f' ({moduleClass.category})'
-            mess += '\n'
-        mess += '\n'
+        params['other']['slot1'] = f'{get_driver_class(driver_lib).slot_config}'
+        params['other']['slot1_name'] = 'my_<MODULE_NAME>'
+        
+        
+    # Example of get_driver
+    mess += '\n' + underline('Example(s) to instantiate a driver:') + '\n\n'
+    for conn in params['connection'].keys() :
+        mess += f"\ta = autolab.get_driver('my_{params['driver']}', '{conn}'"
+        for arg,value in params['connection'][conn].items():
+            mess += f", {arg}='{value}'"
+        for arg,value in params['other'].items():
+            mess += f", {arg}='{value}'"
+        mess += ')\n'
+            
+    # Example of set_driver_config
+    mess += '\n' + underline('Example(s) to save a driver configuration by command-line:') + '\n\n'
+    for conn in params['connection'].keys() :
+        mess += f"\tautolab.set_driver_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
+        for arg,value in params['connection'][conn].items():
+            mess += f", {arg}='{value}'"
+        for arg,value in params['other'].items():
+            mess += f", {arg}='{value}'"
+        mess += ')\n'
+            
+    # Example of set_driver_config
+    mess += '\n' + underline('Example(s) to save a driver configuration by editing the file local_config.ini:') + '\n'
+    for conn in params['connection'].keys() :
+        mess += f"\n\t[my_{params['driver']}]\n"
+        mess += f"\tdriver = {params['driver']}\n"
+        mess += f"\tconnection = {conn}\n"
+        for arg,value in params['connection'][conn].items():
+            mess += f"\t{arg} = {value}\n"
+        for arg,value in params['other'].items():
+            mess += f"\t{arg} = {value}\n"
     
-    mess += f'Configuration example(s) for local_config.ini:\n\n'
+    # Example of get_driver_by_config
+    mess += '\n' + underline('Example to instantiate a driver with local configuration:') + '\n\n'
+    mess += f"\ta = autolab.get_driver_by_config('my_{params['driver']}')"
+        
     
-    # Arguments of Driver class
-    driver_class_args = ''
-    defaults_args = get_class_args(get_driver_class(driver_lib))
-    for key,value in defaults_args.items() :
-        driver_class_args += f'{key} = {value}\n'
-    if hasattr(get_driver_class(driver_lib),'slot_config') :
-        driver_class_args += f'slot1 = {get_driver_class(driver_lib).slot_config}\n'
-        driver_class_args += 'slot1_name = my_<MODULE_NAME>\n'
-        
-    # Arguments of Driver_XXX classes
-    for connection in connections :
-        
-        mess += f'[my_{driver_name}]\n'
-        mess += f'driver = {driver_name}\n'
-        mess += f'connection = {connection}\n'
-        
-        # get all optional parameters and default values of __init__ method of Driver_ class
-        defaults_args = get_class_args(get_connection_class(driver_lib,connection))
-        for key,value in defaults_args.items() :
-            mess += f'{key} = {value}\n'
-
-        mess += driver_class_args + '\n'
+#
+#    # Connections types
+#    mess += 'Connections types:\n'
+#    connections = get_connection_names(driver_lib)
+#    for connection in connections : 
+#        mess += f' - {connection}\n'
+#    mess += '\n'
+#    
+#    # Modules
+#    if hasattr(get_driver_class(driver_lib),'slot_config') :
+#        mess += 'Modules:\n'
+#        modules = get_module_names(driver_lib)
+#        for module in modules : 
+#            moduleClass = get_module_class(driver_lib,module)
+#            mess += f' - {module}'
+#            if hasattr(moduleClass,'category') : mess += f' ({moduleClass.category})'
+#            mess += '\n'
+#        mess += '\n'
+#    
+#    mess += f'Configuration example(s) for local_config.ini:\n\n'
+#    
+#    # Arguments of Driver class
+#    driver_class_args = ''
+#    defaults_args = get_class_args(get_driver_class(driver_lib))
+#    for key,value in defaults_args.items() :
+#        driver_class_args += f'{key} = {value}\n'
+#    if hasattr(get_driver_class(driver_lib),'slot_config') :
+#        driver_class_args += f'slot1 = {get_driver_class(driver_lib).slot_config}\n'
+#        driver_class_args += 'slot1_name = my_<MODULE_NAME>\n'
+#        
+#    # Arguments of Driver_XXX classes
+#    for connection in connections :
+#        
+#        mess += f'[my_{driver_name}]\n'
+#        mess += f'driver = {driver_name}\n'
+#        mess += f'connection = {connection}\n'
+#        
+#        # get all optional parameters and default values of __init__ method of Driver_ class
+#        defaults_args = get_class_args(get_connection_class(driver_lib,connection))
+#        for key,value in defaults_args.items() :
+#            mess += f'{key} = {value}\n'
+#
+#        mess += driver_class_args + '\n'
         
     print(mess)
     
