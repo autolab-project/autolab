@@ -122,17 +122,9 @@ def driver_help(driver_name):
     
     ''' Display the help of a particular driver (connection types, modules, ...) '''
     
-    driver_lib = load_driver_lib(driver_name)
-    
-    mess = '\n'
-
-    # Name and category if available
-    submess = f'Driver "{driver_name}"'
-    if hasattr(driver_lib.Driver,'category') : submess += f' ({driver_lib.Driver.category})'
-    mess += emphasize(submess,sign='=') + '\n'
-
     
     # Load list of all parameters
+    driver_lib = load_driver_lib(driver_name)
     params = {}
     params['driver'] = driver_name
     params['connection'] = {}
@@ -142,12 +134,39 @@ def driver_help(driver_name):
     if hasattr(get_driver_class(driver_lib),'slot_config') :
         params['other']['slot1'] = f'{get_driver_class(driver_lib).slot_config}'
         params['other']['slot1_name'] = 'my_<MODULE_NAME>'
+    
+    mess = '\n'
+
+    # Name and category if available
+    submess = f'Driver "{driver_name}"'
+    if hasattr(driver_lib.Driver,'category') : submess += f' ({driver_lib.Driver.category})'
+    mess += emphasize(submess,sign='=') + '\n'
+    
+    # Connections types
+    mess += '\nConnections types:\n'
+    for connection in params['connection'].keys() : 
+        mess += f' - {connection}\n'
+    mess += '\n'
+    
+    # Modules
+    if hasattr(get_driver_class(driver_lib),'slot_config') :
+        mess += 'Modules:\n'
+        modules = get_module_names(driver_lib)
+        for module in modules : 
+            moduleClass = get_module_class(driver_lib,module)
+            mess += f' - {module}'
+            if hasattr(moduleClass,'category') : mess += f' ({moduleClass.category})'
+            mess += '\n'
+        mess += '\n'
+
+    
+
         
         
     # Example of get_driver
     mess += '\n' + underline('Example(s) to instantiate a driver:') + '\n\n'
     for conn in params['connection'].keys() :
-        mess += f"\ta = autolab.get_driver('my_{params['driver']}', '{conn}'"
+        mess += f"\ta = autolab.get_driver('{params['driver']}', '{conn}'"
         for arg,value in params['connection'][conn].items():
             mess += f", {arg}='{value}'"
         for arg,value in params['other'].items():
