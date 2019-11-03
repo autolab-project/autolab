@@ -24,7 +24,12 @@ setup(
     packages=find_packages(),
     classifiers=["Programming Language :: Python :: 3",
                  "Operating System :: OS Independent"],
-    install_requires=[],
+    install_requires=[
+            'numpy>=1.16',
+            'pandas>=0.24',
+            'PyQt5>=5.9',
+            'pyvisa>=1.10'
+            ],
     entry_points={
         'console_scripts': [
             'autolab = scripts.autolab:main',
