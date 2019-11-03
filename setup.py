@@ -28,7 +28,8 @@ setup(
             'numpy>=1.16',
             'pandas>=0.24',
             'PyQt5>=5.9',
-            'pyvisa>=1.10'
+            'pyvisa>=1.10',
+            'python-vxi11>=0.9'
             ],
     entry_points={
         'console_scripts': [
