@@ -7,6 +7,7 @@ The first developpements of the core, the GUI, and the drivers started initially
 
 Thanks to Maxime, Giuseppe and Guilhem for their contributions.
 
-Contacts:
-- `Quentin Chateiller <mailto:quentin.chateiller@c2n.upsaclay.fr>`_
-- `Bruno Garbin <mailto:bruno.garbin@c2n.upsaclay.fr>`_
+
+**You find this package useful?** Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ ! :-)
+
+Contacts: `quentin.chateiller@c2n.upsaclay.fr <mailto:quentin.chateiller@c2n.upsaclay.fr>`_,  `bruno.garbin@c2n.upsaclay.fr <mailto:bruno.garbin@c2n.upsaclay.fr>`_
