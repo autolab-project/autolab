@@ -43,17 +43,16 @@ class Driver():
 ############################## Connections classes ##############################
 class Driver_TELNET(Driver):
     
-    def __init__(self, address='192.168.0.9', **kwargs):
+    def __init__(self, address='192.168.0.1', **kwargs):
         from telnetlib import Telnet
-        
-        self.TIMEOUT = 1
-        
         
         # Instantiation
         self.controller = Telnet(address,5024)
-        self.read()
-        self.read()
-        
+        while True : 
+            ans = self.read()
+            if ans is not None and 'Connected' in ans :
+                break
+
         Driver.__init__(self, **kwargs)
         
     def write(self,command):
@@ -64,7 +63,7 @@ class Driver_TELNET(Driver):
         
     def read(self):
         try :
-            ans = self.controller.read_until('READY>'.encode(),timeout=self.TIMEOUT)
+            ans = self.controller.read_until('READY>'.encode(),timeout=0.5)
             ans = ans.decode().replace('READY>','').strip() 
             assert ans != ''
             return ans
@@ -93,6 +92,8 @@ class Module_FTB1750():
         self.dev.write(f"LINS1:SENS{self.SLOT}:POW:REF:STAT 0")       # Set Absolute power measurment mode (dBm or W)
         self.dev.write('*OPC?')
     
+
+
 
     
     def set_averaging_state(self,state):
@@ -135,6 +136,8 @@ class Module_FTB1750():
 
     
         
+    
+    
     def set_wavelength(self,wavelength):
         assert isinstance(float(wavelength),float)
         wavelength=float(wavelength)*1e-9
@@ -142,11 +145,13 @@ class Module_FTB1750():
         if wavelength != current_wavelength :
             self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV {wavelength} nm")
             self.dev.write('*OPC?')
-
     
     def get_wavelength(self):
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV?")
         return float(ans)*1e9
+    
+    
+    
     
     
     def get_driver_model(self):
@@ -157,5 +162,3 @@ class Module_FTB1750():
         model.append({'element':'variable','name':'power','type':float,'unit':'W','read':self.get_power,'help':'Current power'})
         return model
         
-    
-
