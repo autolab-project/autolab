@@ -46,13 +46,14 @@ class Driver_TELNET(Driver):
     
     def __init__(self, address='192.168.0.12', **kwargs):
         from telnetlib import Telnet
-        
-        self.TIMEOUT = 1
-        
+                
         # Instantiation
         self.controller = Telnet(address,5024)
-        self.read()
-        self.read()
+        while True : 
+            ans = self.read()
+            if ans is not None and 'Connected' in ans :
+                break
+
         
         Driver.__init__(self,**kwargs)
         
@@ -65,7 +66,7 @@ class Driver_TELNET(Driver):
         
     def read(self):
         try :
-            ans = self.controller.read_until('READY>'.encode(),timeout=self.TIMEOUT)
+            ans = self.controller.read_until('READY>'.encode(),timeout=0.5)
             ans = ans.decode().replace('READY>','').strip() 
             assert ans != ''
             return ans
