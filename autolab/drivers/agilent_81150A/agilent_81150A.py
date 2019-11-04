@@ -49,7 +49,7 @@ class Driver_VISA(Driver):
         return rep
     def close(self):
         self.write(':SYST:COMM:RLST LOC')
-        #self.inst.close()
+        self.inst.close()
 ############################## Connections classes ##############################
 #################################################################################
 

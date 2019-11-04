@@ -50,7 +50,7 @@ class Driver_TELNET(Driver):
         # Instantiation
         self.controller = Telnet(address,5024)
         while True : 
-            ans = self.read()
+            ans = self.read(timeout=0.1)
             if ans is not None and 'Connected' in ans :
                 break
 
@@ -64,9 +64,9 @@ class Driver_TELNET(Driver):
         return self.read()
         
         
-    def read(self):
+    def read(self,timeout=1):
         try :
-            ans = self.controller.read_until('READY>'.encode(),timeout=0.5)
+            ans = self.controller.read_until('READY>'.encode(),timeout=timeout)
             ans = ans.decode().replace('READY>','').strip() 
             assert ans != ''
             return ans

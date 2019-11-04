@@ -49,21 +49,20 @@ class Driver_TELNET(Driver):
         # Instantiation
         self.controller = Telnet(address,5024)
         while True : 
-            ans = self.read()
+            ans = self.read(timeout=0.1)
             if ans is not None and 'Connected' in ans :
                 break
 
         Driver.__init__(self, **kwargs)
         
     def write(self,command):
-        try : self.controller.write(f'{command}\r\n'.encode())
-        except : pass
+        self.controller.write(f'{command}\r\n'.encode())
         return self.read()
         
         
-    def read(self):
+    def read(self,timeout=1):
         try :
-            ans = self.controller.read_until('READY>'.encode(),timeout=0.5)
+            ans = self.controller.read_until('READY>'.encode(),timeout=timeout)
             ans = ans.decode().replace('READY>','').strip() 
             assert ans != ''
             return ans
@@ -98,11 +97,8 @@ class Module_FTB1750():
     
     def set_averaging_state(self,state):
         assert isinstance(state,bool)
-        current_state=self.get_averaging_state()
-        if state != current_state :
-            state = int(state)
-            self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:STAT {state}")
-            self.dev.write('*OPC?')
+        self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:STAT {state}")
+        self.dev.write('*OPC?')
     
     def get_averaging_state(self):
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:STAT?")
@@ -117,12 +113,8 @@ class Module_FTB1750():
         return int(ans)
     
     def set_buffer_size(self, value):
-        assert isinstance(int(value),int)
-        value=int(value)
-        current_size=self.get_buffer_size()
-        if current_size != value :
-            self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:COUN {value}")
-            self.dev.write('*OPC?')
+        self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:COUN {value}")
+        self.dev.write('*OPC?')
 
 
  
@@ -139,12 +131,8 @@ class Module_FTB1750():
     
     
     def set_wavelength(self,wavelength):
-        assert isinstance(float(wavelength),float)
-        wavelength=float(wavelength)*1e-9
-        current_wavelength=self.get_wavelength()
-        if wavelength != current_wavelength :
-            self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV {wavelength} nm")
-            self.dev.write('*OPC?')
+        self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV {wavelength} nm")
+        self.dev.write('*OPC?')
     
     def get_wavelength(self):
         ans = self.dev.write(f"LINS1:SENS{self.SLOT}:POW:WAV?")
