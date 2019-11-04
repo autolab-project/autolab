@@ -97,7 +97,7 @@ class Module_FTB1750():
     
     def set_averaging_state(self,state):
         assert isinstance(state,bool)
-        self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:STAT {state}")
+        self.dev.write(f"LINS1:SENS{self.SLOT}:AVER:STAT {int(state)}")
         self.dev.write('*OPC?')
     
     def get_averaging_state(self):
