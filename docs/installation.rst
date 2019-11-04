@@ -17,7 +17,7 @@ Optional packages (depending on the drivers and connections types you will use):
 * pyvisa
 * python-vxi11
 
-
+All these packages will be installed automatically, if not already present on your system.
 
 
 Installation procedure
