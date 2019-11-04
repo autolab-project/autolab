@@ -6,7 +6,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),'autolab','core'))
 import paths
-import index
+#import index
 import drivers_parser_utilities
 #import config as local_config
 import autolab
