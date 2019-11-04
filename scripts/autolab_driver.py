@@ -123,7 +123,7 @@ def init_argument_to_parse(accepted_arguments):
     args =  ["-"+arg for arg in args.split("-") if arg]
     if len(args)>1: pass
     else: 
-        if args[0] == '-h': print_help_message()  # if first argument is -h print autolab-driver's help message
+        if args[0]=='-h' or len(args)==0: print_help_message()  # if first argument is -h print autolab-driver's help message
     args_to_pass =  [arg   for arg in args   for acc in accepted_arguments   if acc in arg]
     return args_to_pass,args
 
