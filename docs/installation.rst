@@ -26,7 +26,7 @@ Installation procedure
 This project is hosted in the global python repository PyPi at the following address : https://pypi.org/project/autolab/
 To install the Autolab python package on your computer, we then advice you to use the Python package manager ``pip`` in a Python environnement:
 
-.. code-block:: 
+.. code-block:: none
 
 	pip install autolab
 	
@@ -34,7 +34,7 @@ To install the Autolab python package on your computer, we then advice you to us
 	
 If the package is already installed, you can upgrade it with the following command:
 
-.. code-block:: 
+.. code-block:: none
 
 	pip install autolab --upgrade
 	
