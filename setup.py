@@ -27,7 +27,7 @@ setup(
     install_requires=[
             'numpy>=1.16',
             'pandas>=0.24',
-            'PyQt5>=5.9',
+            'pyqt5>=5',
             'pyvisa>=1.10',
             'python-vxi11>=0.9'
             ],
