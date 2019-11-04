@@ -62,7 +62,7 @@ These interfaces are also usable through:
 
 	
 	
-**You find this package useful?** Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ ! :-)
+**You find this package useful?** Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ !
 
 A powerpoint presentation with examples is available here: `bit.ly/autolab-demo <bit.ly/autolab-demo>`_
 
