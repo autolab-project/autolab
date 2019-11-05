@@ -48,11 +48,13 @@ PyQt5 for the GUI
 The GUI requires the package PyQt5. But depending if you are using Anaconda or not, the installation is different:
 
 With Anaconda:
+
 .. code-block:: none
 
 	conda install pyqt
 	
 Without:
+
 .. code-block:: none
 
 	pip install pyqt5
