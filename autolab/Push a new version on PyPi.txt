@@ -3,7 +3,7 @@
 =====================================================================================
 
 0) Install required packages to upload to pypi after : 
-python3 -m pip install --user --upgrade setuptools wheel twine
+python -m pip install --user --upgrade setuptools wheel twine
 
 1) Update the version number in the version.txt file
 
@@ -12,10 +12,10 @@ Then on GitHub, create a release with the same version number
 https://help.github.com/en/articles/creating-releases
 
 3) Generate distribution archives. Inside the autolab folder (where setup.py is):
-python3 setup.py sdist bdist_wheel
+python setup.py sdist bdist_wheel
 
 4) Upload to Pypi (WARNING, BE SURE OF WHAT YOU DO, YOU CANNOT REUPLOAD THE SAME VERSION)
-python3 -m twine upload dist/*
+python -m twine upload dist/*
 
 5) Delete the dist/, autolab.egg-info/ and build/   folders
 
@@ -25,5 +25,5 @@ https://packaging.python.org/tutorials/packaging-projects/
 
 
 For testing on PyPiTest first : 
-python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 pip install --index-url https://test.pypi.org/simple/ autolab
