@@ -4,7 +4,7 @@
 python3 setup.py sdist bdist_wheel
 
 # Uninstall autolab
-pip3 uninstall autolab
+pip3 uninstall -y autolab
 
 # Install the compiled version
 dir dist/*.whl | xargs pip3 install
