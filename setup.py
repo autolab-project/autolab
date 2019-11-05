@@ -23,11 +23,12 @@ setup(
     url = 'https://github.com/qcha41/autolab',
     packages=find_packages(),
     classifiers=["Programming Language :: Python :: 3",
+				"Programming Language :: Python :: 3.6",
+				"Programming Language :: Python :: 3.7",
                  "Operating System :: OS Independent"],
     install_requires=[
             'numpy>=1.16',
             'pandas>=0.24',
-            'pyqt5>=5',
             'pyvisa>=1.10',
             'python-vxi11>=0.9',
 			'matplotlib>=3'
@@ -38,6 +39,7 @@ setup(
             'autolab-device = scripts.autolab_device:main',
             'autolab-driver = scripts.autolab_driver:main',
         ]},
+	python_requires='>=3.6',
     include_package_data=True,
     package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:
     keywords = ['scanning','interface','automation','scientific','laboratory','devices','experiments','measures','interface','gui','scan']
