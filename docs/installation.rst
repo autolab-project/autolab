@@ -27,22 +27,26 @@ This project is hosted in the global python repository PyPi at the following add
 To install the Autolab python package on your computer, we then advice you to use the Python package manager ``pip`` in a Python environnement:
 
 .. code-block:: none
+
 	pip install autolab
 	
 	
 If the package is already installed, you can upgrade it with the following command:
 
 .. code-block:: none
+
 	pip install autolab --upgrade
 	
 	
 Import the Autolab package in a Python shell to check that the installation is correct.
 
 .. code-block:: python
+
 	>>> import autolab
 	
 	
 You can install the latest development version (at your own risk) directly form GitHub:
 
 .. code-block:: none
+
 	pip install http://github.com/qcha41/autolab/zipball/master
