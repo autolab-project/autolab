@@ -36,8 +36,8 @@ usage:    autolab-drivers [options] arg
     Same as before using the nickname defined in local_config.ini
     
     autolab-drivers -D nickname -m some_methods1,arg1,arg2=23 some_methods2,arg1='test'
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
-            """
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition."""
+            
         parser = ArgumentParser(usage=usage,parents=[parser])
         #parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
         #parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
