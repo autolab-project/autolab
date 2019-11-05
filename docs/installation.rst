@@ -31,7 +31,7 @@ To install the Autolab python package on your computer, we then advice you to us
 	pip install autolab
 	
 	
-If the package is already installed, you can upgrade it with the following command:
+If the package is already installed, you can upgrade it to the last official version with the following command:
 
 .. code-block:: none
 
