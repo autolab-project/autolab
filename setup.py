@@ -29,7 +29,8 @@ setup(
             'pandas>=0.24',
             'pyqt5>=5',
             'pyvisa>=1.10',
-            'python-vxi11>=0.9'
+            'python-vxi11>=0.9',
+			'matplotlib>=3'
             ],
     entry_points={
         'console_scripts': [
