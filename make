@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# remove folders if there
+rm -r build/ dist/ autolab.egg-info
+
 # Compile the local source
 python3 setup.py sdist bdist_wheel
 
