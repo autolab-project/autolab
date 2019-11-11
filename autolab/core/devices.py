@@ -30,15 +30,17 @@ def get_element_by_address(address):
         
 
 
-def get_device(device_name):
+def get_device(name, **kwargs):
     
     ''' Returns the Device associated to device_name. Load it if not already done.'''
     
-    if device_name in DEVICES.keys() :
-        return DEVICES[device_name]
-    else :
-        return Device(device_name)
-    
+    if name in DEVICES.keys() :
+        assert len(kwargs)==0, f'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
+    else : 
+        instance = autolab.get_driver(name,**kwargs)
+        DEVICES[name] = Device(name,instance)
+
+    return DEVICES[name]
     
     
     
@@ -86,16 +88,11 @@ def show_devices():
 
 class Device(Module):
     
-    def __init__(self,device_name):
-        
-        assert device_name not in DEVICES.keys(), f'Device {device_name} is already open.'
-        
+    def __init__(self,device_name,instance):
+                
         Module.__init__(self,None,{'name':device_name,
-                                   'object':autolab.get_driver_by_config(device_name),
+                                   'object':instance,
                                    'help':f'Device {device_name}'})
-
-        DEVICES[self.name] = self
-        
         
     def close(self):
         

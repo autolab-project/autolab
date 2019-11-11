@@ -16,38 +16,44 @@ from .utilities import emphasize,underline
 # DRIVERS INSTANTIATION
 # =============================================================================
 
-def get_driver_by_config(config_name,**kwargs):
-    
-    ''' Returns a driver instance using the configuration config_name, overwritted by kwargs '''
-    
-    config =  dict(get_driver_config(config_name))
-    
-    assert 'driver' in config.keys(), f"Driver name not found in config '{config_name}'"
-    driver_name = config['driver']
-    del config['driver']
-        
-    assert 'connection' in config.keys(), f"Connection type not found in config '{config_name}'"
-    connection_type = config['connection']
-    del config['connection']
-
-    for key,value in kwargs.items() :
-        config[key] = value
-    
-    instance = get_driver(driver_name,connection_type,**config)
-    
-    return instance
-
-
-
-def get_driver(driver_name, connection_type, **kwargs):
+def get_driver(name, **kwargs):
     
     ''' Returns a driver instance '''
     
-    assert driver_name in list_drivers(), f'Driver {driver_name} not found'
+    if name in list_driver_configs() :
+        
+        # Load config object
+        config = dict(get_driver_config(name))
+        
+        # Overwrite config with provided configuration in kwargs
+        for key,value in kwargs.items() :
+            config[key] = value
+        
+        # Check if driver provided
+        assert 'driver' in config.keys(), f"Driver name not found in driver config '{name}'"
+        driver_name = config['driver']
+        del config['driver'] # Because config will be pass to the Driver class
+            
+    else :
+        
+        # Create config object
+        config = kwargs
+    
+        # The provided name has to be a driver name
+        assert name in list_drivers(), f'Driver {name} not found'
+        driver_name = name
+        
+    # And the argument connection has to be provided
+    assert 'connection' in config.keys(), f"Missing connection type for driver '{driver_name}'"
+    connection = config['connection']
+    del config['connection'] # Because config will be pass to the Driver class
+        
+    # Load driver library
     driver_lib = load_driver_lib(driver_name)
         
-    assert connection_type in get_connection_names(driver_lib),f"Connection type {connection_type} not found for driver {driver_name}"
-    instance = get_connection_class(driver_lib,connection_type)(**kwargs)
+    # Check connection type
+    assert connection in get_connection_names(driver_lib),f"Connection type {connection} not found for driver {driver_name}"
+    instance = get_connection_class(driver_lib,connection)(**config)
     
     return instance
     
@@ -452,5 +458,5 @@ def load_drivers_paths():
 
 
 # Loading the drivers informations at startup
-DRIVERS_PATH   = load_drivers_paths()
+DRIVERS_PATH = load_drivers_paths()
         

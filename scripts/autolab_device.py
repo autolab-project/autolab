@@ -19,23 +19,20 @@ def main():
 
     # Parser configuration
     parser = argparse.ArgumentParser()
-    parser.add_argument('element', type=str, nargs=1, help='Address of the element to open' )
+    parser.add_argument('name', type=str, nargs=1, help='Name of the device (only preconfigured instruments)' )
+    parser.add_argument('-e', '--element', type=str, nargs=1, dest="element", help='Address of the element to open' )
     parser.add_argument("-v", "--value", type=str, dest="value", default=None, help='Value to set')
     parser.add_argument("-p", "--path", type=str, dest="path", default=None, help='Path where to save data')
-    parser.add_argument("-h", "--help", dest="help", action='store_true', help='Display element help')
-    
+   
     # Results
     args = parser.parse_args()
     
-    # Load element
-    address = args.element[0].split('.')
-    assert address[0] in autolab.list_devices(), f"Device {address[0]} doesn't exist"
-    device = autolab.get_device(address[0])
-    element = device
-    if len(address) > 1 :
-        for i in range(1,len(address)):
-            element = getattr(element,address[i])
-            
+    # Load device
+    device = autolab.get_device(args.name[0])
+    
+    # Find element
+    element = autolab.get_element_by_address(args.name[0]+'.'+args.element[0])
+        
     # Execute order
     if args.help is True :
         print(element.help())
