@@ -33,12 +33,7 @@ setup(
             'python-vxi11>=0.9',
 			'matplotlib>=3'
             ],
-    entry_points={
-        'console_scripts': [
-            'autolab = scripts.autolab:main',
-            'autolab-device = scripts.autolab_device:main',
-            'autolab-driver = scripts.autolab_driver:main',
-        ]},
+    entry_points={'console_scripts': ['autolab = scripts.autolab:main']},
 	python_requires='>=3.6',
     include_package_data=True,
     package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:
