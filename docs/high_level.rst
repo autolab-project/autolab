@@ -1,6 +1,6 @@
 .. _highlevel:
 
-High-level interface (Devices)
+Devices (High-level interface)
 ==============================
 
 What is a Device ?
