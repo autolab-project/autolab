@@ -6,11 +6,13 @@
 Welcome to Autolab's documentation!
 ===================================
 
-Autolab is a Python package dedicated to laboratory instruments remote control and to scientific experiments automation.
+**"With Autolab, forget your instruments, focus on your experiment!"**
 
-This package provides a set of standardized drivers for about 40 instruments, that can be used through three different interfaces: 
+Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the cmmunity (new drivers or upgrades of existing ones). Autolab can be either used through a Python shell, an OS shell, or a graphical interface.
 
-* A :ref:`lowlevel`, which provides a raw access to the package's drivers functions. The instantiation of a **Driver** requires some configuration information (ex `yenista_TUNICS` here) that can be saved locally to simplify the user scripts (ex `my_powermeter` here).
+In this package, the interaction with a scientific instrument can be done through two different objects : the **Drivers**, or the **Devices**.
+
+* The :ref:`lowlevel` provides a raw access to the package's drivers functions. The instantiation of a **Driver** requires some configuration information (ex `yenista_TUNICS` here) that can be saved locally to simplify the user scripts (ex `my_powermeter` here).
 
 	.. code-block:: python
 
@@ -28,8 +30,8 @@ This package provides a set of standardized drivers for about 40 instruments, th
 		>>> stage = autolab.get_driver_by_config('my_stage')
 		>>> stage.go_home()
 
-* A :ref:`highlevel`, which is an abstraction layer of the low-level interface using local configurations, that provides a simple and straightforward way to communicate with an instrument through a **Device** object (a hierarchy of Modules, Variables and Actions objects). 
-	
+* The :ref:`highlevel`, are an abstraction layer of the low-level interface that provide a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects. The configuration of the driver associated to the instrument has to be saved locally in order to interact with it through a **Device**.
+
 	.. code-block:: python
 
 		>>> import autolab
@@ -46,25 +48,22 @@ This package provides a set of standardized drivers for about 40 instruments, th
 		>>> stage = autolab.get_device('my_stage')		# Create the Device 'my_stage'
 		>>> stage.home()					# Execute the Action 'home'
 
-These interfaces are also usable through:
-
-* A :ref:`gui`, a user-friendly GUI based on the high-level interface, that allows the user to interact even more easily with his instruments through three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
+The user can also interact even more easily with this high-level interface through a user-friendly :ref:`gui` which contains three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
 	
 	.. figure:: gui/scanning.png
 		:scale: 50 %
 		:figclass: align-center	
-	
-* 3 :ref:`shell_scripts`, to perform a quick single-shot operation without opening explicitely a Python shell.
+		
+Autolab is also provided with an OS shell interface (Windows and Linux) that can be used to perform to perform a quick single-shot operation without opening explicitely a Python shell. 
 
 	.. code-block:: 
 
-		>>> autolab-devices my_tunics.wavelength -v 1551
-
+		>>> autolab devices my_tunics.wavelength -v 1551
 	
 	
 **You find this package useful?** Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ !
 
-A powerpoint presentation with examples is available here: `bit.ly/autolab-demo <bit.ly/autolab-demo>`_
+A Google Slides presentation with examples is available here: `bit.ly/autolab-demo <bit.ly/autolab-demo>`_
 
 Table of contents:
 
