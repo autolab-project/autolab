@@ -68,7 +68,7 @@ If you want to remove completely a driver configuration, call the function ``rem
 .. code-block:: python
 
 	>>> autolab.set_driver_config('my_tunics',driver='yenista_TUNICS',connection='VISA',address='GPIB0::12::INSTR')
-	>>> laserSource = autolab.get_driver_by_config('my_tunics')
+	>>> laserSource = autolab.get_driver('my_tunics')
 	
 	
 Edit the configuration file
@@ -100,4 +100,4 @@ Save the configuration file, and go back to Autolab. You don't need to restart A
 
 .. code-block:: python
 
-	>>> laserSource = autolab.get_driver_by_config('my_tunics')
+	>>> laserSource = autolab.get_driver('my_tunics')
