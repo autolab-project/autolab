@@ -83,7 +83,7 @@ class Driver_SOCKET(Driver):
         self.BUFFER_SIZE = 40000
         
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.controller.connect((address,50000))    
+        self.controller.connect((address,int(50000)))    
         Driver.__init__(self)
         
     def write(self,command):

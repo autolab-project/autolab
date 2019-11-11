@@ -11,7 +11,7 @@ class InstrumentConnectorRemote():
         self.BUFFER_SIZE = 10000
         
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.controller.connect((self.ADDRESS,self.PORT))
+        self.controller.connect((self.ADDRESS,int(self.PORT)))
         
         
     def write(self,command):
