@@ -67,11 +67,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function will create the first items in the tree, but will 
         associate only the ones already loaded in autolab """
         
-        for devName in autolab.list_devices() :
+        for devName in autolab.list_driver_configs() :
             item = TreeWidgetItemModule(self.tree,devName,self)
             for i in range(5) :
                 item.setBackground(i, QtGui.QColor('#9EB7F5')) #vert
-            if devName in autolab.list_devices_loaded() :
+            if devName in autolab.list_devices() :
                 self.associate(item)
         
         

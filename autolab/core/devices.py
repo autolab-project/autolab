@@ -49,34 +49,13 @@ def get_device(name, **kwargs):
 # DEVICES LIST HELP
 # =============================================================================
         
+
+
 def list_devices():
-    
-    ''' Returns the list of the available devices names '''
-    
-    return list(autolab.list_driver_configs())
-
-
-
-def list_devices_loaded():
     
     ''' Returns the list of the loaded devices '''
     
     return list(DEVICES.keys())
-
-
-
-def show_devices():
-    
-    ''' Display the help of the devices, that consists in a list of available
-    devices, with an indication on their loaded state. '''
-    
-    txt = '\n'+emphasize('Available devices:')+'\n'
-    for device_name in list_devices():
-        txt += f" - {device_name}"
-        if device_name in DEVICES.keys() : txt += ' [loaded]'
-        txt += "\n"
-        
-    print(txt)
 
 
 
