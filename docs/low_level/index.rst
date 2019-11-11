@@ -1,6 +1,6 @@
 .. _lowlevel:
 
-Low-level interface (Drivers)
+Drivers (Low-level interface)
 ==============================
 
 In Autolab, a **Driver** refers to a Python class dedicated to communicate with one particular instrument. This class contains functions that perform particular operations, and may also contain subclasses in case some modules or channels are present in the instrument. Autolab comes with a set of about 40 different **Drivers**, which are ready to use. 
