@@ -41,7 +41,7 @@ class Driver_SOCKET(Driver):
         import socket
         
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.connect((address,port))
+        self.s.connect((address,int(port)))
 
         Driver.__init__(self, **kwargs)
     

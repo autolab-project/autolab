@@ -74,7 +74,7 @@ class Driver_SOCKET(Driver):
         self.BUFFER_SIZE = 10000
         
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.controller.connect((address,self.PORT))
+        self.controller.connect((address,int(self.PORT)))
         
         Driver.__init__(self,camera,**kwargs)
         

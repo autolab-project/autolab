@@ -236,7 +236,7 @@ class Driver_SOCKET(Driver) :
         self.BUFFER_SIZE = 40000
         
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.controller.connect((self.ADDRESS,self.PORT))   
+        self.controller.connect((self.ADDRESS,int(self.PORT)))   
         
         Driver.__init__(self)
         

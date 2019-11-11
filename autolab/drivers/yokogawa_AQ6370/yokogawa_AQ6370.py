@@ -60,7 +60,7 @@ class Driver_SOCKET(Driver):
         import socket
         
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((address, port))
+        self.sock.connect((address, int(port)))
         self.send('OPEN "anonymous"')
         ans = self.recv(1024)
         if not ans=='AUTHENTICATE CRAM-MD5.':

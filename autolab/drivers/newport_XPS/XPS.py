@@ -63,7 +63,7 @@ class XPS:
         XPS.__nbSockets += 1
         try:
             XPS.__sockets[socketId] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            XPS.__sockets[socketId].connect((IP, port))
+            XPS.__sockets[socketId].connect((IP, int(port)))
             XPS.__sockets[socketId].settimeout(timeOut)
             XPS.__sockets[socketId].setblocking(1)
         except socket.error:
