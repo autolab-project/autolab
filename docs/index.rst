@@ -8,7 +8,7 @@ Welcome to Autolab's documentation!
 
 **"With Autolab, forget your instruments, focus on your experiment!"**
 
-Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the cmmunity (new drivers or upgrades of existing ones). Autolab can be either used through a Python shell, an OS shell, or a graphical interface.
+Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones). Autolab can be either used through a Python shell, an OS shell, or a graphical interface.
 
 In this package, the interaction with a scientific instrument can be done through two different objects : the **Drivers**, or the **Devices**.
 
