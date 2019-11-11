@@ -6,37 +6,40 @@
 Welcome to Autolab's documentation!
 ===================================
 
-**"With Autolab, forget your instruments, focus on your experiment!"**
+.. class:: center
 
-Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones). Autolab can be either used through a Python shell, an OS shell, or a graphical interface.
+	**"With Autolab, forget your instruments, focus on your experiment!"**
 
-In this package, the interaction with a scientific instrument can be done through two different objects : the **Drivers**, or the **Devices**.
+Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones). The configuration required to communicate with an given instrument (connection type, address, ...) can be saved locally to avoid providing it each time. Autolab can be either used through a Python shell, an OS shell, or a graphical interface.
 
-* The :ref:`lowlevel` provides a raw access to the package's drivers functions. The instantiation of a **Driver** requires some configuration information (ex `yenista_TUNICS` here) that can be saved locally to simplify the user scripts (ex `my_powermeter` here).
+In this package, the interaction with a scientific instrument can be done through two different objects : the **Drivers**, or the **Devices**. 
+
+* The :ref:`lowlevel` provides a raw access to the package's drivers functions.
 
 	.. code-block:: python
 
 		>>> import autolab
 		
-		>>> laserSource = autolab.get_driver('yenista_TUNICS','VISA',address='GPIB0::12::INSTR')
+		>>> laserSource = autolab.get_driver('yenista_TUNICS',connection='VISA',address='GPIB0::12::INSTR')
 		>>> laserSource.set_wavelength(1550)
 		>>> laserSource.get_wavelength()
 		1550
 		
-		>>> powerMeter = autolab.get_driver_by_config('my_powermeter')
+		>>> powerMeter = autolab.get_driver('my_powermeter')
 		>>> powerMeter.get_current_power()
 		156.89e-6
 		
-		>>> stage = autolab.get_driver_by_config('my_stage')
+		>>> stage = autolab.get_driver('my_stage')
 		>>> stage.go_home()
 
-* The :ref:`highlevel`, are an abstraction layer of the low-level interface that provide a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects. The configuration of the driver associated to the instrument has to be saved locally in order to interact with it through a **Device**.
+* The :ref:`highlevel`, are an abstraction layer of the low-level interface that provide a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects. 
 
 	.. code-block:: python
 
 		>>> import autolab
-
-		>>> laserSource = autolab.get_device('my_tunics')	# Create the Device 'my_tunics'
+		
+		# Create the Device 'my_tunics'
+		>>> laserSource = autolab.get_device('yenista_TUNICS',connection='VISA',address='GPIB0::12::INSTR')
 		>>> laserSource.wavelength(1550)			# Set the Variable 'wavelength'
 		>>> laserSource.wavelength()				# Read the Variable 'wavelength'
 		1550

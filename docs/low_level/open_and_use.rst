@@ -54,18 +54,18 @@ To see the list of the available local drivers configurations, call the function
 	>>> autolab.list_driver_configs()
 	['my_tunics']
 
-Then, to load a **Driver** based on a given local driver configuration, call the function ``get_driver_by_config`` with the name of the driver configuration (usually the nickname of your instrument). The associated driver configuration will be passed automatically in the function ``get_driver``.
+Then, to load a **Driver** based on a given local driver configuration, call the function ``get_driver`` with the name of the driver configuration (usually the nickname of your instrument). The associated driver configuration will be passed automatically in the function ``get_driver``.
 
 .. code-block:: python
 
-	>>> laserSource = autolab.get_driver_by_config('my_tunics')
+	>>> laserSource = autolab.get_driver('my_tunics')
 	
 .. note::
 
-	You can overwrite some of the parameters values of a driver configuration by simply providing them as keywords arguments in the ``get_driver_by_config`` function:
+	You can overwrite some of the parameters values of a driver configuration by simply providing them as keywords arguments in the ``get_driver`` function:
 	
 	.. code-block:: python	
-		>>> laserSource = autolab.get_driver_by_config('my_tunics',address='GPIB::9::INSTR')
+		>>> laserSource = autolab.get_driver('my_tunics',address='GPIB::9::INSTR')
 			
 
 Use a Driver
