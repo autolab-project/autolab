@@ -54,7 +54,7 @@ The user can also interact even more easily with this high-level interface throu
 		:scale: 50 %
 		:figclass: align-center	
 		
-Autolab is also provided with an OS shell interface (Windows and Linux) that can be used to perform to perform a quick single-shot operation without opening explicitely a Python shell. 
+All the Autolab's features are also available through an OS shell interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without opening explicitely a Python shell. 
 
 	.. code-block:: 
 
