@@ -6,9 +6,7 @@
 Welcome to Autolab's documentation!
 ===================================
 
-.. class:: center
-
-	**"With Autolab, forget your instruments, focus on your experiment!"**
+**"With Autolab, forget your instruments, focus on your experiment!"**
 
 Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones). The configuration required to communicate with an given instrument (connection type, address, ...) can be saved locally to avoid providing it each time. Autolab can be either used through a Python shell, an OS shell, or a graphical interface.
 
@@ -59,7 +57,7 @@ The user can also interact even more easily with this high-level interface throu
 		
 All the Autolab's features are also available through an OS shell interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without opening explicitely a Python shell. 
 
-	.. code-block:: 
+	.. code-block:: none
 
 		>>> autolab devices my_tunics.wavelength -v 1551
 	
