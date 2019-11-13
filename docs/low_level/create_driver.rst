@@ -10,6 +10,7 @@ Create your own Driver
 
 The goal of this tutorial is to present the general structure of the drivers of this GitHub repository, in order for you to create your own drivers based on this structure, and make them available in this repository.
 
+This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones)
 To help you writting your own drivers, a few templates are provided on the `GitHub page of the project <https://github.com/qcha41/autolab/tree/master/autolab/drivers/More/Templates>`_.
 
 ## Directory organization
