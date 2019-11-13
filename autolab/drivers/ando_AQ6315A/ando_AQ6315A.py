@@ -48,11 +48,23 @@ class Driver():
         self.write('STP')
     def is_scope_stopped(self):
         return '0' in self.query('SWEEP?')
+    
+    ### Amplitude functions
+    def set_ref_level(self,val):
+        self.write(f'REFL{val}')
+    def get_ref_level(self):
+        return float(self.query(f'REFL?'))
+    def set_level_scale(self,val):
+        self.write(f'LSCL{val}')
+    def get_level_scale(self):
+        return float(self.query(f'LSCL?'))
         
     def get_driver_model(self):
         model = []
         for i in ['A','B','C']:
             model.append({'element':'module','name':f'line{i}','object':getattr(self,f'trace{i}'), 'help':'Traces'})
+        model.append({'element':'variable','name':'reference_level','read':self.get_ref_level,'write':self.set_ref_level, 'type':float,'help':'Reference level'})
+        model.append({'element':'variable','name':'level_scale','read':self.get_level_scale,'write':self.set_level_scale, 'type':float,'help':'Level scale'})
         model.append({'element':'variable','name':'is_stopped','read':self.is_scope_stopped, 'type':bool,'help':'Query whether scope is stopped'})
         model.append({'element':'action','name':'run','do':self.run,'help':'Set run mode for trigger'})
         model.append({'element':'action','name':'single','do':self.single,'help':'Set single mode for trigger'})
