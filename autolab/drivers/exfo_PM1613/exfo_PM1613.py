@@ -79,7 +79,7 @@ class Driver():
         model.append({'element':'variable','name':'averaging','write':self.set_averaging_state,'read':self.get_averaging_state,'type':bool,'help':'This command activates or deactivates data averaging.'})
         model.append({'element':'variable','name':'buffer_size','write':self.set_buffer_size,'read':self.get_buffer_size,'type':int,'help':'This command sets the number of power measurements that will be used to compute data averaging.'})
         model.append({'element':'variable','name':'wavelength','write':self.set_wavelength,'read':self.get_wavelength,'type':float,'help':'The <numeric_value> parameter is an operating wavelength in nm. Any wavelength within the spectral range of the power meter optical detector at 0.01 nm resolution may be selected.'})
-        model.append({'element':'variable','name':'power','read':self.get_power,'type':str,'help':'This command returns the power of both channels in their respective current unit.'})
+        model.append({'element':'variable','name':'power','read':self.get_power,'type':float,'help':'This command returns the power of both channels in their respective current unit.'})
         model.append({'element':'action','name':'zero','do':self.zero, 'help':'This command performs an offset nulling measurement.'})       
         return model
 
