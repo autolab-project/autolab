@@ -10,6 +10,8 @@ Create your own Driver
 
 The goal of this tutorial is to present the general structure of the drivers of this GitHub repository, in order for you to create your own drivers based on this structure, and make them available in this repository.
 
+To help you writting your own drivers, a few templates are provided on the `GitHub page of the project <https://github.com/qcha41/autolab/tree/master/autolab/drivers/More/Templates>`_.
+
 ## Directory organization
 
 Each different device has its own folder in this repository. The name of this folder take the form *\<manufacturer\>_\<model\>*. The driver associated to this device is a python script taking the same name as the folder: *\<manufacturer\>_\<model\>.py*. There can be additional python scripts in this folder (devices's modules, ..).
