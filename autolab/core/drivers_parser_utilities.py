@@ -24,8 +24,14 @@ class utilities():
         return s+'\n'
         
     def list_classes(self,module):
+        
+        # USE get_connection_names FROM DRIVERS.PY ?
+        
         return [name for name, obj in inspect.getmembers(module, inspect.isclass) if obj.__module__ is module.__name__]
     def list_methods(self,I):
+        
+        ### COPY PASTED IN DRIVERS.PY BUT HAS TO BE CHECKED
+        
         methods_list = []
         class_meth = [f'I.{name}' for name,obj in inspect.getmembers(I,inspect.ismethod) if name != '__init__']
         class_vars = [] 
@@ -40,6 +46,9 @@ class utilities():
         return methods_list
     
     def parsekwargs_connectiondependant(self,kwargs,Driver_class):
+        
+        # USE get_class_args FROM DRIVERS.PY ?
+        
         if Driver_class.__name__ == 'Driver_DLL':
             try: 
                 if kwargs['port']: kwargs['libpath'] = kwargs['port']; del kwargs['port']
@@ -51,17 +60,26 @@ class utilities():
         return kwargs
     
     def identify_device_class(self,module,classes_list,link):
+        
+        # USER get_connection_class FROM DRIVERS.PY
+        
         assert f'Driver_{link}' in classes_list , f"Not in {[a for a in classes_list if a.startswith('Driver_')]}"
         Driver_class = getattr(module,f'Driver_{link}')
         return Driver_class
     
     def get_category(self,driver_module):
+        
+        # USE get_driver_category FROM DRIVERS.PY
+        
         classes_list = self.list_classes(driver_module)
         Driver_class = getattr(driver_module,f'Driver')
         assert Driver_class.category, f"Missing category for driver {driver_module.__name__}"
         return Driver_class.category
 
     def parse_commands(self,I,commands,methods_list):
+        
+        
+        
         global NAME
         
         for command in commands:

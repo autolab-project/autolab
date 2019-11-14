@@ -168,7 +168,7 @@ def driver_help(driver_name):
     # Example of get_driver
     mess += '\n' + underline('Example(s) to instantiate a driver:') + '\n\n'
     for conn in params['connection'].keys() :
-        mess += f"\ta = autolab.get_driver('{params['driver']}', '{conn}'"
+        mess += f"\ta = autolab.get_driver('{params['driver']}', connection='{conn}'"
         for arg,value in params['connection'][conn].items():
             mess += f", {arg}='{value}'"
         for arg,value in params['other'].items():
@@ -198,7 +198,7 @@ def driver_help(driver_name):
     
     # Example of get_driver_by_config
     mess += '\n\n' + underline('Example to instantiate a driver with local configuration:') + '\n\n'
-    mess += f"\ta = autolab.get_driver_by_config('my_{params['driver']}')"
+    mess += f"\ta = autolab.get_driver('my_{params['driver']}')"
         
     print(mess)
     
@@ -275,6 +275,23 @@ def get_module_class(driver_lib,module_name):
     assert module_name in get_module_names(driver_lib)
     return getattr(driver_lib,f'Module_{module_name}')
 
+
+def get_class_methods(clas):
+    
+    ''' Returns the list of all the methods in that class '''
+    
+    methods_list = []
+    class_meth = [f'class.{name}' for name,obj in inspect.getmembers(clas,inspect.isfunction) if name != '__init__']
+    class_vars = [] 
+    for key in vars(clas).keys():
+        try:    # explicit to avoid visa and inspect.getmembers issue
+            for name,obj in inspect.getmembers(vars(clas)[key],inspect.ismethod):
+                if inspect.getmembers(vars(clas)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(clas)[key],inspect.ismethod) and name!='__init__':
+                    class_vars.append(f'clas.{key}.{name}')
+        except: pass
+    #class_vars = [f'I.{key}.{name}' for key in vars(I).keys() for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod) if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__']  # issue with visa open instruments
+    methods_list.extend(class_meth);methods_list.extend(class_vars)
+    return methods_list
 
 
 def get_class_args(clas):
