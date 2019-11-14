@@ -192,7 +192,7 @@ class Module(Element):
         if self._help is not None : 
             display+=f'Help: {self._help}\n'
             
-        display += '\nAttribute hierarchy:'
+        display += '\nElement hierarchy:'
             
         hierarchy = self.sub_hierarchy()
         for i, h_step in enumerate(hierarchy):
@@ -335,6 +335,7 @@ class Variable(Element):
         # SET FUNCTION
         else : 
             assert self.writable, f"The variable {self.name} is not writable"
+            value = self.type(value)
             self.write_function(value)
             if self._write_signal is not None : self._write_signal.emit()
   
@@ -409,6 +410,7 @@ class Action(Element):
         assert self.function is not None, f"The action {self.name} is not configured to be actionable"
         if self.has_parameter :
             assert value is not None, f"The action {self.name} requires an argument"
+            value = self.type(value)
             self.function(value)
         else :
             assert value is None, f"The action {self.name} doesn't require an argument"
