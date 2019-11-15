@@ -67,7 +67,6 @@ All the Autolab's features are also available through an OS shell interface (Win
 A Google Slides presentation with examples is available here: `bit.ly/autolab-demo <http://bit.ly/autolab-demo>`_
 
 .. figure:: scheme.png
-		:scale: 100 %
 		:figclass: align-center	
 
 Table of contents:
