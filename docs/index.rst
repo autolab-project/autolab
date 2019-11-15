@@ -12,7 +12,7 @@ Autolab is a Python package dedicated to control remotely any laboratory instrum
 
 In this package, the interaction with a scientific instrument can be done through two different objects : the **Drivers**, or the **Devices**. 
 
-* The :ref:`lowlevel` provides a raw access to the package's drivers functions.
+	* The :ref:`lowlevel` provides a raw access to the package's drivers functions.
 
 	.. code-block:: python
 
@@ -30,7 +30,7 @@ In this package, the interaction with a scientific instrument can be done throug
 		>>> stage = autolab.get_driver('my_stage')
 		>>> stage.go_home()
 
-* The :ref:`highlevel`, are an abstraction layer of the low-level interface that provide a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects. 
+	* The :ref:`highlevel`, are an abstraction layer of the low-level interface that provide a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects. 
 
 	.. code-block:: python
 
@@ -49,7 +49,7 @@ In this package, the interaction with a scientific instrument can be done throug
 		>>> stage = autolab.get_device('my_stage')		# Create the Device 'my_stage'
 		>>> stage.home()					# Execute the Action 'home'
 
-The user can also interact even more easily with this high-level interface through a user-friendly :ref:`gui` which contains three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
+	The user can also interact even more easily with this high-level interface through a user-friendly :ref:`gui` which contains three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
 	
 	.. figure:: gui/scanning.png
 		:scale: 50 %
