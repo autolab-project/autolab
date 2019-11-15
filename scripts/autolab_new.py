@@ -39,9 +39,11 @@ def main() :
         
     # No command provided or -h/--help option : print help
     if len(args)==1 or args[1]=='-h' or args[1]=='--help':
+        
         print_help()
         
     else :
+        
         command = args[1]   # first is 'autolab'
         if command=='documentation':   # Open help on read the docs
             autolab.help()
@@ -67,12 +69,12 @@ def main() :
 def process_config(args_list):
     
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-D", "--driver", type=str, dest="driver", required=True, help="Set the nickname or driver to use: 1) uses nickname if it is defined in local_config.ini OR(if it is not) 2) Set the driver name to use." )
+    parser.add_argument("-D", "--driver", type=str, dest="driver", help="Set the nickname or driver to use: 1) uses nickname if it is defined in local_config.ini OR(if it is not) 2) Set the driver name to use." )
     parser.add_argument("-C", "--connection", type=str, dest="connection", help="Set the connection to use for the connection." )
     parser.add_argument("-A", "--address", type=str, dest="address", help="Set the address to use for the communication." )
     parser.add_argument("-P","--port", type=int, dest="port", help="Argument used to address different things depending on the connection type. SOCKET: the port number used to communicate, GPIB: the gpib board index, DLL: the path to the dll library." )
     parser.add_argument("-O","--other", nargs='+', dest="other", help="Set other parameters (slots,...)." )
-    
+    parser.print_help()
     args, unknown = parser.parse_known_args(args_list)
     
     config = {}
@@ -84,7 +86,7 @@ def process_config(args_list):
             part = part.replace(' ','')
             config[part.split('=')[0]] = part.split('=')[1]
             
-    return args.driver, config
+    return args.driver, config, parser
     
     
     
@@ -92,17 +94,16 @@ def process_config(args_list):
 
 
 def driver_parser(args_list):
-    
     # Reading of connection information
-    driver, config = process_config(args_list)
+    driver, config, config_parser = process_config(args_list)
     
     # Reading of methods
-    parser = argparse.ArgumentParser(add_help=False)
+    parser = argparse.ArgumentParser(add_help=False,usage='...')
     parser.add_argument("-m", "--methods", nargs='+', dest="methods", help="Set the methods to use." )
     args, unknown = parser.parse_known_args(args_list)
     
     # Instantiation
-    instance = autolab.get_driver(driver,config)
+    instance = autolab.get_driver(driver,**config)
     
     # Execution of the method
     for method in args.methods :
@@ -124,7 +125,7 @@ def device_parser(args_list):
     # autolab-device -D mydummy -e channel1.amplitude -h                DISPLAY ELEMENT HELP
 
     # Reading of connection information
-    driver, config = process_config(args_list)
+    driver, config, config_parser = process_config(args_list)
     
     # Parser configuration
     parser = argparse.ArgumentParser(add_help=False)

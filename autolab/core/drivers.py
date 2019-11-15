@@ -276,18 +276,18 @@ def get_module_class(driver_lib,module_name):
     return getattr(driver_lib,f'Module_{module_name}')
 
 
-def get_class_methods(clas):
+def get_class_methods(instance):
     
     ''' Returns the list of all the methods in that class '''
     
     methods_list = []
-    class_meth = [f'class.{name}' for name,obj in inspect.getmembers(clas,inspect.isfunction) if name != '__init__']
+    class_meth = [f'instance.{name}' for name,obj in inspect.getmembers(instance,inspect.ismethod) if name != '__init__']
     class_vars = [] 
-    for key in vars(clas).keys():
+    for key in vars(instance).keys():
         try:    # explicit to avoid visa and inspect.getmembers issue
-            for name,obj in inspect.getmembers(vars(clas)[key],inspect.ismethod):
-                if inspect.getmembers(vars(clas)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(clas)[key],inspect.ismethod) and name!='__init__':
-                    class_vars.append(f'clas.{key}.{name}')
+            for name,obj in inspect.getmembers(vars(instance)[key],inspect.ismethod):
+                if inspect.getmembers(vars(instance)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(instance)[key],inspect.ismethod) and name!='__init__':
+                    class_vars.append(f'instance.{key}.{name}')
         except: pass
     #class_vars = [f'I.{key}.{name}' for key in vars(I).keys() for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod) if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__']  # issue with visa open instruments
     methods_list.extend(class_meth);methods_list.extend(class_vars)
@@ -303,8 +303,9 @@ def get_class_args(clas):
     return {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
 
 
-
-
+def get_method_args(clas):
+    
+    pass
 
 
 
