@@ -64,7 +64,7 @@ All the Autolab's features are also available through an OS shell interface (Win
 	
 **You find this package useful?** Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ !
 
-A Google Slides presentation with examples is available here: `bit.ly/autolab-demo <bit.ly/autolab-demo>`_
+A Google Slides presentation with examples is available here: `bit.ly/autolab-demo <http://bit.ly/autolab-demo>`_
 
 .. figure:: scheme.png
 		:scale: 100 %
