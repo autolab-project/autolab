@@ -8,17 +8,14 @@ The Autolab GUI Control Panel provides an easy way to control your instruments. 
 Devices tree
 ------------
 
-The name of each *Device* configured in Autolab is represented in a tree widget. If the connection to a given instrument is not already established, a click on the associated *Device* will establish this connection. The corresponding *Element* hierarchy of this *Device* then appears. 
+By default, the name of each local configuration in represented in a tree widget. Click on one of them to load the associated **Device**. Then, the corresponding *Element* hierarchy appears. 
 
-A tooltip will be displayed when passing the mouse over the *Elements* (if provided in the driver).
+The help of a given **Element** (see :ref:`highlevel`) can be displayed though a tooltip by passing the mouse over it (if provided in the driver files).
 
 Actions
 #######
 
 A button **Execute** is present in each *Action* line. Clicking the button executes the associated action. If the *Action* has a parameter, fill its value in the associated widget.
-
-
-
 
 Variables
 #########

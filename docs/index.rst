@@ -77,6 +77,7 @@ Table of contents:
    installation
    low_level/index
    high_level
+   local_config
    gui/index
    shell/index
    help_report

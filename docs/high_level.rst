@@ -6,7 +6,7 @@ Devices (High-level interface)
 What is a Device ?
 ------------------
 
-The high-level interface of Autolab is an abstraction layer of its low-level interface, which allows to communicate easily with laboratory instruments without knowing the structure of its associated **Driver**.
+The high-level interface of Autolab is an abstraction layer of its low-level interface, which allows to communicate easily and safely with laboratory instruments without knowing the structure of its associated **Driver**.
 
 In this approach, an instrument is fully described with a hierarchy of three particular **Elements**: the **Modules**, the **Variables** and the **Actions**.
 
@@ -16,16 +16,15 @@ In this approach, an instrument is fully described with a hierarchy of three par
 
 * An **Action** is an **Element** that refers to a particular operation that can be performed by an instrument. (homing of a linear stage, the zeroing of a power meter, the acquisition of a spectrum with a spectrometer...). An **Action** may have a parameter.
 
-A simple instrument is usually composed of only one **Module** (a **Device**), and a few **Variables** and **Actions** attached to it.
+The **Device** of a simple instrument is usually represented by only one **Module**, and a few **Variables** and **Actions** attached to it.
 
 .. code-block:: python
 
 	-- Tunics (Module/Device)
 		|-- Wavelength (Variable)
 		|-- Output state (Variable)
-	
 
-Some instruments are a bit more complex, in the sense that they can host several different modules. Their representation in this interface generally consists in one top level **Module** (the frame, a **Device**) and several others sub-**Modules** containing the **Variables** and **Actions** of each associated modules.
+Some instruments are a bit more complex, in the sense that they can host several different modules. Their representation in this interface generally consists in one top level **Module** (the frame) and several others sub-**Modules** containing the **Variables** and **Actions** of each associated modules.
 
 .. code-block:: python
 
@@ -38,46 +37,33 @@ Some instruments are a bit more complex, in the sense that they can host several
 			|-- Position (Variable)
 			|-- Homing (Action)		
 			
-This hierarchy is implemented for each instrument in its drivers files.
+This hierarchy of **Elements** is implemented for each instrument in its drivers files, and is thus ready to use.
 
-Open a Device
+Load and close a Device
 -----------------------
 
-To use this interface, you need to store locally the configuration of your intruments (see :ref:`configuration`).
-
-For a given instrument, the associated hierarchy of **Elements** is implemented in the drivers files, and is thus ready to use.
-Each **Elements** is represented by a name. The name of the top-level **Module**, the **Device**, is the nickname of the instrument in the configuration file (see :ref:`configuration`).
-
-To see the list of the available **Devices**, simply use the function ``list_devices`` of Autolab. 
+The procedure to load a **Device** is the same as for the **Driver**, but with the function ``get_device``. You can provide either the name of a driver with its full configuration, or the name of a local configuration (see :ref:`local_config`).
 
 .. code-block:: python
 
-	>>> import autolab
-	>>> autolab.list_devices()
-	['my_tunics','my_power_meter','my_linear_stage']
-
-.. note::
-
-The function ``show_devices`` displays the list of the available **Devices**, with an indication of their loaded status.
-
-.. code-block:: python
-
-	>>> autolab.show_devices()
-
-To open a **Device**, simply call the function ``get_device`` with the name of the **Device**.
-
-.. code-block:: python
-
+	>>> laserSource = autolab.get_device('yenista_TUNICS', connection='VISA', address='GPIB0::12::INSTR')
 	>>> lightSource = autolab.get_device('my_tunics')
 	
-To close a **Device**, simply call its the function ``close``. This object will not be usable anymore.
+.. note::
+
+	You can overwrite temporarily some of the parameters values of a configuration by simply providing them as keywords arguments in the ``get_device`` function:
+	
+	.. code-block:: python	
+		>>> laserSource = autolab.get_device('my_tunics',address='GPIB::9::INSTR')
+			
+To close properly the connection to the instrument, simply call its the function ``close`` of the **Device**. This object will not be usable anymore.
 
 .. code-block:: python
 
 	>>> lightSource.close()
 	
-Navigation in a Device
---------------------
+Navigation and help in a Device
+-------------------------------
 
 The navigation in the hierarchy of **Elements** of a given **Device** is based on relative attributes. For instance, to access the **Variable** ``wavelength`` of the **Module** (**Device**) ``my_tunics``, simply execute the following command:
 
@@ -101,8 +87,6 @@ Every **Element** in Autolab is provided with a function ``help`` that can be ca
 	>>> powerMeter.help()
 	>>> powerMeter.channel1.help()
 	>>> powerMeter.channel1.power.help()
-	
-Let's see now how to use concretely these **Elements**.
 
 Use a Variable
 --------------
@@ -150,6 +134,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	
 	# Import the package
 	import autolab
+	import pandas
 	
 	# Open the Devices
 	myTunics = autolab.get_device('my_tunics')
@@ -159,8 +144,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	myTunics.output(True)
 	
 	# Sweep its wavelength and measure a power with a power meter
-	wl_list = []
-	power_list = []
+	df = pd.DataFrame()
 	for wl in range(1550,1560,0.01) :
 	
 	    # Set the parameter
@@ -171,11 +155,17 @@ With all these commands, you can now create your own Python script. Here is an e
 	    power = myPowerMeter.line1.power()
 	    
 	    # Store the values in a list
-	    wl_list.append(wl_measured)
-	    power_list.append(power)
+		df = df.append({'wl_measured':wl_measured, 'power':power},ignore_index=True)
 	
 	# Turn off the light source
 	myTunics.output(False)
+	
+	# Close the Devices
+	myTunics.close()
+	myPowerMeter.close()	
+	
+	# Save data
+	df.to_csv('data.csv')
 
 
 
