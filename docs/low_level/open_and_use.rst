@@ -9,52 +9,38 @@ The low-level interface provides a raw access to the drivers implemented in Auto
 
 	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the :ref:`highlevel`.
 	
-To see the list of available drivers in Autolab, sorted by categories, simply use the function ``show_drivers``. If you just want the list, call the ``list_drivers`` function.
+To see the list of available drivers in Autolab, call the ``list_drivers`` function.
 
 .. code-block:: python
 
 	>>> import autolab
-	>>> autolab.show_drivers()
 	>>> autolab.list_drivers()
 
 .. note::
 
 	The driver of your instrument is missing ? Please contribute to Autolab by creating yourself a new driver, following the provided guidelines : :ref:`create_driver`
 	
-To get more information about one particular driver (connection types, modules, required configuration, ...), call the function ``driver_help`` of Autolab, with the name of the driver.
+Load and close a Driver
+-----------------------
 
-.. code-block:: python
 
-	>>> autolab.driver_help('yenista_TUNICS')
-
-Generally, a **Driver** need a particular configuration to be loaded. As we will see now, this configuration can be provided directly, or loaded from a local configuration file.
-
-Load a Driver
--------------
 
 The instantiation of a *Driver* object is done through the function ``get_driver`` of Autolab, and requires a particular configuration: 
 
 * The name of the driver: one of the name appearing in the ``list_drivers`` function (ex: 'yenista_TUNICS').
-* The connection type: it indicates the library to use to communicate with the instrument. The available connection types are listed in the help function ``driver_help`` (ex: 'VISA', 'TELNET', ...).
-* Driver-dependent arguments: they are listed in the help function ``driver_help`` (ex: address, port, number of channel, module configuration, ...).
+* The connection parameters as keywords arguments: the connection type to use to communicate with the instrument ('VISA', 'TELNET', ...), the address, the port, the slots, ...
 
 .. code-block:: python
 
 	>>> laserSource = autolab.get_driver('yenista_TUNICS','VISA',address='GPIB0::12::INSTR')
 	
-Load a Driver with local configuration
---------------------------------------
-
-To avoid having to provide each time the full configuration to load a **Driver** (as above), Autolab proposes to store locally this configuration. To learn more about this, please see the section :ref:`configuration`.
-
-To see the list of the available local drivers configurations, call the function ``list_driver_configs``. 
+To know what is the required configuration to interact with a given instrument, call the function ``config_help`` with the name of the driver.
 
 .. code-block:: python
 
-	>>> autolab.list_driver_configs()
-	['my_tunics']
-
-Then, to load a **Driver** based on a given local driver configuration, call the function ``get_driver`` with the name of the driver configuration (usually the nickname of your instrument). The associated driver configuration will be passed automatically in the function ``get_driver``.
+	>>> autolab.config_help('yenista_TUNICS')
+	
+To avoid having to provide each time the full configuration of an instrument to load a **Driver** (as above), Autolab proposes to store locally this configuration. To learn more about this, please see the section :ref:`local_config`. You can then just provide the configuration name in the function ``get_driver``.
 
 .. code-block:: python
 
@@ -62,11 +48,16 @@ Then, to load a **Driver** based on a given local driver configuration, call the
 	
 .. note::
 
-	You can overwrite some of the parameters values of a driver configuration by simply providing them as keywords arguments in the ``get_driver`` function:
+	You can overwrite temporarily some of the parameters values of a configuration by simply providing them as keywords arguments in the ``get_device`` function:
 	
 	.. code-block:: python	
-		>>> laserSource = autolab.get_driver('my_tunics',address='GPIB::9::INSTR')
+		>>> laserSource = autolab.get_device('my_tunics',address='GPIB::9::INSTR')
 			
+To close properly the connection to the instrument, simply call its the function ``close`` of the **Driver**. 
+
+.. code-block:: python
+
+	>>> lightSource.close()
 
 Use a Driver
 ------------

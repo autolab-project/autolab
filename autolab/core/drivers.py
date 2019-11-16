@@ -20,10 +20,10 @@ def get_driver(name, **kwargs):
     
     ''' Returns a driver instance '''
     
-    if name in list_driver_configs() :
+    if name in list_local_configs() :
         
         # Load config object
-        config = dict(get_driver_config(name))
+        config = dict(get_local_config(name))
         
         # Overwrite config with provided configuration in kwargs
         for key,value in kwargs.items() :
@@ -172,17 +172,17 @@ def driver_help(driver_name):
             mess += f", {arg}='{value}'"
         mess += ')\n'
             
-    # Example of set_driver_config
+    # Example of set_local_config
     mess += '\n\n' + underline('Example(s) to save a driver configuration by command-line:') + '\n\n'
     for conn in params['connection'].keys() :
-        mess += f"\tautolab.set_driver_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
+        mess += f"\tautolab.set_local_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
         for arg,value in params['connection'][conn].items():
             mess += f", {arg}='{value}'"
         for arg,value in params['other'].items():
             mess += f", {arg}='{value}'"
         mess += ')\n'
             
-    # Example of set_driver_config
+    # Example of set_local_config
     mess += '\n\n' + underline('Example(s) to save a driver configuration by editing the file local_config.ini:') + '\n'
     for conn in params['connection'].keys() :
         mess += f"\n\t[my_{params['driver']}]\n"
@@ -307,10 +307,10 @@ def get_method_args(clas):
 
 
 # =============================================================================
-# DRIVERS CONFIGS
+# LOCAL CONFIGS
 # =============================================================================
     
-def load_driver_configs():
+def load_local_configs():
     
     ''' Return the current autolab drivers informations:
         - the content of the local_config file  ['config']
@@ -326,93 +326,93 @@ def load_driver_configs():
 
 
 
-def list_driver_configs():
+def list_local_configs():
     
     ''' Returns the list of available configuration names '''
     
-    drivers_configs = load_driver_configs()
-    return list(drivers_configs.sections())
+    local_configs = load_local_configs()
+    return sorted(list(local_configs.sections()))
 
 
 
-def get_driver_config(config_name):
+def get_local_config(config_name):
     
     ''' Returns the config associated with config_name '''
     
-    assert config_name in list_driver_configs(), f"Configuration {config_name} not found"
-    drivers_configs = load_driver_configs()
-    return drivers_configs[config_name]
+    assert config_name in list_local_configs(), f"Configuration {config_name} not found"
+    local_configs = load_local_configs()
+    return local_configs[config_name]
 
 
 
-def set_driver_config(config_name,modify=False,**kwargs):
+def set_local_config(config_name,modify=False,**kwargs):
     
     ''' Add a new driver config (kwargs) or modify an existing one in the configuration file.
     Set the option modify=True to apply changes in an existing config (for safety) '''
     
     if modify is False :
-        assert config_name not in list_driver_configs(), f'Configuration "{config_name}" already exists. Please set the option modify=True to apply changes, or delete the configuration first.'
+        assert config_name not in list_local_configs(), f'Configuration "{config_name}" already exists. Please set the option modify=True to apply changes, or delete the configuration first.'
     
-    driver_configs = load_driver_configs()
+    local_configs = load_local_configs()
     
-    if config_name not in driver_configs.sections():
-        driver_configs.add_section(config_name)
+    if config_name not in local_configs.sections():
+        local_configs.add_section(config_name)
     
     for key,value in kwargs.items() :
-        driver_configs.set(config_name, key, str(value))
+        local_configs.set(config_name, key, str(value))
         
     for key in ['driver', 'connection'] :
-        assert key in driver_configs[config_name].keys(), f'Missing parameter "{key}" in the configuration'
-    assert driver_configs.get(config_name, 'driver') in list_drivers(), f'Driver "{driver_configs.get(config_name, "driver")}" does not exist'
+        assert key in local_configs[config_name].keys(), f'Missing parameter "{key}" in the configuration'
+    assert local_configs.get(config_name, 'driver') in list_drivers(), f'Driver "{local_configs.get(config_name, "driver")}" does not exist'
         
     with open(autolab.paths.LOCAL_CONFIG, 'w') as file:
-        driver_configs.write(file)
+        local_configs.write(file)
      
 
 
-def show_driver_config(config_name):
+def show_local_config(config_name):
     
-    ''' Display a driver_config as it appears in the configuration file '''
+    ''' Display a local_config as it appears in the configuration file '''
     
-    assert config_name in list_driver_configs(), f'Configuration "{config_name}" does not exist.'
+    assert config_name in list_local_configs(), f'Configuration "{config_name}" does not exist.'
     
-    driver_configs = load_driver_configs()
+    local_configs = load_local_configs()
     mess = f'\n[{config_name}]\n'
-    for key,value in driver_configs[config_name].items() :
+    for key,value in local_configs[config_name].items() :
         mess += f'{key} = {value}\n'
     print(mess)
 
         
         
-def remove_driver_config(config_name):
+def remove_local_config(config_name):
     
-    ''' Remove a driver_config from the configuration file '''
+    ''' Remove a local_config from the configuration file '''
     
-    assert config_name in list_driver_configs(), f'Configuration "{config_name}" does not exist.'
+    assert config_name in list_local_configs(), f'Configuration "{config_name}" does not exist.'
     
-    driver_configs = load_driver_configs()
-    driver_configs.remove_section(config_name)
+    local_configs = load_local_configs()
+    local_configs.remove_section(config_name)
 
     with open(autolab.paths.LOCAL_CONFIG, 'w') as file:
-        driver_configs.write(file)
+        local_configs.write(file)
 
 
 
-def remove_driver_config_parameter(config_name,param_name):
+def remove_local_config_parameter(config_name,param_name):
     
-    ''' Remove a parameter of a driver_config in the configuration file '''
+    ''' Remove a parameter of a local_config in the configuration file '''
     
-    assert config_name in list_driver_configs(), f'Configuration "{config_name}" does not exist.'
+    assert config_name in list_local_configs(), f'Configuration "{config_name}" does not exist.'
     
-    driver_configs = load_driver_configs()
-    assert param_name in driver_configs[config_name].keys(), f'The parameter "{param_name}" does not exist.'
+    local_configs = load_local_configs()
+    assert param_name in local_configs[config_name].keys(), f'The parameter "{param_name}" does not exist.'
     assert param_name not in ['driver','connection'], f'The parameter "{param_name}" is mandatory.'
     
-    driver_configs = load_driver_configs()
-    driver_configs.remove_option(config_name,param_name)
+    local_configs = load_local_configs()
+    local_configs.remove_option(config_name,param_name)
     
     with open(autolab.paths.LOCAL_CONFIG, 'w') as file:
-        driver_configs.write(file)
+        local_configs.write(file)
     
 
 
@@ -469,12 +469,12 @@ def infos():
         drivers[driver_source].append(driver_name)
     
     # Gather local config informations
-    drivers_configs = list_driver_configs()
+    local_configs = list_local_configs()
     
     # Print infos
     print('\n'+emphasize(f'AUTOLAB')+'\n')    
     print(f'{len(DRIVERS_PATHS)} drivers found')
-    print(f'{len(drivers_configs)} local configurations found\n')
+    print(f'{len(local_configs)} local configurations found\n')
     for driver_source in drivers.keys() : 
         print(f'Drivers in {driver_source}:')
         for driver_name in drivers[driver_source] :
@@ -482,8 +482,8 @@ def infos():
         print()
         
     print('Local configurations:')
-    txt_list = [[f'    - {config_name}',f'({get_driver_config(config_name)["driver"]})']
-                for config_name in drivers_configs ]
+    txt_list = [[f'    - {config_name}',f'({get_local_config(config_name)["driver"]})']
+                for config_name in local_configs ]
     print(two_columns(txt_list))
     
     
