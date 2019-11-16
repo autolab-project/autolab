@@ -9,7 +9,7 @@ import inspect
 import importlib
 import autolab
 import configparser
-from .utilities import emphasize,underline
+from .utilities import emphasize,underline,two_columns
 
     
 # =============================================================================
@@ -62,22 +62,19 @@ def get_driver(name, **kwargs):
 def load_driver_lib(driver_name):
     
     ''' Returns a driver library (that contains Driver, Driver_XXX, Module_XXX) '''
-    
-    driver_dir_path = get_driver_path(driver_name)
-        
+            
     # Loading preparation
-    driver_path = os.path.join(driver_dir_path,f'{driver_name}.py')
-
-    spec = importlib.util.spec_from_file_location(driver_name, driver_path)
-    driver_lib = importlib.util.module_from_spec(spec)
+    driver_path = get_driver_path(driver_name)
     
     # Save current working directory path
     curr_dir = os.getcwd()
     
-    # Go to the driver's directory, in case there are absolute imports
-    os.chdir(driver_dir_path)
+    # Go to the driver's directory (in case it contains absolute imports)
+    os.chdir(os.path.dirname(driver_path))
 
     # Load the module
+    spec = importlib.util.spec_from_file_location(driver_name, driver_path)
+    driver_lib = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(driver_lib)
     
     # Come back to previous working directory
@@ -95,7 +92,7 @@ def list_drivers():
     
     ''' Returns the list of available drivers '''
     
-    return list(DRIVERS_PATH.keys())
+    return sorted(list(DRIVERS_PATHS.keys()))
 
 
 
@@ -431,50 +428,69 @@ def get_driver_path(driver_name):
     
     ''' Returns the config associated with driver_name '''
     
-    assert driver_name in DRIVERS_PATH.keys(), f'Driver {driver_name} not found.'
-    return DRIVERS_PATH[driver_name]
-
-
-
-def list_driver_paths():
-    
-    ''' Returns the list of available configuration names '''
-    
-    return list(DRIVERS_PATH.sections())
-
-
+    assert driver_name in DRIVERS_PATHS.keys(), f'Driver {driver_name} not found.'
+    return DRIVERS_PATHS[driver_name]
 
 def load_drivers_paths():
     
-    ''' Return the current autolab drivers informations : 
-        - the paths of the drivers
+    ''' Returns a dictionary with :
+        - key : name of the driver
+        - value : path of the driver python script
     '''
     
     paths = autolab.paths
     
-    # Drivers : make a directory of the paths
-    driver_dir_paths = []
+    drivers_paths = {}
     for driver_source in paths.DRIVER_SOURCES.values():
-        driver_dir_paths += [os.path.join(driver_source,driver_name) 
-                            for driver_name in os.listdir(driver_source) 
-                            if os.path.isdir(os.path.join(driver_source,driver_name))
-                            and f'{driver_name}.py' in os.listdir(os.path.join(driver_source,driver_name))]
+        for name in os.listdir(driver_source) :
+            temp_path = os.path.join(driver_source,name)
+            if os.path.isdir(temp_path) and f'{name}.py' in os.listdir(temp_path) :
+                assert name not in drivers_paths.keys(), f"Two drivers where found with the name '{name}'. Each driver must have a unique name."
+                drivers_paths[name] = os.path.join(temp_path,f'{name}.py')
+              
+    return drivers_paths
 
-    infos = {}
-    for driver_dir_path in driver_dir_paths : 
-        driver_name = os.path.basename(driver_dir_path)
-        assert driver_name not in infos.keys(), f"Each driver must have a unique name. ({driver_name})"
-        infos[driver_name] = driver_dir_path
+
+
+
+
+
+# =============================================================================
+# INFOS
+# =============================================================================
+
+def infos():
+    
+    # Gather drivers informations
+    drivers = {}
+    for driver_name in DRIVERS_PATHS.keys() :
+        driver_source = os.path.dirname(os.path.dirname(DRIVERS_PATHS[driver_name]))
+        if driver_source not in drivers.keys() : drivers[driver_source] = []
+        drivers[driver_source].append(driver_name)
+    
+    # Gather local config informations
+    drivers_configs = list_driver_configs()
+    
+    # Print infos
+    print('\n'+emphasize(f'AUTOLAB')+'\n')    
+    print(f'{len(DRIVERS_PATHS)} drivers found')
+    print(f'{len(drivers_configs)} local configurations found\n')
+    for driver_source in drivers.keys() : 
+        print(f'Drivers in {driver_source}:')
+        for driver_name in drivers[driver_source] :
+            print(f'   - {driver_name}')
+        print()
         
-    return infos
-
-
-
-
-
-
+    print('Local configurations:')
+    txt_list = [[f'    - {config_name}',f'({get_driver_config(config_name)["driver"]})']
+                for config_name in drivers_configs ]
+    print(two_columns(txt_list))
+    
+    
+    
+    
 
 
 # Loading the drivers informations at startup
-DRIVERS_PATH = load_drivers_paths()
+DRIVERS_PATHS = load_drivers_paths()
         
