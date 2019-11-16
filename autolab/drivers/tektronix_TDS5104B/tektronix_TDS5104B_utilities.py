@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import tektronix_TDS5104B as MODULE
+#import tektronix_TDS5104B as MODULE
 from argparse import ArgumentParser
 
+category = 'Oscilloscope'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

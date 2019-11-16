@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import hp_8656B as MODULE
+#import hp_8656B as MODULE
 from argparse import ArgumentParser
 
+category = 'Function generator'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

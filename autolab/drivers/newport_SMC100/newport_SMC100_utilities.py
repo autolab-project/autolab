@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import newport_SMC100 as MODULE
+#import newport_SMC100 as MODULE
 from argparse import ArgumentParser
 
-
+category = 'Motion controller'
+    
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
         self.utilities = utilities

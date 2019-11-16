@@ -13,8 +13,7 @@ import time
 
 
 class Driver():
-    
-    category = 'Electrical frame'
+
     slot_config = '<MODULE_NAME>'
     
     def __init__(self, **kwargs):

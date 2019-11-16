@@ -10,8 +10,7 @@ from XPS import XPS
 
 
 class Driver():
-    
-    category = 'Motion controller'
+
     slot_config = '<MODULE_NAME>,<NAME_IN_XPS>,<CALIBRATION_PATH>'
 
     def __init__(self,**kwargs):

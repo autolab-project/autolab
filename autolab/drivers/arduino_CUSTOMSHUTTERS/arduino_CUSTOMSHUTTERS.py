@@ -12,8 +12,6 @@ import numpy as np
 
 class Driver():
     
-    category = 'Optical shutter'
-    
     def __init__(self):
         
         self.queue = []

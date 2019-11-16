@@ -9,8 +9,6 @@ Supported instruments (identified):
 
 class Driver():
     
-    category = 'Function generator'
-    
     def __init__(self):
         
         self.conv = ['T0','T1','A','B','C','D','E','F','G','H']

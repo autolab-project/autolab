@@ -12,8 +12,6 @@ import pandas as pd
 
 class Driver():
     
-    category = 'Test'
-    
     def __init__(self):
         
         self.amp = 1

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import anritsu_MS9740A as MODULE
+#import anritsu_MS9740A as MODULE
 from argparse import ArgumentParser
 
+category = 'Optical Spectrum Analyzer'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

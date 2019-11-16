@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import keithley_K2600B as MODULE
+#import keithley_K2600B as MODULE
 from argparse import ArgumentParser
 
 
+category = 'Electrical source'
+    
+    
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
         self.utilities = utilities

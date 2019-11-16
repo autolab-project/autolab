@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import newport_XPS as MODULE
+#import newport_XPS as MODULE
 from argparse import ArgumentParser
 
+category = 'Motion controller'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

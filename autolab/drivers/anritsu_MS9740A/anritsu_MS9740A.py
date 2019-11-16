@@ -9,8 +9,6 @@ Supported instruments (identified):
 
 class Driver() :
     
-    category = 'Optical Spectrum Analyzer'
-    
     def __init__(self):
         pass
 

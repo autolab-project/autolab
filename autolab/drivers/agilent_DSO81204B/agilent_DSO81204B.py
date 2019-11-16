@@ -12,8 +12,6 @@ from numpy import frombuffer,int8,ndarray
 
 class Driver():
     
-    category = 'Oscilloscope'
-    
     def __init__(self,nb_channels=4):
               
         self.nb_channels = int(nb_channels)

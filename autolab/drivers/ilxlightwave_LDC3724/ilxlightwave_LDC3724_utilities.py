@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import ilxlightwave_LDC3724 as MODULE
+#import ilxlightwave_LDC3724 as MODULE
 from argparse import ArgumentParser
 
+
+category = 'Optical source'
+    
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

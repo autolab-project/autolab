@@ -11,8 +11,6 @@ import numpy as np
 
 class Driver():
     
-    category = 'Optical source'
-    
     def __init__(self):
         pass
     

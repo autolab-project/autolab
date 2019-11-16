@@ -15,8 +15,6 @@ import numpy as np
 
 class Driver():    
     
-    category = 'Spectrometer software'
-    
     def __init__(self):
                         
         self.min_counts_allowed=5000

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import exfo_PM1613 as MODULE
+#import exfo_PM1613 as MODULE
 from argparse import ArgumentParser
 
+category = 'Power meter'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

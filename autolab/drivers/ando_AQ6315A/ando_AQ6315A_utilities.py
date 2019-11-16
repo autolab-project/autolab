@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import ando_AQ6315A as MODULE
+#import ando_AQ6315A as MODULE
 from argparse import ArgumentParser
 
-
+category = 'Spectrum analyser'
+    
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
         self.utilities = utilities

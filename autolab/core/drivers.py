@@ -66,22 +66,37 @@ def load_driver_lib(driver_name):
     # Loading preparation
     driver_path = get_driver_path(driver_name)
     
+    # Laod library
+    driver_lib = load_lib(driver_path)
+    
+    return driver_lib
+
+
+
+
+def load_lib(lib_path):
+    
+    ''' Return an instance of the python script located at lib_path '''
+    
+    lib_name = os.path.basename(lib_path).split('.')[0]
+    
     # Save current working directory path
     curr_dir = os.getcwd()
     
     # Go to the driver's directory (in case it contains absolute imports)
-    os.chdir(os.path.dirname(driver_path))
+    os.chdir(os.path.dirname(lib_path))
 
     # Load the module
-    spec = importlib.util.spec_from_file_location(driver_name, driver_path)
-    driver_lib = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(driver_lib)
+    spec = importlib.util.spec_from_file_location(lib_name, lib_path)
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
     
     # Come back to previous working directory
     os.chdir(curr_dir)
     
-    return driver_lib
-
+    return lib
+    
+    
 
 
 # =============================================================================
@@ -95,113 +110,6 @@ def list_drivers():
     return sorted(list(DRIVERS_PATHS.keys()))
 
 
-
-def show_drivers():
-    
-    ''' Display the drivers help, that consists in the list of available drivers
-    sorted by their categories '''
-    
-    d = {}
-    for driver_name in list_drivers() :
-        
-        try :
-            category = get_driver_category(load_driver_lib(driver_name))
-            if category not in d.keys() :
-                d[category] = []
-            d[category].append(driver_name)
-        except :
-            pass
-
-    mess = '\n'+emphasize('Available drivers:')+'\n\n'
-    for category in sorted(list(d.keys())) :
-        mess += f'[{category.upper()}]\n'
-        mess += ", ".join([driver for driver in sorted(d[category])])+'\n\n'        
-    
-    print(mess[:-2])
-
-
-
-def driver_help(driver_name):
-    
-    ''' Display the help of a particular driver (connection types, modules, ...) '''
-    
-    
-    # Load list of all parameters
-    driver_lib = load_driver_lib(driver_name)
-    params = {}
-    params['driver'] = driver_name
-    params['connection'] = {}
-    for conn in get_connection_names(driver_lib) : 
-        params['connection'][conn] = get_class_args(get_connection_class(driver_lib,conn))
-    params['other'] = get_class_args(get_driver_class(driver_lib))
-    if hasattr(get_driver_class(driver_lib),'slot_config') :
-        params['other']['slot1'] = f'{get_driver_class(driver_lib).slot_config}'
-        params['other']['slot1_name'] = 'my_<MODULE_NAME>'
-    
-    mess = '\n'
-
-    # Name and category if available
-    submess = f'Driver "{driver_name}"'
-    if hasattr(driver_lib.Driver,'category') : submess += f' ({driver_lib.Driver.category})'
-    mess += emphasize(submess,sign='=') + '\n'
-    
-    # Connections types
-    mess += '\nConnections types:\n'
-    for connection in params['connection'].keys() : 
-        mess += f' - {connection}\n'
-    mess += '\n'
-    
-    # Modules
-    if hasattr(get_driver_class(driver_lib),'slot_config') :
-        mess += 'Modules:\n'
-        modules = get_module_names(driver_lib)
-        for module in modules : 
-            moduleClass = get_module_class(driver_lib,module)
-            mess += f' - {module}'
-            if hasattr(moduleClass,'category') : mess += f' ({moduleClass.category})'
-            mess += '\n'
-        mess += '\n'
-   
-    # Example of get_driver
-    mess += '\n' + underline('Example(s) to instantiate a driver:') + '\n\n'
-    for conn in params['connection'].keys() :
-        mess += f"\ta = autolab.get_driver('{params['driver']}', connection='{conn}'"
-        for arg,value in params['connection'][conn].items():
-            mess += f", {arg}='{value}'"
-        for arg,value in params['other'].items():
-            mess += f", {arg}='{value}'"
-        mess += ')\n'
-            
-    # Example of set_local_config
-    mess += '\n\n' + underline('Example(s) to save a driver configuration by command-line:') + '\n\n'
-    for conn in params['connection'].keys() :
-        mess += f"\tautolab.set_local_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
-        for arg,value in params['connection'][conn].items():
-            mess += f", {arg}='{value}'"
-        for arg,value in params['other'].items():
-            mess += f", {arg}='{value}'"
-        mess += ')\n'
-            
-    # Example of set_local_config
-    mess += '\n\n' + underline('Example(s) to save a driver configuration by editing the file local_config.ini:') + '\n'
-    for conn in params['connection'].keys() :
-        mess += f"\n\t[my_{params['driver']}]\n"
-        mess += f"\tdriver = {params['driver']}\n"
-        mess += f"\tconnection = {conn}\n"
-        for arg,value in params['connection'][conn].items():
-            mess += f"\t{arg} = {value}\n"
-        for arg,value in params['other'].items():
-            mess += f"\t{arg} = {value}\n"
-    
-    # Example of get_driver_by_config
-    mess += '\n\n' + underline('Example to instantiate a driver with local configuration:') + '\n\n'
-    mess += f"\ta = autolab.get_driver('my_{params['driver']}')"
-        
-    print(mess)
-    
-    
-    
-    
     
     
     
@@ -234,15 +142,18 @@ def get_connection_names(driver_lib):
     
     
     
-def get_driver_category(driver_lib):
+def get_driver_category(driver_name):
     
     ''' Returns the driver's category (from class Driver) '''
     
-    driver_class = get_driver_class(driver_lib)
-    if hasattr(driver_class,'category'):
-        return driver_class.category
-    else :
-        return 'Other'
+    driver_utilities_path = os.path.join(os.path.dirname(DRIVERS_PATHS[driver_name]),f'{driver_name}_utilities.py')
+    category = 'Other'
+    if os.path.exists(driver_utilities_path) :
+        driver_utilities = load_lib(driver_utilities_path)
+        if hasattr(driver_utilities,'category') :
+            category = driver_utilities.category
+    
+    return category
     
     
     
@@ -415,7 +326,91 @@ def remove_local_config_parameter(config_name,param_name):
         local_configs.write(file)
     
 
+def config_help(driver_name):
+    
+    ''' Display the help of a particular driver (connection types, modules, ...) '''
+    
+    
+    # Load list of all parameters
+    driver_lib = load_driver_lib(driver_name)
+    params = {}
+    params['driver'] = driver_name
+    params['connection'] = {}
+    for conn in get_connection_names(driver_lib) : 
+        params['connection'][conn] = get_class_args(get_connection_class(driver_lib,conn))
+    params['other'] = get_class_args(get_driver_class(driver_lib))
+    if hasattr(get_driver_class(driver_lib),'slot_config') :
+        params['other']['slot1'] = f'{get_driver_class(driver_lib).slot_config}'
+        params['other']['slot1_name'] = 'my_<MODULE_NAME>'
+    
+    mess = '\n'
 
+    # Name and category if available
+    submess = f'Driver "{driver_name}"'
+    if hasattr(driver_lib.Driver,'category') : submess += f' ({driver_lib.Driver.category})'
+    mess += emphasize(submess,sign='=') + '\n'
+    
+    # Connections types
+    mess += '\nAvailable connections types:\n'
+    for connection in params['connection'].keys() : 
+        mess += f' - {connection}\n'
+    mess += '\n'
+    
+    # Modules
+    if hasattr(get_driver_class(driver_lib),'slot_config') :
+        mess += 'Available modules:\n'
+        modules = get_module_names(driver_lib)
+        for module in modules : 
+            moduleClass = get_module_class(driver_lib,module)
+            mess += f' - {module}'
+            if hasattr(moduleClass,'category') : mess += f' ({moduleClass.category})'
+            mess += '\n'
+        mess += '\n'
+   
+    # Example of get_driver
+    mess += '\n' + underline('Example(s) to load a Driver or a Device:') + '\n\n'
+    for conn in params['connection'].keys() :
+        mess += f"   a = autolab.get_driver('{params['driver']}', connection='{conn}'"
+        for arg,value in params['connection'][conn].items():
+            mess += f", {arg}='{value}'"
+        for arg,value in params['other'].items():
+            mess += f", {arg}='{value}'"
+        mess += ')\n'
+        mess += f"   a = autolab.get_device('{params['driver']}', connection='{conn}'"
+        for arg,value in params['connection'][conn].items():
+            mess += f", {arg}='{value}'"
+        for arg,value in params['other'].items():
+            mess += f", {arg}='{value}'"
+        mess += ')\n'
+            
+    # Example of set_local_config
+    mess += '\n\n' + underline('Example(s) to save a configuration by command-line:') + '\n\n'
+    for conn in params['connection'].keys() :
+        mess += f"   autolab.set_local_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
+        for arg,value in params['connection'][conn].items():
+            mess += f", {arg}='{value}'"
+        for arg,value in params['other'].items():
+            mess += f", {arg}='{value}'"
+        mess += ')\n'
+            
+    # Example of set_local_config
+    mess += '\n\n' + underline('Example(s) to save a configuration by editing the file local_config.ini:') + '\n'
+    for conn in params['connection'].keys() :
+        mess += f"\n   [my_{params['driver']}]\n"
+        mess += f"   driver = {params['driver']}\n"
+        mess += f"   connection = {conn}\n"
+        for arg,value in params['connection'][conn].items():
+            mess += f"   {arg} = {value}\n"
+        for arg,value in params['other'].items():
+            mess += f"   {arg} = {value}\n"
+    
+    # Example of get_driver_by_config
+    mess += '\n\n' + underline('Example to instantiate a Driver or a Device with a local configuration:') + '\n\n'
+    mess += f"   a = autolab.get_driver('my_{params['driver']}')\n"
+    mess += f"   a = autolab.get_device('my_{params['driver']}')"
+        
+    print(mess)
+    
 
 
 
@@ -477,8 +472,9 @@ def infos():
     print(f'{len(local_configs)} local configurations found\n')
     for driver_source in drivers.keys() : 
         print(f'Drivers in {driver_source}:')
-        for driver_name in drivers[driver_source] :
-            print(f'   - {driver_name}')
+        txt_list = [[f'    - {driver_name}',f'({get_driver_category(driver_name)})']
+                    for driver_name in drivers[driver_source] ]
+        print(two_columns(txt_list))
         print()
         
     print('Local configurations:')

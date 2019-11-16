@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import newport_1918C as MODULE
+#import newport_1918C as MODULE
 from argparse import ArgumentParser
 
+category = 'Power meter'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

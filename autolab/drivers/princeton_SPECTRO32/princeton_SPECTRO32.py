@@ -13,8 +13,6 @@ from numpy import savetxt,ndarray
 
 class Driver():
     
-    category = 'Spectrum analyser'
-    
     def __init__(self,camera='Camera1'):
         self.camera = camera
         

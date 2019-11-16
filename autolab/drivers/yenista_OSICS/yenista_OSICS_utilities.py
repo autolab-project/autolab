@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import yenista_OSICS as MODULE
+#import yenista_OSICS as MODULE
 from argparse import ArgumentParser
 
+category = 'Optical frame'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

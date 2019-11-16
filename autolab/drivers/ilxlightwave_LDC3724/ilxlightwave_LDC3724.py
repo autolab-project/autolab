@@ -10,9 +10,7 @@ import time
 
 
 class Driver():
-    
-    category = 'Optical source'
-    
+
     def __init__(self):
     
         # Initialisation

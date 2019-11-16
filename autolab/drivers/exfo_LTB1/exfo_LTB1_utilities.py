@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import exfo_LTB1 as MODULE
+#import exfo_LTB1 as MODULE
 from argparse import ArgumentParser
 
+category = 'Optical frame'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

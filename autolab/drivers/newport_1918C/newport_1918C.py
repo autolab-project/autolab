@@ -9,8 +9,6 @@ import ctypes as ct
 
 class Driver():
     
-    category = 'Power meter'
-    
     def __init__(self):
         self.write('PM:DS:Clear') # Clear data store
         self.write('PM:AUTO 1') # Automatic range

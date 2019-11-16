@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import agilent_DSA91304A as MODULE
+#import agilent_DSA91304A as MODULE
 from argparse import ArgumentParser
 
-
+category = 'Oscilloscope'
+    
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
         self.utilities = utilities
