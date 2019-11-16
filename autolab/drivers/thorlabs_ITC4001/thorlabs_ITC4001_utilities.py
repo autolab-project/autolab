@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import thorlabs_ITC4001 as MODULE
+#import thorlabs_ITC4001 as MODULE
 from argparse import ArgumentParser
 
+category = 'Optical source'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

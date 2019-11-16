@@ -9,8 +9,6 @@ Supported instruments (identified):
 
 class Driver():
     
-    category = 'Function generator'
-    
     def __init__(self,nb_channels=2):
         
         self.nb_channels = int(nb_channels)

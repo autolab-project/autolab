@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import dummy as MODULE
+#import dummy as MODULE
 from argparse import ArgumentParser
 
+category = 'Test'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import arduino_CUSTOMSHUTTERS as MODULE
+#import arduino_CUSTOMSHUTTERS as MODULE
 from argparse import ArgumentParser
 
+category = 'Optical shutter'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

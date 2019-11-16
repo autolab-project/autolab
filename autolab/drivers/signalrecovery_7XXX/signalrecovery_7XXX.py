@@ -10,8 +10,6 @@ Supported instruments (identified):
 import time
 
 class Driver():
-    
-    category = 'Lock-in amplifier'
 
     def __init__(self):
         pass 

@@ -9,8 +9,6 @@ Supported instruments (identified):
 
 class Driver():
     
-    category = 'Optical source'
-    
     def __init__(self):
         pass
 

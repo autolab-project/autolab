@@ -13,8 +13,6 @@ import pandas
 
 class Driver():
     
-    category = 'Spectrum analyser'
-    
     def __init__(self):
         
         for i in ['A','B','C','D','E','F','G']:

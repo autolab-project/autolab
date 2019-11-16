@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import yenista_TUNICS as MODULE
+#import yenista_TUNICS as MODULE
 from argparse import ArgumentParser
 
+category = 'Optical source'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

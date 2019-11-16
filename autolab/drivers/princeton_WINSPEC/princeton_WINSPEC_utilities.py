@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import princeton_WINSPEC as MODULE
+#import princeton_WINSPEC as MODULE
 from argparse import ArgumentParser
 
+category = 'Spectrometer software'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

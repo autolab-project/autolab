@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import princeton_SPECTRO32 as MODULE
+#import princeton_SPECTRO32 as MODULE
 from argparse import ArgumentParser
 
+category = 'Spectrum analyser'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

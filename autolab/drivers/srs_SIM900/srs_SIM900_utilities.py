@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import srs_SIM900 as MODULE
+#import srs_SIM900 as MODULE
 from argparse import ArgumentParser
 
+category = 'Electrical frame'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

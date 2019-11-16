@@ -9,8 +9,6 @@ Supported instruments (identified): Yenista Tunics.
 
 class Driver():
     
-    category = 'Optical source'
-    
     def __init__(self):
         self.write('MW')
         

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import tektronix_DPO4104 as MODULE
+#import tektronix_DPO4104 as MODULE
 from argparse import ArgumentParser
 
-
+category = 'Oscilloscope'
+    
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
         self.utilities = utilities

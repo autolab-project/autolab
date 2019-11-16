@@ -11,8 +11,6 @@ from numpy import zeros,ones,linspace
 
 class Driver():
     
-    category = 'Function generator'
-    
     def __init__(self):
         pass
     def amplitude(self,amplitude):

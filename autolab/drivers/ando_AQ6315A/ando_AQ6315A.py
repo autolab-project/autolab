@@ -14,8 +14,6 @@ import time
 
 class Driver():
     
-    category = 'Spectrum analyser'
-    
     def __init__(self):
         
         for i in ['A','B','C']:

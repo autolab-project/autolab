@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import keopsys_CEFA_C_PB_HP as MODULE
+#import keopsys_CEFA_C_PB_HP as MODULE
 from argparse import ArgumentParser
 
-
+category = 'Optical amplifier'
+    
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):
         self.utilities = utilities

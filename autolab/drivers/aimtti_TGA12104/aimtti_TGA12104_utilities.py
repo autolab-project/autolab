@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import aimtti_TGA12104 as MODULE
+#import aimtti_TGA12104 as MODULE
 from argparse import ArgumentParser
 
+category = 'Function generator'
 
 class Driver_parser():
     def __init__(self,args,utilities,**kwargs):

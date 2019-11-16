@@ -9,11 +9,8 @@ Supported instruments (identified):
 
 class Driver():
     
-    category = 'Function generator'
-    
     def __init__(self):
         pass
-    
     
     def amplitude(self,amplitude):
         self.write(f'POW {amplitude}')

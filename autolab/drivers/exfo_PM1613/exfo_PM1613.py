@@ -7,12 +7,7 @@ Supported instruments (identified):
 """
 import time
 
-
-
-
 class Driver():
-    
-    category = 'Power meter'
     
     def __init__(self):
         
