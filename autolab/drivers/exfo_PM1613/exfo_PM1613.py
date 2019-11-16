@@ -55,7 +55,7 @@ class Driver():
     def get_power(self):
         while True :
             result=self.query('READ:ALL:POW:DC?')
-            if isinstance(result,str) and '!' in result :
+            if isinstance(result,str) and '*' in result :
                 time.sleep(0.1)
             else :
                 break
