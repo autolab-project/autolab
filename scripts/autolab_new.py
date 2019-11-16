@@ -25,6 +25,7 @@ def print_help():
     print('  device                Device interface')
     print('  documentation         Open the online documentation')
     print('  report                Open Github webpage to report issues and/or suggestions')
+    print('  infos                 Displays the avalaible drivers and local configurations')
     print()
     print('General Options:')
     print('  -h, --help            Show this help message')
@@ -51,6 +52,8 @@ def main() :
             autolab.report()
         elif command=='gui':           # GUI
             autolab.gui()
+        elif command=='infos':           # GUI
+            autolab.infos()
         elif command=='driver':
             driver_parser(args[2:])
         elif command=='device':

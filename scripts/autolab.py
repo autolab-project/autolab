@@ -22,6 +22,7 @@ def print_help_commands():
     print(f'  device                A device interface')
     print(f'  documentation         Open the online documentation')
     print(f'  report                Open github report issue online webpage')
+    print('  infos                 Displays the avalaible drivers and local configurations')
     print()
     print(f'General Options:')
     print(f'  -h, --help            Show this help message')
@@ -34,7 +35,7 @@ def import_module(name):
 
 def main() :
     args               = sys.argv
-    available_commands = ['gui','driver','device','documentation','report']  #WARNING add manually to help too
+    available_commands = ['gui','driver','device','documentation','report','infos']  #WARNING add manually to help too
         
     # print help
     if len(args)==1 or args[1]=='-h' or args[1]=='--help':
@@ -54,6 +55,8 @@ def main() :
         autolab.report()
     elif command=='gui':           # GUI
         autolab.gui()
+    elif command=='infos':           # GUI
+        autolab.infos()
     else :                         # autolab_driver.py or autolab_device.py
         # modify sys.argv
         sys.argv = [f'autolab_{command}.py'] + args[2:]  # first is 'autolab' and second is command
