@@ -13,4 +13,4 @@ LOCAL_CONFIG = os.path.join(USER_FOLDER,'local_config.ini')
 LOCAL_CONFIG_TEMPLATE = os.path.join(os.path.dirname(__file__),'local_config.ini')
         
 DRIVER_SOURCES = {'main':os.path.join(os.path.dirname(os.path.dirname(__file__)),'drivers'),
-                       'local':os.path.join(USER_FOLDER,'local_drivers')}
+                  'local':os.path.join(USER_FOLDER,'local_drivers')}
