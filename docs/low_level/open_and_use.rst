@@ -48,10 +48,10 @@ To avoid having to provide each time the full configuration of an instrument to 
 	
 .. note::
 
-	You can overwrite temporarily some of the parameters values of a configuration by simply providing them as keywords arguments in the ``get_device`` function:
+	You can overwrite temporarily some of the parameters values of a configuration by simply providing them as keywords arguments in the ``get_driver`` function:
 	
 	.. code-block:: python	
-		>>> laserSource = autolab.get_device('my_tunics',address='GPIB::9::INSTR')
+		>>> laserSource = autolab.get_driver('my_tunics',address='GPIB::9::INSTR')
 			
 To close properly the connection to the instrument, simply call its the function ``close`` of the **Driver**. 
 
@@ -70,3 +70,44 @@ You are now ready to use the functions implemented in the **Driver**:
 	>>> laserSource.get_wavelength()
 	1550
 
+Script example
+--------------
+
+With all these commands, you can now create your own Python script. Here is an example of a script that sweep the wavelength of a light source, and measure a power of a power meter:
+
+.. code-block:: python
+	
+	# Import the package
+	import autolab
+	import pandas
+	
+	# Open the Devices
+	myTunics = autolab.get_driver('my_tunics')
+	myPowerMeter = autolab.get_driver('my_power_meter')
+	
+	# Turn on the light source
+	myTunics.output(True)
+	
+	# Sweep its wavelength and measure a power with a power meter
+	df = pd.DataFrame()
+	for wl in range(1550,1560,0.01) :
+	
+	    # Set the parameter
+	    myTunics.wavelength(wl)
+	    
+	    # Measures the values
+	    wl_measured = myTunics.set_wavelength(wl)
+	    power = myPowerMeter.line1.set_power()
+	    
+	    # Store the values in a list
+		df = df.append({'wl_measured':wl_measured, 'power':power},ignore_index=True)
+	
+	# Turn off the light source
+	myTunics.output(False)
+	
+	# Close the Devices
+	myTunics.close()
+	myPowerMeter.close()	
+	
+	# Save data
+	df.to_csv('data.csv')
