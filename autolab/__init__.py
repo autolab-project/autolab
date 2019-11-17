@@ -26,6 +26,7 @@ if os.path.exists(paths.LOCAL_CONFIG) is False : # LOCAL CONFIG
 if os.path.exists(paths.DRIVER_SOURCES['local']) is False : # lOCAL CUSTOM DRIVER FOLDER
     os.mkdir(paths.DRIVER_SOURCES['local'])
 
+del os, shutil
 
 # DRIVERS
 from .core.drivers import *
@@ -42,5 +43,8 @@ from .core.recorder import Recorder, Recorder_V2
 # GUI
 from .core.gui import start as gui
 
+# Stats (on en reparle ^^)
+from .core.stats import startup
+startup()
+del startup
     
-del os, shutil
