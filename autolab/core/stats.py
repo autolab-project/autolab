@@ -6,9 +6,8 @@ Created on Sun Nov 17 19:24:07 2019
 """
 
 from threading import Thread
-import uuid
-import requests
 
+import uuid
 session = uuid.uuid4().hex
 
 def startup() :
@@ -23,6 +22,8 @@ class StatisticsThread(Thread) :
         self.action = action
         
     def run(self):
+        
+        import requests
         
         data = {
             'v': '1',  # API Version.
