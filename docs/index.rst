@@ -57,7 +57,7 @@ In this package, the interaction with a scientific instrument can be done throug
 	.. figure:: gui/scanning.png
 		:figclass: align-center	
 		
-All the Autolab's features are also available through an OS shell interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without opening explicitely a Python shell. 
+All the Autolab's features are also available through an :ref:`os_shell` interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without opening explicitely a Python shell. 
 
 	.. code-block:: none
 
