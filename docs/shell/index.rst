@@ -5,7 +5,7 @@ OS shell
 
 Most of the Autolab functions can also be used directly from a **Windows** or **Linux** terminal without opening explicitely a Python shell. 
 
-Just enter the command ``autolab`` or ``autolab -h`` in your terminal to see the available functions.
+Just enter the command ``autolab`` or ``autolab -h`` in your terminal to see the available commands.
 
 .. code-block:: none
 
