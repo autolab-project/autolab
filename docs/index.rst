@@ -52,7 +52,6 @@ In this package, the interaction with a scientific instrument can be done throug
 	The user can also interact even more easily with this high-level interface through a user-friendly :ref:`gui` which contains three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
 	
 	.. figure:: gui/scanning.png
-		:scale: 50 %
 		:figclass: align-center	
 		
 All the Autolab's features are also available through an OS shell interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without opening explicitely a Python shell. 
@@ -64,7 +63,9 @@ All the Autolab's features are also available through an OS shell interface (Win
 	
 **You find this package useful?** Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ !
 
-A Google Slides presentation with examples is available here: `bit.ly/autolab-demo <http://bit.ly/autolab-demo>`_
+This documentation can be open from Python using the command ``autolab.doc()``.
+
+A Google Slides presentation and examples are available here: `bit.ly/autolab-demo <http://bit.ly/autolab-demo>`_
 
 .. figure:: scheme.png
 		:figclass: align-center	

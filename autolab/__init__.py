@@ -34,7 +34,7 @@ from .core.drivers import *
 from .core.devices import *
 
 # WEBBROWSER FUNCTIONS
-from .core.web import report,help
+from .core.web import *
 
 # RECORDER (to be removed at some point)
 from .core.recorder import Recorder, Recorder_V2

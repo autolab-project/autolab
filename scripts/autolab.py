@@ -20,9 +20,9 @@ def print_help_commands():
     print(f'  gui                   Open the Graphical User Interface')
     print(f'  driver                Shell scripting')
     print(f'  device                A device interface')
-    print(f'  documentation         Open the online documentation')
-    print(f'  report                Open github report issue online webpage')
-    print('  infos                 Displays the avalaible drivers and local configurations')
+    print(f'  doc                   Open the online documentation (readthedocs)')
+    print(f'  report                Open the online report/suggestions webpage (github)')
+    print(f'  infos                 Displays the avalaible drivers and local configurations')
     print()
     print(f'General Options:')
     print(f'  -h, --help            Show this help message')
@@ -35,7 +35,7 @@ def import_module(name):
 
 def main() :
     args               = sys.argv
-    available_commands = ['gui','driver','device','documentation','report','infos']  #WARNING add manually to help too
+    available_commands = ['gui','driver','device','doc','report','infos']  #WARNING add manually to help too
         
     # print help
     if len(args)==1 or args[1]=='-h' or args[1]=='--help':
@@ -49,8 +49,8 @@ def main() :
         assert args[2] not in available_commands, f"Please provide one command only"
     
     command = args[1]   # first is autolab
-    if command=='documentation':   # Open help on read the docs
-        autolab.help()
+    if command=='doc':   # Open help on read the docs
+        autolab.doc()
     elif command=='report':        # Open github report issue webpage
         autolab.report()
     elif command=='gui':           # GUI
