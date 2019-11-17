@@ -59,12 +59,6 @@ All the Autolab's features are also available through an OS shell interface (Win
 	.. code-block:: none
 
 		>>> autolab devices my_tunics.wavelength -v 1551
-	
-.. note::
-	**You find this package useful?** Please help us to improve its visibility by adding a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_ !
-
-.. note::
-	This documentation can be open from Python using the command ``autolab.doc()``.
 
 .. note::
 	A Google Slides presentation and examples are available here: `bit.ly/autolab-demo <http://bit.ly/autolab-demo>`_
