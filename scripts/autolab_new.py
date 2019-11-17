@@ -112,6 +112,15 @@ def driver_parser(args_list):
     for method in args.methods :
         getattr(instance,method) 
         # ...
+        
+        
+    # Liste python des drivers : autolab.list_drivers()
+    # Liste python des configurations locales : autolab.list_local_configs()
+    # Affichage des drivers + catégories + local config : autolab.infos()
+    # Affichage de l'aide pour la configuration d'un driver : autolab.config_help(driver_name)
+    # Liste python des fonctions (et leur args) d'une instance : autolab.list_instance_methods(instance)
+    # Affichage de la liste des fonctions (et leur args) d'une instance : autolab.explore_driver(instance)
+    
     
     # Driver closing
     instance.close()
