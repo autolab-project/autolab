@@ -23,8 +23,8 @@ def print_help():
     print('  gui                   Start the Graphical User Interface')
     print('  driver                Driver interface')
     print('  device                Device interface')
-    print('  documentation         Open the online documentation')
-    print('  report                Open Github webpage to report issues and/or suggestions')
+    print('  doc                   Open the online documentation (readthedocs)')
+    print('  report                Open the online report/suggestions webpage (github)')
     print('  infos                 Displays the avalaible drivers and local configurations')
     print()
     print('General Options:')
@@ -46,8 +46,8 @@ def main() :
     else :
         
         command = args[1]   # first is 'autolab'
-        if command=='documentation':   # Open help on read the docs
-            autolab.help()
+        if command=='doc':   # Open help on read the docs
+            autolab.doc()
         elif command=='report':        # Open github report issue webpage
             autolab.report()
         elif command=='gui':           # GUI

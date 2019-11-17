@@ -1,14 +1,14 @@
-Help and bugs/suggestions report
---------------------------------
+Documentation and bugs/suggestions report
+-----------------------------------------
 
-In case you need some help to use Autolab, you can open directly this documentation in your web browser by calling the function ``help`` of the package:
+You can open directly this documentation  from Python by calling the function ``doc`` of the package:
 
 .. code-block:: python
 
-	>>> autolab.help()
+	>>> autolab.doc()
 
 	
-If you encounter some problems or bugs, or if you have any suggestion to improve this package, or one of its driver, please open an Issue on the GitHub page of this project: 
+If you encounter some problems or bugs, or if you have any suggestion to improve this package, or one of its driver, please open an Issue on the GitHub page of this project
 https://github.com/qcha41/autolab/issues/new
 
 You can also directly call the function ``report`` of the package, which will open this page in your web browser:
@@ -16,3 +16,5 @@ You can also directly call the function ``report`` of the package, which will op
 .. code-block:: python
 
 	>>> autolab.report()
+
+You can also send us an email (see :ref:`about`).

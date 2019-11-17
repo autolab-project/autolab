@@ -10,5 +10,5 @@ import webbrowser
 def report():
     webbrowser.open('https://github.com/qcha41/autolab/issues')
     
-def help():
+def doc():
     webbrowser.open('https://autolab.readthedocs.io')
