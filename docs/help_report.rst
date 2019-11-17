@@ -1,4 +1,4 @@
-Documentation and bugs/suggestions report
+Docs and bugs/suggestions report
 -----------------------------------------
 
 You can open directly this documentation  from Python by calling the function ``doc`` of the package:
