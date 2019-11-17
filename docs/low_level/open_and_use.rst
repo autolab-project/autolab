@@ -5,9 +5,9 @@ Load and use a Driver
 
 The low-level interface provides a raw access to the drivers implemented in Autolab, through a **Driver** object, which contains functions that perform particular operations in your instrument.
 
-.. warning::
+.. attention::
 
-	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. The authors declines any responsibility for the consequences of an incorrect use of the drivers. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the :ref:`highlevel`.
+	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. **The authors declines any responsibility for the consequences of an incorrect use of the drivers**. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the use of the :ref:`highlevel`.
 	
 To see the list of available drivers in Autolab, call the ``list_drivers`` function.
 
@@ -69,6 +69,10 @@ You are now ready to use the functions implemented in the **Driver**:
 	>>> laserSource.set_wavelength(1550)
 	>>> laserSource.get_wavelength()
 	1550
+	
+You can get the list of the available functions by calling the function ``autolab.explore_driver`` with the instance of your **Driver**. Once again, note that some of these functions are note supposed to be used directly, some of them may be internal functions. 
+
+	>>> autolab.explore_driver(laserSource)
 
 Script example
 --------------

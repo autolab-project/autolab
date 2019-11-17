@@ -184,22 +184,41 @@ def get_module_class(driver_lib,module_name):
     return getattr(driver_lib,f'Module_{module_name}')
 
 
-def get_class_methods(instance):
+def explore_driver(instance):
     
-    ''' Returns the list of all the methods in that class '''
+    ''' Displays the list of the methods available in this instance '''
     
-    methods_list = []
-    class_meth = [f'instance.{name}' for name,obj in inspect.getmembers(instance,inspect.ismethod) if name != '__init__']
-    class_vars = [] 
-    for key in vars(instance).keys():
-        try:    # explicit to avoid visa and inspect.getmembers issue
-            for name,obj in inspect.getmembers(vars(instance)[key],inspect.ismethod):
-                if inspect.getmembers(vars(instance)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(instance)[key],inspect.ismethod) and name!='__init__':
-                    class_vars.append(f'instance.{key}.{name}')
-        except: pass
-    #class_vars = [f'I.{key}.{name}' for key in vars(I).keys() for name,obj in inspect.getmembers(vars(I)[key],inspect.ismethod) if inspect.getmembers(vars(I)[key],inspect.ismethod) != '__init__' and inspect.getmembers(vars(I)[key],inspect.ismethod) and name!='__init__']  # issue with visa open instruments
-    methods_list.extend(class_meth);methods_list.extend(class_vars)
-    return methods_list
+    methods = get_instance_methods(instance)
+    print('This instance contains the following functions:')
+    for method in methods :
+        print(f' - {method[0]}({",".join(method[1])})')
+
+
+def get_instance_methods(instance):
+    
+    ''' Returns the list of all the methods (and their args) in that class '''
+    
+    methods = []
+    
+    # LEVEL 1
+    for name,obj in inspect.getmembers(instance,inspect.ismethod) :
+        if name != '__init__' :
+            attr = getattr(instance,name)
+            args = list(inspect.signature(attr).parameters.keys())
+            methods.append([name,args])
+            
+    # LEVEL 2
+    instance_vars = vars(instance)
+    for key in instance_vars.keys():
+        try :    # explicit to avoid visa and inspect.getmembers issue
+            for name,obj in inspect.getmembers(instance_vars[key],inspect.ismethod):
+                if inspect.getmembers(instance_vars[key],inspect.ismethod) != '__init__' and inspect.getmembers(instance_vars[key],inspect.ismethod) and name!='__init__':
+                    attr = getattr(getattr(instance,key),name)
+                    args = list(inspect.signature(attr).parameters.keys())
+                    methods.append([f'{key}.{name}',args])
+        except : pass
+        
+    return methods
 
 
 def get_class_args(clas):
@@ -210,10 +229,6 @@ def get_class_args(clas):
     signature = inspect.signature(clas)
     return {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
 
-
-def get_method_args(clas):
-    
-    pass
 
 
 
