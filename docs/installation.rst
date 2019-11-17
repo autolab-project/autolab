@@ -7,7 +7,6 @@ Required packages:
 
 * numpy
 * pandas
-* PyQt5
 
 Optional packages (depending on the drivers and connections types you will use):
 
