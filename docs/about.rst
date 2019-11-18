@@ -11,6 +11,7 @@ Thanks to Maxime, Giuseppe and Guilhem for their contributions.
 
 
 **You find this package useful?** We would be really grateful if you could help us to improve its visibility ! You can:
+
 * Add a star on the `GitHub page of this project <https://github.com/qcha41/autolab>`_
 * Spread the word around you
 * Mention this package in your research publications
