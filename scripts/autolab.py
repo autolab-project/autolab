@@ -64,6 +64,9 @@ def main() :
     sys.exit()
         
 
+
+####################################################################################
+######################### autolab driver/device utilities ##########################
 def process_config(args_list):
     
     parser = argparse.ArgumentParser(add_help=False)
@@ -93,9 +96,45 @@ def process_config(args_list):
     
     return args.driver, config, parser
 
+def print_help_parser(parser,args_list):
+    autolab_infos = autolab.infos(_print=False)
+    parser.usage = f"""
 
-########################################################################
-######################### autolab driver ###############################
+----------------  General informations:  ----------------
+
+This is a very basic help message for usage of {args_list[0]}. More info can be found on read the doc website. To display a more extensive further help please have a look at the section help below.
+    
+    Usage:   {args_list[0]} -D driver_name -C connection -A address -h
+
+Recquired connection arguments (capital letters):
+    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See lower for the list of available drivers.
+    -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
+    -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
+    
+    
+----------------  Helps (-h option)  ----------------       
+
+Three helps are configured:
+    {args_list[0]} -h
+    This help message.
+    
+    {args_list[0]} -h -D driver_name
+    Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
+    
+    {args_list[0]} -D driver_name -C connection -A address -h
+    Full help message about the driver.
+    
+    
+----------------  List of available drivers and local configurations (-D option) ----------------
+    {autolab_infos}"""
+    
+    parser.print_help()
+########################## autolab driver/device utilities ##########################
+#####################################################################################
+
+
+#####################################################################################
+################################## autolab driver ###################################
 def driver_parser(args_list):
     # Reading of connection information
     driver_name, config, parser = process_config(args_list)
@@ -144,41 +183,6 @@ def driver_parser(args_list):
     # Driver closing
     driver_utilities_instance.exit()
 
-
-def print_help_parser(parser,args_list):
-    parser.usage = f"""
-
-----------------  General informations:  ----------------
-
-This is a very basic help message for usage of {args_list[0]}. More info can be found on read the doc website. To display a more extensive further help please have a look at the section help below.
-    
-    Usage:   {args_list[0]} -D driver_name -C connection -A address -h
-
-Recquired connection arguments (capital letters):
-    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See lower for the list of available drivers.
-    -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
-    -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
-    
-    
-----------------  Helps (-h option)  ----------------       
-
-Three helps are configured:
-    {args_list[0]} -h
-    This help message.
-    
-    {args_list[0]} -h -D driver_name
-    Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
-    
-    {args_list[0]} -D driver_name -C connection -A address -h
-    Full help message about the driver.
-    
-    
-----------------  List of available drivers and local configurations (-D option) ----------------
- 
-    {autolab.infos()}"""
-    
-    parser.print_help()
-    
 def build_driver_infos_for_usage(driver_name,driver_instance):
     driver_lib = autolab.load_driver_lib(driver_name)
     
@@ -205,12 +209,12 @@ def build_driver_infos_for_usage(driver_name,driver_instance):
     mess += '\n'
     
     return mess
-######################### autolab driver ###############################
-########################################################################    
+################################## autolab driver ###################################   
+#####################################################################################
 
 
-######################################################################## 
-######################### autolab device ###############################
+#####################################################################################
+################################## autolab device ###################################
 def device_parser(args_list):
     
     # autolab-device -D mydummy -e amplitude -p C:\Users\               GET AND SAVE VARIABLE VALUE
@@ -257,8 +261,8 @@ def device_parser(args_list):
         elif element._element_type == 'action' : element()
     
     instance.close()
-######################### autolab device ###############################
-######################################################################## 
+################################## autolab device ###################################
+#####################################################################################
 
 
 if __name__ == '__main__' : 
