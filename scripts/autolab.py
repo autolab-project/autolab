@@ -132,9 +132,11 @@ def driver_parser(args_list):
     # Process given methods
     if args.methods:
         global message
+        method_list = [method_args[0] for method_args in autolab.get_instance_methods(driver_instance)]
         for method in args.methods:
             message = None
-            #assert method in methods_list, f"Method not known or bound. Methods known are: {method_list}"
+            print(method)
+            assert method.split('(')[0] in method_list, f"Method {method} not known or bound. Methods known are: {method_list}"
             print(f'\nExecuting command:  {method}')
             exec(f"message = driver_instance.{method}",globals())
             if message is not None: print(f'Return:  {message}\n')
@@ -171,7 +173,7 @@ Three helps are configured:
     Full help message about the driver.
     
     
-----------------  List of available drivers (-D option) ----------------
+----------------  List of available drivers and local configurations (-D option) ----------------
  
     {autolab.infos()}"""
     
@@ -217,14 +219,15 @@ def device_parser(args_list):
     # autolab-device -D mydummy -e channel1.amplitude -h                DISPLAY ELEMENT HELP
 
     # Reading of connection information
-    driver_name, config, config_parser = process_config(args_list)
+    driver_name, config, parser = process_config(args_list)
     
     # Parser configuration
-    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('-e', '--element', type=str, dest="element", help='Address of the element to open' )
     parser.add_argument("-v", "--value", type=str, dest="value", help='Value to set')
     parser.add_argument("-p", "--path", type=str, dest="path", help='Path where to save data')
     parser.add_argument("-h", "--help", action='store_true', dest="help", help='Display element help')
+    
+    # In autolab driver, this is done after the last help request
     args, unknown = parser.parse_known_args(args_list)
 
     # Instantiation
