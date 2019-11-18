@@ -346,7 +346,7 @@ def remove_local_config_parameter(config_name,param_name):
         local_configs.write(file)
     
 
-def config_help(driver_name, _print=True):
+def config_help(driver_name, _print=True, _parser=False):
     
     ''' Display the help of a particular driver (connection types, modules, ...) '''
     
@@ -390,44 +390,58 @@ def config_help(driver_name, _print=True):
     # Example of get_driver
     mess += '\n' + underline('Example(s) to load a Driver or a Device:') + '\n\n'
     for conn in params['connection'].keys() :
-        mess += f"   a = autolab.get_driver('{params['driver']}', connection='{conn}'"
-        for arg,value in params['connection'][conn].items():
-            mess += f", {arg}='{value}'"
-        for arg,value in params['other'].items():
-            mess += f", {arg}='{value}'"
-        mess += ')\n'
-        mess += f"   a = autolab.get_device('{params['driver']}', connection='{conn}'"
-        for arg,value in params['connection'][conn].items():
-            mess += f", {arg}='{value}'"
-        for arg,value in params['other'].items():
-            mess += f", {arg}='{value}'"
-        mess += ')\n'
+        if _parser is False :
+            mess += f"   a = autolab.get_driver('{params['driver']}', connection='{conn}'"
+            for arg,value in params['connection'][conn].items():
+                mess += f", {arg}='{value}'"
+            for arg,value in params['other'].items():
+                mess += f", {arg}='{value}'"
+            mess += ')\n'
+            mess += f"   a = autolab.get_device('{params['driver']}', connection='{conn}'"
+            for arg,value in params['connection'][conn].items():
+                mess += f", {arg}='{value}'"
+            for arg,value in params['other'].items():
+                mess += f", {arg}='{value}'"
+            mess += ')'
+        else : 
+            pass
+        mess += '\n'
             
     # Example of set_local_config
     mess += '\n\n' + underline('Example(s) to save a configuration by command-line:') + '\n\n'
     for conn in params['connection'].keys() :
-        mess += f"   autolab.set_local_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
-        for arg,value in params['connection'][conn].items():
-            mess += f", {arg}='{value}'"
-        for arg,value in params['other'].items():
-            mess += f", {arg}='{value}'"
-        mess += ')\n'
+        if _parser is False :
+            mess += f"   autolab.set_local_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
+            for arg,value in params['connection'][conn].items():
+                mess += f", {arg}='{value}'"
+            for arg,value in params['other'].items():
+                mess += f", {arg}='{value}'"
+            mess += ')'
+        else :
+            pass
+        mess += '\n'
             
     # Example of set_local_config
     mess += '\n\n' + underline('Example(s) to save a configuration by editing the file local_config.ini:') + '\n'
     for conn in params['connection'].keys() :
-        mess += f"\n   [my_{params['driver']}]\n"
-        mess += f"   driver = {params['driver']}\n"
-        mess += f"   connection = {conn}\n"
-        for arg,value in params['connection'][conn].items():
-            mess += f"   {arg} = {value}\n"
-        for arg,value in params['other'].items():
-            mess += f"   {arg} = {value}\n"
+        if _parser is False :
+            mess += f"\n   [my_{params['driver']}]\n"
+            mess += f"   driver = {params['driver']}\n"
+            mess += f"   connection = {conn}\n"
+            for arg,value in params['connection'][conn].items():
+                mess += f"   {arg} = {value}\n"
+            for arg,value in params['other'].items():
+                mess += f"   {arg} = {value}\n"
+        else :
+            pass
     
     # Example of get_driver_by_config
     mess += '\n\n' + underline('Example to instantiate a Driver or a Device with a local configuration:') + '\n\n'
-    mess += f"   a = autolab.get_driver('my_{params['driver']}')\n"
-    mess += f"   a = autolab.get_device('my_{params['driver']}')"
+    if _parser is False :
+        mess += f"   a = autolab.get_driver('my_{params['driver']}')\n"
+        mess += f"   a = autolab.get_device('my_{params['driver']}')"
+    else :
+        pass
         
     if _print is True : print(mess)
     else : return mess
