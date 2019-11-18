@@ -14,12 +14,32 @@ def startup() :
 
     send('startup')
     
+    
+    
 def send(action):
     
     ''' Send a <action> anonymous event to google analytics '''
     
-    if autolab._config['stats']['enable'] == '1' :
+    if is_stats_enabled():
         StatisticsThread(action).start()
+        
+        
+        
+def set_stats_enabled(state):
+    
+    """ This function enable or disable the anonymous statistics feature of Autolab """
+    
+    assert isinstance(state,bool), "The state has to be a boolean."
+    autolab._config.set_value('stats','enabled',str(int(state)))
+    
+    
+    
+def is_stats_enabled():
+    
+    """ This function the activation state of the anonymous statistics feature of Autolab """
+    
+    return autolab._config.get_value('stats','enabled') == '1' 
+
 
 class StatisticsThread(Thread) :
     
