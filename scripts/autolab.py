@@ -23,7 +23,11 @@ def print_help():
     print('  device                Device interface')
     print('  doc                   Open the online documentation (readthedocs)')
     print('  report                Open the online report/suggestions webpage (github)')
-    print('  infos                 Displays the avalaible drivers and local configurations')
+    print('  infos                 Displays the avalaible drivers and local configurations we ')
+    print('  stats                 To manage (enable/disable/query) the anonymous data ')
+    print('                        would collect at import autolab. No personal data is sent,')
+    print('                        sha256 hashing is used to generate and send a single ID once. ')
+    print('                        Those are used for statistics.')
     print()
     print('General Options:')
     print('  -h, --help            Show this help message')
@@ -53,6 +57,8 @@ def main() :
             autolab.gui()
         elif command=='infos':           # GUI
             autolab.infos()
+        elif command=='stats':
+            statistics(args)
         elif command=='driver':
             driver_parser(args)
         elif command=='device':
@@ -62,8 +68,24 @@ def main() :
               
             
     sys.exit()
-        
-
+    
+####################################################################################
+################################## autolab stats ###################################      
+def statistics(args_list):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-e", "--enable", action="store_true", dest="enable", help="Enable anonymous data collection." )
+    parser.add_argument("-d", "--disable", action="store_true", dest="disable", help="Disable anonymous data collection." )
+    parser.add_argument("-q", "--query", action="store_true", dest="query", help="Query anonymous data collection state." )
+    parser.add_argument("-h", "--help", action="store_true", dest="help", help="Display this help message." )
+    args, unknown = parser.parse_known_args(args_list)
+    
+    if len(args_list)==1 or args_list[1]=='-h' or args_list[1]=='--help': parser.print_help(); sys.exit()
+    assert not(args.enable and args.disable), "You may either enable or disable not both"
+    if args.query: print('Stats is ENABLED' if autolab.is_stats_enabled() else 'Stats is DISABLED')
+    elif args.enable: autolab.set_stats_enabled(True); print('Turning stats ON permanently')
+    elif args.disable: autolab.set_stats_enabled(False); print('Turning stats OFF permanently')
+################################## autolab stats ###################################
+####################################################################################
 
 ####################################################################################
 ######################### autolab driver/device utilities ##########################
