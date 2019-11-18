@@ -22,7 +22,7 @@ Getting started: create a new driver
     Each driver name should be unique: do not define new drivers (in your local folders) with a name that already exists in the main package.
     
 
-In the local_drivers directory, as in the main package, each instrument has/should have its own directory organized and named as follow. The name of this folder take the form *\<manufacturer\>_\<model\>*. The driver associated to this instrument is a python script taking the same name as the folder: *\<manufacturer\>_\<model\>.py*. A second python script, allowing the parser to work properly, should be named *\<manufacturer\>_\<model\>_parser.py* (`find a minimal template here <https://github.com/qcha41/autolab/tree/master/autolab/drivers/More/Templates>`_). Additional python scripts may be present in this folder (devices's modules, etc.). Please see the existing driver autolab package for extensive examples.
+In the local_drivers directory, as in the main package, each instrument has/should have its own directory organized and named as follow. The name of this folder take the form *\<manufacturer\>_\<MODEL\>*. The driver associated to this instrument is a python script taking the same name as the folder: *\<manufacturer\>_\<MODEL\>.py*. A second python script, allowing the parser to work properly, should be named *\<manufacturer\>_\<MODEL\>_utilities.py* (`find a minimal template here <https://github.com/qcha41/autolab/tree/master/autolab/drivers/More/Templates>`_). Additional python scripts may be present in this folder (devices's modules, etc.). Please see the existing drivers of the autolab package for extensive examples.
 
 **For addition to the main package**: Once you tested your driver and it is ready to be used by others, you can send the appropriate directory to the contacts (:ref:`about`).
 
@@ -33,7 +33,7 @@ In the local_drivers directory, as in the main package, each instrument has/shou
     
     * The imports of additional modules (numpy, pandas, time, etc.) should be made in the class they are needed so that the imports are done only if needed (e.g. import visa within the Driver_VISA class).
 
-Driver structure (*\<manufacturer\>_\<model\>.py* file)
+Driver structure (*\<manufacturer\>_\<MODEL\>.py* file)
 -------------------------------------------------------
 
 The Driver is organized in several `python class <https://docs.python.org/tutorial/classes.html>`_ with a structure as follow. The numbers represent the way sections appear from the top to the bottom of an actual driver file. We chose to present the sections in a different way:
@@ -126,7 +126,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
                 
                 This enables passing extra arguments (e.g. slot configuration, etc.) to the Driver class, that will instantiate the instrument configuration, in the form of a dictionnary.
             
-            - 7\) The close function is mandatory, even though you do not use it in any of the other classes of the  *\<manufacturer\>_\<model\>.py* file.
+            - 7\) The close function is mandatory, even though you do not use it in any of the other classes of the  *\<manufacturer\>_\<MODEL\>.py* file.
     
     
     **Further instrument complexity:**
@@ -421,7 +421,7 @@ Additional necessary functions/files
 Function get_driver_model (in each class but Driver_CONNECTION)
 ###############################################################
 
-The function ``get_driver_model`` should be present in each of the classes of the *\<manufacturer\>_\<model\>.py* but the class **Driver_CONNECTION** (including the class Driver and any optionnal class **Module_MODEL**), in order for many features of the package to work properly. It simply consists in a list of predefined elements that will indicate to the package the structure of the driver and predefined variable and actions.
+The function ``get_driver_model`` should be present in each of the classes of the *\<manufacturer\>_\<MODEL\>.py* but the class **Driver_CONNECTION** (including the class Driver and any optionnal class **Module_MODEL**), in order for many features of the package to work properly. It simply consists in a list of predefined elements that will indicate to the package the structure of the driver and predefined variable and actions.
 There are three possible elements in the function ``get_driver_model``: *Module*, *Variable* and *Action*.
 
 Shared by the three elements (*Module*, *Variable*, *Action*):
@@ -454,8 +454,75 @@ Example code:
     return model    
     
 
-Driver parser structure (*\<manufacturer\>_\<model\>_paser.py* file)
-####################################################################
+Driver utilities structure (*\<manufacturer\>_\<MODEL\>_utilities.py* file)
+###########################################################################
 
-Coming soon
+This file should be present in the driver directory (*\<manufacturer\>_\<MODEL\>.py*). 
+
+Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py*, further explained bellow:
+
+.. code-block:: python
+
+    category = 'Optical source'                                #
+
+    class Driver_parser():                                     #
+        def __init__(self, Instance, name, **kwargs):          #
+            self.name     = name                               #
+            self.Instance = Instance                           #
+            
+            
+        def add_parser_usage(self,message):                    #
+            """Usage to be used by the parser"""               #
+            usage = f"""                                       #
+    {message}                                                  # 
+                                                               #
+    ----------------  Examples:  ----------------              #
+                                                               #
+    usage:    autolab driver [options] args                    #
+                                                               #
+        autolab driver -D {self.name} -A GPIB0::2::INSTR -C VISA -a 0.2
+        load {self.name} driver using VISA communication protocol with address GPIB... and set the laser pump current to 200mA.
+                                                               #
+        autolab driver -D nickname -a 0.2
+        Similar to previous one but using the device's nickname as defined in local_config.ini
+                """                                            #
+            return usage                                       #
+        
+        def add_parser_arguments(self,parser):                 #
+            """Add arguments to the parser passed as input"""  #
+            parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the pump current value in Ampere." )
+            
+            return parser                                      #
+
+        def do_something(self,args):                           #
+            if args.amplitude:                                 #
+                # next line equivalent to: self.Instance.amplitude = args.amplitude
+                getattr(self.Instance,'amplitude')(args.amplitude)
+
+        def exit(self):                                        #
+            self.Instance.close()                              #
+
+
+It contains: 
+    
+    * The category of the instrument (see ``autolab.infos`` (from python shell) or ``autolab infos`` for (OS shell) for examples of identified categories).
+    
+    * A class **Driver_parser** with 5 functions:
+    
+        **1**) ``__init__``: defines class attributes
+        
+        **2**) ``add_parser_usage``: adds help to the parser in oorder to help the user
+        
+        **3**) ``add_parser_arguments``: configures options to be used from the OS shell (e.g. ``autolab driver -D nickname -a 2``). See :ref:`os_driver` for full usage.
+        
+        **4**) ``do_something``: configures action to perform/variable to set (here: modify the amplitude to the the provided argument value), and link them to the values of the argument added with **3**.
+        
+        **5**) ``exit``: closes properly the connection
+
+.. note::
+
+Please do consider, keeping each line ending with a # character in the example as is.This way you would need to modify 3 main parts to configure options, associated actions and help:  **3**, **4** and **2** (respectively).
+
+
+
 
