@@ -12,9 +12,14 @@ def startup() :
     
     ''' Send a 'startup' anonymous event to google analytics '''
 
-    StatisticsThread('startup').start()
+    send('startup')
     
-
+def send(action):
+    
+    ''' Send a <action> anonymous event to google analytics '''
+    
+    if autolab._config['stats']['enable'] == '1' :
+        StatisticsThread(action).start()
 
 class StatisticsThread(Thread) :
     

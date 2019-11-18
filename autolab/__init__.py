@@ -11,10 +11,6 @@ with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as version_fil
     __version__ = version_file.read().strip()
 del version_file
 
-# Stats (on en reparle ^^)
-from .core import stats as _stats
-_stats.startup()
-
 # PATHS
 from .core import paths
 
@@ -31,6 +27,15 @@ if os.path.exists(paths.DRIVER_SOURCES['local']) is False : # lOCAL CUSTOM DRIVE
     os.mkdir(paths.DRIVER_SOURCES['local'])
 
 del os, shutil
+
+# CONFIG
+from .core import config 
+_config = config.load()
+del config
+
+# Stats (on en reparle ^^)
+from .core import stats as _stats
+_stats.startup()
 
 # DRIVERS
 from .core.drivers import *

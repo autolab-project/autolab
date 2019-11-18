@@ -14,5 +14,10 @@ Thanks to Maxime, Giuseppe and Guilhem for their contributions.
 
 Contacts: `quentin.chateiller@c2n.upsaclay.fr <mailto:quentin.chateiller@c2n.upsaclay.fr>`_,  `bruno.garbin@c2n.upsaclay.fr <mailto:bruno.garbin@c2n.upsaclay.fr>`_
 
+.. note::
+	
+	In order to have a better understanding of how our package is used worldwide, an event is sent over internet when you start using it. This event is completely anonymous (sha256 hashing is used to generate an ID, no personal data is sent) and doesn't affect the performance of the package. If you don't want to participate to this study, you can disable this feature in the `autolab_config.py` file located in the autolab local directory.
+
 .. figure:: logos.jpg
 		:figclass: align-center	
+
