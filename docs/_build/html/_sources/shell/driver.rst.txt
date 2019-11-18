@@ -8,26 +8,25 @@ Getting help
 ############
 Three helps are configured (device or driver may be used equally in the lines bellow):
     
-    An help message on ...
-    
     .. code-block:: python
     
         >>> autolab driver -h
     
-    Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
+    This help message.
     
     .. code-block:: python
     
         >>> autolab driver -h -D driver_name
     
-
-    Full help message about the driver, including
+    Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
     
     .. code-block:: python
     
         >>> autolab driver -D driver_name -C connection -A address -h
     
-    
+    Full help message about the driver.
+
+
 Connection arguments
 ####################
 
