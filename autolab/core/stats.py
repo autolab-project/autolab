@@ -6,13 +6,14 @@ Created on Sun Nov 17 19:24:07 2019
 """
 
 from threading import Thread
-
-import uuid
-session = uuid.uuid4().hex
+import autolab
 
 def startup() :
+    
+    ''' Send a 'startup' anonymous event to google analytics '''
 
     StatisticsThread('startup').start()
+    
 
 
 class StatisticsThread(Thread) :
@@ -23,17 +24,29 @@ class StatisticsThread(Thread) :
         
     def run(self):
         
-        import requests
+        ''' Send an anonymous event to google analytics '''
         
+        import requests
+        import hashlib
+        import uuid
+        import socket
+        
+        # Fabrication of a unique anonymous identifier based on the hostname and mac address
+        uid = socket.gethostname()+hex(uuid.getnode())
+        uid = hashlib.sha256(uid.encode()).hexdigest()   
+
+        # Preparing payload
         data = {
             'v': '1',  # API Version.
             't': 'event',  # Event hit type.
-            'tid': 'UA-152731770-2',  # Tracking ID / Property ID of the Google Analytics property
-            'cid': session, # Random Unique Anonymous Client Identifier (NOT BASED AT ALL ON THE DEVICE)
+            'tid': 'UA-152731770-3',  # Tracking ID / Property ID of the Google Analytics property
+            'cid': uid, # Unique Anonymous Client Identifier
             'ec': 'package',  # Event category.
-            'ea': self.action  # Event action.
+            'ea': self.action,  # Event action.
+            'el': autolab.__version__ # Event label
         }
         
-        try : requests.post('https://ssl.google-analytics.com/collect', data=data)
+        try : 
+            requests.post('https://www.google-analytics.com/collect', data=data)
         except : pass
         
