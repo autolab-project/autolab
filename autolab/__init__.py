@@ -11,6 +11,10 @@ with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as version_fil
     __version__ = version_file.read().strip()
 del version_file
 
+# Stats (on en reparle ^^)
+from .core import stats as _stats
+_stats.startup()
+
 # PATHS
 from .core import paths
 
@@ -43,8 +47,4 @@ from .core.recorder import Recorder, Recorder_V2
 # GUI
 from .core.gui import start as gui
 
-# Stats (on en reparle ^^)
-from .core.stats import startup
-startup()
-del startup
-    
+

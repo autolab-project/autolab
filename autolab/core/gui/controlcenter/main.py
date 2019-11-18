@@ -59,7 +59,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         reportAction.setToolTip('Open the issue webpage of this project on GitHub')  
         
         helpAction = self.menuBar.addAction('Help')
-        helpAction.triggered.connect(autolab.help)
+        helpAction.triggered.connect(autolab.doc)
         helpAction.setToolTip('Open the documentation on Read The Docs website')  
         
     def initialize(self):
@@ -67,7 +67,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function will create the first items in the tree, but will 
         associate only the ones already loaded in autolab """
         
-        for devName in autolab.list_driver_configs() :
+        for devName in autolab.list_local_configs() :
             item = TreeWidgetItemModule(self.tree,devName,self)
             for i in range(5) :
                 item.setBackground(i, QtGui.QColor('#9EB7F5')) #vert
