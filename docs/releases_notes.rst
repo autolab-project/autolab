@@ -12,6 +12,7 @@ Core:
 * New function autolab.infos() that displays the available drivers and local configurations in the system.
 * The local configurations are now refered as 'local_config' in the functions of autolab.
 * The OS shell interface has been completely restructured. Most of the features of Autolab are now available (doc, report, infos, drivers, devices, gui..) through a unique command 'autolab'.
+* Added trigger for statistics of use (can be disabled).
 
 Drivers:
 
