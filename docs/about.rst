@@ -20,7 +20,7 @@ Contacts: `quentin.chateiller@c2n.upsaclay.fr <mailto:quentin.chateiller@c2n.ups
 
 .. note::
 	
-	In order to have a better understanding of how our package is used worldwide, an event is sent over internet when you start using it. This event is completely anonymous (sha256 hashing is used to generate an anonymous ID, no personal data is sent) and doesn't affect the performance of the package. If you don't want to participate to this study, you can disable this feature in the `autolab_config.py` file located in the autolab local directory.
+At startup, Autolab is configured to send in background a signal completely anonymous (sha256 hashed ID) on internet for statistics of use If you don't want to participate to this study, you can disable this feature with the function ``autolab.set_stats_enabled(True/False)``.
 
 .. figure:: logos.jpg
 		:figclass: align-center	
