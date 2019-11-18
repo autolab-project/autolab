@@ -20,7 +20,7 @@ Contacts: `quentin.chateiller@c2n.upsaclay.fr <mailto:quentin.chateiller@c2n.ups
 
 .. note::
 	
-	At startup, Autolab is configured to send in background a signal completely anonymous (sha256 hashed ID) on internet for statistics of use If you don't want to participate to this study, you can disable this feature with the function ``autolab.set_stats_enabled(True/False)``.
+	At startup, Autolab is configured to send in background a signal completely anonymous (sha256 hashed ID) on internet for statistics of use. If you don't want to participate to this study, you can disable this feature with the function ``autolab.set_stats_enabled(True/False)``.
 
 .. figure:: logos.jpg
 		:figclass: align-center	
