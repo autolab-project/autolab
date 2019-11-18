@@ -2,7 +2,8 @@ Releases notes
 ---------------
 
 
-**dev**
+dev
+====
 
 * Mettre à jour la fonction driver_help() depuis qu’il n’y a plus de ..._by_config
 * Mettre à jour le notebook jupyter dans le drive depuis qu’il n’y a plus de _by_config
@@ -15,6 +16,7 @@ Releases notes
 * Supprimer autolab.show_drivers() et afficher les catégories dans autolab.infos()
 * Renommer autolab.help() en autolab.doc() et ‘autolab documentation’ en ‘autolab doc’
 
-**v1.0**
+v1.0
+=====
 
 * First push
