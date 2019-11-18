@@ -521,7 +521,7 @@ It contains:
 
 .. note::
 
-Please do consider, keeping each line ending with a # character in the example as is.This way you would need to modify 3 main parts to configure options, associated actions and help:  **3**, **4** and **2** (respectively).
+Please do consider, keeping each line ending with a # character in the example as is.This way you need to modify 3 main parts to configure options, associated actions and help:  **3**, **4** and **2** (respectively).
 
 
 
