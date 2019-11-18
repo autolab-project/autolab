@@ -97,7 +97,45 @@ def load_lib(lib_path):
     return lib
     
     
+    
+    
+def load_driver_utilities_lib(driver_utilities_name):
+    
+    ''' Returns a driver library (that contains Driver, Driver_XXX, Module_XXX) '''
+            
+    # Loading preparation
+    driver_path = get_driver_path(driver_utilities_name.replace('_utilities',''))
+    
+    # Laod library
+    driver_lib = load_utilities_lib(driver_path)
+    
+    return driver_lib
 
+
+
+
+def load_utilities_lib(lib_path):
+    
+    ''' Return an instance of the python script located at lib_path '''
+    
+    lib_name = os.path.basename(lib_path).split('.')[0]
+    
+    # Save current working directory path
+    curr_dir = os.getcwd()
+    
+    # Go to the driver's directory (in case it contains absolute imports)
+    os.chdir(os.path.dirname(lib_path))
+
+    # Load the module
+    lib_name = lib_name + '_utilities'
+    spec = importlib.util.spec_from_file_location(lib_name, os.path.join(os.path.dirname(lib_path),f'{lib_name}.py'))
+    lib = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lib)
+    
+    # Come back to previous working directory
+    os.chdir(curr_dir)
+    
+    return lib
 
 # =============================================================================
 # DRIVERS LIST HELP
