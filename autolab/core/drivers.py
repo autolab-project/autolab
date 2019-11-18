@@ -184,14 +184,17 @@ def get_module_class(driver_lib,module_name):
     return getattr(driver_lib,f'Module_{module_name}')
 
 
-def explore_driver(instance):
+def explore_driver(instance,_print=True):
     
     ''' Displays the list of the methods available in this instance '''
     
     methods = get_instance_methods(instance)
-    print('This instance contains the following functions:')
+    s = 'This instance contains the following functions:\n'
     for method in methods :
-        print(f' - {method[0]}({",".join(method[1])})')
+        s += f' - {method[0]}({",".join(method[1])})\n'
+        
+    if _print is True : print(s)
+    else : return s
 
 
 def get_instance_methods(instance):
@@ -296,7 +299,7 @@ def set_local_config(config_name,modify=False,**kwargs):
      
 
 
-def show_local_config(config_name):
+def show_local_config(config_name,_print=True):
     
     ''' Display a local_config as it appears in the configuration file '''
     
@@ -306,7 +309,9 @@ def show_local_config(config_name):
     mess = f'\n[{config_name}]\n'
     for key,value in local_configs[config_name].items() :
         mess += f'{key} = {value}\n'
-    print(mess)
+    
+    if _print is True : print(mess)
+    else : return mess
 
         
         
@@ -341,7 +346,7 @@ def remove_local_config_parameter(config_name,param_name):
         local_configs.write(file)
     
 
-def config_help(driver_name):
+def config_help(driver_name, _print=True):
     
     ''' Display the help of a particular driver (connection types, modules, ...) '''
     
@@ -424,7 +429,8 @@ def config_help(driver_name):
     mess += f"   a = autolab.get_driver('my_{params['driver']}')\n"
     mess += f"   a = autolab.get_device('my_{params['driver']}')"
         
-    print(mess)
+    if _print is True : print(mess)
+    else : return mess
     
 
 
@@ -469,7 +475,7 @@ def load_drivers_paths():
 # INFOS
 # =============================================================================
 
-def infos():
+def infos(_print=True):
     
     # Gather drivers informations
     drivers = {}
@@ -482,22 +488,23 @@ def infos():
     local_configs = list_local_configs()
     
     # Print infos
-    print('\n'+emphasize(f'AUTOLAB')+'\n')    
-    print(f'{len(DRIVERS_PATHS)} drivers found')
-    print(f'{len(local_configs)} local configurations found\n')
+    s = ''
+    s += '\n'+emphasize(f'AUTOLAB')+'\n\n'    
+    s += f'{len(DRIVERS_PATHS)} drivers found\n'
+    s += f'{len(local_configs)} local configurations found\n\n'
     for driver_source in drivers.keys() : 
-        print(f'Drivers in {driver_source}:')
+        s += f'Drivers in {driver_source}:\n'
         txt_list = [[f'    - {driver_name}',f'({get_driver_category(driver_name)})']
                     for driver_name in drivers[driver_source] ]
-        print(two_columns(txt_list))
-        print()
+        s += two_columns(txt_list)+'\n\n'
         
-    print('Local configurations:')
+    s += 'Local configurations:\n'
     txt_list = [[f'    - {config_name}',f'({get_local_config(config_name)["driver"]})']
                 for config_name in local_configs ]
-    print(two_columns(txt_list))
+    s += two_columns(txt_list)+'\n'
     
-    
+    if _print is True : print(s)
+    else : return s
     
     
 
