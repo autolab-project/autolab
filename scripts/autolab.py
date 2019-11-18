@@ -93,6 +93,64 @@ def process_config(args_list):
     
     return args.driver, config, parser
 
+
+########################################################################
+######################### autolab driver ###############################
+def driver_parser(args_list):
+    # Reading of connection information
+    driver_name, config, parser = process_config(args_list)
+    
+    # Reading of methods
+    parser.add_argument("-m", "--methods", nargs='+', dest="methods", help="Set the methods to use." )
+    parser.add_argument("-h", "--help", dest="help", help="Print this help message." )
+    
+    # Instantiation of driver.py and driver_utilities.py
+    global driver_instance
+    driver_instance           = autolab.get_driver(driver_name,**config)
+    driver_utilities          = autolab.load_driver_utilities_lib(driver_name+'_utilities')
+    driver_utilities_instance = driver_utilities.Driver_parser(driver_instance,driver_name)
+    
+    # Add arguments to the existing parser (driver dependant)
+    parser = driver_utilities_instance.add_parser_arguments(parser)
+    
+    # Add help and usage to the parser only if "-h" options requested
+    if '-h' in args_list:
+        dirver_infos_for_usage = build_driver_infos_for_usage(driver_name,driver_instance)
+        parser.usage = driver_utilities_instance.add_parser_usage(dirver_infos_for_usage)
+        parser.usage = parser.usage + f"""
+    autolab-drivers -D nickname -m 'some_methods1(arg1,arg2=23)' 'some_methods2(arg1='test')'
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+                """
+        parser.print_help()
+        sys.exit()
+        
+    args = parser.parse_args()
+
+    # Finally, execute functions according to the arguments provided
+    driver_utilities_instance.do_something(args)
+    
+    # Process given methods
+    if args.methods:
+        global message
+        for method in args.methods:
+            message = None
+            #assert method in methods_list, f"Method not known or bound. Methods known are: {method_list}"
+            print(f'\nExecuting command:  {method}')
+            exec(f"message = driver_instance.{method}",globals())
+            if message is not None: print(f'Return:  {message}\n')
+    
+    # Liste python des drivers : autolab.list_drivers()
+    # Liste python des classes d'un module : autolab.get_connection_names('dummy')
+    # Liste python des configurations locales : autolab.list_local_configs()
+    # Affichage des drivers + catégories + local config : autolab.infos()
+    # Affichage de l'aide pour la configuration d'un driver : autolab.config_help(driver_name)
+    # Affichage de la liste des fonctions (et leur args) d'une instance : autolab.explore_driver(instance)
+    
+    
+    # Driver closing
+    driver_utilities_instance.exit()
+
+
 def print_help_parser(parser,args_list):
     parser.usage = f"""
 
@@ -127,7 +185,6 @@ Three helps are configured:
     
     parser.print_help()
     
-    
 def build_driver_infos_for_usage(driver_name,driver_instance):
     driver_lib = autolab.load_driver_lib(driver_name)
     
@@ -154,63 +211,12 @@ def build_driver_infos_for_usage(driver_name,driver_instance):
     mess += '\n'
     
     return mess
-    
-    
-def driver_parser(args_list):
-    # Reading of connection information
-    driver_name, config, parser = process_config(args_list)
-    
-    # Reading of methods
-    parser.add_argument("-m", "--methods", nargs='+', dest="methods", help="Set the methods to use." )
-    parser.add_argument("-h", "--help", dest="help", help="Print this help message." )
-    
-    # Instantiation of driver.py and driver_utilities.py
-    global driver_instance
-    driver_instance           = autolab.get_driver(driver_name,**config)
-    driver_utilities          = autolab.load_driver_utilities_lib(driver_name+'_utilities')
-    driver_utilities_instance = driver_utilities.Driver_parser(driver_instance,driver_name)
-    
-    # Add arguments to the existing parser (driver dependant)
-    parser = driver_utilities_instance.add_parser_arguments(parser)
-    
-    # Add help and usage to the parser only if "-h" options requested
-    if '-h' in args_list:
-        dirver_infos_for_usage = build_driver_infos_for_usage(driver_name,driver_instance)
-        parser.usage = driver_utilities_instance.add_parser_usage(dirver_infos_for_usage)
-        parser.usage = parser.usage + f"""
-    autolab-drivers -D nickname -m some_methods1(arg1,arg2=23) some_methods2(arg1='test')
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
-                """
-        parser.print_help()
-        sys.exit()
-        
-    args = parser.parse_args()
+######################### autolab driver ###############################
+########################################################################    
 
-    # Finally, execute functions according to the arguments provided
-    driver_utilities_instance.do_something(args)
-    
-    # Process given methods
-    if args.methods:
-        global message
-        for method in args.methods:
-            message = None
-            #assert method in methods_list, f"Method not known or bound. Methods known are: {method_list}"
-            print(f'\nExecuting command:  {method}')
-            exec(f"message = driver_instance.{method}",globals())
-            if message is not None: print(f'Return:  {message}\n')
-    
-    # Liste python des drivers : autolab.list_drivers()
-    # Liste python des classes d'un module : autolab.get_connection_names('dummy')
-    # Liste python des configurations locales : autolab.list_local_configs()
-    # Affichage des drivers + catégories + local config : autolab.infos()
-    # Affichage de l'aide pour la configuration d'un driver : autolab.config_help(driver_name)
-    # Affichage de la liste des fonctions (et leur args) d'une instance : autolab.explore_driver(instance)
-    
-    
-    # Driver closing
-    driver_utilities_instance.exit()
-    
-    
+
+######################################################################## 
+######################### autolab device ###############################
 def device_parser(args_list):
     
     # autolab-device -D mydummy -e amplitude -p C:\Users\               GET AND SAVE VARIABLE VALUE
@@ -256,6 +262,9 @@ def device_parser(args_list):
         elif element._element_type == 'action' : element()
     
     instance.close()
-    
+######################### autolab device ###############################
+######################################################################## 
+
+
 if __name__ == '__main__' : 
     main()
