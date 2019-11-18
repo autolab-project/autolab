@@ -11,7 +11,7 @@ class Driver_parser():
         
     def add_parser_usage(self,message):
         """Usage to be used by the parser"""
-        usage = f"""
+        usage = rf"""
 {message}
 
 ----------------  Examples:  ----------------
@@ -22,7 +22,7 @@ usage:    autolab driver [options] args
     In this particular case the --port option indicate the dll library location. Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
     
     autolab driver -D nickname -m some_methods
-    Same as before using the nickname defined in local_config.ini
+    same as before but using the device nickname as defined in local_config.ini
             """
         return usage
     

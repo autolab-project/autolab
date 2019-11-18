@@ -49,7 +49,7 @@ usage:    autolab driver [options] args
             ##getattr(self.Instance,'get_data_traces')(traces=args.channels,single=args.trigger)
             #getattr(self.Instance,'get_data_traces')(traces=args.channels)
             #getattr(self.Instance,'save_data_traces')(filename=args.filename,traces=args.channels,FORCE=args.force)
-  
+        pass
   
     def exit(self):
         self.Instance.close()
