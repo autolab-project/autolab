@@ -391,49 +391,47 @@ def config_help(driver_name, _print=True, _parser=False):
     mess += '\n' + underline('Example(s) to load a Driver or a Device:') + '\n\n'
     for conn in params['connection'].keys() :
         if _parser is False :
-            mess += f"   a = autolab.get_driver('{params['driver']}', connection='{conn}'"
+            args_str = f"'{params['driver']}', connection='{conn}'"
             for arg,value in params['connection'][conn].items():
-                mess += f", {arg}='{value}'"
+                args_str += f", {arg}='{value}'"
             for arg,value in params['other'].items():
-                mess += f", {arg}='{value}'"
-            mess += ')\n'
-            mess += f"   a = autolab.get_device('{params['driver']}', connection='{conn}'"
-            for arg,value in params['connection'][conn].items():
-                mess += f", {arg}='{value}'"
-            for arg,value in params['other'].items():
-                mess += f", {arg}='{value}'"
-            mess += ')'
+                args_str += f", {arg}='{value}'"
+            mess += f"   a = autolab.get_driver({args_str})\n"
+            mess += f"   a = autolab.get_device({args_str})\n"
         else : 
-            pass
-        mess += '\n'
+            args_str = f"-D {params['driver']} -C {conn} "
+            for arg,value in params['connection'][conn].items():
+                if arg == 'address' : args_str += f"-A {value} "
+                if arg == 'port' : args_str += f"-P {value} "
+            if len(params['other'])>0 : args_str += '-O '
+            for arg,value in params['other'].items():
+                args_str += f"{arg}={value} "
+            mess += f"   autolab driver {args_str} \n"
+            mess += f"   autolab device {args_str} \n"
             
     # Example of set_local_config
     mess += '\n\n' + underline('Example(s) to save a configuration by command-line:') + '\n\n'
     for conn in params['connection'].keys() :
         if _parser is False :
-            mess += f"   autolab.set_local_config('my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
+            args_str = f"'my_{params['driver']}', driver='{params['driver']}', connection='{conn}'"
             for arg,value in params['connection'][conn].items():
-                mess += f", {arg}='{value}'"
+                args_str += f", {arg}='{value}'"
             for arg,value in params['other'].items():
-                mess += f", {arg}='{value}'"
-            mess += ')'
-        else :
-            pass
-        mess += '\n'
+                args_str += f", {arg}='{value}'"
+            mess += f"   autolab.set_local_config({args_str})\n"
+        else : 
+            mess += '   Available soon through OS shell\n'
             
     # Example of set_local_config
     mess += '\n\n' + underline('Example(s) to save a configuration by editing the file local_config.ini:') + '\n'
     for conn in params['connection'].keys() :
-        if _parser is False :
-            mess += f"\n   [my_{params['driver']}]\n"
-            mess += f"   driver = {params['driver']}\n"
-            mess += f"   connection = {conn}\n"
-            for arg,value in params['connection'][conn].items():
-                mess += f"   {arg} = {value}\n"
-            for arg,value in params['other'].items():
-                mess += f"   {arg} = {value}\n"
-        else :
-            pass
+        mess += f"\n   [my_{params['driver']}]\n"
+        mess += f"   driver = {params['driver']}\n"
+        mess += f"   connection = {conn}\n"
+        for arg,value in params['connection'][conn].items():
+            mess += f"   {arg} = {value}\n"
+        for arg,value in params['other'].items():
+            mess += f"   {arg} = {value}\n"
     
     # Example of get_driver_by_config
     mess += '\n\n' + underline('Example to instantiate a Driver or a Device with a local configuration:') + '\n\n'
@@ -441,7 +439,8 @@ def config_help(driver_name, _print=True, _parser=False):
         mess += f"   a = autolab.get_driver('my_{params['driver']}')\n"
         mess += f"   a = autolab.get_device('my_{params['driver']}')"
     else :
-        pass
+        mess += f"   autolab driver -D my_{params['driver']}\n"
+        mess += f"   autolab device -D my_{params['driver']}\n"
         
     if _print is True : print(mess)
     else : return mess
@@ -502,8 +501,7 @@ def infos(_print=True):
     local_configs = list_local_configs()
     
     # Print infos
-    s = ''
-    s += '\n'+emphasize(f'AUTOLAB')+'\n\n'    
+    s = '\n'
     s += f'{len(DRIVERS_PATHS)} drivers found\n'
     s += f'{len(local_configs)} local configurations found\n\n'
     for driver_source in drivers.keys() : 
