@@ -78,6 +78,7 @@ Table of contents:
    gui/index
    shell/index
    help_report
+   releases_notes
    about
    
 
