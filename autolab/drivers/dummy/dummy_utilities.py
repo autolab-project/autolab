@@ -10,24 +10,24 @@ class Driver_parser():
         
         
     def add_parser_usage(self,message):
-        """Add arguments and help to the parser passed as input"""
-        s = f"""
-----------------  Driver informations:  ----------------
-    {message}
+        """Usage to be used by the parser"""
+        usage = f"""
+{message}
 
 ----------------  Examples:  ----------------
 
-usage:    autolab-drivers [options] arg 
-        
-    autolab-drivers -D {self.name} -A 192.168.0.8 -C CONN -m some_methods
+usage:    autolab driver [options] args
+
+    autolab driver -D {self.name} -A 192.168.0.8 -C CONN -m some_methods
     Execute some_methods of the driver. A list of available methods is present at the top of this help.
     
-    autolab-drivers -D nickname -m some_methods
+    autolab driver -D nickname -m some_methods
     Same as before using the nickname defined in devices_index.ini
             """
-        return s
+        return usage
     
     def add_parser_arguments(self,parser):
+        """Add arguments to the parser passed as input"""
         #parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
         #parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
         #parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
