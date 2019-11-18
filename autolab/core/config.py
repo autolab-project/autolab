@@ -37,7 +37,7 @@ def check():
     config = load()
     
     # stats
-    if 'stats' not in config.sections() :
+    if 'stats' not in config.sections() or 'enabled' not in config['stats'].keys() :
         
         ans = input('At startup, Autolab is configured to send in background a signal completely anonymous (sha256 hashed ID) on internet for statistics of use. Do you agree? [default:yes] > ')
         if ans.strip().lower() == 'no' :
