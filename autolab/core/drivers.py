@@ -409,7 +409,9 @@ def config_help(driver_name, _print=True, _parser=False):
     mess += emphasize(submess,sign='=') + '\n'
     
     # Connections types
-    mess += '\nAvailable connections types:\n'
+    c_option=''
+    if _parser: c_option='(-C option)'
+    mess += f'\nAvailable connections types {c_option}:\n'
     for connection in params['connection'].keys() : 
         mess += f' - {connection}\n'
     mess += '\n'
