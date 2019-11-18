@@ -16,10 +16,10 @@ Core:
 
 Drivers:
 
- * The driver category is now stored in the script <driver>_utilities.py in the same folder (previously <driver>_parser.py).
- * exfo_PM1613: Driver update taking into account that the power meter returns ***** when changing its scale. 
- * yokogawa_...
- * Other driver update
+* The driver category is now stored in the script <driver>_utilities.py in the same folder (previously <driver>_parser.py).
+* exfo_PM1613: Driver update taking into account that the power meter returns ***** when changing its scale. 
+* yokogawa_...
+* Other driver update
 
 
 v1.0
