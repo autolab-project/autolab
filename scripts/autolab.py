@@ -157,9 +157,8 @@ def driver_parser(args_list):
         dirver_infos_for_usage = build_driver_infos_for_usage(driver_name,driver_instance)
         parser.usage = driver_utilities_instance.add_parser_usage(dirver_infos_for_usage)
         parser.usage = parser.usage + f"""
-    autolab-drivers -D nickname -m 'some_methods1(arg1,arg2=23)' 'some_methods2(arg1="test")'
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition. Note if strings are passed as arguments mind the usage of ' and " (follow some_methods2 example).
-                """
+    autolab driver -D nickname -m 'some_methods1(arg1,arg2=23)' 'some_methods2(arg1="test")'
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition. Note if strings are passed as arguments, mind the usage of ' and " (follow some_methods2 example)."""
         parser.print_help()
         sys.exit()
         
@@ -191,7 +190,7 @@ def build_driver_infos_for_usage(driver_name,driver_instance):
     list_additional_classes = autolab.get_module_names(driver_lib)
     list_instance_methods_and_args = autolab.get_instance_methods(driver_instance)
     
-    mess = ''
+    mess = '\n----------------  Driver informations:  ----------------\n'
     mess += '\n    Available connections types (-C option):\n'
     for connection in list_connection_classes: 
         mess += f'     - {connection}\n'
@@ -207,7 +206,7 @@ def build_driver_infos_for_usage(driver_name,driver_instance):
     for method in list_instance_methods_and_args:
         mess += f'\n     - {method[0]}({",".join(method[1])})'
     mess += '\n'
-    
+            
     return mess
 ################################## autolab driver ###################################   
 #####################################################################################
@@ -217,10 +216,10 @@ def build_driver_infos_for_usage(driver_name,driver_instance):
 ################################## autolab device ###################################
 def device_parser(args_list):
     
-    # autolab-device -D mydummy -e amplitude -p C:\Users\               GET AND SAVE VARIABLE VALUE
-    # autolab-device -D mydummy -e something                            EXECUTE ACTION
-    # autolab-device -D mydummy -e amplitude -v 4                       SET VARIABLE VALUE
-    # autolab-device -D mydummy -e channel1.amplitude -h                DISPLAY ELEMENT HELP
+    # autolab device -D mydummy -e amplitude -p C:\Users\               GET AND SAVE VARIABLE VALUE
+    # autolab device -D mydummy -e something                            EXECUTE ACTION
+    # autolab device -D mydummy -e amplitude -v 4                       SET VARIABLE VALUE
+    # autolab device -D mydummy -e channel1.amplitude -h                DISPLAY ELEMENT HELP
 
     # Reading of connection information
     driver_name, config, parser = process_config(args_list)
@@ -244,7 +243,7 @@ def device_parser(args_list):
             element = getattr(element,name)
         
     # Execute order
-    if args.help is True : print(element.help())
+    if args.help is True : element.help()
         
     elif args.path is not None: 
         assert element._element_type == 'variable', f"This element is not a Variable"
