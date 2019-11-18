@@ -118,8 +118,8 @@ def driver_parser(args_list):
         dirver_infos_for_usage = build_driver_infos_for_usage(driver_name,driver_instance)
         parser.usage = driver_utilities_instance.add_parser_usage(dirver_infos_for_usage)
         parser.usage = parser.usage + f"""
-    autolab-drivers -D nickname -m 'some_methods1(arg1,arg2=23)' 'some_methods2(arg1='test')'
-    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition.
+    autolab-drivers -D nickname -m 'some_methods1(arg1,arg2=23)' 'some_methods2(arg1="test")'
+    Execute some_methods of the driver. A list of available methods is present at the top of this help along with arguments definition. Note if strings are passed as arguments mind the usage of ' and " (follow some_methods2 example).
                 """
         parser.print_help()
         sys.exit()
@@ -138,14 +138,6 @@ def driver_parser(args_list):
             print(f'\nExecuting command:  {method}')
             exec(f"message = driver_instance.{method}",globals())
             if message is not None: print(f'Return:  {message}\n')
-    
-    # Liste python des drivers : autolab.list_drivers()
-    # Liste python des classes d'un module : autolab.get_connection_names('dummy')
-    # Liste python des configurations locales : autolab.list_local_configs()
-    # Affichage des drivers + catégories + local config : autolab.infos()
-    # Affichage de l'aide pour la configuration d'un driver : autolab.config_help(driver_name)
-    # Affichage de la liste des fonctions (et leur args) d'une instance : autolab.explore_driver(instance)
-    
     
     # Driver closing
     driver_utilities_instance.exit()
