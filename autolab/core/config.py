@@ -56,8 +56,8 @@ def set_value(header,parameter,value):
     ''' This function set the value of the given parameter of the given header in the autolab configuration file'''
     
     config = load()
-    assert header in config.sections(), "Header '{header}' not found in the autolab configuration file."
-    assert parameter in config[header].keys(), "Parameter '{parameter}' not found in header {header}."
+    assert header in config.sections(), f"Header '{header}' not found in the autolab configuration file."
+    assert parameter in config[header].keys(), f"Parameter '{parameter}' not found in header {header}."
     config[header][parameter] = str(value)
     save(config)
 
@@ -68,8 +68,8 @@ def get_value(header,parameter):
     ''' This function set the value of the given parameter of the given header in the autolab configuration file'''
      
     config = load()
-    assert header in config.sections(), "Header '{header}' not found in the autolab configuration file."
-    assert parameter in config[header].keys(), "Parameter '{parameter}' not found in header {header}."
+    assert header in config.sections(), f"Header '{header}' not found in the autolab configuration file."
+    assert parameter in config[header].keys(), f"Parameter '{parameter}' not found in header {header}."
     return config[header][parameter]
    
     
