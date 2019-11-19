@@ -1,23 +1,24 @@
 Installation
 ============
 
+Python
+------
+
 This package is working on Python version 3.6+.
 
-Required packages:
+* On Windows, we recommend to install Python through the distribution Anaconda: https://www.anaconda.com/ 
+* On older versions of Windows (before Windows 7), we recommend to install Python manually: https://www.python.org/
+* On Linux, we recommend to install Python through the apt-get command.
+
+Additional required packages (installed automatically with Autolab):
 
 * numpy
 * pandas
-
-Optional packages (depending on the drivers and connections types you will use):
-
 * pyvisa
 * python-vxi11
 
-All these packages will be installed automatically, if not already present on your system.
-
-
-Autolab
--------
+Autolab package
+---------------
 
 This project is hosted in the global python repository PyPi at the following address : https://pypi.org/project/autolab/
 To install the Autolab python package on your computer, we then advice you to use the Python package manager ``pip`` in a Python environnement:	
