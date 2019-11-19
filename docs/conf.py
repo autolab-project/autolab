@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Autolab'
-copyright = '2019, Quentin Chateiller, Bruno Garbin'
+copyright = '2019, Quentin Chateiller & Bruno Garbin, (C2N-CNRS)'
 author = 'Quentin Chateiller & Bruno Garbin'
 
 
