@@ -515,13 +515,13 @@ It contains:
         
         **3**) ``add_parser_arguments``: configures options to be used from the OS shell (e.g. ``autolab driver -D nickname -a 2``). See :ref:`os_driver` for full usage.
         
-        **4**) ``do_something``: configures action to perform/variable to set (here: modify the amplitude to the the provided argument value), and link them to the values of the argument added with **3**.
+        **4**) ``do_something``: configures action to perform/variable to set (here: modify the amplitude to the the provided argument value), and link them to the values of the argument added with **3**).
         
         **5**) ``exit``: closes properly the connection
 
 .. note::
 
-Please do consider, keeping each line ending with a # character in the example as is.This way you would need to modify 3 main parts to configure options, associated actions and help:  **3**, **4** and **2** (respectively).
+Please do consider, keeping each line ending with a # character in the example as is.This way you would need to modify 3 main parts to configure options, associated actions and help:  **3**), **4**) and **2**) (respectively).
 
 
 
