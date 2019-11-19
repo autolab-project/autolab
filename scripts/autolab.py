@@ -24,10 +24,7 @@ def print_help():
     print('  doc                   Open the online documentation (readthedocs)')
     print('  report                Open the online report/suggestions webpage (github)')
     print('  infos                 Displays the avalaible drivers and local configurations we ')
-    print('  stats                 To manage (enable/disable/query) the anonymous data ')
-    print('                        would collect at import autolab. No personal data is sent,')
-    print('                        sha256 hashing is used to generate and send a single ID once. ')
-    print('                        Those are used for statistics.')
+    print('  stats                 Enable/disable/query statistics collection.')
     print()
     print('General Options:')
     print('  -h, --help            Show this help message')
@@ -72,7 +69,10 @@ def main() :
 ####################################################################################
 ################################## autolab stats ###################################      
 def statistics(args_list):
-    parser = argparse.ArgumentParser(add_help=False)
+    usage = """autolab stats [-h] [options]
+    
+To manage (enable/disable/query) the anonymous data collection at import autolab. No personal data is sent, sha256 hashing is used to generate a uniq ID that is sent only once. Those are used for statistics. Note that this does not slow down your import autolab as it is located in a separated thread."""
+    parser = argparse.ArgumentParser(add_help=False,usage=usage)
     parser.add_argument("-e", "--enable", action="store_true", dest="enable", help="Enable anonymous data collection." )
     parser.add_argument("-d", "--disable", action="store_true", dest="disable", help="Disable anonymous data collection." )
     parser.add_argument("-q", "--query", action="store_true", dest="query", help="Query anonymous data collection state." )
@@ -129,7 +129,7 @@ This is a very basic help message for usage of {args_list[0]}. More info can be 
     Usage:   {args_list[0]} -D driver_name -C connection -A address -h
 
 Recquired connection arguments (capital letters):
-    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See lower for the list of available drivers.
+    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See below for the list of available drivers.
     -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
     -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
     
@@ -138,17 +138,22 @@ Recquired connection arguments (capital letters):
 
 Three helps are configured:
     {args_list[0]} -h
-    This help message.
+    Print this help message.
     
     {args_list[0]} -h -D driver_name
-    Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
+    Print useful informations on the {args_list[0].split(' ')[1]}, including available connection types, etc.
     
     {args_list[0]} -D driver_name -C connection -A address -h
-    Full help message about the driver.
+    Full help message about the {args_list[0].split(' ')[1]}. This requires the address to be valid and the {args_list[0].split(' ')[1]} to be instantiated.
     
     
 ----------------  List of available drivers and local configurations (-D option) ----------------
-    {autolab_infos}"""
+   
+To display the full list of available drivers and local configurations, use:
+    autolab infos
+    
+
+---------------- Accepted options ----------------"""
     
     parser.print_help()
 ########################## autolab driver/device utilities ##########################
