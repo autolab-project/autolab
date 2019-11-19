@@ -1,11 +1,10 @@
-.. _os_driver:
+.. _shell_connection:
 
-Command driver
-===============
-
+The two sections that follow are equivalent for the commands ``autolab driver`` and ``autolab device``. They will guide you through **getting basic help** and minimal formatting of command lines (minimal arguments to pass) to **establish the connection with you instrument**.
 
 Getting help
-############
+============
+
 Three helps are configured (device or driver may be used equally in the lines bellow):
     
     1) 
@@ -29,7 +28,7 @@ Three helps are configured (device or driver may be used equally in the lines be
     
     
 Connection arguments
-####################
+====================
 
 This command will establish a connection to your instrument, perform the requested operation, and finally close properly the connection.
     
@@ -90,12 +89,4 @@ Optional arguments:
     autolab driver -D my_driver
     autolab device -D my_driver
     
-
-
-
-
-
-
-
-
 
