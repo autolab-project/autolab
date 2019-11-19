@@ -1,92 +1,68 @@
 .. _shell_connection:
 
-The two sections that follow are equivalent for the commands ``autolab driver`` and ``autolab device``. They will guide you through **getting basic help** and minimal formatting of command lines (minimal arguments to pass) to **establish the connection with you instrument**.
+The two sections that follow are equivalent for the commands ``autolab driver`` and ``autolab device`` (unless specified). They will guide you through **getting basic help** and minimal formatting of command lines (minimal arguments to pass) to **establish the connection with you instrument**.
+
+.. _name_shell_help:
 
 Getting help
 ============
 
 Three helps are configured (device or driver may be used equally in the lines bellow):
     
-    1) 
+    1) Basic help of the commands autolab driver/device: 
     
-    .. code-block:: python
+        .. code-block:: python
+        
+            >>> autolab driver -h
+            
+        It including arguments and options formatting, definition of the available options and associated help and informations to retrieve the list of available drivers and local configurations (command: autolab infos).
     
-        >>> autolab driver -h
+    2) Basic help about the particular name driver/device you provided:
     
-    2) Short message displaying the device category as well as the implemented connections to a device (VISA, etc).
+        .. code-block:: python
+        
+            >>> autolab driver -h -D driver_name
     
-    .. code-block:: python
+        It includes the category of the driver/device (e.g. Function generator, Oscilloscope, etc.), a list of the implemented connections (-C option), personnalized usage example (automatically generated from the driver.py file), and examples to use and set up a local configuration using command lines (see :ref:`localconfig` for more informations about local configurations).
     
-        >>> autolab driver -h -D driver_name
+    3) Full help message **about the driver/driver**:
     
+        .. code-block:: python
+        
+            >>> autolab driver -D driver_name -C connection -A address -h
+            >>> autolab driver -D nickname -h
+    
+        **For driver:** 
+            
+            It includes the list of the implemented connections (-C option), the list of the available additional modules (classes **Channel**, **Trace**, **Module_MODEL**, etc.; see :ref:`create_driver`), the list of all the methods that are instantiated with the driver (for direct use with the command: autolab driver; see :ref:`os_driver`), and an extensive help for the usage of the defined options.
+            
+        **For device:**
+            
+            It includes the hierarchy of the device and all the defined *Modules*, *Variables* and *Actions* (see :ref:`get_driver_model` and :ref:`os_device` for more informations on the definition and usage respectively).
+            
+        Note that this help requires the instantiation of your instrument to be done, in other words it requires valid arguments for options -D, -C and -A (that you can get for previous helps) and a working physical link.
 
-    3) Full help message **about the driver**, including its structure
-    
-    .. code-block:: python
-    
-        >>> autolab driver -D driver_name -C connection -A address -h
-    
-    
+.. _name_shell_connection:
+
 Connection arguments
 ====================
 
-This command will establish a connection to your instrument, perform the requested operation, and finally close properly the connection.
-    
-    .. code-block:: python
-    
-        >>>   autolab driver <driver_name or config_name> -C <CONNECTION> -A <address> 
-
-Recquired connection arguments (capital letters):
-    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See lower for the list of available drivers.
-    -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
-    -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
-
-
-Optional arguments:
-  -P PORT, --port PORT  Argument used to address different things depending on
-                        the connection type. SOCKET: the port number used to
-                        communicate, GPIB: the gpib board index, DLL: the path
-                        to the dll library.
-  -O OTHER [OTHER ...], --other OTHER [OTHER ...]
-                        Set other parameters (slots,...).
+The commands autolab driver/device will establish a connection to your instrument, perform the requested operation, and finally close properly the connection. To **establish the connection** you need to give valid arguments as requested by the driver (build to suit the physical instrument requirements). 
 
 .. code-block:: python
 
-    ======================
-    Driver "driver_name"
-    ======================
-
-    Available connections types (-C option):
-    - VISA
-    - SOCKET
+    >>> autolab driver -D <driver_name or config_name> -C <CONNECTION> -A <address> (optional)
 
 
-    Example(s) to load a Driver or a Device:
-    ----------------------------------------
-
-    autolab driver -D driver_name -C VISA
-    autolab device -D driver_name -C VISA
-
-
-    Example(s) to save a configuration by command-line:
-    ---------------------------------------------------
-
-    Available soon through OS shell
-
-
-    Example(s) to save a configuration by editing the file local_config.ini:
-    ------------------------------------------------------------------------
-
-    [my_driver]
-    driver = driver_name
-    connection = VISA
-    address = TCPIP::192.168.0.1::INSTR
-
-
-    Example to instantiate a Driver or a Device with a local configuration:
-    -----------------------------------------------------------------------
-
-    autolab driver -D my_driver
-    autolab device -D my_driver
+To establish the connection for the first time, we recommand to follow the different help states (see :ref:`_name_shell_help`).
     
 
+-P --port Argument used to address different things depending on the connection type. SOCKET: the port number used to communicate, GPIB: the gpib board index, DLL: the path to the dll library.
+-O --other Set other parameters (slots,...).
+
+    
+
+
+    
+    
+    

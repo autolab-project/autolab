@@ -9,7 +9,7 @@ To read, write or save the value of a **Variable**, or to execute an **Action**,
 
 	autolab-devices -D <DRIVER_NAME or CONFIG_NAME> -e <ELEMENT_ADDRESS> <OPTIONS>
 	
-The **Element address** indicates the address of the desired **Variable** or **Action** in the Autolab Device hierarchy, using a point separator. This command will establish a connection to your instrument, perform the requested operation, and finally close properly the connection.
+The **Element address** indicates the address of the desired **Variable** or **Action** in the Autolab Device hierarchy, using a point separator. This command will establish a connection to your instrument, perform the requested operation, and finally close properly the connection. See :ref:`name_shell_connection` for more informations about the connection.
 
 The available operations are listed below:
 
