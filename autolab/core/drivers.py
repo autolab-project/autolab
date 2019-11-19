@@ -404,8 +404,7 @@ def config_help(driver_name, _print=True, _parser=False):
     mess = '\n'
 
     # Name and category if available
-    submess = f'Driver "{driver_name}"'
-    if hasattr(driver_lib.Driver,'category') : submess += f' ({driver_lib.Driver.category})'
+    submess = f'Driver "{driver_name}" ({get_driver_category(driver_name)})'
     mess += emphasize(submess,sign='=') + '\n'
     
     # Connections types
