@@ -6,7 +6,7 @@ Created on Fri May 17 15:04:04 2019
 @author: quentin.chateiller
 """
 
-import os
+
 import sys
 import autolab
 import argparse
@@ -24,7 +24,7 @@ def print_help():
     print('  doc                   Open the online documentation (readthedocs)')
     print('  report                Open the online report/suggestions webpage (github)')
     print('  infos                 Displays the avalaible drivers and local configurations we ')
-    print('  stats                 Enable/disable/query statistics collection.')
+    print('  stats                 Manage the data collection state')
     print()
     print('General Options:')
     print('  -h, --help            Show this help message')
@@ -69,9 +69,11 @@ def main() :
 ####################################################################################
 ################################## autolab stats ###################################      
 def statistics(args_list):
-    usage = """autolab stats [-h] [options]
+    usage = f"""autolab stats [-h] [options]
     
-To manage (enable/disable/query) the anonymous data collection at import autolab. No personal data is sent, sha256 hashing is used to generate a uniq ID that is sent only once. Those are used for statistics. Note that this does not slow down your import autolab as it is located in a separated thread."""
+Management of the anonymous data collection in Autolab.  \n\n
+{autolab._stats.get_explanation()}
+"""
     parser = argparse.ArgumentParser(add_help=False,usage=usage)
     parser.add_argument("-e", "--enable", action="store_true", dest="enable", help="Enable anonymous data collection." )
     parser.add_argument("-d", "--disable", action="store_true", dest="disable", help="Disable anonymous data collection." )
