@@ -1,0 +1,316 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Load and use a Driver &mdash; Autolab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Write your own Driver" href="create_driver.html" />
+    <link rel="prev" title="Drivers (Low-level interface)" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Autolab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Drivers (Low-level interface)</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Load and use a Driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#load-and-close-a-driver">Load and close a Driver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-a-driver">Use a Driver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#script-example">Script example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="create_driver.html">Write your own Driver</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../high_level.html">Devices (High-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../local_config.html">Local configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui/index.html">Graphical User Interface (GUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../shell/index.html">OS shell</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../help_report.html">Docs and bugs/suggestions report</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releases_notes.html">Releases notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Autolab</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Drivers (Low-level interface)</a> &raquo;</li>
+        
+      <li>Load and use a Driver</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/low_level/open_and_use.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="load-and-use-a-driver">
+<span id="userguide-low"></span><h1>Load and use a Driver<a class="headerlink" href="#load-and-use-a-driver" title="Permalink to this headline">¶</a></h1>
+<p>The low-level interface provides a raw access to the drivers implemented in Autolab, through a <strong>Driver</strong> object, which contains functions that perform particular operations in your instrument.</p>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>The Autolab drivers may contains internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. <strong>The authors declines any responsibility for the consequences of an incorrect use of the drivers</strong>. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the use of the <a class="reference internal" href="../high_level.html#highlevel"><span class="std std-ref">Devices (High-level interface)</span></a>.</p>
+</div>
+<p>To see the list of available drivers in Autolab, call the <code class="docutils literal notranslate"><span class="pre">list_drivers</span></code> function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">list_drivers</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The driver of your instrument is missing ? Please contribute to Autolab by creating yourself a new driver, following the provided guidelines : <a class="reference internal" href="create_driver.html#create-driver"><span class="std std-ref">Write your own Driver</span></a></p>
+</div>
+<div class="section" id="load-and-close-a-driver">
+<h2>Load and close a Driver<a class="headerlink" href="#load-and-close-a-driver" title="Permalink to this headline">¶</a></h2>
+<p>The instantiation of a <em>Driver</em> object is done through the function <code class="docutils literal notranslate"><span class="pre">get_driver</span></code> of Autolab, and requires a particular configuration:</p>
+<ul class="simple">
+<li><p>The name of the driver: one of the name appearing in the <code class="docutils literal notranslate"><span class="pre">list_drivers</span></code> function (ex: ‘yenista_TUNICS’).</p></li>
+<li><p>The connection parameters as keywords arguments: the connection type to use to communicate with the instrument (‘VISA’, ‘TELNET’, …), the address, the port, the slots, …</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To know what is the required configuration to interact with a given instrument, call the function <code class="docutils literal notranslate"><span class="pre">config_help</span></code> with the name of the driver.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">config_help</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To avoid having to provide each time the full configuration of an instrument to load a <strong>Driver</strong> (as above), Autolab proposes to store locally this configuration. To learn more about this, please see the section <span class="xref std std-ref">local_config</span>. You can then just provide the configuration name in the function <code class="docutils literal notranslate"><span class="pre">get_driver</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can overwrite temporarily some of the parameters values of a configuration by simply providing them as keywords arguments in the <code class="docutils literal notranslate"><span class="pre">get_driver</span></code> function:</p>
+</div>
+<p>To close properly the connection to the instrument, simply call its the function <code class="docutils literal notranslate"><span class="pre">close</span></code> of the <strong>Driver</strong>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lightSource</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="use-a-driver">
+<h2>Use a Driver<a class="headerlink" href="#use-a-driver" title="Permalink to this headline">¶</a></h2>
+<p>You are now ready to use the functions implemented in the <strong>Driver</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">set_wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">get_wavelength</span><span class="p">()</span>
+<span class="go">1550</span>
+</pre></div>
+</div>
+<p>You can get the list of the available functions by calling the function <code class="docutils literal notranslate"><span class="pre">autolab.explore_driver</span></code> with the instance of your <strong>Driver</strong>. Once again, note that some of these functions are note supposed to be used directly, some of them may be internal functions.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">explore_driver</span><span class="p">(</span><span class="n">laserSource</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="script-example">
+<h2>Script example<a class="headerlink" href="#script-example" title="Permalink to this headline">¶</a></h2>
+<p>With all these commands, you can now create your own Python script. Here is an example of a script that sweep the wavelength of a light source, and measure a power of a power meter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import the package</span>
+<span class="kn">import</span> <span class="nn">autolab</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+
+<span class="c1"># Open the Devices</span>
+<span class="n">myTunics</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+<span class="n">myPowerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;my_power_meter&#39;</span><span class="p">)</span>
+
+<span class="c1"># Turn on the light source</span>
+<span class="n">myTunics</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># Sweep its wavelength and measure a power with a power meter</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">wl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1550</span><span class="p">,</span><span class="mi">1560</span><span class="p">,</span><span class="mf">0.01</span><span class="p">)</span> <span class="p">:</span>
+
+    <span class="c1"># Set the parameter</span>
+    <span class="n">myTunics</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="n">wl</span><span class="p">)</span>
+
+    <span class="c1"># Measures the values</span>
+    <span class="n">wl_measured</span> <span class="o">=</span> <span class="n">myTunics</span><span class="o">.</span><span class="n">set_wavelength</span><span class="p">(</span><span class="n">wl</span><span class="p">)</span>
+    <span class="n">power</span> <span class="o">=</span> <span class="n">myPowerMeter</span><span class="o">.</span><span class="n">line1</span><span class="o">.</span><span class="n">set_power</span><span class="p">()</span>
+
+    <span class="c1"># Store the values in a list</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;wl_measured&#39;</span><span class="p">:</span><span class="n">wl_measured</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">:</span><span class="n">power</span><span class="p">},</span><span class="n">ignore_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># Turn off the light source</span>
+<span class="n">myTunics</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="c1"># Close the Devices</span>
+<span class="n">myTunics</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">myPowerMeter</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="c1"># Save data</span>
+<span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;data.csv&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="create_driver.html" class="btn btn-neutral float-right" title="Write your own Driver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Drivers (Low-level interface)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Quentin Chateiller &amp; Bruno Garbin, (C2N-CNRS)
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
