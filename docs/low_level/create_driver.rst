@@ -418,6 +418,8 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 Additional necessary functions/files
 ------------------------------------
 
+.. _get_driver_model:
+
 Function get_driver_model (in each class but Driver_CONNECTION)
 ###############################################################
 

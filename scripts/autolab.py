@@ -126,7 +126,7 @@ def print_help_parser(parser,args_list):
 
 ----------------  General informations:  ----------------
 
-This is a very basic help message for usage of {args_list[0]}. More info can be found on read the doc website (command: autolab doc). To display a more extensive further help please have a look at the section help below.
+This is a very basic help message for usage of {args_list[0]}. More info can be found on read the doc website (command: autolab doc). To display a more extensive help, please have a look at the section help below.
     
     Usage:   {args_list[0]} -D driver_name -C connection -A address -h
 
