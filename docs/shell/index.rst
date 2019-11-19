@@ -28,6 +28,7 @@ Table of contents:
 .. toctree::
    :maxdepth: 1
    
+   connection
    driver
    device
 
