@@ -41,6 +41,11 @@ def is_stats_enabled():
     return autolab._config.get_value('stats','enabled') == '1' 
 
 
+def get_explanation():
+    
+    return '''At startup, Autolab is configured to send just only once a completely anonymous signal (sha256 hashed ID) on internet for statistics of use. No personal data is transmitted during this process. Also, this is done in background, with no impact on the performance of Autolab.'''
+
+
 class StatisticsThread(Thread) :
     
     def __init__(self,action) :

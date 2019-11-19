@@ -15,11 +15,11 @@ del version_file
 from .core import paths
 
 # CONFIG
+from .core import stats as _stats
 from .core import config as _config
 _config.check()
 
 # STATS
-from .core import stats as _stats
 from .core.stats import set_stats_enabled, is_stats_enabled
 _stats.startup()
 
