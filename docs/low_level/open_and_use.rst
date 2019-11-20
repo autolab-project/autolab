@@ -74,6 +74,9 @@ You can get the list of the available functions by calling the function ``autola
 
 	>>> autolab.explore_driver(laserSource)
 
+
+.. _name_pythonscript_example:
+
 Script example
 --------------
 

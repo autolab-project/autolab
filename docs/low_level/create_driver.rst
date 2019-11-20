@@ -455,7 +455,8 @@ Example code:
         model.append({'name':'go_home', 'element':'action', 'read':self.home, 'help':'Simple help for go_home action'})
     return model    
     
-
+.. _name_driver_utilities.py:
+    
 Driver utilities structure (*\<manufacturer\>_\<MODEL\>_utilities.py* file)
 ###########################################################################
 

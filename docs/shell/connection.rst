@@ -34,7 +34,7 @@ Three helps are configured (device or driver may be used equally in the lines be
     
         **For driver:** 
             
-            It includes the list of the implemented connections (-C option), the list of the available additional modules (classes **Channel**, **Trace**, **Module_MODEL**, etc.; see :ref:`create_driver`), the list of all the methods that are instantiated with the driver (for direct use with the command: autolab driver; see :ref:`os_driver`), and an extensive help for the usage of the defined options.
+            It includes the list of the implemented connections (-C option), the list of the available additional modules (classes **Channel**, **Trace**, **Module_MODEL**, etc.; see :ref:`create_driver`), the list of all the methods that are instantiated with the driver (for direct use with the command: autolab driver; see :ref:`os_driver`), and an extensive help for the usage of the pre-defined options.
             
         **For device:**
             
