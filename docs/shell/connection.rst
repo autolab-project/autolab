@@ -1,6 +1,6 @@
 .. _shell_connection:
 
-The two sections that follow are equivalent for the commands ``autolab driver`` and ``autolab device`` (unless specified). They will guide you through **getting basic help** and minimal formatting of command lines (minimal arguments to pass) to **establish the connection with you instrument**.
+The two sections that follow are equivalent for the commands ``autolab driver`` and ``autolab device`` (unless specified). They will guide you through **getting basic help** and minimal formatting of command lines (minimal arguments to pass) to **instantiate your instrument** (set up the connection with it, etc.).
 
 .. _name_shell_help:
 
@@ -44,20 +44,22 @@ Three helps are configured (device or driver may be used equally in the lines be
 
 .. _name_shell_connection:
 
-Connection arguments
+Instantiate a driver
 ====================
 
-The commands autolab driver/device will establish a connection to your instrument, perform the requested operation, and finally close properly the connection. To **establish the connection** you need to give valid arguments as requested by the driver (build to suit the physical instrument requirements). 
+The commands autolab driver/device will set up a connection to your instrument, perform the requested operation(s), and finally close properly the connection. To **set up the connection** you need to give valid arguments as requested by the driver (build to suit the physical instrument requirements). 
+
+A typical command line structure is:
 
 .. code-block:: python
 
     >>> autolab driver -D <driver_name or config_name> -C <CONNECTION> -A <address> (optional)
 
+**To set up the connection** for the first time, we recommand to follow the different help states (see :ref:`_name_shell_help`), that usually guide you through filling the arguments corresponding to the above options. To use one of Autolab's driver to drive an instrument you need to provide its name. This is done with the option -D. -D option accepts either a driver_name (e.g. agilent_33220A, etc) or a config_name (nickname as defined in your local_config.ini, e.g. my_agilent). A full list of the available driver names and config names may be found using the command ``autolab infos``. Due to Autolab's drivers structure you also need to provide a -C option for the connection type (corresponding to a class to use for the communication, see :ref:`create_driver` for more informations) when instantiating your device. The available connection types (arguments for -C option) are driver dependent (you need to provide a valid -D option) and may be access with a second stage help (see :ref:`name_shell_help`).
+Lately you will need to provide additional options/arguments to set up the communication. One of the most common is the address for which we cannot help much. At this stage you need to make sure of the instrument address/set the address (on the physical instrument) and format it the way that the connection type is expecting it (e.g. for an ethernet connection with address 192.168.0.1 using VISA connection type: ``TCPIP::192.168.0.1::INSTR``). You will find in the second stage help automatically generated example of a minimal command line (as defined in the driver) that should be able to instantiate your instrument (providing you modify arguments to fit your conditions). A -P option is also available to pass additional connection arguments such as the port number (for SOCKET), the gpib board index (for GPIB) or the path to the dll library (for DLL).
 
-To establish the connection for the first time, we recommand to follow the different help states (see :ref:`_name_shell_help`).
-    
+**Other arguments** may be necessary for the driver to work properly. 
 
--P --port Argument used to address different things depending on the connection type. SOCKET: the port number used to communicate, GPIB: the gpib board index, DLL: the path to the dll library.
 -O --other Set other parameters (slots,...).
 
     
