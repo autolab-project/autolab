@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Command driver &mdash; Autolab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Command device" href="device.html" />
+    <link rel="prev" title="Getting help" href="connection.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Autolab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../low_level/index.html">Drivers (Low-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../high_level.html">Devices (High-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../local_config.html">Local configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gui/index.html">Graphical User Interface (GUI)</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">OS shell</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="connection.html">Getting help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="connection.html#instantiate-a-driver">Instantiate a driver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Command driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage-of-pre-configured-operations">Usage of pre-configured operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#raw-operations-m-option">Raw operations (-m option)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#script-example">Script example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="device.html">Command device</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../help_report.html">Doc / Reports / Stats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releases_notes.html">Releases notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Autolab</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">OS shell</a> &raquo;</li>
+        
+      <li>Command driver</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/shell/driver.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="command-driver">
+<span id="os-driver"></span><h1>Command driver<a class="headerlink" href="#command-driver" title="Permalink to this headline">¶</a></h1>
+<p>See <a class="reference internal" href="connection.html#name-shell-connection"><span class="std std-ref">Instantiate a driver</span></a> for more informations about the connection. Once your driver is instantiated you will be able to perform <strong>pre-configured operations</strong> (see <a class="reference internal" href="../low_level/create_driver.html#name-driver-utilities-py"><span class="std std-ref">Driver utilities structure (&lt;manufacturer&gt;_&lt;MODEL&gt;_utilities.py file)</span></a> for how to configure operations) as well as <strong>raw operations</strong> (-m option). We will discuss both of them here as well as a quick (bash) <strong>scripting example</strong>.
+In the rest of this sections we will assume that you have a working local configuration for your instrument with a nickname my_instrument.</p>
+<div class="section" id="usage-of-pre-configured-operations">
+<h2>Usage of pre-configured operations<a class="headerlink" href="#usage-of-pre-configured-operations" title="Permalink to this headline">¶</a></h2>
+<p>You may access an extensive driver help, that will particularly <strong>list the pre-defined options</strong>, using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -h
+</pre></div>
+</div>
+<p>It includes the list of the implemented connections, the list of the available additional modules (classes <strong>Channel</strong>, <strong>Trace</strong>, <strong>Module_MODEL</strong>, etc.; see <a class="reference internal" href="../low_level/create_driver.html#create-driver"><span class="std std-ref">Write your own Driver</span></a>), the list of all the methods that are instantiated with the driver (for direct use with the command: autolab driver; see <a class="reference internal" href="#os-driver"><span class="std std-ref">Command driver</span></a>), and an extensive help for the usage of the pre-defined options. For instance if an option -a has been defined in the file driver_utilities.py (see <a class="reference internal" href="../low_level/create_driver.html#name-driver-utilities-py"><span class="std std-ref">Driver utilities structure (&lt;manufacturer&gt;_&lt;MODEL&gt;_utilities.py file)</span></a>), one may use it to perform the associated action, say to modify the amplitude, this way:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -a 2
+</pre></div>
+</div>
+<p>This modifies the amplitude to 2 Volts (if the unit is set to Volt).</p>
+<p>In addition, if the instrument has several channels, an channel option is most likely implemented and one can modify the amplitude of channel 4 and 6 to 2 Volts using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -a 2 -c 4,6
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>No space must be present within an argument or option (e.g. do not write <code class="docutils literal notranslate"><span class="pre">-</span> <span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">-c</span> <span class="pre">4,</span> <span class="pre">6</span></code>).</p>
+</div>
+<p>Furthermore, several operations may be perform in a single and compact script line. One can modify the amplitude of channel 4 and 6 to 2 Volts and the frequencies (of the same channel) to 50 Hz using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -a 2 -c 4,6 -f 50
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The arguments are non-positional, which means that the previous line is formally equivalent to:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -c 4,6 -f 50 -a 2
+&gt;&gt;&gt; autolab driver -D my_instrument -f 50 -a 2 -c 4,6
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="raw-operations-m-option">
+<h2>Raw operations (-m option)<a class="headerlink" href="#raw-operations-m-option" title="Permalink to this headline">¶</a></h2>
+<p>Independently of the user definition of options in the file driver_utilities.py, you may access any methods that are instantiated with the driver using the -m option.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>This is not a <em>safe</em> environment, but it allows you to access all the functionnalities of a driver and doesn’t rely on a user configuration.</p>
+</div>
+<p>You may access the <strong>full list of instantiated methods</strong> along with their argument definition, using:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -h
+</pre></div>
+</div>
+<p>This allow you to simply copy and paste the method you want to use from the list into the following command, directly as <em>python code</em>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -m &#39;get_amplitude()&#39;
+&gt;&gt;&gt; autolab driver -D my_instrument -m &#39;set_amplitude(value)&#39;
+</pre></div>
+</div>
+<p>One may also call several methods separated with a space after -m option:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab driver -D my_instrument -m &#39;get_amplitude()&#39; &#39;set_amplitude(value=&quot;test&quot;)&#39; &#39;slot1.get_power()&#39;
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ol class="arabic simple">
+<li><p>If strings are passed as arguments, mind the usage of ‘ and “.</p></li>
+<li><p>It is possible to combine pre-defined options and -m option in a single script line.</p></li>
+</ol>
+</div>
+</div>
+<div class="section" id="script-example">
+<h2>Script example<a class="headerlink" href="#script-example" title="Permalink to this headline">¶</a></h2>
+<p>One may stack in a single file several script line in order to perform custom measurement (modify several control parameters, etc.). This is a bash counterpart to the python scripting example provided there <a class="reference internal" href="../low_level/open_and_use.html#name-pythonscript-example"><span class="std std-ref">Script example</span></a>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#!/bin/bash                   # Very first line of the file (this is bash code)
+
+i=1                           # Definition of a variable
+
+for volts in $(seq 0 0.1 5)   # Definition of a loop (variable volts goes from 0 to 5 with steps of 0.1)
+do
+
+echo $volts                   # Print the value of the volts variable
+
+autolab driver -D my_function_generator -a $volts  # Increase the amplitude of my_function_generator
+autolab driver -D my_oscilloscope -c 1,2,4 -o $i   # Get channels 1, 2 and 4 from my_oscilloscope and save the according files with a name starting with the number of iteration of the loop (i)
+
+i=$(($i+1))                   # Increment i variable of 1 at each loop iteration
+done                          # End of the for loop
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ol class="arabic simple">
+<li><p>Any time the command <code class="docutils literal notranslate"><span class="pre">autolab</span> <span class="pre">driver</span></code> is called it sets up the connection. It is then inherently slightly slower (instrument dependant for the amount of time that usually range from 0.1 to 0.5 seconds) than scripting in python.</p></li>
+<li><p>The whole script looks sightly simpler and shorter than its python counterpart.</p></li>
+</ol>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="device.html" class="btn btn-neutral float-right" title="Command device" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="connection.html" class="btn btn-neutral float-left" title="Getting help" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Quentin Chateiller &amp; Bruno Garbin, (C2N-CNRS)
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

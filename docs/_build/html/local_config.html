@@ -1,0 +1,299 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Local configuration &mdash; Autolab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Graphical User Interface (GUI)" href="gui/index.html" />
+    <link rel="prev" title="Devices (High-level interface)" href="high_level.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Autolab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Drivers (Low-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="high_level.html">Devices (High-level interface)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Local configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#python-commands">Python commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#edit-the-configuration-file">Edit the configuration file</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shell/index.html">OS shell</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help_report.html">Doc / Reports / Stats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_notes.html">Releases notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Autolab</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Local configuration</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/local_config.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="local-configuration">
+<span id="localconfig"></span><h1>Local configuration<a class="headerlink" href="#local-configuration" title="Permalink to this headline">¶</a></h1>
+<p>To avoid having to provide each time the full configuration of an instrument (connection type, address, port, slots, …) to load a <strong>Driver</strong> or a <strong>Device</strong>, Autolab proposes to store it locally for further use.</p>
+<p>More precisely, this configuration is stored in a local configuration file named <code class="docutils literal notranslate"><span class="pre">local_config.ini</span></code>, which is located in the local directory of Autolab. Both this directory and this file are created automatically in your home directory the first time you use the package (the following messages will be displayed, indicating their exact paths).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">INFORMATION</span><span class="p">:</span> <span class="n">The</span> <span class="n">local</span> <span class="n">folder</span> <span class="n">AUTOLAB</span> <span class="n">has</span> <span class="n">been</span> <span class="n">created</span> <span class="p">:</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="o">&lt;</span><span class="n">USER</span><span class="o">&gt;</span>\<span class="n">autolab</span>
+<span class="n">INFORMATION</span><span class="p">:</span> <span class="n">The</span> <span class="n">configuration</span> <span class="nb">file</span> <span class="n">local_config</span><span class="o">.</span><span class="n">ini</span> <span class="n">has</span> <span class="n">been</span> <span class="n">created</span> <span class="p">:</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="o">&lt;</span><span class="n">USER</span><span class="o">&gt;</span>\<span class="n">autolab</span>\<span class="n">local_config</span><span class="o">.</span><span class="n">ini</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do not move or rename the local directory nor the configuration file.</p>
+</div>
+<p>A local configuration is composed of several parameters:</p>
+<ul class="simple">
+<li><p>The name of the local configuration, which is usually the nickname of your instrument in Autolab.</p></li>
+<li><p>The name of the associated Autolab <strong>driver</strong>.</p></li>
+<li><p>All the connection parameters (connection, address, port, slots, …)</p></li>
+</ul>
+<p>To see the list of the available local configurations, call the function <code class="docutils literal notranslate"><span class="pre">list_local_configs</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">list_local_configs</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To know what parameters have to be provided for a particular <strong>Driver</strong> or <strong>Device</strong>, use the function <cite>config_help</cite> with the name of corresponding driver.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">config_help</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This section describes the procedure to create or modify a local configuration either through Autolab, or by editing directly the configuration file on your computer.</p>
+<div class="section" id="python-commands">
+<h2>Python commands<a class="headerlink" href="#python-commands" title="Permalink to this headline">¶</a></h2>
+<p>The first way to create or modify a local configuration is to use the dedicated functions in Autolab. To create a new local configuration, call the function <code class="docutils literal notranslate"><span class="pre">set_local_config</span></code> with the configuration name, the driver name, and the parameters with their values. (Note that <code class="docutils literal notranslate"><span class="pre">driver</span></code> and <code class="docutils literal notranslate"><span class="pre">connection</span></code> keywords are mandatory).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">set_local_config</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The function <code class="docutils literal notranslate"><span class="pre">set_local_config</span></code> can also be used to update an existing local configuration. As above, provide configuration name followed by the parameters and values you want to update, with the additional keyword <code class="docutils literal notranslate"><span class="pre">modify=True</span></code> to confirm the local changes. Any parameter can be changed in this way.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">set_local_config</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::4::INSTR&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can display the content of a local configuration by calling the function <code class="docutils literal notranslate"><span class="pre">show_local_config</span></code> with the name of the local configuration.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">show_local_config</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, to remove a parameter from a local configuration, call the function <code class="docutils literal notranslate"><span class="pre">remove_local_config_parameter</span></code> with the configuration name and the name of the parameter to remove.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">set_driver_driver</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">,</span> <span class="n">fake_parameter</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">remove_local_config_parameter</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">,</span> <span class="s1">&#39;fake_parameter&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to remove completely a local configuration, call the function <code class="docutils literal notranslate"><span class="pre">remove_local_config</span></code> with the name of the configuration to remove.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">remove_local_config</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id1"><span class="problematic" id="id2">**</span></a>To sum up, you can either provide the full configuration of an instrument in the function ** <code class="docutils literal notranslate"><span class="pre">get_driver</span></code> ** or ** <code class="docutils literal notranslate"><span class="pre">get_device</span></code> <a href="#id3"><span class="problematic" id="id4">**</span></a>, or save it locally with a nickname, and just provide that nickname in the two previous functions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span> <span class="n">connection</span><span class="o">=</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">autolab</span><span class="o">.</span><span class="n">set_local_config</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">,</span><span class="n">driver</span><span class="o">=</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span><span class="n">connection</span><span class="o">=</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="edit-the-configuration-file">
+<h2>Edit the configuration file<a class="headerlink" href="#edit-the-configuration-file" title="Permalink to this headline">¶</a></h2>
+<p>You can also edit directly the local configuration file <code class="docutils literal notranslate"><span class="pre">local_config.ini</span></code>.</p>
+<p>This file is structured in blocks, each of them containing the configuration of an instrument. Each block contains a header (the configuration name / nickname of the instrument in square brackets <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">]</span></code>). The parameters and values are then listed below line by line, separated by an equal sign <code class="docutils literal notranslate"><span class="pre">=</span></code>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&lt;NICKNAME_OF_YOUR_DEVICE&gt;]
+driver = &lt;DRIVER_NAME&gt;
+connection = &lt;CONNECTION_TYPE&gt;
+address = &lt;ADDRESS&gt;
+slot1 = &lt;MODULE_NAME&gt;
+slot1_name = &lt;MY_MODULE_NAME&gt;
+</pre></div>
+</div>
+<p>To see a concrete example of the block you have to append in the configuration file for a given driver, call the function <code class="docutils literal notranslate"><span class="pre">config_help</span></code> with the name of the driver. You can then directly copy and paste this exemple into the configuration file, and customize the value of the parameters to suit those of your instrument. Here is an example for the Yenista Tunics light source:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[my_tunics]
+driver = yenista_TUNICS
+connection = VISA
+address = GPIB0::2::INSTR
+</pre></div>
+</div>
+<p>Save the configuration file, and go back to Autolab. You don’t need to restart Autolab, the configuration file will be read automatically at the next request.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_tunics&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gui/index.html" class="btn btn-neutral float-right" title="Graphical User Interface (GUI)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="high_level.html" class="btn btn-neutral float-left" title="Devices (High-level interface)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Quentin Chateiller &amp; Bruno Garbin, (C2N-CNRS)
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
