@@ -86,7 +86,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	
 	# Import the package
 	import autolab
-	import pandas
+	import pandas as pd
 	
 	# Open the Devices
 	myTunics = autolab.get_driver('my_tunics')
