@@ -86,31 +86,31 @@ With all these commands, you can now create your own Python script. Here is an e
 	
 	# Import the package
 	import autolab
-	import pandas
+	import pandas as pd
 	
 	# Open the Devices
 	myTunics = autolab.get_driver('my_tunics')
 	myPowerMeter = autolab.get_driver('my_power_meter')
 	
 	# Turn on the light source
-	myTunics.output(True)
+	myTunics.set_output(True)
 	
 	# Sweep its wavelength and measure a power with a power meter
 	df = pd.DataFrame()
 	for wl in range(1550,1560,0.01) :
 	
 	    # Set the parameter
-	    myTunics.wavelength(wl)
+	    myTunics.set_wavelength(wl)
 	    
 	    # Measures the values
-	    wl_measured = myTunics.set_wavelength(wl)
+	    wl_measured = myTunics.get_wavelength()
 	    power = myPowerMeter.line1.set_power()
 	    
 	    # Store the values in a list
-		df = df.append({'wl_measured':wl_measured, 'power':power},ignore_index=True)
+	    df = df.append({'wl_measured':wl_measured, 'power':power},ignore_index=True)
 	
 	# Turn off the light source
-	myTunics.output(False)
+	myTunics.set_output(False)
 	
 	# Close the Devices
 	myTunics.close()
