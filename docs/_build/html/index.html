@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Welcome to Autolab’s documentation! &mdash; Autolab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> Autolab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Drivers (Low-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="high_level.html">Devices (High-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="local_config.html">Local configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shell/index.html">OS shell</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help_report.html">Doc / Reports / Stats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_notes.html">Releases notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Autolab</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>Welcome to Autolab’s documentation!</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="welcome-to-autolab-s-documentation">
+<h1>Welcome to Autolab’s documentation!<a class="headerlink" href="#welcome-to-autolab-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p><strong>“Forget your instruments, focus on your experiment!”</strong></p>
+<p>Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 40 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones). The configuration required to communicate with an given instrument (connection type, address, …) can be saved locally to avoid providing it each time. Autolab can be either used through a Python shell, an OS shell, or a graphical interface.</p>
+<div class="align-center figure align-default">
+<img alt="_images/scheme.png" src="_images/scheme.png" />
+</div>
+<p>In this package, the interaction with a scientific instrument can be done through two different objects : the <strong>Drivers</strong>, or the <strong>Devices</strong>.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The <a class="reference internal" href="low_level/index.html#lowlevel"><span class="std std-ref">Drivers (Low-level interface)</span></a> provides a raw access to the package’s drivers functions.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span><span class="n">connection</span><span class="o">=</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">set_wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">get_wavelength</span><span class="p">()</span>
+<span class="go">1550</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;my_powermeter&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">get_current_power</span><span class="p">()</span>
+<span class="go">156.89e-6</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_driver</span><span class="p">(</span><span class="s1">&#39;my_stage&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span><span class="o">.</span><span class="n">go_home</span><span class="p">()</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>The <a class="reference internal" href="high_level.html#highlevel"><span class="std std-ref">Devices (High-level interface)</span></a>, are an abstraction layer of the low-level interface that provide a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">autolab</span>
+
+<span class="go"># Create the Device &#39;my_tunics&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;yenista_TUNICS&#39;</span><span class="p">,</span><span class="n">connection</span><span class="o">=</span><span class="s1">&#39;VISA&#39;</span><span class="p">,</span><span class="n">address</span><span class="o">=</span><span class="s1">&#39;GPIB0::12::INSTR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">(</span><span class="mi">1550</span><span class="p">)</span>                        <span class="c1"># Set the Variable &#39;wavelength&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">laserSource</span><span class="o">.</span><span class="n">wavelength</span><span class="p">()</span>                            <span class="c1"># Read the Variable &#39;wavelength&#39;</span>
+<span class="go">1550</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_powermeter&#39;</span><span class="p">)</span>    <span class="c1"># Create the Device &#39;my_powermeter&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">powerMeter</span><span class="o">.</span><span class="n">power</span><span class="p">()</span>                                  <span class="c1"># Read the Variable &#39;power&#39;</span>
+<span class="go">156.89e-6</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span> <span class="o">=</span> <span class="n">autolab</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="s1">&#39;my_stage&#39;</span><span class="p">)</span>              <span class="c1"># Create the Device &#39;my_stage&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage</span><span class="o">.</span><span class="n">home</span><span class="p">()</span>                                        <span class="c1"># Execute the Action &#39;home&#39;</span>
+</pre></div>
+</div>
+<p>The user can also interact even more easily with this high-level interface through a user-friendly <a class="reference internal" href="gui/index.html#gui"><span class="std std-ref">Graphical User Interface (GUI)</span></a> which contains three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).</p>
+<div class="align-center figure align-default">
+<img alt="_images/scanning.png" src="_images/scanning.png" />
+</div>
+</div></blockquote>
+<p>All the Autolab’s features are also available through an <span class="xref std std-ref">os_shell</span> interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without opening explicitely a Python shell.</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; autolab devices my_tunics.wavelength -v 1551
+</pre></div>
+</div>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A Google Slides presentation and examples are available here: <a class="reference external" href="http://bit.ly/autolab-demo">bit.ly/autolab-demo</a></p>
+</div>
+<p>Table of contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="low_level/index.html">Drivers (Low-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="high_level.html">Devices (High-level interface)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="local_config.html">Local configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gui/index.html">Graphical User Interface (GUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shell/index.html">OS shell</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help_report.html">Doc / Reports / Stats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_notes.html">Releases notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Quentin Chateiller &amp; Bruno Garbin, (C2N-CNRS)
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
