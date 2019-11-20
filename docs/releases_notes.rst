@@ -17,13 +17,12 @@ Core:
 Drivers:
 
 * The driver category is now stored in the script <driver>_utilities.py in the same folder (previously <driver>_parser.py).
-* exfo_PM1613: Driver update taking into account that the power meter returns ***** when changing its scale. 
+* exfo_PM1613: 1) Driver update taking into account that the power meter returns ***** when changing its scale. 2) typos in the type of power of get_driver_model (str -> float).
 * Modification of the way we pass argument to socket.send function. Safer now as we explicitely convert the argument to a string (impacted a few instruments that use socket module such as yokogawa_AQ6370, etc.).
-* Other driver updates
 
 Help:
 
-* Efforts to merge all the help [in python, OS (autolab driver/device), etc.] to a common standard, using the very same functions.
+* Efforts to merge all the helps [in python, OS (autolab driver/device), etc.] to a common standard, using the very same functions.
 
 v1.0
 =====
