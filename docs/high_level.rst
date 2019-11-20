@@ -151,7 +151,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	    myTunics.wavelength(wl)
 	    
 	    # Measures the values
-	    wl_measured = myTunics.wavelength(wl)
+	    wl_measured = myTunics.wavelength()
 	    power = myPowerMeter.line1.power()
 	    
 	    # Store the values in a list
