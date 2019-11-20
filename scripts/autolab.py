@@ -97,15 +97,13 @@ def process_config(args_list):
     parser.add_argument("-D", "--driver", type=str, dest="driver", help="Set the nickname or driver to use: 1) uses nickname if it is defined in local_config.ini OR(if it is not) 2) Set the driver name to use." )
     parser.add_argument("-C", "--connection", type=str, dest="connection", help="Set the connection type to use for the connection." )
     parser.add_argument("-A", "--address", type=str, dest="address", help="Set the address to use for the communication." )
-    parser.add_argument("-P","--port", type=int, dest="port", help="Argument used to address different things depending on the connection type. SOCKET: the port number used to communicate, GPIB: the gpib board index, DLL: the path to the dll library." )
-    parser.add_argument("-O","--other", nargs='+', dest="other", help="Set other parameters (slots,...)." )
+    parser.add_argument("-O","--other", nargs='+', dest="other", help="Set other parameters [ports (e.g SOCKET), board_index, slots,...)." )
 
     args, unknown = parser.parse_known_args(args_list)
     
     config = {}
     if args.connection is not None : config['connection'] = args.connection
     if args.address is not None : config['address'] = args.address
-    if args.port is not None : config['port'] = args.port
     if args.other is not None : 
         for part in args.other : 
             part = part.replace(' ','')
@@ -121,7 +119,6 @@ def process_config(args_list):
     return args.driver, config, parser
 
 def print_help_parser(parser,args_list):
-    autolab_infos = autolab.infos(_print=False)
     parser.usage = f"""
 
 ----------------  General informations:  ----------------
