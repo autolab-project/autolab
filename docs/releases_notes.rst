@@ -1,6 +1,10 @@
 Releases notes
 ---------------
 
+(last) v1.1.1
+=============
+* fixed installation issue regarding version.txt
+
 v1.1
 ====
 
