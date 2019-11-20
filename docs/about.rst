@@ -18,10 +18,6 @@ Thanks to Maxime, Giuseppe and Guilhem for their contributions.
 
 Contacts: `quentin.chateiller@c2n.upsaclay.fr <mailto:quentin.chateiller@c2n.upsaclay.fr>`_,  `bruno.garbin@c2n.upsaclay.fr <mailto:bruno.garbin@c2n.upsaclay.fr>`_
 
-.. note::
-	
-	At startup, Autolab is configured to send in background a signal completely anonymous (sha256 hashed ID) on internet for statistics of use. If you don't want to participate to this study, you can disable this feature with the function ``autolab.set_stats_enabled(True/False)``.
-
 .. figure:: logos.jpg
 		:figclass: align-center	
 
