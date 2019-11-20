@@ -46,5 +46,5 @@ At startup, Autolab is configured to send only once a completely anonymous signa
 
 .. code-block:: none
 
-	>>> autolab stats -e
+	>>> autolab stats -e/-d
 	>>> autolab stats -q
