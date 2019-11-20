@@ -130,7 +130,7 @@ This is a very basic help message for usage of {args_list[0]}. More info can be 
 Recquired connection arguments (capital letters):
     -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See below for accessing the list of available drivers.
     -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
-    -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on how you configured the device.
+    -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on the way you configured the instrument.
     
     
 ----------------  Helps (-h option)  ----------------       
