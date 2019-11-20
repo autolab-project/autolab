@@ -7,7 +7,7 @@ To read, write or save the value of a **Variable**, or to execute an **Action**,
 
 .. code-block:: none
 
-	autolab-devices -D <DRIVER_NAME or CONFIG_NAME> -e <ELEMENT_ADDRESS> <OPTIONS>
+	autolab device -D <DRIVER_NAME or CONFIG_NAME> -e <ELEMENT_ADDRESS> <OPTIONS>
 	
 The **Element address** indicates the address of the desired **Variable** or **Action** in the Autolab Device hierarchy, using a point separator. This command will establish a connection to your instrument, perform the requested operation, and finally close properly the connection. See :ref:`name_shell_connection` for more informations about the connection.
 
@@ -17,7 +17,7 @@ The available operations are listed below:
 	
 	.. code-block:: none
 
-		>>> autolab device -D myTunics. -e wavelength
+		>>> autolab device -D myTunics -e wavelength
 		1550.00
 	
 	* **To read and save** the value of a readable **Variable** in a file, provide its address with the option ``-p`` or ``--path`` with the desired output file or folder path:
