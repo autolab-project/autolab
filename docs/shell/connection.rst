@@ -59,13 +59,4 @@ A typical command line structure is:
 Lately you will need to provide additional options/arguments to set up the communication. One of the most common is the address for which we cannot help much. At this stage you need to make sure of the instrument address/set the address (on the physical instrument) and format it the way that the connection type is expecting it (e.g. for an ethernet connection with address 192.168.0.1 using VISA connection type: ``TCPIP::192.168.0.1::INSTR``). You will find in the second stage help automatically generated example of a minimal command line (as defined in the driver) that should be able to instantiate your instrument (providing you modify arguments to fit your conditions). 
 
 **Other arguments** may be necessary for the driver to work properly. In particular, additional connection argument may be passed through the option -O, such as the port number (for SOCKET connection type), the gpib board index (for GPIB connection) or the path to the dll library (for DLL connection type). 
-In addition, for `complex` instruments (such as instruments with 'slots'), this options provides you with a reliable way to indicate how 
-
--O --other Set other parameters (slots,...).
-
-    
-
-
-    
-    
-    
+In addition, for `complex` instruments (such as instruments with 'slots'), this options provides you with a reliable way to indicate the physical configuration of your instrument [e.g. Module_TEST111 is physically inserted in slot 1, Module_TEST222 is physically inserted in slot 5 (-O slot1=Module_TEST111 slot5=Module_TEST222); see :ref:`` for more informations].
