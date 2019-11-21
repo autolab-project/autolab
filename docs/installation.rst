@@ -22,17 +22,16 @@ Autolab package
 
 This project is hosted in the global python repository PyPi at the following address : https://pypi.org/project/autolab/
 To install the Autolab python package on your computer, we then advice you to use the Python package manager ``pip`` in a Python environnement:	
-	
-If the package is already installed, you can upgrade it to the last official version with the following command:
 
 .. code-block:: none
 
 	pip install autolab
 	
-To update the package:
+If the package is already installed, you can check the current version installed and upgrade it to the last official version with the following commands:
 
 .. code-block:: none
-
+	
+	pip show autolab
 	pip install autolab --upgrade
 	
 Import the Autolab package in a Python shell to check that the installation is correct.
