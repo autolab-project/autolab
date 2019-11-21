@@ -172,6 +172,14 @@ def driver_parser(args_list):
     # Instantiation of driver.py and driver_utilities.py
     global driver_instance
     driver_instance           = autolab.get_driver(driver_name,**config)
+    
+    if driver_name in autolab.list_local_configs():        
+        # Load config object
+        config = dict(autolab.get_local_config(driver_name))
+        # Check if driver provided
+        assert 'driver' in config.keys(), f"Driver name not found in driver config '{driver_name}'"
+        driver_name = config['driver']
+        
     driver_utilities          = autolab.load_driver_utilities_lib(driver_name+'_utilities')
     driver_utilities_instance = driver_utilities.Driver_parser(driver_instance,driver_name)
     
