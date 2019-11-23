@@ -1,11 +1,17 @@
 Releases notes
 ---------------
 
+Development version
+===================
+
+* The help of an Element (Device approach) can be either displayed through its ``element.help()`` function or by printing the object ``print(element)``.
+* The help of a Variable (Device approach) now display its python type.
+
 (last) v1.1.2
 =============
 * fixed issue with using local config and OS command autolab driver
 
-v1.1.1: * fixed installation issue regarding version.txt
+v1.1.1: fixed installation issue regarding version.txt
 
 v1.1
 ====

@@ -78,14 +78,14 @@ In the case of a more complex **Device**, for instance a power meter named ``my_
 	>>> powerMeter = autolab.get_device('my_power_meter')
 	>>> powerMeter.channel1.power
 	
-Every **Element** in Autolab is provided with a function ``help`` that can be called to obtain some information about it, but also to know which further **Elements** can be accessed through it, in the case of a **Module**. For a **Variable**, it will display its read and/or write functions (from the driver) and its unit if provided in the driver. For an **Action**, il will display the associated function in the driver, and its parameter if it have one.
+Every **Element** in Autolab is provided with a function ``help`` that can be called to obtain some information about it, but also to know which further **Elements** can be accessed through it, in the case of a **Module**. For a **Variable**, it will display its read and/or write functions (from the driver), its python type, and its unit if provided in the driver. For an **Action**, il will display the associated function in the driver, and its parameter (python type and unit) if it has one. You can also ``print()`` the object to display this help.
 
 .. code-block:: python
 
 	>>> lightSource.help()
-	>>> lightSource.wavelength.help()
+	>>> print(lightSource.wavelength)
 	>>> powerMeter.help()
-	>>> powerMeter.channel1.help()
+	>>> print(powerMeter.channel1)
 	>>> powerMeter.channel1.power.help()
 
 Use a Variable
