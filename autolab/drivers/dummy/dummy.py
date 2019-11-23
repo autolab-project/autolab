@@ -81,6 +81,11 @@ class Driver():
         if self.verbose : print('get phase',value)
         return value
     
+    def set_phase(self,value):
+        time.sleep(self.sleep)
+        self.phase = value
+        if self.verbose : print('set phase',value)
+    
     def do_sth(self):
         time.sleep(self.sleep)
         if self.verbose : print('do sth')
@@ -118,7 +123,7 @@ class Driver():
         
         model.append({'element':'variable','name':'amplitude','type':float,'unit':'V','read':self.get_amplitude,'write':self.set_amplitude,'help':'This is the amplitude of the device...'})
         model.append({'element':'variable','name':'phrase','type':str,'read':self.get_phrase,'write':self.set_phrase})
-        model.append({'element':'variable','name':'phase','type':float,'read':self.get_phase})
+        model.append({'element':'variable','name':'phase','type':float,'read':self.get_phase,'write':self.set_phase})
         model.append({'element':'action','name':'something','do':self.do_sth,'help':'This do something...'})
         model.append({'element':'variable','name':'dataframe','type':pd.DataFrame,'read':self.get_dataframe})
         model.append({'element':'variable','name':'option','type':bool,'read':self.get_option,'write':self.set_option})
