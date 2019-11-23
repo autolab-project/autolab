@@ -187,6 +187,13 @@ class Module(Element):
         
         """ This function prints informations for the user about the availables 
         submodules, variables and action attached to the current module """
+
+        print(self)
+        
+    def __str__(self):
+        
+        """ This function returns informations for the user about the availables 
+        submodules, variables and action attached to the current module """
         
         display ='\n'+emphasize(f'Module {self.name}')+'\n'
         if self._help is not None : 
@@ -200,10 +207,8 @@ class Module(Element):
             else : prefix = '|- '
             txt = ' '*3*h_step[2] + f'{prefix}{h_step[0]}'
             display += '\n' + txt + ' '*(30-len(txt)) + f'({h_step[1]})'
-            
-        print(display)
         
-        
+        return display
         
     def __dir__(self):
         
@@ -300,6 +305,13 @@ class Variable(Element):
     def help(self):
         
         """ This function prints informations for the user about the current variable """
+    
+        print(self)
+    
+    
+    def __str__(self):
+        
+        """ This function returns informations for the user about the current variable """
         
         display ='\n'+emphasize(f'Variable {self.name}')+'\n'
         if self._help is not None : display+=f'Help: {self._help}\n'
@@ -313,13 +325,15 @@ class Variable(Element):
         if self.writable is True : display += f"YES (driver function '{self.write_function.__name__}')\n"
         else : display += 'NO\n'
         
+        display+=f'Type: {self.type.__name__}\n'
+        
         display += 'Unit: '
         if self.unit is not None : display += f'{self.unit}\n'
         else : display += 'None\n'
         
-        print(display)
+        return display
     
-
+    
 
     def __call__(self,value=None):
         
@@ -384,6 +398,14 @@ class Action(Element):
         
         """ This function prints informations for the user about the current variable """
         
+        print(self)
+               
+        
+        
+    def __str__(self):
+        
+        """ This function returns informations for the user about the current variable """
+        
         display ='\n'+emphasize(f'Action {self.name}')+'\n'
         if self._help is not None : display+=f'Help: {self._help}\n'
         display += '\n'
@@ -397,9 +419,8 @@ class Action(Element):
         else :
             display += 'Parameter: NO\n'
             
-        
-        print(display)
-               
+        return display
+    
     
     
     def __call__(self,value=None):
