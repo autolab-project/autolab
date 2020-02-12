@@ -42,7 +42,7 @@ class Driver():
             self.nb_frames = int(command.split('=')[1])
             self.setNbFrames(self.nb_frames)
         elif command.startswith('NBFRAMES?'):
-            return self.getNbFrames(self.nb_frames)
+            return self.getNbFrames()
         elif command.startswith('CONNECT='):
             camera = command.split('=')[1]
             self.CAM = self.get_camera(camera)
