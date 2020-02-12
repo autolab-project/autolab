@@ -68,7 +68,7 @@ class Driver():
         
         
     def get_motor_speed(self):
-        return float(self.query("MOTOR_SPEED?").split('=')[1])
+        return float(self.query("MOTOR_SPEED?"))
  
     
     def set_motor_speed(self,value):  # from 1 to 100 nm/s
