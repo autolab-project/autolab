@@ -57,8 +57,8 @@ class Driver():
         model.append({'element':'variable','name':'nb_frames','type':int,'read':self.get_nb_frames,'write':self.set_nb_frames,'help':'Manage the number of frames to be acquired'})
         model.append({'element':'variable','name':'camera','type':str,'read':self.list_cameras,'write':self.set_camera,'help':'Manage cameras'})
         model.append({'element':'variable','name':'trace','type':ndarray,'read':self.get_data,'help':'Get the current trace in a numpy array'})
-        model.append({'element':'action','name':'enable_auto_exposure','read':self.enable_auto_exposure,'help':'Enable auto exposure mode'})
-        model.append({'element':'action','name':'disable_auto_exposure','read':self.disable_auto_exposure,'help':'Disable auto exposure mode'})
+        model.append({'element':'action','name':'enable_auto_exposure','do':self.enable_auto_exposure,'help':'Enable auto exposure mode'})
+        model.append({'element':'action','name':'disable_auto_exposure','do':self.disable_auto_exposure,'help':'Disable auto exposure mode'})
         return model
 
 
