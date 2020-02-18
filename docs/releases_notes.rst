@@ -7,9 +7,13 @@ Development version
 * The help of an Element (Device approach) can be either displayed through its ``element.help()`` function or by printing the object ``print(element)``.
 * The help of a Variable (Device approach) now display its python type.
 
-(last) v1.1.2
+(last) v1.1.3
 =============
-* fixed issue with using local config and OS command autolab driver
+* minor fixes
+* addition of a few functions and the connection class Driver_GPIB to agilent_33220A
+* addition of the driver keithley_2200
+
+v1.1.2: fixed issue with using local config and OS command autolab driver
 
 v1.1.1: fixed installation issue regarding version.txt
 
