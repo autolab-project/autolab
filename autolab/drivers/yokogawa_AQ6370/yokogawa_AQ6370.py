@@ -70,19 +70,19 @@ class Driver_SOCKET(Driver):
         
         Driver.__init__(self)
 
-    def send(self, msg):
+    def write(self, msg):
         msg=(msg+"\n").encode()
         self.sock.send(msg)
-    def recv(self, length=2048):
+    def read(self, length=100000):
         msg=''
         while not msg.endswith('\r\n'):
             msg=msg+self.sock.recv(length).decode()
         msg = msg[:-2]
-        return msg
-    def query(self,msg,length=2048):
+        return msg.strip('\r\n')
+    def query(self,msg,length=100000):
         """Sends question and returns answer"""
-        self.send(msg)
-        return(self.recv(length))
+        self.write(msg)
+        return(self.read(length))
     def close(self):
         self.sock.close()
 ############################## Connections classes ##############################
@@ -96,7 +96,7 @@ class Traces():
         self.data_dict = {}
         
     def get_data(self):
-        self.data        = self.dev.query(f":TRAC:DATA:Y? TR{self.trace}", length=100000).split(',')
+        self.data        = self.dev.query(f":TRAC:DATA:Y? TR{self.trace}").split(',')
         self.frequencies = self.get_frequencies()
         self.data        = [float(val) for val in self.data]
         self.frequencies = [float(val) for val in self.frequencies]
@@ -108,7 +108,7 @@ class Traces():
         return pandas.DataFrame(self.data_dict)
     
     def get_frequencies(self):
-        return self.dev.query(f":TRAC:DATA:X? TR{self.trace}", length=1000000).split(',')
+        return self.dev.query(f":TRAC:DATA:X? TR{self.trace}").split(',')
     
     def save_data(self,filename,FORCE=False):
         temp_filename = f'{filename}_AQ6370TR{self.trace}.txt'
