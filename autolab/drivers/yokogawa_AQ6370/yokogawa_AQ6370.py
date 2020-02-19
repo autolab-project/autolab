@@ -37,7 +37,7 @@ class Driver():
     ### Trigger functions
     def single(self):
         """Trigger a single sweep"""
-        self.send('*TRG')
+        self.write('*TRG')
     def is_scope_stopped(self):
         return '1' in self.query(':STATUS:OPER:COND?')
 
@@ -59,12 +59,12 @@ class Driver_SOCKET(Driver):
         
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((address, int(port)))
-        self.send('OPEN "anonymous"')
-        ans = self.recv(1024)
+        self.write('OPEN "anonymous"')
+        ans = self.read(1024)
         if not ans=='AUTHENTICATE CRAM-MD5.':
             print("problem with authentication")
-        self.send(" ")
-        ans = self.recv(1024)
+        self.write(" ")
+        ans = self.read(1024)
         if not ans=='ready':
             print("problem with authentication")
         
