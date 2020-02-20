@@ -38,6 +38,7 @@ class Driver():
     def single(self):
         """Trigger a single sweep"""
         self.write('*TRG')
+        while not(self.is_scope_stopped()): pass
     def is_scope_stopped(self):
         return '1' in self.query(':STATUS:OPER:COND?')
 
