@@ -29,7 +29,7 @@ class Driver():
             while(self.get_output() != False): pass
             
     def get_output(self):
-        return "ON" in self.query('L:STAT?')
+        return "ON" is self.query('L:STAT?')
 
     
     def set_mode(self,mode):
