@@ -7,8 +7,11 @@ Development version
 * The help of an Element (Device approach) can be either displayed through its ``element.help()`` function or by printing the object ``print(element)``.
 * The help of a Variable (Device approach) now display its python type.
 
-(last) v1.1.5:
+(last) v1.1.6:
 ==============
+* Addition of the driver sacher_PC500
+
+v1.1.5:
 * yokogawa_AQ6370: fix on the single function of the class Driver: it will now wait to finish the operation
 
 v1.1.4:
