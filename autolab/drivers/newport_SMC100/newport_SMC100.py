@@ -142,7 +142,7 @@ class Module_ILS100CC() :
     
     def get_driver_model(self):
         model = []
-        model.append({'element':'variable','name':'position','type':str,
+        model.append({'element':'variable','name':'position','type':float,
                        'read':self.get_position,'write':self.set_position, 'help':'Initiates an absolute move.'})
         return model
             
