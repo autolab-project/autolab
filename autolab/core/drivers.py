@@ -383,7 +383,43 @@ def remove_local_config_parameter(config_name,param_name):
     with open(autolab.paths.LOCAL_CONFIG, 'w') as file:
         local_configs.write(file)
     
+def connection_help(driver_name, _print=True, _parser=False):
+    
+    # Load list of all parameters
+    driver_lib = load_driver_lib(driver_name)
+    params = {}
+    params['driver'] = driver_name
+    params['connection'] = {}
+    for conn in get_connection_names(driver_lib) : 
+        params['connection'][conn] = get_class_args(get_connection_class(driver_lib,conn))
+    params['other'] = get_class_args(get_driver_class(driver_lib))
+    if hasattr(get_driver_class(driver_lib),'slot_config') :
+        params['other']['slot1'] = f'{get_driver_class(driver_lib).slot_config}'
+        params['other']['slot1_name'] = 'my_<MODULE_NAME>'
+    
+    mess = '\n'
 
+    # Name and category if available
+    submess = f'Driver "{driver_name}" ({get_driver_category(driver_name)})'
+    mess += emphasize(submess,sign='=') + '\n'
+    # Connections types
+    c_option=''
+    if _parser: c_option='(-C option) '
+    mess += f'\nAvailable connection types {c_option}and parameter examples:\n\n'
+    for connection in params['connection'].keys() : 
+        mess += f' - {connection}\n'
+        mess += f"      driver = {params['driver']}\n"
+        mess += f"      connection = {connection}\n"
+        for arg,value in params['connection'][connection].items():
+            mess += f"      {arg} = {value}\n"
+        for arg,value in params['other'].items():
+            mess += f"      {arg} = {value}\n"
+        mess += '\n'
+    
+    if _print is True : print(mess)
+    else : return mess
+    
+    
 def config_help(driver_name, _print=True, _parser=False):
     
     ''' Display the help of a particular driver (connection types, modules, ...) '''
