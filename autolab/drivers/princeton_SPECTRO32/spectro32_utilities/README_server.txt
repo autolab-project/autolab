@@ -15,3 +15,6 @@ To launch the server :
 2) Execute "launcher.bat" to start the server
 3) Send commands to 192.168.0.xxx at port 5005.
 
+
+Install PVCAM32 (complete installation ! Otherwise SDK folder won't be installed)
+
