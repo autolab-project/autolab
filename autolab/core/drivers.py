@@ -36,7 +36,7 @@ def load_driver_lib(driver_name):
     ''' Returns a driver library (that contains Driver, Driver_XXX, Module_XXX) '''
 
     # Loading preparation
-    driver_path = get_driver_path(driver_name)
+    driver_path = get_driver_path(driver_name)['path']
 
     # Laod library
     driver_lib = load_lib(driver_path)
