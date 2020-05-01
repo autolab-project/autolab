@@ -70,7 +70,7 @@ def get_device(device_name, **kwargs):
     else :
         instance = drivers.get_driver(device_config['driver'],
                                        device_config['connection'],
-                                       { k:v for k,v in device_config.items() if k not in ['driver','connection']})
+                                       **{ k:v for k,v in device_config.items() if k not in ['driver','connection']})
         DEVICES[device_name] = Device(name,instance,device_config)
         DEVICES[device_name].device_config = device_config
 
