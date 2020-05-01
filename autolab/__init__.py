@@ -26,7 +26,7 @@ from .core import stats as _stats
 _stats.startup()
 
 # infos
-from .core.infos import list_devices, list_drivers, infos, config_help, stats
+from .core.infos import list_devices, list_drivers, infos, config_help, statistics
 
 # Devices
 from .core.devices import get_device
