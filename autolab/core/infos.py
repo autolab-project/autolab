@@ -23,9 +23,12 @@ def list_drivers(_print=True):
     for source_name in paths.DRIVER_SOURCES.keys() :
         sub_driver_list = sorted([key for key in drivers.DRIVERS_PATHS.keys() if drivers.DRIVERS_PATHS[key]['source']==source_name])
         s += f'Drivers in {paths.DRIVER_SOURCES[source_name]}:\n'
-        txt_list = [[f'    - {driver_name}',f'({drivers.get_driver_category(driver_name)})']
-                     for driver_name in sub_driver_list ]
-        s += utilities.two_columns(txt_list)+'\n\n'
+        if len(sub_driver_list)>0 :
+            txt_list = [[f'    - {driver_name}',f'({drivers.get_driver_category(driver_name)})']
+                        for driver_name in sub_driver_list ]
+            s += utilities.two_columns(txt_list)+'\n\n'
+        else :
+            s += '<No drivers>'
 
     if _print is True : print(s)
     else : return s
@@ -145,7 +148,7 @@ def config_help(driver_name, _print=True, _parser=False):
     else :
         mess += f"   autolab device -D my_{params['driver']}\n"
 
-    mess += "\n Note: provided arguments overwrite those found in devices_config.ini"
+    mess += "\n\nNote: provided arguments overwrite those found in devices_config.ini"
 
     if _print is True : print(mess)
     else : return mess
