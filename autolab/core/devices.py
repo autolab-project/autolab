@@ -68,6 +68,7 @@ def get_device(device_name, **kwargs):
         assert device_config == DEVICES[name].device_config, f'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
 
     else :
+        print({ k:v for k,v in device_config.items() if k not in ['driver','connection']})
         instance = drivers.get_driver(device_config['driver'],
                                        device_config['connection'],
                                        { k:v for k,v in device_config.items() if k not in ['driver','connection']})
