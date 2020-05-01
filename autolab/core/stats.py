@@ -7,6 +7,7 @@ Created on Sun Nov 17 19:24:07 2019
 
 from threading import Thread
 from . import config
+from .. import __version__
 
 startup_text = '''At startup, Autolab is configured to send only once a completely anonymous signal (sha256 hashed ID) over internet for statistics of use. This helps the authors to have a better understanding of how the package is used worldwide. No personal data is transmitted during this process. Also, this is done in background, with no impact on the performance of Autolab.'''
 
@@ -67,7 +68,7 @@ class StatisticsThread(Thread) :
             'cid': uid, # Unique Anonymous Client Identifier
             'ec': 'package',  # Event category.
             'ea': self.action,  # Event action.
-            'el': autolab.__version__ # Event label
+            'el': __version__ # Event label
         }
 
         try : requests.post('https://www.google-analytics.com/collect', data=data)
