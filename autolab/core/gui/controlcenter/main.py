@@ -7,7 +7,7 @@ quentin.chateiller@c2n.upsaclay.fr
 
 """
 
-import autolab
+from ... import devices, web
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 import os
 from ..scanning.main import Scanner
@@ -55,11 +55,11 @@ class ControlCenter(QtWidgets.QMainWindow):
 
 
         reportAction = self.menuBar.addAction('Community')
-        reportAction.triggered.connect(autolab.community)
+        reportAction.triggered.connect(web.community)
         reportAction.setToolTip('Open the issue webpage of this project on GitHub')
 
         helpAction = self.menuBar.addAction('Documentation')
-        helpAction.triggered.connect(autolab.doc)
+        helpAction.triggered.connect(web.doc)
         helpAction.setToolTip('Open the documentation on Read The Docs website')
 
     def initialize(self):
@@ -67,11 +67,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function will create the first items in the tree, but will
         associate only the ones already loaded in autolab """
 
-        for devName in autolab.list_devices() :
+        for devName in devices.list_devices() :
             item = TreeWidgetItemModule(self.tree,devName,self)
             for i in range(5) :
                 item.setBackground(i, QtGui.QColor('#9EB7F5')) #vert
-            if devName in autolab.list_loaded_devices() :
+            if devName in devices.list_loaded_devices() :
                 self.associate(item)
 
 
@@ -124,7 +124,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         check = False
         try :
             self.setStatus(f'Loading device {item.name}...')
-            module = autolab.get_device(item.name)
+            module = devices.get_device(item.name)
             check = True
             self.clearStatus()
         except Exception as e :
