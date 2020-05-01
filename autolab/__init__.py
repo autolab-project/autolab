@@ -6,22 +6,29 @@ Created on Fri May 17 15:04:04 2019
 """
 import os
 
-# VERSION
+# Load current version in version file
 with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as version_file:
     __version__ = version_file.read().strip()
 del version_file
 
-# PATHS
-from .core import paths
+# Process updates from previous versions
+from .core import version_adapter
+version_adapter.apply_all_changes()
+del version_adapter
 
-# CONFIG
-from .core import stats as _stats
-from .core import config as _config
-_config.check()
+# Load user config
+from .core import config
+config.initialize_local_directory()
+config.check_autolab_config()
+del config
 
-# STATS
-from .core.stats import set_stats_enabled, is_stats_enabled
-_stats.startup()
+# Statistics
+from .core import stats
+stats.startup()
+del stats
+
+# INFOS
+from .core.infos import *
 
 # DRIVERS
 from .core.drivers import *
@@ -37,5 +44,3 @@ from .core.recorder import Recorder, Recorder_V2
 
 # GUI
 from .core.gui import start as gui
-
-
