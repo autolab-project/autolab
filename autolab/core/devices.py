@@ -65,16 +65,16 @@ def get_device(device_name, **kwargs):
     device_config = get_final_device_config(device_name, **kwargs)
 
     if device_name in list_loaded_devices() :
-        assert device_config == DEVICES[name].device_config, f'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
+        assert device_config == DEVICES[device_name].device_config, f'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
 
     else :
         instance = drivers.get_driver(device_config['driver'],
                                        device_config['connection'],
                                        **{ k:v for k,v in device_config.items() if k not in ['driver','connection']})
-        DEVICES[device_name] = Device(name,instance,device_config)
+        DEVICES[device_name] = Device(device_name,instance,device_config)
         DEVICES[device_name].device_config = device_config
 
-    return DEVICES[name]
+    return DEVICES[device_name]
 
 
 
