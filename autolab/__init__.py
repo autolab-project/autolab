@@ -13,7 +13,7 @@ del version_file
 
 # Process updates from previous versions
 from .core import version_adapter
-version_adapter.apply_all_changes()
+version_adapter.process_all_changes()
 del version_adapter
 
 # Load user config
@@ -27,14 +27,11 @@ from .core import stats
 stats.startup()
 del stats
 
-# INFOS
+# infos
 from .core.infos import *
 
-# DRIVERS
-from .core.drivers import *
-
-# DEVICES
-from .core.devices import *
+# Devices
+from .core.devices import get_device
 
 # WEBBROWSER FUNCTIONS
 from .core.web import *

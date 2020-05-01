@@ -5,6 +5,7 @@ from . import stats as _stats
 from . import drivers as _drivers
 from . import paths as _path
 from . import utilities as _utilities
+from . import devices as _devices
 
 # =============================================================================
 # INFOS
@@ -34,13 +35,15 @@ def list_devices(_print=True):
     ''' Returns a list of all the devices and their associated drivers from devices_config.ini '''
 
     # Gather local config informations
-    devices_configs = _config.list_all_devices_configs()
+    devices_names        = _devices.list_devices()
+    devices_names_loaded = _devices.list_loaded_devices()
 
     # Build infos str for devices
     s = '\n'
     s += f'{len(devices_configs)} devices found\n\n'
-    txt_list = [[f'    - {config_name}',f'({_config.get_device_config(config_name)["driver"]})']
-                for config_name in devices_configs ]
+    txt_list = [[f'    - {name} '+('[loaded]' if name in devices_names_loaded else ''),
+                 f'({_config.get_device_config(name)["driver"]})']
+                 for name in devices_names ]
     s += _utilities.two_columns(txt_list)+'\n'
 
     if _print is True : print(s)
