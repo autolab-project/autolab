@@ -6,13 +6,14 @@ Created on Thu Jun 13 10:25:49 2019
 """
 
 
-import autolab
+from . import drivers
 from .elements import Module
 from .utilities import emphasize
 from . import config
 
 # Storage of the devices
 DEVICES = {}
+
 
 
 def get_element_by_address(address):
@@ -67,15 +68,13 @@ def get_device(device_name, **kwargs):
         assert device_config == DEVICES[name].device_config, f'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
 
     else :
-        device_config = get_valid_device_config(device_name, **kwargs)
-        instance, = autolab.get_driver(device_config['driver'],
-                                        device_config['connection'],
-                                        { k:v for k,v in device_config.items() if k not in ['driver','connection']})
+        instance, = drivers.get_driver(device_config['driver'],
+                                       device_config['connection'],
+                                       { k:v for k,v in device_config.items() if k not in ['driver','connection']})
         DEVICES[device_name] = Device(name,instance,device_config)
         DEVICES[device_name].device_config = device_config
 
     return DEVICES[name]
-
 
 
 

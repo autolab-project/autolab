@@ -62,8 +62,8 @@ def infos(_print=True):
     s += list_drivers(_print=False)
     s += list_devices(_print=False)
 
-    if _print is False : return s
-
+    if _print is True : print(s)
+    else : return s
 
 # =============================================================================
 # DRIVERS
