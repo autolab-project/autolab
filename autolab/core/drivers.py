@@ -36,7 +36,7 @@ def load_driver_lib(driver_name):
     ''' Returns a driver library (that contains Driver, Driver_XXX, Module_XXX) '''
 
     # Loading preparation
-    driver_path = get_driver_path(driver_name)['path']
+    driver_path = get_driver_path(driver_name)
 
     # Laod library
     driver_lib = load_lib(driver_path)
@@ -250,7 +250,7 @@ def get_driver_path(driver_name):
     ''' Returns the config associated with driver_name '''
 
     assert driver_name in DRIVERS_PATHS.keys(), f'Driver {driver_name} not found.'
-    return DRIVERS_PATHS[driver_name]
+    return DRIVERS_PATHS[driver_name]['path']
 
 
 def load_drivers_paths():
