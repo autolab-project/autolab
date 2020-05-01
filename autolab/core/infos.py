@@ -77,7 +77,7 @@ def config_help(driver_name, _print=True, _parser=False):
     params['connection'] = {}
     for conn in drivers.get_connection_names(driver_lib) :
         params['connection'][conn] = drivers.get_class_args(drivers.get_connection_class(driver_lib,conn))
-    params['other'] = drivers.get_class_args(get_driver_class(driver_lib))
+    params['other'] = drivers.get_class_args(drivers.get_driver_class(driver_lib))
     if hasattr(drivers.get_driver_class(driver_lib),'slot_config') :
         params['other']['slot1'] = f'{drivers.get_driver_class(driver_lib).slot_config}'
         params['other']['slot1_name'] = 'my_<MODULE_NAME>'
@@ -162,4 +162,7 @@ def statistics():
     ''' Display short message about stats management from autolab and actual stats collection state '''
 
     state_str = 'ENABLED' if stats.is_stats_enabled() else 'DISABLED'
-    return stats.startup_text + f'\n\nCurrent state: [{state_str}]'
+    mess = stats.startup_text + f'\n\nCurrent state: [{state_str}]'
+
+    if _print is True : print(mess)
+    else : return mess
