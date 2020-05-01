@@ -32,7 +32,7 @@ from .core.infos import list_devices, list_drivers, infos, config_help, stats
 from .core.devices import get_device
 
 # Webbrowser shortcuts
-from .core.web import community, web
+from .core.web import community, doc
 
 # GUI
 from .core.gui import start as gui
