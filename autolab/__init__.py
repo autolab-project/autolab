@@ -4,10 +4,10 @@ Created on Fri May 17 15:04:04 2019
 
 @author: quentin.chateiller
 """
-import os
 
 # Load current version in version file
-with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as version_file:
+from .core import paths as _paths
+with open(_paths.VERSION) as version_file:
     __version__ = version_file.read().strip()
 del version_file
 
@@ -17,27 +17,22 @@ version_adapter.process_all_changes()
 del version_adapter
 
 # Load user config
-from .core import config
-config.initialize_local_directory()
-config.check_autolab_config()
-del config
+from .core import config as _config
+_config.initialize_local_directory()
+_config.check_autolab_config()
 
 # Statistics
-from .core import stats
-stats.startup()
-del stats
+from .core import statistics as _stats
+_stats.startup()
 
 # infos
-from .core.infos import *
+from .core.infos import list_devices, list_drivers, infos, config_help, stats
 
 # Devices
 from .core.devices import get_device
 
 # Webbrowser shortcuts
-from .core.web import *
-
-# RECORDER (to be removed at some point)
-#from .core.recorder import Recorder, Recorder_V2
+from .core.web import community, web
 
 # GUI
 from .core.gui import start as gui

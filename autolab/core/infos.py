@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from . import config as _config
-from . import stats as _stats
-from . import drivers as _drivers
-from . import paths as _path
-from . import utilities as _utilities
-from . import devices as _devices
+from . import config
+from . import stats
+from . import drivers
+from . import paths
+from . import utilities
+from . import devices
 
 # =============================================================================
 # INFOS
@@ -15,36 +15,37 @@ def list_drivers(_print=True):
 
     ''' Returns a list of all the drivers with categories by sections (autolab drivers, local drivers) '''
 
-    _drivers.update_drivers_paths()
+    drivers.update_drivers_paths()
 
     s = '\n'
-    s += f'{len(_drivers.DRIVERS_PATHS)} drivers found\n\n'
+    s += f'{len(drivers.DRIVERS_PATHS)} drivers found\n\n'
 
-    for source_name in _paths.DRIVER_SOURCES.keys() :
-        sub_driver_list = sorted([key for key in _drivers.DRIVERS_PATHS.keys() if _drivers.DRIVERS_PATHS[key]['source']==source_name])
-        s += f'Drivers in {_paths.DRIVER_SOURCES[source_name]}:\n'
-        txt_list = [[f'    - {driver_name}',f'({_drivers.get_driver_category(driver_name)})']
+    for source_name in paths.DRIVER_SOURCES.keys() :
+        sub_driver_list = sorted([key for key in drivers.DRIVERS_PATHS.keys() if drivers.DRIVERS_PATHS[key]['source']==source_name])
+        s += f'Drivers in {paths.DRIVER_SOURCES[source_name]}:\n'
+        txt_list = [[f'    - {driver_name}',f'({drivers.get_driver_category(driver_name)})']
                      for driver_name in sub_driver_list ]
-        s += _utilities.two_columns(txt_list)+'\n\n'
+        s += utilities.two_columns(txt_list)+'\n\n'
 
     if _print is True : print(s)
     else : return s
+
 
 def list_devices(_print=True):
 
     ''' Returns a list of all the devices and their associated drivers from devices_config.ini '''
 
     # Gather local config informations
-    devices_names        = _devices.list_devices()
-    devices_names_loaded = _devices.list_loaded_devices()
+    devices_names        = devices.list_devices()
+    devices_names_loaded = devices.list_loaded_devices()
 
     # Build infos str for devices
     s = '\n'
-    s += f'{len(devices_configs)} devices found\n\n'
+    s += f'{len(devices_names)} devices found\n\n'
     txt_list = [[f'    - {name} '+('[loaded]' if name in devices_names_loaded else ''),
-                 f'({_config.get_device_config(name)["driver"]})']
+                 f'({config.get_device_config(name)["driver"]})']
                  for name in devices_names ]
-    s += _utilities.two_columns(txt_list)+'\n'
+    s += utilities.two_columns(txt_list)+'\n'
 
     if _print is True : print(s)
     else : return s
@@ -70,22 +71,22 @@ def config_help(driver_name, _print=True, _parser=False):
     ''' Display the help of a particular driver (connection types, modules, ...) '''
 
     # Load list of all parameters
-    driver_lib = _drivers.load_driver_lib(driver_name)
+    driver_lib = drivers.load_driver_lib(driver_name)
     params = {}
     params['driver'] = driver_name
     params['connection'] = {}
-    for conn in _drivers.get_connection_names(driver_lib) :
-        params['connection'][conn] = _drivers.get_class_args(_drivers.get_connection_class(driver_lib,conn))
-    params['other'] = _drivers.get_class_args(get_driver_class(driver_lib))
-    if hasattr(_drivers.get_driver_class(driver_lib),'slot_config') :
-        params['other']['slot1'] = f'{_drivers.get_driver_class(driver_lib).slot_config}'
+    for conn in drivers.get_connection_names(driver_lib) :
+        params['connection'][conn] = drivers.get_class_args(drivers.get_connection_class(driver_lib,conn))
+    params['other'] = drivers.get_class_args(get_driver_class(driver_lib))
+    if hasattr(drivers.get_driver_class(driver_lib),'slot_config') :
+        params['other']['slot1'] = f'{drivers.get_driver_class(driver_lib).slot_config}'
         params['other']['slot1_name'] = 'my_<MODULE_NAME>'
 
     mess = '\n'
 
     # Name and category if available
-    submess = f'Driver "{driver_name}" ({_drivers.get_driver_category(driver_name)})'
-    mess += _utilities.emphasize(submess,sign='=') + '\n'
+    submess = f'Driver "{driver_name}" ({drivers.get_driver_category(driver_name)})'
+    mess += utilities.emphasize(submess,sign='=') + '\n'
 
     # Connections types
     c_option=''
@@ -96,18 +97,18 @@ def config_help(driver_name, _print=True, _parser=False):
     mess += '\n'
 
     # Modules
-    if hasattr(_drivers.get_driver_class(driver_lib),'slot_config') :
+    if hasattr(drivers.get_driver_class(driver_lib),'slot_config') :
         mess += 'Available modules:\n'
-        modules = _drivers.get_module_names(driver_lib)
+        modules = drivers.get_module_names(driver_lib)
         for module in modules :
-            moduleClass = _drivers.get_module_class(driver_lib,module)
+            moduleClass = drivers.get_module_class(driver_lib,module)
             mess += f' - {module}'
             if hasattr(moduleClass,'category') : mess += f' ({moduleClass.category})'
             mess += '\n'
         mess += '\n'
 
     # Example of get_driver
-    mess += '\n' + _utilities.underline('Loading a Device manually (with arguments):') + '\n\n'
+    mess += '\n' + utilities.underline('Loading a Device manually (with arguments):') + '\n\n'
     for conn in params['connection'].keys() :
         if _parser is False :
             args_str = f"'{params['driver']}', connection='{conn}'"
@@ -127,7 +128,7 @@ def config_help(driver_name, _print=True, _parser=False):
             mess += f"   autolab device {args_str} \n"
 
     # Example of a devices_config.ini section
-    mess += '\n\n' + _utilities.underline('Saving a Device configuration in devices_config.ini:') + '\n'
+    mess += '\n\n' + utilities.underline('Saving a Device configuration in devices_config.ini:') + '\n'
     for conn in params['connection'].keys() :
         mess += f"\n   [my_{params['driver']}]\n"
         mess += f"   driver = {params['driver']}\n"
@@ -138,7 +139,7 @@ def config_help(driver_name, _print=True, _parser=False):
             mess += f"   {arg} = {value}\n"
 
     # Example of get_driver_by_config
-    mess += '\n\n' + _utilities.underline('Loading a Device using a configuration in devices_config.ini:') + '\n\n'
+    mess += '\n\n' + utilities.underline('Loading a Device using a configuration in devices_config.ini:') + '\n\n'
     if _parser is False :
         mess += f"   a = autolab.get_device('my_{params['driver']}')"
     else :
@@ -150,13 +151,15 @@ def config_help(driver_name, _print=True, _parser=False):
     else : return mess
 
 
+
+
 # =============================================================================
 # STATS
 # =============================================================================
 
-def stats():
+def statistics():
 
     ''' Display short message about stats management from autolab and actual stats collection state '''
 
-    state_str = 'ENABLED' if _stats.is_stats_enabled() else 'DISABLED'
-    return _stats.startup_text + f'\n\nCurrent state: [{state_str}]'
+    state_str = 'ENABLED' if stats.is_stats_enabled() else 'DISABLED'
+    return stats.startup_text + f'\n\nCurrent state: [{state_str}]'
