@@ -6,7 +6,7 @@ Created on Sun Sep 29 18:16:09 2019
 """
 from PyQt5 import QtWidgets
 import autolab
-from .. import paths
+from ... import paths
 import configparser
 import datetime
 import os
