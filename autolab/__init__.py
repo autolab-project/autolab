@@ -22,7 +22,7 @@ _config.initialize_local_directory()
 _config.check_autolab_config()
 
 # Statistics
-from .core import statistics as _stats
+from .core import stats as _stats
 _stats.startup()
 
 # infos
