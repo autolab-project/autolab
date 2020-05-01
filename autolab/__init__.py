@@ -33,11 +33,11 @@ from .core.infos import *
 # Devices
 from .core.devices import get_device
 
-# WEBBROWSER FUNCTIONS
+# Webbrowser shortcuts
 from .core.web import *
 
 # RECORDER (to be removed at some point)
-from .core.recorder import Recorder, Recorder_V2
+#from .core.recorder import Recorder, Recorder_V2
 
 # GUI
 from .core.gui import start as gui
