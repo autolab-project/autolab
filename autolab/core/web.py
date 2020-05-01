@@ -9,6 +9,6 @@ import webbrowser
 
 def report():
     webbrowser.open('https://autolab-community.ddns.net')
-    
+
 def doc():
     webbrowser.open('https://autolab.readthedocs.io')
