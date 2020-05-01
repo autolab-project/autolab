@@ -153,7 +153,7 @@ def get_driver_category(driver_name):
 
     ''' Returns the driver's category (from class Driver) '''
 
-    driver_utilities_path = os.path.join(os.path.dirname(DRIVERS_PATHS[driver_name]),f'{driver_name}_utilities.py')
+    driver_utilities_path = os.path.join(os.path.dirname(get_driver_path(driver_name),f'{driver_name}_utilities.py'))
     category = 'Other'
     if os.path.exists(driver_utilities_path) :
         driver_utilities = load_lib(driver_utilities_path)

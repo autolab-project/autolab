@@ -5,7 +5,7 @@ Created on Sun Sep 29 18:16:09 2019
 @author: qchat
 """
 from PyQt5 import QtWidgets
-from autolab
+import autolab
 from .. import paths
 import configparser
 import datetime
