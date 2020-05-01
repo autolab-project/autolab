@@ -54,7 +54,7 @@ def get_final_device_config(device_name,**kwargs) :
     assert 'driver' in device_config.keys(), f"Missing driver name for device '{device_name}'"
     assert 'connection' in device_config.keys(), f"Missing connection type for device '{device_name}'"
 
-    return devices_config
+    return device_config
 
 
 
