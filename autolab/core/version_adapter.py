@@ -15,5 +15,5 @@ def rename_old_devices_config_file() :
 
     from .paths import USER_FOLDER
     if os.path.exists(os.path.join(USER_FOLDER,'local_config.ini')) :
-        os.path.rename(os.path.join(USER_FOLDER,'local_config.ini'),
+        os.rename(os.path.join(USER_FOLDER,'local_config.ini'),
                         os.path.join(USER_FOLDER,'devices_config.ini'))
