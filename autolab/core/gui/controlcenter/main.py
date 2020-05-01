@@ -54,11 +54,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         scanAction.setToolTip('Open the scanner in another window')
 
 
-        reportAction = self.menuBar.addAction('Report bugs / suggestions')
-        reportAction.triggered.connect(autolab.report)
+        reportAction = self.menuBar.addAction('Community')
+        reportAction.triggered.connect(autolab.community)
         reportAction.setToolTip('Open the issue webpage of this project on GitHub')
 
-        helpAction = self.menuBar.addAction('Help')
+        helpAction = self.menuBar.addAction('Documentation')
         helpAction.triggered.connect(autolab.doc)
         helpAction.setToolTip('Open the documentation on Read The Docs website')
 

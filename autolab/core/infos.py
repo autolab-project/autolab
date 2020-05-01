@@ -28,7 +28,7 @@ def list_drivers(_print=True):
                         for driver_name in sub_driver_list ]
             s += utilities.two_columns(txt_list)+'\n\n'
         else :
-            s += '<No drivers>'
+            s += '    <No drivers>'
 
     if _print is True : print(s)
     else : return s
@@ -59,8 +59,8 @@ def infos(_print=True):
     ''' Returns a list of all the drivers and all the devices (along with their associated drivers from devices_config.ini) '''
 
     s  = ''
-    s += list_drivers(_print=_print)
-    s += list_devices(_print=_print)
+    s += list_drivers(_print=False)
+    s += list_devices(_print=False)
 
     if _print is False : return s
 
