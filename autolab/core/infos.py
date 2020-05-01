@@ -157,7 +157,7 @@ def config_help(driver_name, _print=True, _parser=False):
 # STATS
 # =============================================================================
 
-def statistics():
+def statistics(_print=True):
 
     ''' Display short message about stats management from autolab and actual stats collection state '''
 
