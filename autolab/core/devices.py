@@ -54,7 +54,7 @@ def get_final_device_config(device_name,**kwargs) :
     assert 'driver' in device_config.keys(), f"Missing driver name for device '{device_name}'"
     assert 'connection' in device_config.keys(), f"Missing connection type for device '{device_name}'"
 
-    return config
+    return devices_config
 
 
 
@@ -68,7 +68,6 @@ def get_device(device_name, **kwargs):
         assert device_config == DEVICES[name].device_config, f'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
 
     else :
-        print({ k:v for k,v in device_config.items() if k not in ['driver','connection']})
         instance = drivers.get_driver(device_config['driver'],
                                        device_config['connection'],
                                        { k:v for k,v in device_config.items() if k not in ['driver','connection']})
