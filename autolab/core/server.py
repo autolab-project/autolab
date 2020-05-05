@@ -14,6 +14,7 @@ class Driver_SOCKET():
 
         ''' Read pickled object from autolab master and return python object '''
 
+        print('reading message')
         # First read
         msg  = self.socket.recv(length)
         if not msg.startswith(self.prefix) : raise ValueError('Autolab communication structure not found in reply')
@@ -25,17 +26,19 @@ class Driver_SOCKET():
         # Clean msg (remove prefix and suffix)
         msg = msg.lstrip(self.prefix).rstrip(self.suffix)
 
+        obj = pickle.loads(msg)
+        print('message read: {obj}')
         # Return unpickled server answer
-        return pickle.loads(msg)
+        return obj
 
 
     def write(self,object):
 
         ''' Send pickled object to autolab master '''
-
+        print('writing message: {object}')
         msg = self.prefix+pickle.dumps(object)+self.suffix
         self.socket.send(msg)
-
+        print('message writen successfully')
 
 class Server(Driver_SOCKET):
 
@@ -123,7 +126,9 @@ class Driver_REMOTE(Driver_SOCKET):
         self.handshake()
 
         # Retourne la liste des devices
+        print('starting get_devices_status')
         self.devices_status = self.get_devices_status()
+        print('get_devices_status finished')
 
     def close(self):
 
@@ -143,7 +148,9 @@ class Driver_REMOTE(Driver_SOCKET):
 
 
     def get_devices_status(self) : # Déjà instantié ou non
+        print('send query devices status')
         self.write('DEVICES_STATUS?')
+        print('devices_status sent')
         return self.read()
 
 
