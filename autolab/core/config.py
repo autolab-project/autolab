@@ -108,9 +108,7 @@ def check_autolab_config():
 
     # Check server configuration
     if 'server' not in autolab_config.sections() :
-        autolab_config['server'] = {'local_ip':'192.168.1.241','port':4001}
-    if 'local_ip' not in autolab_config['server'].keys() :
-        autolab_config['server']['local_ip'] = '192.168.1.241'
+        autolab_config['server'] = {'port':4001}
     if 'port' not in autolab_config['server'].keys() :
         autolab_config['server']['port'] = 4001
 

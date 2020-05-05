@@ -5,6 +5,7 @@ import socket
 import pickle
 from . import config, devices
 
+
 class Driver_SOCKET():
 
     prefix = b'<AUTOLAB_START>'
@@ -25,10 +26,8 @@ class Driver_SOCKET():
         # Clean msg (remove prefix and suffix)
         msg = msg.lstrip(self.prefix).rstrip(self.suffix)
 
-        obj = pickle.loads(msg)
-
         # Return unpickled server answer
-        return obj
+        return pickle.loads(msg)
 
 
     def write(self,object):
@@ -45,14 +44,13 @@ class Server(Driver_SOCKET):
 
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
-        local_ip = server_config['local_ip']
         port = int(server_config['port'])
         print(port)
 
         # Start the server
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.main_socket.bind((local_ip, port))
-        self.main_socket.listen(1) # 0 to test
+        self.main_socket.bind(('', port))
+        self.main_socket.listen(1)
 
         # Start listening and executing remote commands
         while True :
@@ -65,9 +63,7 @@ class Server(Driver_SOCKET):
                     while True :
                         command = self.read()
                         if command == 'CLOSE_CONNECTION' : break
-                        else :
-                            self.process_command(command)
-
+                        else : self.process_command(command)
                 else :
                     self.socket.close()
 
@@ -104,7 +100,7 @@ class Server(Driver_SOCKET):
 
 class Driver_REMOTE(Driver_SOCKET):
 
-    def __init__(self,address='192.168.1.1',port=5000):
+    def __init__(self,address='192.168.1.1',port=4001):
         from functools import partial
 
         self.address = address
