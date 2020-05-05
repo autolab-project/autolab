@@ -7,10 +7,9 @@ Created on Tue Oct  1 17:38:15 2019
 import os
 import inspect
 import importlib
-import autolab
 import configparser
 from .utilities import emphasize,underline,two_columns
-from . import paths
+from . import paths, server
 
 # =============================================================================
 # DRIVERS INSTANTIATION
@@ -18,14 +17,15 @@ from . import paths
 
 def get_driver(driver_name,connection_type,**kwargs):
 
-    ''' Returns a driver instance using configuration provided in kwargs'''
+    ''' Returns a driver instance using configuration provided in kwargs '''
 
-    # Load Driver module
-    assert driver_name in list_drivers(), f"Driver {driver_name} not found in autolab's drivers"
-    driver_lib = load_driver_lib(driver_name)
+    if driver_name == 'autolab_server' :
+        driver_instance = server.Driver_REMOTE(**kwargs)
 
-    # Driver instance
-    driver_instance = get_connection_class(driver_lib,connection_type)(**kwargs)
+    else :
+        assert driver_name in list_drivers(), f"Driver {driver_name} not found in autolab's drivers"
+        driver_lib = load_driver_lib(driver_name)
+        driver_instance = get_connection_class(driver_lib,connection_type)(**kwargs)
 
     return driver_instance
 

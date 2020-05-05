@@ -52,6 +52,8 @@ def get_final_device_config(device_name,**kwargs) :
 
     # And the argument connection has to be provided
     assert 'driver' in device_config.keys(), f"Missing driver name for device '{device_name}'"
+    if device_config['driver'] == 'autolab_server' :
+        device_config['connection'] = 'USELESS_ENTRY'
     assert 'connection' in device_config.keys(), f"Missing connection type for device '{device_name}'"
 
     return device_config
@@ -97,7 +99,14 @@ def list_devices():
     return config.list_all_devices_configs()
 
 
+def get_devices_status():
 
+    ''' Returns a dict of devices as keys and True/False values if device is loaded'''
+
+    devices_names        = list_devices()
+    loaded_devices_names = list_loaded_devices()
+
+    return {k:(k in loaded_devices_names) for k in devices_names}
 
 
 # =============================================================================

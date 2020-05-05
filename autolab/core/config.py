@@ -27,7 +27,9 @@ def initialize_local_directory():
 
     # DEVICES CONFIGURATION FILE
     if os.path.exists(paths.DEVICES_CONFIG) is False :
-        shutil.copyfile(paths.DEVICES_CONFIG_TEMPLATE,paths.DEVICES_CONFIG)
+        devices_config = configparser.ConfigParser()
+        devices_config['system'] = {'driver':'system','connection':'DEFAULT'}
+        save_config('devices',devices_config)
         print(f'The devices configuration file devices_config.ini has been created: {paths.DEVICES_CONFIG}')
 
     # lOCAL CUSTOM DRIVER FOLDER
@@ -37,7 +39,7 @@ def initialize_local_directory():
 
     # AUTOLAB CONFIGURATION FILE
     if os.path.exists(paths.AUTOLAB_CONFIG) is False :
-        save_autolab_config(configparser.ConfigParser())
+        save_config('autolab',configparser.ConfigParser())
         print(f'The configuration file autolab_config.ini has been created: {paths.AUTOLAB_CONFIG}')
 
 
@@ -103,7 +105,17 @@ def check_autolab_config():
             print('Thank you !')
             autolab_config['stats'] = {'enabled': '1'}
 
-        save_config('autolab',config)
+
+    # Check server configuration
+    if 'server' not in autolab_config.sections() :
+        autolab_config['server'] = {'local_ip':'192.168.1.241','port':4001}
+    if 'local_ip' not in autolab_config['server'].keys() :
+        autolab_config['server']['local_ip'] = '192.168.1.241'
+    if 'port' not in autolab_config['server'].keys() :
+        autolab_config['server']['port'] = 4001
+
+
+    save_config('autolab',config)
 
 
 def get_stats_config():
@@ -115,10 +127,15 @@ def get_stats_config():
 
     return config['stats']
 
-#def get_slave_config():
-#
-#    ''' Returns section stats from autpolab_config.ini '''
 
+def get_server_config():
+
+    ''' Returns section server from autolab_config.ini '''
+
+    config = load_config('autolab')
+    assert 'server' in config.sections(), 'Missing section server in autolab_config.ini'
+
+    return config['server']
 
 
 
