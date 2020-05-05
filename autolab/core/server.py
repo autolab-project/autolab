@@ -46,7 +46,7 @@ class Server(Driver_SOCKET):
 
     def process_command(self,command):
 
-        if command = 'DEVICES_STATUS?' :
+        if command == 'DEVICES_STATUS?' :
             return self.write(devices.get_devices_status())
 
 
