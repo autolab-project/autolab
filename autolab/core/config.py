@@ -115,7 +115,7 @@ def check_autolab_config():
         autolab_config['server']['port'] = 4001
 
 
-    save_config('autolab',config)
+    save_config('autolab',autolab_config)
 
 
 def get_stats_config():
