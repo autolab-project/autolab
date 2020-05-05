@@ -34,5 +34,8 @@ from .core.devices import get_device
 # Webbrowser shortcuts
 from .core.web import community, doc
 
+# Server
+from .core.server import Server as server
+
 # GUI
 from .core.gui import start as gui
