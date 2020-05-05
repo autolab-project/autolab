@@ -15,12 +15,12 @@ class Driver_SOCKET():
         ''' Read pickled object from autolab master and return python object '''
 
         # First read
-        msg  = self.client_socket.recv(length)
+        msg  = self.socket.recv(length)
         if not msg.startswith(self.prefix) : raise ValueError('Autolab communication structure not found in reply')
 
         # Continue reading up to suffix
         while not msg.endswith(self.suffix):
-            msg += self.client_socket.recv(length)
+            msg += self.socket.recv(length)
 
         # Clean msg (remove prefix and suffix)
         msg = msg.lstrip(self.prefix).rstrip(self.suffix)
@@ -34,7 +34,7 @@ class Driver_SOCKET():
         ''' Send pickled object to autolab master '''
 
         msg = self.prefix+pickle.dumps(object)+self.suffix
-        self.client_socket.send(msg)
+        self.socket.send(msg)
 
 
 class Server(Driver_SOCKET):
@@ -48,16 +48,16 @@ class Server(Driver_SOCKET):
         print(port)
 
         # Start the server
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((local_ip, port))
-        self.socket.listen(1) # 0 to test
+        self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.main_socket.bind((local_ip, port))
+        self.main_socket.listen(1) # 0 to test
 
         # Start listening and executing remote commands
         while True :
             try:
-                print('waiting for server')
+                print('waiting for client')
                 # Wait incoming connection
-                self.client_socket, self.client_address = self.socket.accept()
+                self.socket, self.client_address = self.main_socket.accept()
                 print(f'connection esatablish with {self.client_address}')
                 # Handshaking
                 if self.handshake() is True :
@@ -72,7 +72,7 @@ class Server(Driver_SOCKET):
 
                 else :
                     print('handshaking did not worked, closing')
-                    self.client_socket.close()
+                    self.socket.close()
 
             except KeyboardInterrupt:
                 self.socket.close()
@@ -89,7 +89,7 @@ class Server(Driver_SOCKET):
     def handshake(self):
 
         ''' Check that incoming connection comes from another Autolab program '''
-        self.client_socket.settimeout(2)
+        self.socket.settimeout(2)
         try :
             handshake_str = self.read()
             if handshake_str == 'AUTOLAB?' :
@@ -98,7 +98,7 @@ class Server(Driver_SOCKET):
             else : result = False
         except :
             result = False
-        self.client_socket.settimeout(0)
+        self.socket.settimeout(0)
         return result
 
 
@@ -115,9 +115,9 @@ class Driver_REMOTE(Driver_SOCKET):
         self.port    = port
 
         # Connection au serveur Autolab
-        self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.controller.connect((address, int(port)))
-        self.controller.settimeout(2)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((address, int(port)))
+        self.socket.settimeout(2)
 
         # Handshaking
         self.handshake()
@@ -127,8 +127,8 @@ class Driver_REMOTE(Driver_SOCKET):
 
     def close(self):
 
-        self.controller.write('CLOSE_CONNECTION')
-        self.controller.close()
+        self.socket.write('CLOSE_CONNECTION')
+        self.socket.close()
 
     def handshake(self):
 
