@@ -101,7 +101,7 @@ class Server(Driver_SOCKET):
             else : result = False
         except :
             result = False
-        self.socket.settimeout(0)
+        self.socket.settimeout(None)
         return result
 
 
