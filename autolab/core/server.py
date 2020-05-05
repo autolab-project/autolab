@@ -14,7 +14,6 @@ class Driver_SOCKET():
 
         ''' Read pickled object from autolab master and return python object '''
 
-        print('reading message')
         # First read
         msg  = self.socket.recv(length)
         if not msg.startswith(self.prefix) : raise ValueError('Autolab communication structure not found in reply')
@@ -27,7 +26,7 @@ class Driver_SOCKET():
         msg = msg.lstrip(self.prefix).rstrip(self.suffix)
 
         obj = pickle.loads(msg)
-        print(f'message read: {obj}')
+
         # Return unpickled server answer
         return obj
 
@@ -35,10 +34,10 @@ class Driver_SOCKET():
     def write(self,object):
 
         ''' Send pickled object to autolab master '''
-        print(f'writing message: {object}')
+
         msg = self.prefix+pickle.dumps(object)+self.suffix
         self.socket.send(msg)
-        print('message writen successfully')
+
 
 class Server(Driver_SOCKET):
 
@@ -58,28 +57,22 @@ class Server(Driver_SOCKET):
         # Start listening and executing remote commands
         while True :
             try:
-                print('waiting for client')
                 # Wait incoming connection
                 self.socket, self.client_address = self.main_socket.accept()
-                print(f'connection esatablish with {self.client_address}')
+
                 # Handshaking
                 if self.handshake() is True :
-                    print('handshaking worked')
                     while True :
                         command = self.read()
-                        print(f'recevied command {command}')
                         if command == 'CLOSE_CONNECTION' : break
                         else :
                             self.process_command(command)
-                        print(f'command {command} processed')
 
                 else :
-                    print('handshaking did not worked, closing')
                     self.socket.close()
 
             except KeyboardInterrupt:
                 self.socket.close()
-                print("You cancelled the program!")
                 sys.exit(1)
 
     def process_command(self,command):
@@ -126,9 +119,7 @@ class Driver_REMOTE(Driver_SOCKET):
         self.handshake()
 
         # Retourne la liste des devices
-        print('starting get_devices_status')
         self.devices_status = self.get_devices_status()
-        print('get_devices_status finished')
 
     def close(self):
 
@@ -148,9 +139,7 @@ class Driver_REMOTE(Driver_SOCKET):
 
 
     def get_devices_status(self) : # Déjà instantié ou non
-        print('send query devices status')
         self.write('DEVICES_STATUS?')
-        print('devices_status sent')
         return self.read()
 
 
