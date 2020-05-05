@@ -36,7 +36,7 @@ class Driver_SOCKET():
         msg = self.prefix+pickle.dumps(object)+self.suffix
         self.client_socket.send(msg)
 
-        
+
 class Server(Driver_SOCKET):
 
     def __init__(self):
@@ -45,6 +45,7 @@ class Server(Driver_SOCKET):
         server_config = config.get_server_config()
         local_ip = server_config['local_ip']
         port = int(server_config['port'])
+        print(port)
 
         # Start the server
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,20 +55,23 @@ class Server(Driver_SOCKET):
         # Start listening and executing remote commands
         while True :
             try:
-
+                print('waiting for server')
                 # Wait incoming connection
                 self.client_socket, self.client_address = self.socket.accept()
-
+                print(f'connection esatablish with {self.client_address}')
                 # Handshaking
                 if self.handshake() is True :
-
+                    print('handshaking worked')
                     while True :
                         command = self.read()
+                        print(f'recevied command {command}')
                         if command == 'CLOSE_CONNECTION' : break
                         else :
                             self.process_command(command)
+                        print(f'command {command} processed')
 
                 else :
+                    print('handshaking did not worked, closing')
                     self.client_socket.close()
 
             except KeyboardInterrupt:
