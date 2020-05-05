@@ -5,7 +5,38 @@ import socket
 import pickle
 from . import config, devices
 
+class Driver_SOCKET():
 
+    prefix = b'<AUTOLAB_START>'
+    suffix = b'<AUTOLAB_END>'
+
+    def read(self, length=4096):
+
+        ''' Read pickled object from autolab master and return python object '''
+
+        # First read
+        msg  = self.client_socket.recv(length)
+        if not msg.startswith(self.prefix) : raise ValueError('Autolab communication structure not found in reply')
+
+        # Continue reading up to suffix
+        while not msg.endswith(self.suffix):
+            msg += self.client_socket.recv(length)
+
+        # Clean msg (remove prefix and suffix)
+        msg = msg.lstrip(self.prefix).rstrip(self.suffix)
+
+        # Return unpickled server answer
+        return pickle.loads(msg)
+
+
+    def write(self,object):
+
+        ''' Send pickled object to autolab master '''
+
+        msg = self.prefix+pickle.dumps(object)+self.suffix
+        self.client_socket.send(msg)
+
+        
 class Server(Driver_SOCKET):
 
     def __init__(self):
@@ -126,38 +157,3 @@ class Driver_REMOTE(Driver_SOCKET):
             # Pour un device de slave donné, retourne sa structure de (sous-devices, modules, action variable) à l’instant t
             # Device non instantité : ne renvoie rien
             # Device instantié : renvoie structure en (modules, action, variable)
-
-
-
-
-
-class Driver_SOCKET():
-
-    prefix = b'<AUTOLAB_START>'
-    suffix = b'<AUTOLAB_END>'
-
-    def read(self, length=4096):
-
-        ''' Read pickled object from autolab master and return python object '''
-
-        # First read
-        msg  = self.client_socket.recv(length)
-        if not msg.startswith(self.prefix) : raise ValueError('Autolab communication structure not found in reply')
-
-        # Continue reading up to suffix
-        while not msg.endswith(self.suffix):
-            msg += self.client_socket.recv(length)
-
-        # Clean msg (remove prefix and suffix)
-        msg = msg.lstrip(self.prefix).rstrip(self.suffix)
-
-        # Return unpickled server answer
-        return pickle.loads(msg)
-
-
-    def write(self,object):
-
-        ''' Send pickled object to autolab master '''
-
-        msg = self.prefix+pickle.dumps(object)+self.suffix
-        self.client_socket.send(msg)
