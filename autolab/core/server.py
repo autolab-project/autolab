@@ -27,7 +27,7 @@ class Driver_SOCKET():
         msg = msg.lstrip(self.prefix).rstrip(self.suffix)
 
         obj = pickle.loads(msg)
-        print('message read: {obj}')
+        print(f'message read: {obj}')
         # Return unpickled server answer
         return obj
 
@@ -35,7 +35,7 @@ class Driver_SOCKET():
     def write(self,object):
 
         ''' Send pickled object to autolab master '''
-        print('writing message: {object}')
+        print(f'writing message: {object}')
         msg = self.prefix+pickle.dumps(object)+self.suffix
         self.socket.send(msg)
         print('message writen successfully')
