@@ -40,18 +40,24 @@ class Driver_SOCKET():
 
 class Server(Driver_SOCKET):
 
-    def __init__(self):
+    def __init__(self,port=None):
 
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
-        port = int(server_config['port'])
+        if not port: port = int(server_config['port'])
+        self.port = port
 
         # Start the server
-        self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.main_socket.bind(('', port))
-        self.main_socket.listen(1)
+        self.start()
 
         # Start listening and executing remote commands
+        self.listen()
+
+
+    def listen(self):
+
+        ''' Start listening and executing remote commands '''
+
         while True :
             try:
                 # Wait incoming connection
@@ -67,8 +73,29 @@ class Server(Driver_SOCKET):
                     self.socket.close()
 
             except KeyboardInterrupt:
-                self.socket.close()
+                self.close()
                 sys.exit(1)
+
+
+
+    def start(self):
+
+        ''' Start the server (main socket) '''
+
+        self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.main_socket.bind(('', port))
+        self.main_socket.listen(1)
+
+
+    def close(self):
+
+        ''' Close existing sockets (main and client if existing) '''
+
+        try : self.socket.close()
+        except : pass
+        self.main_socket.close()
+
+
 
     def process_command(self,command):
 
