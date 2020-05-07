@@ -114,7 +114,7 @@ class Server(Driver_SOCKET):
     def handshake(self):
 
         ''' Check that incoming connection comes from another Autolab program '''
-        self.socket.settimeout(2)
+        self.socket.settimeout(5)
         try :
             handshake_str = self.read()
             if handshake_str == 'AUTOLAB?' :
@@ -143,7 +143,7 @@ class Driver_REMOTE(Driver_SOCKET):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(2)
         self.socket.connect((address, int(port)))
-        
+
         # Handshaking
         self.handshake()
 
