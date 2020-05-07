@@ -93,7 +93,8 @@ class SocketThread(threading.Thread,Driver_SOCKET):
                 if self.server.connected is False :
                     self.write('YES')
                     result = True
-                else : self.write('SERVER IS BUSY')
+                else :
+                    self.write('SERVER IS BUSY')
                     result = False
             else : result = False
         except Exception as e:
@@ -110,7 +111,6 @@ class Server():
 
     def __init__(self,port=None):
 
-        self.connected = False
         self.thread = None
 
         # Load server config in autolab_config.ini
@@ -122,7 +122,6 @@ class Server():
         self.start()
 
         try :
-
             while True :
 
                 # Wait incoming connection
@@ -131,7 +130,6 @@ class Server():
                 # Start thread
                 thread = SocketThread(clientsocket,self)
                 thread.start()
-
 
         except KeyboardInterrupt:
             self.close()
