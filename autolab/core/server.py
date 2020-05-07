@@ -162,9 +162,11 @@ class Server():
         self.start()
 
         # Start listening
+        print('start listening')
         try :
             self.listen()
         except KeyboardInterrupt:
+            print('keyboard interrupt')
             self.close()
             sys.exit()
 
@@ -214,8 +216,9 @@ class Server():
     def close(self):
 
         ''' Close the server and client threads'''
-
+        print('close clients')
         self.close_client_threads()
+        print('close main')
         self.main_socket.close()
 
 
