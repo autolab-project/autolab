@@ -45,7 +45,6 @@ class Server(Driver_SOCKET):
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
         port = int(server_config['port'])
-        print(port)
 
         # Start the server
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -116,6 +115,7 @@ class Driver_REMOTE(Driver_SOCKET):
 
         # Retourne la liste des devices
         self.devices_status = self.get_devices_status()
+        print(self.devices_status)
 
     def close(self):
 
@@ -141,7 +141,7 @@ class Driver_REMOTE(Driver_SOCKET):
 
     def get_driver_model(self):
         model = {}
-        for dev_name in self.devices_list :
+        for dev_name in self.devices_status :
             model['element':'device', 'name':dev_name, 'instance': partial(self.get_device,dev_name)]
         return model
 

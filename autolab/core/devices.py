@@ -36,19 +36,14 @@ def get_final_device_config(device_name,**kwargs) :
 
     ''' Returns a valid device config from configuration file overwritten by kwargs '''
 
-    if device_name in config.list_all_devices_configs() :
+    assert device_name in config.list_all_devices_configs(), f"Device name {device_name} not found in devices_config.ini"
 
-        # Load config object
-        device_config = dict(config.get_device_config(device_name))
+    # Load config object
+    device_config = dict(config.get_device_config(device_name))
 
-        # Overwrite config with provided configuration in kwargs
-        for key,value in kwargs.items() :
-            device_config[key] = value
-
-    else :
-
-        # Create config object
-        device_config = kwargs
+    # Overwrite config with provided configuration in kwargs
+    for key,value in kwargs.items() :
+        device_config[key] = value
 
     # And the argument connection has to be provided
     assert 'driver' in device_config.keys(), f"Missing driver name for device '{device_name}'"
