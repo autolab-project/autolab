@@ -25,17 +25,18 @@ class Driver_SOCKET():
         while not msg.endswith(self.suffix):
             msg += self.socket.recv(length)
 
-        # Clean msg (remove prefix and suffix)
+        # Clean msg (remove prefix and suffix) and unpicke it
         msg = msg.lstrip(self.prefix).rstrip(self.suffix)
+        obj = pickle.loads(msg)
+        print('read',obj)
 
-        # Return unpickled server answer
-        return pickle.loads(msg)
+        return obj
 
 
     def write(self,object):
 
         ''' Send pickled object to autolab master '''
-
+        print('write', object)
         msg = self.prefix+pickle.dumps(object)+self.suffix
         self.socket.send(msg)
 
@@ -226,7 +227,7 @@ class Driver_REMOTE(Driver_SOCKET):
         from functools import partial
 
         self.address = address
-        self.port    = port
+        self.port    = int(port)
 
         # Connection au serveur Autolab
         self.connect()
@@ -245,7 +246,7 @@ class Driver_REMOTE(Driver_SOCKET):
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(2)
-        self.socket.connect((address, int(port)))
+        self.socket.connect((self.address, self.port))
 
 
     def handshake(self):
