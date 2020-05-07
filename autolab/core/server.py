@@ -141,8 +141,8 @@ class Driver_REMOTE(Driver_SOCKET):
 
         # Connection au serveur Autolab
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((address, int(port)))
         self.socket.settimeout(2)
+        self.socket.connect((address, int(port)))
 
         # Handshaking
         self.handshake()
