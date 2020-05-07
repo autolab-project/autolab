@@ -206,7 +206,9 @@ class Server():
         ''' Close any existing client thread '''
 
         self.clean_client_threads()
-        for thread in self.client_threads : thread.stop()
+        for thread in self.client_threads :
+            thread.close()
+            thread.join()
 
 
     def close(self):
