@@ -121,7 +121,9 @@ class Server(Driver_SOCKET):
                 self.write('YES')
                 result = True
             else : result = False
-        except :
+        except Exception as e:
+            print("Unexpected error:", sys.exc_info()[0])
+            print(e)
             result = False
         self.socket.settimeout(None)
         return result
