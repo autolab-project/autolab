@@ -58,23 +58,30 @@ class Server(Driver_SOCKET):
 
         ''' Start listening and executing remote commands '''
 
-        while True :
-            try:
+        try:
+
+            while True :
+
                 # Wait incoming connection
                 self.socket, self.client_address = self.main_socket.accept()
 
                 # Handshaking
                 if self.handshake() is True :
                     while True :
-                        command = self.read()
+
+                        try: command = self.read()
+                        except: break
+
                         if command == 'CLOSE_CONNECTION' : break
                         else : self.process_command(command)
-                else :
-                    self.socket.close()
 
-            except KeyboardInterrupt:
-                self.close()
-                sys.exit(1)
+                # Close socket (client)
+                self.socket.close()
+
+
+        except KeyboardInterrupt:
+            self.close()
+            sys.exit()
 
 
 
