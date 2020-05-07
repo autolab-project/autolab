@@ -28,7 +28,6 @@ class Driver_SOCKET():
         # Clean msg (remove prefix and suffix) and unpicke it
         msg = msg.lstrip(self.prefix).rstrip(self.suffix)
         obj = pickle.loads(msg)
-        print('read',obj)
 
         return obj
 
@@ -36,7 +35,7 @@ class Driver_SOCKET():
     def write(self,object):
 
         ''' Send pickled object to autolab master '''
-        print('write', object)
+
         msg = self.prefix+pickle.dumps(object)+self.suffix
         self.socket.send(msg)
 
@@ -162,11 +161,9 @@ class Server():
         self.start()
 
         # Start listening
-        print('start listening')
         try :
             self.listen()
         except KeyboardInterrupt:
-            print('keyboard interrupt')
             self.close()
             sys.exit()
 
@@ -216,9 +213,8 @@ class Server():
     def close(self):
 
         ''' Close the server and client threads'''
-        print('close clients')
+
         self.close_client_threads()
-        print('close main')
         self.main_socket.close()
 
 
@@ -285,8 +281,8 @@ class Driver_REMOTE(Driver_SOCKET):
 
     def get_driver_model(self):
         model = {}
-        for dev_name in self.devices_status :
-            model['element':'device', 'name':dev_name, 'instance': partial(self.get_device,dev_name)]
+        #for dev_name in self.devices_status :
+            #model['element':'device', 'name':dev_name, 'instance': partial(self.get_device,dev_name)]
         return model
 
     def get_device(self,dev_name):
