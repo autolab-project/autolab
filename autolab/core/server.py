@@ -42,7 +42,7 @@ class Driver_SOCKET():
 
 
 
-class SocketThread(threading.Thread,Driver_SOCKET):
+class ClientThread(threading.Thread,Driver_SOCKET):
 
     def __init__(self, clientsocket, server):
         threading.Thread.__init__(self)
@@ -59,13 +59,13 @@ class SocketThread(threading.Thread,Driver_SOCKET):
 
         # Handshaking
         if self.handshake() is True :
-            self.server.thread = self
+            self.server.client_thread = self
             self.listen()
 
         # Close socket (client)
         self.socket.close()
-        if id(self.server.thread) == id(self) :
-            self.server.thread = None
+        if id(self.server.client_thread) == id(self) :
+            self.server.client_thread = None
 
     def listen(self):
 
@@ -90,7 +90,7 @@ class SocketThread(threading.Thread,Driver_SOCKET):
         try :
             handshake_str = self.read()
             if handshake_str == 'AUTOLAB?' :
-                if self.server.connected is False :
+                if self.server.client_thread is False :
                     self.write('YES')
                     result = True
                 else :
@@ -111,7 +111,7 @@ class Server():
 
     def __init__(self,port=None):
 
-        self.thread = None
+        self.client_thread = None
 
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
@@ -128,8 +128,9 @@ class Server():
                 clientsocket, _ = self.main_socket.accept()
 
                 # Start thread
-                thread = SocketThread(clientsocket,self)
-                thread.start()
+                client_thread = SocketThread(clientsocket,self)
+                client_thread.start()
+
 
         except KeyboardInterrupt:
             self.close()
@@ -150,7 +151,7 @@ class Server():
 
         ''' Close existing sockets (main and client if existing) '''
 
-        if self.thread is not None : self.thread.stop()
+        if self.client_thread is not None : self.client_thread.stop()
         self.main_socket.close()
 
 
