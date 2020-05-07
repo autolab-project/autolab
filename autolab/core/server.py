@@ -18,7 +18,8 @@ class Driver_SOCKET():
 
         # First read
         msg  = self.socket.recv(length)
-        if not msg.startswith(self.prefix) : raise ValueError('Autolab communication structure not found in reply')
+        assert msg != b'', 'Connection closed by remote host'
+        assert msg.startswith(self.prefix), 'Autolab communication structure not found in reply'
 
         # Continue reading up to suffix
         while not msg.endswith(self.suffix):
@@ -44,59 +45,52 @@ class Driver_SOCKET():
 
 class ClientThread(threading.Thread,Driver_SOCKET):
 
-    def __init__(self, clientsocket, server):
+    def __init__(self, client_socket, server):
         threading.Thread.__init__(self)
-        self.socket = clientsocket
-        self.stop_flag = threading.Event()
+        self.socket = client_socket
         self.server = server
+        self.stop_flag = threading.Event()
 
-    def stop(self) :
-        self.stop_flag.set()
-        self.socket.close()
-        self.join()
 
     def run(self):
 
         # Handshaking
         if self.handshake() is True :
-            self.server.client_thread = self
+            # Start listening client commands
             self.listen()
 
-        # Close socket (client)
-        self.socket.close()
-        if id(self.server.client_thread) == id(self) :
-            self.server.client_thread = None
+        # Close client socket
+        self.close()
 
-    def listen(self):
-
-        while self.stop_flag.is_set() is False :
-
-            try: command = self.read()
-            except: break
-
-            if command == 'CLOSE_CONNECTION' : break
-            else : self.process_command(command)
-
-
-    def process_command(self,command):
-        if command == 'DEVICES_STATUS?' :
-            return self.write(devices.get_devices_status())
 
     def handshake(self):
 
-        ''' Check that incoming connection comes from another Autolab program '''
+        ''' Check that incoming connection comes from another Autolab program,
+            and that no thread is already controlling autolab '''
 
         self.socket.settimeout(5)
         try :
+            # Read first command from client
             handshake_str = self.read()
-            if handshake_str == 'AUTOLAB?' :
-                if self.server.client_thread is False :
+
+            # Check that first client command is 'AUTOLAB?'
+            if handshake_str.startswith('AUTOLAB?') :
+
+                # There is no main thread currently running, accepting communication
+                if self.server.main_client_thread_id is None :
+                    self.server.main_client_thread_id = id(self)
+                    self.server.client_hostname = handshake_str.split('=')[1]
                     self.write('YES')
                     result = True
+
+                # Another client is controlling autolab, reply that the server is busy, refusing communication
                 else :
-                    self.write('SERVER IS BUSY')
+                    self.write(f'Autolab server on host {socket.gethostname()} already in use by host {self.server.client_hostname}.')
                     result = False
+
+            # The client did not ask the right first command, refusing communication
             else : result = False
+
         except Exception as e:
             print(e)
             result = False
@@ -105,13 +99,56 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         return result
 
 
+    def listen(self):
+
+        ''' Listen and answer client commands '''
+
+        while self.stop_flag.is_set() is False :
+
+            try:
+                command = self.read()
+                self.process_command(command)
+            except:
+                self.stop_flag.set()
+
+
+    def process_command(self,command):
+
+        ''' Process given client command '''
+
+        if command == 'CLOSE_CONNECTION' :
+            self.stop_flag.set()
+        elif command == 'DEVICES_STATUS?' :
+            return self.write(devices.get_devices_status())
+
+
+    def close(self):
+
+        # In case the close call come from outside of the threading
+        self.stop_flag.set()
+
+        # Close client socket
+        self.socket.close()
+
+        # If this thread is the main client thread, remove declaration
+        if self.server.main_client_thread_id == id(self) :
+            self.server.main_client_thread_id = None
+            self.server.client_hostname = None
+
+
+
+
+
+
+
 
 
 class Server():
 
     def __init__(self,port=None):
 
-        self.client_thread = None
+        self.main_client_thread = None
+        self.client_threads = []
 
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
@@ -121,40 +158,59 @@ class Server():
         # Start the server
         self.start()
 
+        # Start listening
         try :
-            while True :
-
-                # Wait incoming connection
-                clientsocket, _ = self.main_socket.accept()
-
-                # Clean terminated threads
-
-                # Start thread
-                client_thread = ClientThread(clientsocket,self)
-                client_thread.start()
-
-
-
+            self.listen()
         except KeyboardInterrupt:
             self.close()
             sys.exit()
 
 
-
     def start(self):
 
-        ''' Start the server (main socket) '''
+        ''' Start the server '''
 
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.main_socket.bind(('', self.port))
         self.main_socket.listen(0)
 
 
+    def listen(self):
+
+        while True :
+
+            # Wait incoming connection
+            client_socket, _ = self.main_socket.accept()
+
+            # Clean terminated threads
+            self.clean_client_threads()
+
+            # Start new client thread
+            client_thread = ClientThread(client_socket,self)
+            client_thread.start()
+            self.client_threads.append(client_thread)
+
+
+    def clean_client_threads(self):
+
+        ''' Remove finshed client threads from the list '''
+
+        self.client_threads = [t for t in self.client_threads if not t.is_alive()]
+
+
+    def close_client_threads(self):
+
+        ''' Close any existing client thread '''
+
+        self.clean_client_threads()
+        for thread in self.client_threads : thread.stop()
+
+
     def close(self):
 
-        ''' Close existing sockets (main and client if existing) '''
+        ''' Close the server and client threads'''
 
-        if self.client_thread is not None : self.client_thread.stop()
+        self.close_client_threads()
         self.main_socket.close()
 
 
@@ -173,9 +229,7 @@ class Driver_REMOTE(Driver_SOCKET):
         self.port    = port
 
         # Connection au serveur Autolab
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(2)
-        self.socket.connect((address, int(port)))
+        self.connect()
 
         # Handshaking
         self.handshake()
@@ -184,21 +238,36 @@ class Driver_REMOTE(Driver_SOCKET):
         self.devices_status = self.get_devices_status()
         print(self.devices_status)
 
-    def close(self):
 
-        self.socket.write('CLOSE_CONNECTION')
-        self.socket.close()
+    def connect(self):
+
+        ''' Initialize connection with autolab server '''
+
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(2)
+        self.socket.connect((address, int(port)))
+
 
     def handshake(self):
 
         ''' Check that distant partner is an Autolab server '''
 
-        self.write('AUTOLAB?')
+        self.write(f'AUTOLAB?HOSTNAME={socket.gethostname()}')
         try :
             answer = self.read()
-            assert answer == 'YES', "This is not the good answer but anyway, this is never gonna be displayed ;)"
+            assert answer == 'YES', answer
         except Exception as e :
             raise ValueError(f'Impossible to join autolab server at {self.address}:{self.port} \n {e}')
+
+
+    def disconnect(self):
+
+        ''' Close autolab server connection '''
+
+        self.socket.write('CLOSE_CONNECTION')
+        self.socket.close()
+
+
 
 
     def get_devices_status(self) : # Déjà instantié ou non
