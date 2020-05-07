@@ -127,9 +127,12 @@ class Server():
                 # Wait incoming connection
                 clientsocket, _ = self.main_socket.accept()
 
+                # Clean terminated threads
+
                 # Start thread
-                client_thread = SocketThread(clientsocket,self)
+                client_thread = ClientThread(clientsocket,self)
                 client_thread.start()
+
 
 
         except KeyboardInterrupt:
