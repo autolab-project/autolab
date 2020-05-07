@@ -78,15 +78,15 @@ class ClientThread(threading.Thread,Driver_SOCKET):
             if handshake_str.startswith('AUTOLAB?') :
 
                 # There is no main thread currently running, accepting communication
-                if self.server.main_client_thread_id is None :
-                    self.server.main_client_thread_id = id(self)
-                    self.server.client_hostname = handshake_str.split('=')[1]
+                if self.server.active_connection_thread is None :
+                    self.server.active_connection_thread = self
+                    self.server.active_connection_hostname = handshake_str.split('=')[1]
                     self.write('YES')
                     result = True
 
                 # Another client is controlling autolab, reply that the server is busy, refusing communication
                 else :
-                    self.write(f'Autolab server on host {socket.gethostname()} already in use by host {self.server.client_hostname}.')
+                    self.write(f'Autolab server on host {socket.gethostname()} already in use by host {self.server.active_connection_hostname}.')
                     result = False
 
             # The client did not ask the right first command, refusing communication
@@ -132,9 +132,9 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         self.socket.close()
 
         # If this thread is the main client thread, remove declaration
-        if self.server.main_client_thread_id == id(self) :
-            self.server.main_client_thread_id = None
-            self.server.client_hostname = None
+        if self.server.active_connection_thread == self :
+            self.server.active_connection_thread = None
+            self.server.active_connection_hostname = None
 
 
 
@@ -148,8 +148,10 @@ class Server():
 
     def __init__(self,port=None):
 
-        self.main_client_thread = None
         self.client_threads = []
+
+        self.active_connection_thread = None
+        self.active_connection_hostname = None
 
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
