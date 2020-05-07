@@ -5,7 +5,7 @@ import socket
 import pickle
 import threading
 from . import config, devices
-
+import datetime as dt
 
 class Driver_SOCKET():
 
@@ -76,16 +76,20 @@ class ClientThread(threading.Thread,Driver_SOCKET):
             # Check that first client command is 'AUTOLAB?'
             if handshake_str.startswith('AUTOLAB?') :
 
+                hostname = handshake_str.split('=')[1]
+
                 # There is no main thread currently running, accepting communication
                 if self.server.active_connection_thread is None :
                     self.server.active_connection_thread = self
-                    self.server.active_connection_hostname = handshake_str.split('=')[1]
+                    self.server.active_connection_hostname = hostname
+                    self.server.log(f'Host "{hostname}" connected')
                     self.write('YES')
                     result = True
 
                 # Another client is controlling autolab, reply that the server is busy, refusing communication
                 else :
-                    self.write(f'Autolab server on host {socket.gethostname()} already in use by host {self.server.active_connection_hostname}.')
+                    self.server.log(f'Host "{hostname}" trying to connect but server already in use by host "{self.server.active_connection_hostname}"')
+                    self.write(f'Autolab server on host "{socket.gethostname()}" already in use by host "{self.server.active_connection_hostname}".')
                     result = False
 
             # The client did not ask the right first command, refusing communication
@@ -132,6 +136,7 @@ class ClientThread(threading.Thread,Driver_SOCKET):
 
         # If this thread is the main client thread, remove declaration
         if self.server.active_connection_thread == self :
+            self.server.log(f'Host "{self.server.active_connection_hostname}" disconnected')
             self.server.active_connection_thread = None
             self.server.active_connection_hostname = None
 
@@ -175,6 +180,7 @@ class Server():
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.main_socket.bind(('', self.port))
         self.main_socket.listen(0)
+        self.log('Autolab server running, waiting for incoming connections on port {self.port}')
 
 
     def listen(self):
@@ -209,6 +215,9 @@ class Server():
             thread.close()
             thread.join()
 
+    def log(self,log):
+        timestamp = dt.datetime.now().isoformat()
+        print(f'{timestamp}: {log}')
 
     def close(self):
 
