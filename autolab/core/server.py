@@ -180,7 +180,7 @@ class Server():
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.main_socket.bind(('', self.port))
         self.main_socket.listen(0)
-        self.log('Autolab server running, waiting for incoming connections on port {self.port}')
+        self.log(f'Autolab server running, waiting for incoming connections on port {self.port}')
 
 
     def listen(self):
@@ -289,7 +289,7 @@ class Driver_REMOTE(Driver_SOCKET):
 
 
     def get_driver_model(self):
-        model = {}
+        model = []
         #for dev_name in self.devices_status :
             #model['element':'device', 'name':dev_name, 'instance': partial(self.get_device,dev_name)]
         return model
