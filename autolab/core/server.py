@@ -88,8 +88,8 @@ class ClientThread(threading.Thread,Driver_SOCKET):
 
                 # Another client is controlling autolab, reply that the server is busy, refusing communication
                 else :
-                    self.server.log(f'Host "{hostname}" trying to connect but server already in use by host "{self.server.active_connection_hostname}"')
-                    self.write(f'Autolab server on host "{socket.gethostname()}" already in use by host "{self.server.active_connection_hostname}".')
+                    self.server.log(f'Host "{hostname}" trying to connect but a connection is already established from host "{self.server.active_connection_hostname}"')
+                    self.write(f'A connection to the Autolab server is already established from host "{self.server.active_connection_hostname}".')
                     result = False
 
             # The client did not ask the right first command, refusing communication
