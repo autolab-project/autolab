@@ -83,7 +83,7 @@ class Server(Driver_SOCKET):
         ''' Start the server (main socket) '''
 
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.main_socket.bind(('', port))
+        self.main_socket.bind(('', self.port))
         self.main_socket.listen(1)
 
 
