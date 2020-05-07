@@ -91,7 +91,7 @@ class Server(Driver_SOCKET):
 
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.main_socket.bind(('', self.port))
-        self.main_socket.listen(1)
+        self.main_socket.listen(0)
 
 
     def close(self):
@@ -143,7 +143,7 @@ class Driver_REMOTE(Driver_SOCKET):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(2)
         self.socket.connect((address, int(port)))
-
+        
         # Handshaking
         self.handshake()
 
