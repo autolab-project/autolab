@@ -3,6 +3,7 @@
 import sys
 import socket
 import pickle
+import threading
 from . import config, devices
 
 
@@ -38,9 +39,79 @@ class Driver_SOCKET():
         self.socket.send(msg)
 
 
-class Server(Driver_SOCKET):
+
+
+
+class SocketThread(threading.Thread,Driver_SOCKET):
+
+    def __init__(self, clientsocket, server):
+        threading.Thread.__init__(self)
+        self.socket = clientsocket
+        self.stop_flag = threading.Event()
+        self.server = server
+
+    def stop(self) :
+        self.stop_flag.set()
+        self.socket.close()
+        self.join()
+
+    def run(self):
+
+        # Handshaking
+        if self.handshake() is True :
+            self.server.thread = self
+            self.listen()
+
+        # Close socket (client)
+        self.socket.close()
+        if id(self.server.thread) == id(self) :
+            self.server.thread = None
+
+    def listen(self):
+
+        while self.stop_flag.is_set() is False :
+
+            try: command = self.read()
+            except: break
+
+            if command == 'CLOSE_CONNECTION' : break
+            else : self.process_command(command)
+
+
+    def process_command(self,command):
+        if command == 'DEVICES_STATUS?' :
+            return self.write(devices.get_devices_status())
+
+    def handshake(self):
+
+        ''' Check that incoming connection comes from another Autolab program '''
+
+        self.socket.settimeout(5)
+        try :
+            handshake_str = self.read()
+            if handshake_str == 'AUTOLAB?' :
+                if self.server.connected is False :
+                    self.write('YES')
+                    result = True
+                else : self.write('SERVER IS BUSY')
+                    result = False
+            else : result = False
+        except Exception as e:
+            print(e)
+            result = False
+        self.socket.settimeout(None)
+
+        return result
+
+
+
+
+class Server():
 
     def __init__(self,port=None):
+
+        self.connected = False
+        self.thread = None
 
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
@@ -50,33 +121,16 @@ class Server(Driver_SOCKET):
         # Start the server
         self.start()
 
-        # Start listening and executing remote commands
-        self.listen()
-
-
-    def listen(self):
-
-        ''' Start listening and executing remote commands '''
-
-        try:
+        try :
 
             while True :
 
                 # Wait incoming connection
-                self.socket, self.client_address = self.main_socket.accept()
+                clientsocket, _ = self.main_socket.accept()
 
-                # Handshaking
-                if self.handshake() is True :
-                    while True :
-
-                        try: command = self.read()
-                        except: break
-
-                        if command == 'CLOSE_CONNECTION' : break
-                        else : self.process_command(command)
-
-                # Close socket (client)
-                self.socket.close()
+                # Start thread
+                thread = SocketThread(clientsocket,self)
+                thread.start()
 
 
         except KeyboardInterrupt:
@@ -98,35 +152,10 @@ class Server(Driver_SOCKET):
 
         ''' Close existing sockets (main and client if existing) '''
 
-        try : self.socket.close()
-        except : pass
+        if self.thread is not None : self.thread.stop()
         self.main_socket.close()
 
 
-
-    def process_command(self,command):
-
-        if command == 'DEVICES_STATUS?' :
-            return self.write(devices.get_devices_status())
-
-
-
-    def handshake(self):
-
-        ''' Check that incoming connection comes from another Autolab program '''
-        self.socket.settimeout(5)
-        try :
-            handshake_str = self.read()
-            if handshake_str == 'AUTOLAB?' :
-                self.write('YES')
-                result = True
-            else : result = False
-        except Exception as e:
-            print("Unexpected error:", sys.exc_info()[0])
-            print(e)
-            result = False
-        self.socket.settimeout(None)
-        return result
 
 
 
