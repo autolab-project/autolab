@@ -53,7 +53,7 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         self.socket = client_socket
         self.server = server
         self.stop_flag = threading.Event()
-
+        self.hostname = None
 
     def run(self):
 
@@ -80,20 +80,19 @@ class ClientThread(threading.Thread,Driver_SOCKET):
             # Check that first client command is 'AUTOLAB?'
             if handshake_str.startswith('AUTOLAB?') :
 
-                hostname = handshake_str.split('=')[1]
+                self.hostname = handshake_str.split('=')[1]
 
                 # There is no main thread currently running, accepting communication
                 if self.server.active_connection_thread is None :
                     self.server.active_connection_thread = self
-                    self.server.active_connection_hostname = hostname
-                    self.server.log(f'Host "{hostname}" connected')
+                    self.server.log(f'Host "{self.hostname}" connected')
                     self.write('YES')
                     result = True
 
                 # Another client is controlling autolab, reply that the server is busy, refusing communication
                 else :
-                    self.server.log(f'Host "{hostname}" trying to connect but a connection is already established from host "{self.server.active_connection_hostname}"')
-                    self.write(f'A connection to the Autolab server is already established from host "{self.server.active_connection_hostname}".')
+                    self.server.log(f'Host "{self.hostname}" trying to connect but a connection is already established from host "{self.server.active_connection_thread.hostname}"')
+                    self.write(f'A connection to the Autolab server is already established from host "{self.server.active_connection_thread.hostname}".')
                     result = False
 
             # The client did not ask the right first command, refusing communication
@@ -134,7 +133,9 @@ class ClientThread(threading.Thread,Driver_SOCKET):
     def close(self):
 
         # In case the close call come from outside of the threading
+        print('Setting stop flag')
         self.stop_flag.set()
+        print('Setting stop flag passed')
 
         # Close client socket
         print('Shuting down client socket')
@@ -144,9 +145,8 @@ class ClientThread(threading.Thread,Driver_SOCKET):
 
         # If this thread is the main client thread, remove declaration
         if self.server.active_connection_thread == self :
-            self.server.log(f'Host "{self.server.active_connection_hostname}" disconnected')
+            self.server.log(f'Host "{self.hostname}" disconnected')
             self.server.active_connection_thread = None
-            self.server.active_connection_hostname = None
 
 
 
@@ -161,9 +161,7 @@ class Server():
     def __init__(self,port=None):
 
         self.client_threads = []
-
         self.active_connection_thread = None
-        self.active_connection_hostname = None
 
         # Load server config in autolab_config.ini
         server_config = config.get_server_config()
@@ -176,6 +174,7 @@ class Server():
         # Start listening
         try :
             self.listen()
+            print('listen finished')
         except KeyboardInterrupt:
             self.close()
             sys.exit()
