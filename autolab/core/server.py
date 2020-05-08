@@ -212,10 +212,10 @@ class Server():
 
         ''' Remove finshed client threads from the list '''
 
-        print(211,)
+        print(211)
         print(self.active_connection_thread)
         if self.active_connection_thread is not None : print(self.active_connection_thread.is_alive())
-        self.client_threads = [t for t in self.client_threads if not t.is_alive()]
+        self.client_threads = [t for t in self.client_threads if t.is_alive()]
         print(212)
 
     def close_client_threads(self):
