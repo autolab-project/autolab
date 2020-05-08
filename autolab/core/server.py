@@ -172,10 +172,8 @@ class Server():
         self.start()
 
         # Start listening
-        try :
-            self.listen()
-        except :
-            print('COUCOU')
+        try : self.listen()
+        except : print('You excited the server (TO CHANGE)')
         self.close()
 
 
@@ -215,11 +213,15 @@ class Server():
     def close_client_threads(self):
 
         ''' Close any existing client thread '''
-
-        self.clean_client_threads()
+        print('entering client thread close')
+        self.clean_client_threads
+        print('client thread cleaning done, starting closing client threads and join them')
         for thread in self.client_threads :
+            print(f'trying to close thread {id(thread)}')
             thread.close()
+            print('closing all done')
             thread.join()
+            print('finished join')
 
 
     def log(self,log):
@@ -233,10 +235,13 @@ class Server():
     def close(self):
 
         ''' Close the server and client threads'''
-
+        print('calling server close')
         self.close_client_threads()
+        print('close client_thread done')
         self.main_socket.shutdown(socket.SHUT_RDWR)
+        print('closing main socket')
         self.main_socket.close()
+        print('finissssshhheeedd')
 
 
 
