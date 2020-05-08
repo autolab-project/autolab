@@ -177,6 +177,7 @@ class Server():
         ''' Start the server '''
 
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.main_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.main_socket.bind(('', self.port))
         self.main_socket.listen(0)
         self.log(f'Autolab server running, waiting for incoming connections on port {self.port}')
