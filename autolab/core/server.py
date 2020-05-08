@@ -113,7 +113,9 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         while self.stop_flag.is_set() is False :
 
             try:
+                print(90)
                 command = self.read()
+                print(91)
                 self.process_command(command)
             except:
                 self.stop_flag.set()
@@ -210,7 +212,7 @@ class Server():
 
         ''' Remove finshed client threads from the list '''
 
-        print(211)
+        print(211,self.active_connection_thread.is_alive())
         self.client_threads = [t for t in self.client_threads if not t.is_alive()]
         print(212)
 
