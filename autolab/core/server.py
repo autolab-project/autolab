@@ -217,7 +217,7 @@ class Server():
     def close_client_threads(self):
 
         ''' Close any existing client thread '''
-        print(21)
+        print(21,len(self.client_threads))
         self.clean_client_threads()
         print(22,len(self.client_threads))
         for thread in self.client_threads :
