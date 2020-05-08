@@ -176,9 +176,8 @@ class Server():
             self.listen()
             print('listen finished')
         except Exception as e:
-            print(e)
-            self.close()
-            sys.exit()
+            print('COUCOU')
+        self.close()
 
 
     def start(self):
