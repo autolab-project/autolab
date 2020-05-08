@@ -130,13 +130,15 @@ class ClientThread(threading.Thread,Driver_SOCKET):
 
 
     def close(self):
-
+        print('A')
         # In case the close call come from outside of the threading
         self.socket.close()
-
+        print('B')
         # If this thread is the main client thread, remove declaration
         if self.server.active_connection_thread == self :
+            print('C')
             self.server.log(f'Host "{self.hostname}" disconnected')
+            print('D')
             self.server.active_connection_thread = None
 
 
@@ -217,7 +219,7 @@ class Server():
         ''' Close any existing client thread '''
         print(21)
         self.clean_client_threads()
-        print(22)
+        print(22,len(self.client_threads))
         for thread in self.client_threads :
             print(23)
             thread.request_close()
