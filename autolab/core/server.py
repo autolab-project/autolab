@@ -224,7 +224,7 @@ class Server():
             print(23)
             thread.request_close()
             print(24)
-        self.clean_client_threads()
+        self.client_threads = []
         print(25)
 
     def log(self,log):
