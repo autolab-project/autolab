@@ -175,7 +175,8 @@ class Server():
         try :
             self.listen()
             print('listen finished')
-        except KeyboardInterrupt:
+        except Exception as e:
+            print(e)
             self.close()
             sys.exit()
 
