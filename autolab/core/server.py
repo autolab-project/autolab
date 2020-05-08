@@ -7,6 +7,8 @@ import threading
 from . import config, devices
 import datetime as dt
 
+
+
 class Driver_SOCKET():
 
     prefix = b'<AUTOLAB_START>'
@@ -18,6 +20,7 @@ class Driver_SOCKET():
 
         # First read
         msg  = self.socket.recv(length)
+        print('RECV func PASSED')
         assert msg != b'', 'Connection closed by remote host'
         assert msg.startswith(self.prefix), 'Autolab communication structure not found in reply'
 
@@ -69,7 +72,7 @@ class ClientThread(threading.Thread,Driver_SOCKET):
             and that no thread is already controlling autolab '''
 
         self.socket.settimeout(2)
-        
+
         try :
             # Read first command from client
             handshake_str = self.read()
@@ -134,7 +137,9 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         self.stop_flag.set()
 
         # Close client socket
+        print('Shuting down client socket')
         self.socket.shutdown(socket.SHUT_RDWR)
+        print('Shuting down client socket PASSED, go to closing')
         self.socket.close()
 
         # If this thread is the main client thread, remove declaration
