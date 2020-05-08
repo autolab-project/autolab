@@ -113,9 +113,7 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         while self.stop_flag.is_set() is False :
 
             try:
-                print(90)
                 command = self.read()
-                print(91)
                 self.process_command(command)
             except:
                 self.stop_flag.set()
@@ -132,27 +130,21 @@ class ClientThread(threading.Thread,Driver_SOCKET):
 
 
     def close(self):
-        print('A')
+
         # In case the close call come from outside of the threading
         self.socket.close()
-        print('B')
+
         # If this thread is the main client thread, remove declaration
         if self.server.active_connection_thread == self :
-            print('C')
             self.server.log(f'Host "{self.hostname}" disconnected')
-            print('D')
             self.server.active_connection_thread = None
 
 
     def request_close(self):
 
-        print(231)
         self.stop_flag.set()
-        print(232)
         self.socket.shutdown(socket.SHUT_RDWR)
-        print(233)
         self.join()
-        print(234)
 
 
 
@@ -177,7 +169,6 @@ class Server():
         # Start listening
         try : self.listen()
         except : print('You excited the server (TO CHANGE)')
-        print(1)
         self.close()
 
 
@@ -212,24 +203,19 @@ class Server():
 
         ''' Remove finshed client threads from the list '''
 
-        print(211)
-        print(self.active_connection_thread)
-        if self.active_connection_thread is not None : print(self.active_connection_thread.is_alive())
         self.client_threads = [t for t in self.client_threads if t.is_alive()]
-        print(212)
 
     def close_client_threads(self):
 
         ''' Close any existing client thread '''
-        print(21,len(self.client_threads))
+
         self.clean_client_threads()
-        print(22,len(self.client_threads))
+
         for thread in self.client_threads :
-            print(23)
             thread.request_close()
-            print(24)
+
         self.client_threads = []
-        print(25)
+
 
     def log(self,log):
 
@@ -242,15 +228,10 @@ class Server():
     def close(self):
 
         ''' Close the server and client threads'''
-        print(2)
+
         self.close_client_threads()
-        print(3)
         self.main_socket.shutdown(socket.SHUT_RDWR)
-        print(4)
         self.main_socket.close()
-        print(5)
-
-
 
 
 
