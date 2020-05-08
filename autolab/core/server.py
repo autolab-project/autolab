@@ -132,6 +132,7 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         self.stop_flag.set()
 
         # Close client socket
+        self.socket.shutdown()
         self.socket.close()
 
         # If this thread is the main client thread, remove declaration
@@ -215,15 +216,21 @@ class Server():
             thread.close()
             thread.join()
 
+
     def log(self,log):
+
+        ''' Display a log on the server '''
+
         timestamp = dt.datetime.now().isoformat()
         print(f'{timestamp}: {log}')
+
 
     def close(self):
 
         ''' Close the server and client threads'''
 
         self.close_client_threads()
+        self.main_socket.shutdown()
         self.main_socket.close()
 
 
