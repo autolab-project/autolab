@@ -133,14 +133,6 @@ class ClientThread(threading.Thread,Driver_SOCKET):
     def close(self):
 
         # In case the close call come from outside of the threading
-        print('Setting stop flag')
-        self.stop_flag.set()
-        print('Setting stop flag passed')
-
-        # Close client socket
-        print('Shuting down client socket')
-        self.socket.shutdown(socket.SHUT_RDWR)
-        print('Shuting down client socket PASSED, go to closing')
         self.socket.close()
 
         # If this thread is the main client thread, remove declaration
@@ -149,6 +141,16 @@ class ClientThread(threading.Thread,Driver_SOCKET):
             self.server.active_connection_thread = None
 
 
+    def ask_close(self):
+
+        print('Setting stop flag')
+        self.stop_flag.set()
+        print('Setting stop flag passed')
+
+        # Close client socket
+        print('Shuting down client socket')
+        self.socket.shutdown(socket.SHUT_RDWR)
+        print('Shuting down client socket PASSED, go to closing')
 
 
 
@@ -218,7 +220,7 @@ class Server():
         print('client thread cleaning done, starting closing client threads and join them')
         for thread in self.client_threads :
             print(f'trying to close thread {id(thread)}')
-            thread.close()
+            thread.ask_close()
             print('closing all done')
             thread.join()
             print('finished join')
