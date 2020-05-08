@@ -20,7 +20,6 @@ class Driver_SOCKET():
 
         # First read
         msg  = self.socket.recv(length)
-        print('RECV func PASSED')
         assert msg != b'', 'Connection closed by remote host'
         assert msg.startswith(self.prefix), 'Autolab communication structure not found in reply'
 
@@ -141,17 +140,11 @@ class ClientThread(threading.Thread,Driver_SOCKET):
             self.server.active_connection_thread = None
 
 
-    def ask_close(self):
+    def request_close(self):
 
-        print('Setting stop flag')
         self.stop_flag.set()
-        print('Setting stop flag passed')
-
-        # Close client socket
-        print('Shuting down client socket')
         self.socket.shutdown(socket.SHUT_RDWR)
-        print('Shuting down client socket PASSED, go to closing')
-
+        self.join()
 
 
 
@@ -215,16 +208,13 @@ class Server():
     def close_client_threads(self):
 
         ''' Close any existing client thread '''
-        print('entering client thread close')
-        self.clean_client_threads
-        print('client thread cleaning done, starting closing client threads and join them')
-        for thread in self.client_threads :
-            print(f'trying to close thread {id(thread)}')
-            thread.ask_close()
-            print('closing all done')
-            thread.join()
-            print('finished join')
 
+        self.clean_client_threads()
+
+        for thread in self.client_threads :
+            thread.request_close()
+
+        self.clean_client_threads()
 
     def log(self,log):
 
@@ -237,13 +227,10 @@ class Server():
     def close(self):
 
         ''' Close the server and client threads'''
-        print('calling server close')
+
         self.close_client_threads()
-        print('close client_thread done')
         self.main_socket.shutdown(socket.SHUT_RDWR)
-        print('closing main socket')
         self.main_socket.close()
-        print('finissssshhheeedd')
 
 
 
