@@ -68,7 +68,8 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         ''' Check that incoming connection comes from another Autolab program,
             and that no thread is already controlling autolab '''
 
-        self.socket.settimeout(5)
+        self.socket.settimeout(2)
+        
         try :
             # Read first command from client
             handshake_str = self.read()
@@ -98,6 +99,7 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         except Exception as e:
             print(e)
             result = False
+
         self.socket.settimeout(None)
 
         return result
@@ -132,7 +134,7 @@ class ClientThread(threading.Thread,Driver_SOCKET):
         self.stop_flag.set()
 
         # Close client socket
-        self.socket.shutdown()
+        self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
 
         # If this thread is the main client thread, remove declaration
@@ -230,7 +232,7 @@ class Server():
         ''' Close the server and client threads'''
 
         self.close_client_threads()
-        self.main_socket.shutdown()
+        self.main_socket.shutdown(socket.SHUT_RDWR)
         self.main_socket.close()
 
 
@@ -266,6 +268,7 @@ class Driver_REMOTE(Driver_SOCKET):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(2)
         self.socket.connect((self.address, self.port))
+        self.socket.settimeout(None)
 
 
     def handshake(self):
@@ -285,6 +288,7 @@ class Driver_REMOTE(Driver_SOCKET):
         ''' Close autolab server connection '''
 
         self.socket.write('CLOSE_CONNECTION')
+        self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
 
 
