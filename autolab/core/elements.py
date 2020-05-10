@@ -43,6 +43,8 @@ class Module(Element):
         self._var = {}
         self._act = {}
 
+        print(config)
+
         # Object - instance
         assert 'object' in config.keys(), f"Module {self.name}: missing module object"
         self.instance = config['object']
@@ -98,7 +100,7 @@ class Module(Element):
 
         """ Returns the submodule of the given name """
 
-        assert name in self._mod.keys(), f"The submodule '{name}' does not exist in module {self.name}"
+        assert name in self.list_modules(), f"The submodule '{name}' does not exist in module {self.name}"
         return self._mod[name]
 
 
@@ -115,7 +117,7 @@ class Module(Element):
 
         """ Returns the variable with the given name """
 
-        assert name in self._var.keys(), f"The variable '{name}' does not exist in module {self.name}"
+        assert name in self.list_variables(), f"The variable '{name}' does not exist in module {self.name}"
         return self._var[name]
 
 
@@ -132,7 +134,7 @@ class Module(Element):
 
         """ Returns the action with the given name """
 
-        assert name in self._act.keys(), f"The action '{name}' does not exist in device {self.name}"
+        assert name in self.list_actions(), f"The action '{name}' does not exist in device {self.name}"
         return self._act[name]
 
 
@@ -149,7 +151,7 @@ class Module(Element):
 
         """ Returns the list of the names of all the elements of this module """
 
-        return list(self._mod.keys()) + list(self._var.keys()) + list(self._act.keys())
+        return self.list_modules() + self.list_variables() + self.list_actions()
 
 
 
