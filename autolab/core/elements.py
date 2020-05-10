@@ -43,9 +43,6 @@ class Module(Element):
         self._var = {}
         self._act = {}
 
-        print(config)
-        print()
-
         # Object - instance
         assert 'object' in config.keys(), f"Module {self.name}: missing module object"
         self.instance = config['object']
@@ -167,14 +164,20 @@ class Module(Element):
     def get_structure(self):
 
         structure = {}
-        print('pass')
+
+        #for mod in self.list_modules() :
+        #    structure[mod] = {'element':'module','structure':self.get_module(mod).get_structure()}
+        #for var in self.list_variables() :
+        #    structure[var] = {'element':'variable'}
+        #for act in self.list_actions() :
+        #    structure[act] = {'element':'action'}
 
         for mod in self.list_modules() :
-            structure[mod] = {'element':'module','structure':self.get_module(mod).get_structure()}
+            structure[mod] = ['module',self.get_module(mod).get_structure()]
         for var in self.list_variables() :
-            structure[var] = {'element':'variable'}
+            structure[var] = ['variable']
         for act in self.list_actions() :
-            structure[act] = {'element':'action'}
+            structure[act] = ['action']
 
         return structure
 
