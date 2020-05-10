@@ -179,7 +179,7 @@ class Module(Element):
         for act in self.list_actions() :
             structure[act] = 'action'
 
-        structure['my_device']['module_1']['my_variable'] --> 'variable'
+        #structure['my_device']['module_1']['my_variable'] --> 'variable'
         return structure
 
 
