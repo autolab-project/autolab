@@ -325,7 +325,7 @@ class Driver_REMOTE(Driver_SOCKET):
             # Device non instantité : ne renvoie rien
             # Device instantié : renvoie structure en (modules, action, variable)
 
-class FakeDriver(Device.Element):
+class FakeDriver():
 
     def __init__(self,driver_remote,name,status) :
 
