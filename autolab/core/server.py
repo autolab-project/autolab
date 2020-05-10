@@ -345,7 +345,7 @@ class FakeDriver(Device.Element):
             for key in remote_device_structure.keys() :
                 if remote_device_structure[key] == 'variable' :
                     arg = {'command':'request',address:'yenista::wavelength'}
-                    model.append({'element':remote_device_structure[key], 'name':key, 'read': partial(self.interact,'read',address) .., 'write'})
+                    #model.append({'element':remote_device_structure[key], 'name':key, 'read': partial(self.interact,'read',address) .., 'write'})
                 elif remote_device_structure[key] == 'action' :
                     pass
                 elif remote_device_structure[key] == 'module' :
@@ -359,15 +359,15 @@ class FakeDriver(Device.Element):
         pass
 
 
-{'slot1': {'power': 'variable', 'wavelength': 'variable'},
- 'amplitude': 'variable',
- 'something': 'action'}
+#{'slot1': {'power': 'variable', 'wavelength': 'variable'},
+# 'amplitude': 'variable',
+# 'something': 'action'}
 
-def get_driver_model(self):
+#def get_driver_model(self):
 
-    model = []
-    model.append({'element':'variable','name':'amplitude','write':self.amplitude,'read':self.get_amplitude,'unit':'V','type':float,'help':'Amplitude'})
-    model.append({'element':'variable','name':'offset','write':self.offset,'read':self.get_offset,'unit':'V','type':float,'help':'Offset'})
-    model.append({'element':'variable','name':'frequency','write':self.frequency,'read':self.get_frequency,'unit':'Hz','type':float,'help':'Frequency'})
+ #    model = []
+#    model.append({'element':'variable','name':'amplitude','write':self.amplitude,'read':self.get_amplitude,'unit':'V','type':float,'help':'Amplitude'})
+#    model.append({'element':'variable','name':'offset','write':self.offset,'read':self.get_offset,'unit':'V','type':float,'help':'Offset'})
+#    model.append({'element':'variable','name':'frequency','write':self.frequency,'read':self.get_frequency,'unit':'Hz','type':float,'help':'Frequency'})
 
-    return model
+#    return model
