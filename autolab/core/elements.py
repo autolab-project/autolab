@@ -132,8 +132,8 @@ class Module(Element):
 
         """ Returns the action with the given name """
 
-        assert name in self._dev.keys(), f"The action '{name}' does not exist in device {self.name}"
-        return self._dev[name]
+        assert name in self._act.keys(), f"The action '{name}' does not exist in device {self.name}"
+        return self._act[name]
 
 
 
@@ -154,16 +154,17 @@ class Module(Element):
 
 
     def __getattr__(self,attr):
-
-        if attr in self._var.keys() : return self._var[attr]
-        elif attr in self._act.keys() : return self._act[attr]
-        elif attr in self._mod.keys() : return self._mod[attr]
+        print(attr)
+        if attr in self.list_variables() : return self.get_variable(attr)
+        elif attr in self.list_actions() : return self.get_action(attr)
+        elif attr in self.list_modules() : return self.get_module(attr)
         else : raise AttributeError(f"'{attr}' not found in module '{self.name}'")
 
 
     def get_structure(self):
 
         structure = {}
+        print('pass')
 
         for mod in self.list_modules() :
             structure[mod] = {'element':'module','structure':self.get_module(mod).get_structure()}
