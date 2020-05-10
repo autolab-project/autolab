@@ -6,7 +6,7 @@ import pickle
 import threading
 from . import config, devices
 import datetime as dt
-
+import functools import partial
 
 
 class Driver_SOCKET():
@@ -122,12 +122,13 @@ class ClientThread(threading.Thread,Driver_SOCKET):
     def process_command(self,command):
 
         ''' Process given client command '''
-
+        if isinstance(comma)
         if command == 'CLOSE_CONNECTION' :
             self.stop_flag.set()
         elif command == 'DEVICES_STATUS?' :
             return self.write(devices.get_devices_status())
 
+#command_dict = {'command':'get_driver_model','name':self.name}
 
     def close(self):
 
@@ -288,8 +289,6 @@ class Driver_REMOTE(Driver_SOCKET):
         self.socket.close()
 
 
-
-
     def get_devices_status(self) : # Déjà instantié ou non
         self.write('DEVICES_STATUS?')
         return self.read()
@@ -297,9 +296,13 @@ class Driver_REMOTE(Driver_SOCKET):
 
     def get_driver_model(self):
         model = []
-        #for dev_name in self.devices_status :
-            #model['element':'device', 'name':dev_name, 'instance': partial(self.get_device,dev_name)]
+        for dev_name in self.devices_status.keys() :
+            a = FakeDriver(self,dev_name,status)
+            model.append({'element':'module', 'name':dev_name, 'object': a})
+            a.get_driver_model()
+            partial(devices.Device,dev_name)
         return model
+
 
     def get_device(self,dev_name):
         pass
@@ -309,3 +312,20 @@ class Driver_REMOTE(Driver_SOCKET):
             # Pour un device de slave donné, retourne sa structure de (sous-devices, modules, action variable) à l’instant t
             # Device non instantité : ne renvoie rien
             # Device instantié : renvoie structure en (modules, action, variable)
+
+class FakeDriver():
+
+    def __init__(self,driver_remote,name,status) :
+
+        self.driver_remote = driver_remote
+        self.name = name
+        self.status = status
+
+
+    def get_driver_model(self) :
+        if status is False :
+            return []
+        else:
+            command_dict = {'command':'get_driver_model','name':self.name}
+            remote_driver_model = self.driver_remote.write(command_dict)
+            return remote_driver_model
