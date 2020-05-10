@@ -173,12 +173,13 @@ class Module(Element):
         #    structure[act] = {'element':'action'}
 
         for mod in self.list_modules() :
-            structure[mod] = ['module',self.get_module(mod).get_structure()]
+            structure[mod] = self.get_module(mod).get_structure()
         for var in self.list_variables() :
-            structure[var] = ['variable']
+            structure[var] = 'variable'
         for act in self.list_actions() :
-            structure[act] = ['action']
+            structure[act] = 'action'
 
+        structure['my_device']['module_1']['my_variable'] --> 'variable'
         return structure
 
 
