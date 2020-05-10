@@ -44,6 +44,7 @@ class Module(Element):
         self._act = {}
 
         print(config)
+        print()
 
         # Object - instance
         assert 'object' in config.keys(), f"Module {self.name}: missing module object"
