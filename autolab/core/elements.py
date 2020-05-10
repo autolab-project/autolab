@@ -157,7 +157,7 @@ class Module(Element):
 
 
     def __getattr__(self,attr):
-        print(attr)
+
         if attr in self.list_variables() : return self.get_variable(attr)
         elif attr in self.list_actions() : return self.get_action(attr)
         elif attr in self.list_modules() : return self.get_module(attr)

@@ -112,9 +112,6 @@ class Device(Module):
 
     def __init__(self,device_name,instance):
 
-        pass
-
-    def initialize(self):
         Module.__init__(self,None,{'name':device_name,
                                    'object':instance,
                                    'help':f'Device {device_name}'})
