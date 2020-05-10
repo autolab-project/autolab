@@ -6,7 +6,7 @@ import pickle
 import threading
 from . import config, devices
 import datetime as dt
-import functools import partial
+from functools import partial
 
 
 class Driver_SOCKET():
@@ -122,11 +122,20 @@ class ClientThread(threading.Thread,Driver_SOCKET):
     def process_command(self,command):
 
         ''' Process given client command '''
-        if isinstance(comma)
-        if command == 'CLOSE_CONNECTION' :
-            self.stop_flag.set()
-        elif command == 'DEVICES_STATUS?' :
-            return self.write(devices.get_devices_status())
+        
+        if isinstance(command,str) :
+            if command == 'CLOSE_CONNECTION' :
+                self.stop_flag.set()
+            elif command == 'DEVICES_STATUS?' :
+                return self.write(devices.get_devices_status())
+        else :
+            if command['command'] == 'get_driver_model' :
+                device_name = command['device_name']
+                device_instance = devices.get_device(device_name).get_structure()
+
+
+
+
 
 #command_dict = {'command':'get_driver_model','name':self.name}
 
