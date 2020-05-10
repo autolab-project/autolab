@@ -161,6 +161,19 @@ class Module(Element):
         else : raise AttributeError(f"'{attr}' not found in module '{self.name}'")
 
 
+    def get_structure(self):
+
+        structure = {}
+
+        for mod in self.list_modules() :
+            structure[mod] = {'element':'module','structure':self.get_module(mod).get_structure())
+        for var in self.list_variables() :
+            structure[var] = {'element':'variable'}
+        for act in self.list_actions() :
+            structure[act] = {'element':'action'}
+
+        return structure
+
 
     def sub_hierarchy(self,level=0):
 
