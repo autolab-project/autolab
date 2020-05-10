@@ -163,23 +163,22 @@ class Module(Element):
 
     def get_structure(self):
 
-        structure = {}
-
-        #for mod in self.list_modules() :
-        #    structure[mod] = {'element':'module','structure':self.get_module(mod).get_structure()}
-        #for var in self.list_variables() :
-        #    structure[var] = {'element':'variable'}
-        #for act in self.list_actions() :
-        #    structure[act] = {'element':'action'}
+        structure = []
 
         for mod in self.list_modules() :
-            structure[mod] = self.get_module(mod).get_structure()
+            structure += self.get_module(mod).get_structure()
         for var in self.list_variables() :
-            structure[var] = 'variable'
+            structure.append([self.get_variable(var).address(), 'variable'])
         for act in self.list_actions() :
-            structure[act] = 'action'
+            structure.append([self.get_action(act).address(), 'action'])
 
-        #structure['my_device']['module_1']['my_variable'] --> 'variable'
+        #for mod in self.list_modules() :
+        #    structure[mod] = self.get_module(mod).get_structure()
+        #for var in self.list_variables() :
+        #    structure[var] = 'variable',
+        #for act in self.list_actions() :
+        #    structure[act] = 'action'
+
         return structure
 
 
