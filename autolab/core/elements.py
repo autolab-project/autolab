@@ -166,7 +166,7 @@ class Module(Element):
         structure = {}
 
         for mod in self.list_modules() :
-            structure[mod] = {'element':'module','structure':self.get_module(mod).get_structure())
+            structure[mod] = {'element':'module','structure':self.get_module(mod).get_structure()}
         for var in self.list_variables() :
             structure[var] = {'element':'variable'}
         for act in self.list_actions() :
