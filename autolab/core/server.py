@@ -122,18 +122,21 @@ class ClientThread(threading.Thread,Driver_SOCKET):
     def process_command(self,command):
 
         ''' Process given client command '''
-        
+
         if isinstance(command,str) :
             if command == 'CLOSE_CONNECTION' :
                 self.stop_flag.set()
             elif command == 'DEVICES_STATUS?' :
                 return self.write(devices.get_devices_status())
         else :
-            if command['command'] == 'get_driver_model' :
+            if command['command'] == 'get_device_model' :
                 device_name = command['device_name']
-                device_instance = devices.get_device(device_name).get_structure()
-
-
+                structure = devices.get_device(device_name).get_structure()
+                self.write(structure)
+            elif command['command'] == 'request' :
+                devices.get_devices(device_name).get_by_adress(command['element_adress'])
+                # element_address --> my_yenista::submodule::wavelength
+                wavelength()
 
 
 
@@ -322,7 +325,7 @@ class Driver_REMOTE(Driver_SOCKET):
             # Device non instantité : ne renvoie rien
             # Device instantié : renvoie structure en (modules, action, variable)
 
-class FakeDriver():
+class FakeDriver(Device.Element):
 
     def __init__(self,driver_remote,name,status) :
 
@@ -332,9 +335,39 @@ class FakeDriver():
 
 
     def get_driver_model(self) :
+        model = []
         if status is False :
-            return []
+            return model
         else:
-            command_dict = {'command':'get_driver_model','name':self.name}
-            remote_driver_model = self.driver_remote.write(command_dict)
+            command_dict = {'command':'get_device_structure','name':self.name}
+            remote_device_structure = self.driver_remote.write(command_dict)
+
+            for key in remote_device_structure.keys() :
+                if remote_device_structure[key] == 'variable' :
+                    arg = {'command':'request',address:'yenista::wavelength'}
+                    model.append({'element':remote_device_structure[key], 'name':key, 'read': partial(self.interact,'read',address) .., 'write'})
+                elif remote_device_structure[key] == 'action' :
+                    pass
+                elif remote_device_structure[key] == 'module' :
+                    pass
+
             return remote_driver_model
+
+
+    def interact(interaction_type,address):
+
+        pass
+
+
+{'slot1': {'power': 'variable', 'wavelength': 'variable'},
+ 'amplitude': 'variable',
+ 'something': 'action'}
+
+def get_driver_model(self):
+
+    model = []
+    model.append({'element':'variable','name':'amplitude','write':self.amplitude,'read':self.get_amplitude,'unit':'V','type':float,'help':'Amplitude'})
+    model.append({'element':'variable','name':'offset','write':self.offset,'read':self.get_offset,'unit':'V','type':float,'help':'Offset'})
+    model.append({'element':'variable','name':'frequency','write':self.frequency,'read':self.get_frequency,'unit':'Hz','type':float,'help':'Frequency'})
+
+    return model
