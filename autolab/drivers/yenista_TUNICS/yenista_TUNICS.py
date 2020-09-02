@@ -72,7 +72,7 @@ class Driver():
  
     
     def set_motor_speed(self,value):  # from 1 to 100 nm/s
-        self.write("MOTOR_SPEED={float(value)}")
+        self.write(f"MOTOR_SPEED={float(value)}")
         self.wait()
 
 
