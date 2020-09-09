@@ -64,7 +64,13 @@ All the Autolab's features are also available through an :ref:`os_shell` interfa
 		>>> autolab devices my_tunics.wavelength -v 1551
 
 .. note::
-	Slides of our Autolab seminar (March 2020): `link <https://docs.google.com/presentation/d/1Uc6f0dEn6C18_0fr1pFuYSLmQ2AhIkVi9B5xTKfUIqw/edit?usp=sharing>`_
+	**Useful links**: 
+	
+	* `Slides of our Autolab seminar (March 2020) <https://docs.google.com/presentation/d/1Uc6f0dEn6C18_0fr1pFuYSLmQ2AhIkVi9B5xTKfUIqw/edit?usp=sharing>`_
+	* Github project: `github.com/qcha41/autolab <https://github.com/qcha41/autolab>`_
+	* PyPi project: `pypi.org/project/autolab/ <https://pypi.org/project/autolab/>`_
+	* Community & Support: `autolab-community.org <https://autolab-community.org/>`_
+	
 
 Table of contents:
 
