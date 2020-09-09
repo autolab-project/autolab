@@ -64,7 +64,7 @@ All the Autolab's features are also available through an :ref:`os_shell` interfa
 		>>> autolab devices my_tunics.wavelength -v 1551
 
 .. note::
-	A Google Slides presentation and examples are available here: `bit.ly/autolab-demo <http://bit.ly/autolab-demo>`_
+	Slides of our Autolab seminar (March 2020): `link <https://docs.google.com/presentation/d/1Uc6f0dEn6C18_0fr1pFuYSLmQ2AhIkVi9B5xTKfUIqw/edit?usp=sharing>`_
 
 Table of contents:
 
