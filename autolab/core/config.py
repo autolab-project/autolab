@@ -17,28 +17,49 @@ import os
 def check_local_directory():
 
     """ This function creates the default autolab local directory in the user home"""
+    
+    item_created = []
 
     # LOCAL DIRECTORY
     if os.path.exists(paths.USER_FOLDER) is False:
         os.mkdir(paths.USER_FOLDER)
-        print(f'The local directory of AUTOLAB has been created: {paths.USER_FOLDER}')
+        item_created.append(paths.USER_FOLDER)
 
     # DEVICES CONFIGURATION FILE
     if os.path.exists(paths.DEVICES_CONFIG) is False :
         devices_config = configparser.ConfigParser()
         devices_config['system'] = {'driver':'system','connection':'DEFAULT'}
         save_config('devices',devices_config)
-        print(f'The devices configuration file devices_config.ini has been created: {paths.DEVICES_CONFIG}')
+        item_created.append(paths.DEVICES_CONFIG)
+        
 
-    # lOCAL CUSTOM DRIVER FOLDER
-    if os.path.exists(paths.DRIVER_SOURCES['local']) is False :
-        os.mkdir(paths.DRIVER_SOURCES['local'])
-        print(f'The local driver directory has been created: {paths.DRIVER_SOURCES["local"]}')
+    # DRIVERS
+    # =========================================================================
+    if os.path.exists(paths.DRIVERS) is False :
+        os.mkdir(paths.DRIVERS)
+        item_created.append(paths.DRIVERS)
 
-    # AUTOLAB CONFIGURATION FILE
+    for key in ['OFFICIAL','LOCAL']:
+        path = getattr(paths,f'DRIVERS_{key}')
+        if os.path.exists(path) is False :
+            os.mkdir(path)
+            item_created.append(path)
+        
+        
+    # AUTOLAB
+    # =========================================================================
     if os.path.exists(paths.AUTOLAB_CONFIG) is False :
         save_config('autolab',configparser.ConfigParser())
-        print(f'The configuration file autolab_config.ini has been created: {paths.AUTOLAB_CONFIG}')
+        item_created.append(paths.AUTOLAB_CONFIG)
+        
+        
+    # SUMUP
+    # =========================================================================
+    if len(item_created) > 0 : 
+        print('[AUTOLAB Configuration] Folder(s) & File(s) created:')
+        for item in item_created : print(item)
+
+
 
 
 def save_config(config_name,config):
