@@ -1,4 +1,0 @@
-- Gestion plusieurs type de connexion
-- argument obligatoire dans init pour l'adresse
-- fichier externe pour trouver adresse des appareils visa.list_resources()
-- DOCUMENTATION
