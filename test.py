@@ -5,12 +5,9 @@ Created on Sat Jul 20 10:46:59 2019
 @author: qchat
 """
 
-import numpy as np
-import time
-
-import autolab
-
-
+from autolab.drivers import DriverManager
+dm = DriverManager()
+dm.update()
 
 
 
