@@ -9,7 +9,12 @@ import numpy as np
 import time
 
 import autolab
-autolab.get_device('PCBRUNO')
+
+
+
+
+
+#autolab.get_device('PCBRUNO')
 #from autolab import scan as s
 
 # # Instantiation and preconfiguration of a device
