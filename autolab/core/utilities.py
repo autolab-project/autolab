@@ -1,48 +1,32 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Oct 18 23:09:51 2019
 
-@author: qchat
-"""
-
-def emphasize(txt,sign='-'):
-
-    ''' Returns:    ---
-                    txt
-                    ---
-    '''
-
-    return sign*len(txt) + '\n' + txt + '\n' + sign*len(txt)
-
-
-def underline(txt,sign='-'):
-
-    ''' Returns:
-                    txt
-                    ---
-    '''
-
-    return txt + '\n' + sign*len(txt)
-
-
-def clean_string(txt):
-
-    """ Returns txt without special characters """
-
-    for character in '*."/\[]:;|, ' :
-        txt = txt.replace(character,'')
-
-    return txt
-
-
-
-def two_columns(txt_list) :
-
-    ''' Returns a string of the form:
-        txt[0]                         txt[1]
-        with a minimal spacing between the first character of txt1 and txt2 '''
-
-    spacing = max([len(txt[0]) for txt in txt_list]) + 5
-
-    return '\n'.join([ txt[0] + ' '*(spacing-len(txt[0])) + txt[1]
-            for txt in txt_list])
+def print_tab(tab_content) :
+    
+    MIN_SPACE_LEFT = 1
+    MIN_SPACE_RIGHT = 4
+    SEP_SIGN = '='
+    
+    # Nb col
+    for content in tab_content : 
+        if content is not None :
+            nb_col = len(content)
+            break
+        
+    # Col width
+    col_width = []
+    for i in range(nb_col) :
+        col_width.append(MIN_SPACE_LEFT+MIN_SPACE_RIGHT+max([len(c[i]) for c in tab_content if c is not None]))
+        
+    # Str to print
+    str_to_print = ''
+    for i in range(len(tab_content)):
+        if tab_content[i] is None : 
+            str_to_print += ' '+SEP_SIGN*(sum(col_width)+nb_col-1)
+        else :
+            str_to_print += '|'
+            for col in range(nb_col) :
+                str_to_print += ' '*MIN_SPACE_LEFT + tab_content[i][col] + ' '*(col_width[col]-len(tab_content[i][col])-MIN_SPACE_LEFT) + '|'
+        if i != len(tab_content)-1 :
+            str_to_print += '\n'
+    
+    print(str_to_print)
