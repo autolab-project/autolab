@@ -6,6 +6,8 @@ Created on Wed Sep 23 14:57:12 2020
 """
 
 from .core.utilities import print_tab
+from .core import drivers 
+import git
 
 class DriverManager() :
     def __init__(self) :
@@ -15,33 +17,41 @@ class DriverManager() :
     def summary(self) :
         # Print list of drivers sorted by name and category with their last version
         # Content to be dynamical of course
-        tab_content = [['Driver category','Driver name','Last version'],None]
-        if self.DEMO_updated is False :
-            tab_content.append(['Light source','yenista_TUNICS','1.0.0'])
-            tab_content.append(['','yenista_OSICS','1.1.2'])
-            tab_content.append(None)
-            tab_content.append(['Power meter','exfo_LTB1','1.0.0'])
-            tab_content.append(['','exfo_PM1613','2.1.0'])
-            tab_content.append(['','thorlabs_ITC4001','1.0.0'])
-        else :
-            tab_content.append(['Light source','yenista_TUNICS','1.0.0'])
-            tab_content.append(['','yenista_OSICS','1.1.2'])
-            tab_content.append(None)
-            tab_content.append(['Power meter','exfo_LTB1','1.2.1'])
-            tab_content.append(['','exfo_PM1613','2.5.0'])
-            tab_content.append(['','thorlabs_ITC4001','2.0.1'])
-            tab_content.append(None)
-            tab_content.append(['Oscilloscope','tektronix_DPO4104','1.0.1'])
-            tab_content.append(['','lecroy_WAVEMASTER','1.0.0'])
-        tab_content.append(None)
-        print_tab(tab_content)
+        drivers_list = drivers.load_paths()
+        print(drivers_list)
+        # tab_content = [['Driver category','Driver name','Last version'],None]
+        # if self.DEMO_updated is False :
+        #     tab_content.append(['Light source','yenista_TUNICS','1.0.0'])
+        #     tab_content.append(['','yenista_OSICS','1.1.2'])
+        #     tab_content.append(None)
+        #     tab_content.append(['Power meter','exfo_LTB1','1.0.0'])
+        #     tab_content.append(['','exfo_PM1613','2.1.0'])
+        #     tab_content.append(['','thorlabs_ITC4001','1.0.0'])
+        # else :
+        #     tab_content.append(['Light source','yenista_TUNICS','1.0.0'])
+        #     tab_content.append(['','yenista_OSICS','1.1.2'])
+        #     tab_content.append(None)
+        #     tab_content.append(['Power meter','exfo_LTB1','1.2.1'])
+        #     tab_content.append(['','exfo_PM1613','2.5.0'])
+        #     tab_content.append(['','thorlabs_ITC4001','2.0.1'])
+        #     tab_content.append(None)
+        #     tab_content.append(['Oscilloscope','tektronix_DPO4104','1.0.1'])
+        #     tab_content.append(['','lecroy_WAVEMASTER','1.0.0'])
+        # tab_content.append(None)
+        # print_tab(tab_content)
+        
+        
     def update(self):
-        # Update drivers codes from github repo autolab-drivers
-        if self.DEMO_updated is False :
-            self.DEMO_updated = True
-            print('Updated 3 existing drivers. Added 2 new drivers')
-        else :
-            print('Already up-do-date')
+                
+        drivers.sync_repo()
+        
+        
+        # # Update drivers codes from github repo autolab-drivers
+        # if self.DEMO_updated is False :
+        #     self.DEMO_updated = True
+        #     print('Updated 3 existing drivers. Added 2 new drivers')
+        # else :
+        #     print('Already up-do-date')
 
     def releases_notes(self,driver_name) :
         # Print releases note of a particular driver
