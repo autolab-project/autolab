@@ -10,5 +10,5 @@ import webbrowser
 def community():
     webbrowser.open('https://autolab-community.org')
 
-def doc():
+def docs():
     webbrowser.open('https://autolab.readthedocs.io')
