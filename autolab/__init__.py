@@ -35,7 +35,7 @@ del telemetry
 # from .core.devices import get_device
 
 # Webbrowser shortcuts
-from .core.web import community, doc
+from .core.web import community, docs
 
 # # Server
 # from .core.server import Server as server
