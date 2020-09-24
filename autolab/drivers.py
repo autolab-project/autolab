@@ -6,7 +6,7 @@ Created on Wed Sep 23 14:57:12 2020
 """
 
 from .core.utilities import print_tab
-from .core import drivers 
+from .core import drivers
 import git
 
 class DriverManager() :
@@ -43,8 +43,9 @@ class DriverManager() :
         
         
     def update(self):
-                
-        drivers.RepoSyncer().sync()       
+        
+        from .core import repo
+        repo.sync()       
         
         # # Update drivers codes from github repo autolab-drivers
         # if self.DEMO_updated is False :
