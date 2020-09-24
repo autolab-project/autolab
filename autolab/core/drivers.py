@@ -82,7 +82,7 @@ class Driver():
         # Load releases
         self.releases = {}
         for item in os.listdir(self.path) :
-            try : release = Release(os.path.join(self.path,item))
+            try : release = Release(self,os.path.join(self.path,item))
             except : release = None
             if release is not None :
                 assert release.name not in self.releases.keys()
@@ -121,7 +121,9 @@ class Driver():
     
 class Release():
     
-    def __init__(self,path):
+    def __init__(self,driver,path):
+        
+        self.driver = driver
     
         assert os.path.isdir(path)
         self.path = path
@@ -146,6 +148,10 @@ class Release():
     def connect(self):
         return 'instance'
         
+    def summary(self):
+        print(f'Driver {self.driver.name}')
+        print(f'Release {self.version} (self.date)')
+        print(f'Releases notes: {self.notes}')
 
 
     
