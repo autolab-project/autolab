@@ -5,49 +5,40 @@ import os
 
 from . import paths,utilities
 
-
+drivers = {}
 
 class DriverManager() :
     
     def __init__(self):
-        self.drivers = {}
         self.refresh()
         
     def list_drivers(self):
-        return list(self.drivers.keys())
+        return list(drivers.keys())
     
     def list_categories(self):
-        return list(set([d.category for d in self.drivers.keys()]))
+        return list(set([d.category for d in drivers.keys()]))
     
     def refresh(self):
-        self.drivers = {}
+        global drivers
+        drivers = {}
         for source_path in [paths.DRIVERS_OFFICIAL,paths.DRIVERS_LOCAL]:
             for item in os.listdir(source_path) :
                 try : driver = Driver(os.path.join(source_path,item))
                 except : driver = None
                 if driver is not None and len(driver.list_versions())>0 :
-                    assert driver.name not in self.drivers.keys()
-                    self.drivers[driver.name] = driver
+                    assert driver.name not in drivers.keys(), f'At least two drivers found with the same name {driver.name}.'
+                    drivers[driver.name] = driver
                     
     def summary(self):
-        
-        # Prepare list
-        drivers = {}
-        for driver_name in self.list_drivers() :
-            category = self.drivers[driver_name].category
-            if category not in drivers.keys() : drivers[category] = []
-            drivers[category].append(driver_name)
-            
-        # Print
         tab_content = [['Driver category','Driver name','Last version'],None]
-        for category in drivers.keys() :
-            init = 0
-            for driver_name in drivers[category] :
-                if init == 0 : 
-                    tab_content.append([category,driver_name,self.drivers[driver_name].last_version()])
-                    init = 1
+        for category in sorted(self.list_categories()) :
+            first_row_passed = False
+            for driver_name in sorted([d.name for d in drivers.keys() if d.category==category]) :
+                if first_row_passed == False : 
+                    tab_content.append([category,driver_name,drivers[driver_name].last_version()])
+                    first_row_passed = True
                 else : 
-                    tab_content.append(['',driver_name,self.drivers[driver_name].last_version()])
+                    tab_content.append(['',driver_name,drivers[driver_name].last_version()])
                 tab_content.append(None)
         if len(tab_content) == 2 : 
             print('No drivers yet, download them using the update() function.')
@@ -55,10 +46,19 @@ class DriverManager() :
             utilities.print_tab(tab_content)
         
     def update(self):
-        
         from . import repo
         repo.sync()   
         self.refresh()
+        
+    def get_driver(self,driver_name):
+        assert driver_name in drivers.keys() 
+        return drivers[driver_name]
+
+    def __getattr__(self,attr):
+        return self.get_driver(attr)
+    
+    def __getitem__(self,attr):
+        return self.get_driver(attr)
                     
 
 class Driver():
@@ -93,22 +93,30 @@ class Driver():
     
     def last_version(self):
         return max(self.list_versions())
-                    
-    def instantiate(self,connection_infos,version=None) :
-        if version is None: version = max(self.versions())
-        assert version in self.versions(), f"Version {version} of driver {self.name} doesn't exist"
-        return self.releases[version].instantiate(connection_infos)
-        
     
+    def last_release(self):
+        return self.get_release(self.last_version())
+                    
+    def connect(self,connection_infos,version=None) :
+        if version is None: version = max(self.versions())
+        release = self.get_release(version)
+        return release.connect(connection_infos)
+        
     def summary(self):
         print(f" Driver {self.name}")
         print('')
-        tab_content = [['Version (date)','Release notes'],None]
+        tab_content = [['Releases versions (date)','Releases notes'],None]
         for version in sorted(self.releases.keys()) :
             tab_content.append([f'{version} ({self.releases[version].date})',self.releases[version].notes])
         tab_content.append(None)
         utilities.print_tab(tab_content)
+        
+    def get_release(self,version):
+        assert version in self.releases.keys(), f"Version {version} of driver {self.name} doesn't exist"
+        return self.releases[version]
     
+    def __getitem__(self,attr):
+        return self.get_release(attr)
     
     
 class Release():
@@ -135,10 +143,8 @@ class Release():
         assert os.path.exists(self.driver_path)  
         assert os.path.exists(self.autolab_config_path)
         
-    def instantiate(self,connection_infos):
-        pass
-        # return instance
-        
+    def connect(self):
+        return 'instance'
         
 
 
