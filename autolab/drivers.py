@@ -15,10 +15,11 @@ class DriverManager() :
         self.DEMO_updated = False
     
     def summary(self) :
+        pass
         # Print list of drivers sorted by name and category with their last version
         # Content to be dynamical of course
-        drivers_list = drivers.load_paths()
-        print(drivers_list)
+        #drivers_list = drivers.load_paths()
+        #print(drivers_list)
         # tab_content = [['Driver category','Driver name','Last version'],None]
         # if self.DEMO_updated is False :
         #     tab_content.append(['Light source','yenista_TUNICS','1.0.0'])
@@ -43,8 +44,7 @@ class DriverManager() :
         
     def update(self):
                 
-        drivers.sync_repo()
-        
+        drivers.RepoSyncer().sync()       
         
         # # Update drivers codes from github repo autolab-drivers
         # if self.DEMO_updated is False :
