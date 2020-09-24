@@ -5,10 +5,10 @@ Created on Sat Jul 20 10:46:59 2019
 @author: qchat
 """
 
-from autolab.drivers import DriverManager
+from autolab import DriverManager
 dm = DriverManager()
 dm.update()
-
+dm.summary()
 
 
 #autolab.get_device('PCBRUNO')

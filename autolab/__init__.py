@@ -37,6 +37,11 @@ del telemetry
 # Webbrowser shortcuts
 from .core.web import community, docs
 
+# Driver and Device managers
+from .core.drivers import DriverManager
+#from .core.devices import DeviceManager
+
+
 # # Server
 # from .core.server import Server as server
 
