@@ -30,15 +30,18 @@ class DriverManager() :
                     drivers[driver.name] = driver
                     
     def summary(self):
-        tab_content = [['Driver category','Driver name','Last version'],None]
+        tab_content = [['Category','Manufacturer','Model','Driver name','Last version'],None]
         for category in sorted(self.list_categories()) :
-            first_row_passed = False
             for driver_name in sorted([d.name for d in drivers.keys() if d.category==category]) :
-                if first_row_passed == False : 
-                    tab_content.append([category,driver_name,drivers[driver_name].last_version()])
-                    first_row_passed = True
-                else : 
-                    tab_content.append(['',driver_name,drivers[driver_name].last_version()])
+                driver = drivers[driver_name]
+                line_content = []
+                if tab_content[-1] is not None and tab_content[-1][0] != category : line_content.append(category)
+                else : line_content.append('')
+                if tab_content[-1] is not None and tab_content[-1][1] != driver.manufacturer : line_content.append(driver.manufacturer)
+                else : line_content.append('')
+                line_content.append(driver.model)
+                line_content.append(driver.name)
+                line_content.append(driver.last_version())
                 tab_content.append(None)
         if len(tab_content) == 2 : 
             print('No drivers yet, download them using the update() function.')
@@ -51,7 +54,7 @@ class DriverManager() :
         self.refresh()
         
     def get_driver(self,driver_name):
-        assert driver_name in drivers.keys() 
+        assert driver_name in drivers.keys(), f'Driver {driver_name} does not exist' 
         return drivers[driver_name]
 
     def __getattr__(self,attr):
@@ -75,8 +78,8 @@ class Driver():
         driver_infos.read(driver_infos_path)
         assert 'GENERAL' in driver_infos.sections()
         driver_infos = driver_infos['GENERAL']
-        for key in ['name','category'] :
-            assert key in driver_infos.keys(), f'Missing key "{key}" in driver_infos.ini'
+        for key in ['name','category','manufacturer','model'] :
+            assert key in driver_infos.keys(), f'Missing key "{key}" in {path}'
             setattr(self,key,driver_infos[key])
         
         # Load releases
@@ -104,6 +107,7 @@ class Driver():
         
     def summary(self):
         print(f" Driver {self.name}")
+        print(f" Instrument {self.manufacturer}, model {self.model}")
         print('')
         tab_content = [['Releases versions (date)','Releases notes'],None]
         for version in sorted(self.releases.keys()) :
@@ -112,7 +116,7 @@ class Driver():
         utilities.print_tab(tab_content)
         
     def get_release(self,version):
-        assert version in self.releases.keys(), f"Version {version} of driver {self.name} doesn't exist"
+        assert version in self.releases.keys(), f"Version {version} of driver {self.name} does not exist"
         return self.releases[version]
     
     def __getitem__(self,attr):
