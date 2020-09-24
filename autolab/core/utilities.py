@@ -30,3 +30,23 @@ def print_tab(tab_content) :
             str_to_print += '\n'
     
     print(str_to_print)
+    
+    
+def emphasize(txt,sign='-'):
+
+    ''' Returns:    ---
+                    txt
+                    ---
+    '''
+
+    return sign*len(txt) + '\n' + txt + '\n' + sign*len(txt)
+
+
+def underline(txt,sign='-'):
+
+    ''' Returns:
+                    txt
+                    ---
+    '''
+
+    return txt + '\n' + sign*len(txt)
