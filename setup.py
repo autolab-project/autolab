@@ -31,7 +31,8 @@ setup(
             'pandas>=0.24',
             'pyvisa>=1.10',
             'python-vxi11>=0.9',
-			'matplotlib>=3'
+			'matplotlib>=3',
+            'gitpython>=3.1.8'
             ],
     entry_points={'console_scripts': ['autolab = scripts.autolab:main']},
 	python_requires='>=3.6',
