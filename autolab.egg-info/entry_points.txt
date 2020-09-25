@@ -1,0 +1,3 @@
+[console_scripts]
+autolab = scripts.autolab:main
+

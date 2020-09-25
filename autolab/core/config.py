@@ -1,65 +1,46 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 23 15:17:16 2020
+Created on Mon Nov 18 14:53:10 2019
 
 @author: qchat
 """
 
 import configparser
-from . import paths, telemetry
+from . import paths, stats
 import os
+import shutil
+
 
 
 # ==============================================================================
 # GENERAL
 # ==============================================================================
 
-def check_local_directory():
+def initialize_local_directory():
 
-    """ This function creates the default autolab local directory in the user home"""
-    
-    item_created = []
+    """ This function creates the default autolab local directory """
 
     # LOCAL DIRECTORY
     if os.path.exists(paths.USER_FOLDER) is False:
         os.mkdir(paths.USER_FOLDER)
-        item_created.append(paths.USER_FOLDER)
+        print(f'The local directory of AUTOLAB has been created: {paths.USER_FOLDER}')
 
     # DEVICES CONFIGURATION FILE
     if os.path.exists(paths.DEVICES_CONFIG) is False :
         devices_config = configparser.ConfigParser()
         devices_config['system'] = {'driver':'system','connection':'DEFAULT'}
         save_config('devices',devices_config)
-        item_created.append(paths.DEVICES_CONFIG)
-        
+        print(f'The devices configuration file devices_config.ini has been created: {paths.DEVICES_CONFIG}')
 
-    # DRIVERS
-    # =========================================================================
-    if os.path.exists(paths.DRIVERS) is False :
-        os.mkdir(paths.DRIVERS)
-        item_created.append(paths.DRIVERS)
+    # lOCAL CUSTOM DRIVER FOLDER
+    if os.path.exists(paths.DRIVER_SOURCES['local']) is False :
+        os.mkdir(paths.DRIVER_SOURCES['local'])
+        print(f'The local driver directory has been created: {paths.DRIVER_SOURCES["local"]}')
 
-    for key in ['OFFICIAL','LOCAL']:
-        path = getattr(paths,f'DRIVERS_{key}')
-        if os.path.exists(path) is False :
-            os.mkdir(path)
-            item_created.append(path)
-        
-        
-    # AUTOLAB
-    # =========================================================================
+    # AUTOLAB CONFIGURATION FILE
     if os.path.exists(paths.AUTOLAB_CONFIG) is False :
         save_config('autolab',configparser.ConfigParser())
-        item_created.append(paths.AUTOLAB_CONFIG)
-        
-        
-    # SUMUP
-    # =========================================================================
-    if len(item_created) > 0 : 
-        print('[AUTOLAB Configuration] Folder(s) & File(s) created:')
-        for item in item_created : print(item)
-
-
+        print(f'The configuration file autolab_config.ini has been created: {paths.AUTOLAB_CONFIG}')
 
 
 def save_config(config_name,config):
@@ -79,6 +60,29 @@ def load_config(config_name):
     return config
 
 
+#def get_attribute(name,config,header,attribute):
+
+#    ''' This function get the value of the given parameter of the given header in the provided configparser '''
+
+#    assert header in config.sections(), f"Header '{header}' not found in the configuration file."
+#    assert parameter in config[header].keys(), f"Parameter '{parameter}' not found in header {header}."
+#    return config[header][parameter]
+
+#def get_config_section(config,section_name):
+
+#    ''' Returns section <section_name> from existing <config> object '''
+
+#    assert section_name in config.sections(), f"Section {section_name} not found in configuration file"
+#    return config[section_name]
+
+
+#def load_config_section(config_name,section_name):
+
+#    ''' Returns section <section_name> from configuration file <config_name>_config.ini '''
+
+#    config = load_config(config_name)
+#    return get_config_section(config,section_name)
+
 
 # ==============================================================================
 # AUTOLAB CONFIG
@@ -91,22 +95,23 @@ def check_autolab_config():
     autolab_config = load_config('autolab')
 
     # Check stats configuration
-    if 'telemetry' not in autolab_config.sections() or 'enabled' not in autolab_config['telemetry'].keys() :
-        
-        change_text = 'To change it, edit the autolab_config.ini file.'
-        ans = input(f'{telemetry.init_text}\nDo you agree? [default:yes] > ')
+    if 'stats' not in autolab_config.sections() or 'enabled' not in autolab_config['stats'].keys() :
+
+        ans = input(f'{stats.startup_text} Do you agree? [default:yes] > ')
         if ans.strip().lower() == 'no' :
-            autolab_config['telemetry'] = {'enabled': '0'}
-            print(f'\nTelemetry has been disabled. {change_text}')
+            print('This feature has been disabled. You can enable it back with the function autolab.set_stats_enabled(True).')
+            autolab_config['stats'] = {'enabled': '0'}
         else :
-            autolab_config['telemetry'] = {'enabled': '1'}
-            print(f'\nThank you! {change_text}')
+            print('Thank you !')
+            autolab_config['stats'] = {'enabled': '1'}
+
 
     # Check server configuration
     if 'server' not in autolab_config.sections() :
         autolab_config['server'] = {'port':4001}
     if 'port' not in autolab_config['server'].keys() :
         autolab_config['server']['port'] = 4001
+
 
     save_config('autolab',autolab_config)
 
@@ -116,7 +121,7 @@ def get_stats_config():
     ''' Returns section stats from autolab_config.ini '''
 
     config = load_config('autolab')
-    assert 'telemetry' in config.sections(), 'Missing section telemetry in autolab_config.ini'
+    assert 'stats' in config.sections(), 'Missing section stats in autolab_config.ini'
 
     return config['stats']
 
@@ -130,3 +135,36 @@ def get_server_config():
 
     return config['server']
 
+
+
+# =============================================================================
+# DEVICES CONFIG
+# =============================================================================
+
+def get_all_devices_configs():
+
+    ''' Returns current devices configuration '''
+
+    config = load_config('devices')
+    assert len(set(config.sections())) == len(config.sections()), f"Each device must have a unique name."
+
+    return config
+
+
+
+def list_all_devices_configs():
+
+    ''' Returns the list of available configuration names '''
+
+    devices_configs = get_all_devices_configs()
+    return sorted(list(devices_configs.sections()))
+
+
+
+def get_device_config(config_name):
+
+    ''' Returns the config associated with config_name '''
+
+    assert config_name in list_all_devices_configs(), f"Device configuration {config_name} not found"
+    devices_configs = get_all_devices_configs()
+    return devices_configs[config_name]
