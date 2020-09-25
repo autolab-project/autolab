@@ -5,42 +5,11 @@ Created on Sat Jul 20 10:46:59 2019
 @author: qchat
 """
 
-from autolab import DriverManager
-dm = DriverManager()
+import numpy as np
+import time
 
-print('\n-- Print summary, first time is empty --')
-dm.summary()
-
-print('\n-- Refresh drivers in case we have modified some of them --')
-dm.refresh()
-
-print('\n-- Print summary, first time is empty --')
-dm.summary()
-
-print('\n-- Update repo (automatically refreshed) --')
-dm.update()
-
-print('\n-- Print summary --')
-dm.summary()
-
-print('\n-- access yenista_TUNICS --')
-print(dm['yenista_TUNICS'])
-print(dm.yenista_TUNICS)
-print(dm.get_driver('yenista_TUNICS'))
-
-print('\n-- yenista_TUNICS summary --')
-driver = dm.get_driver('yenista_TUNICS')
-driver.summary()
-
-print('\n-- connect to yenista_TUNICS with last version --')
-conn_infos = {}
-instance = driver.connect()
-
-print('\n-- connect to yenista_TUNICS with a particular driver version --')
-conn_infos = {}
-instance = driver.connect(version='1.2.2')
-
-#autolab.get_device('PCBRUNO')
+import autolab
+autolab.get_device('PCBRUNO')
 #from autolab import scan as s
 
 # # Instantiation and preconfiguration of a device

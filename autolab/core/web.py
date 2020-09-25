@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 23 15:44:55 2020
+Created on Fri Sep 20 17:11:57 2019
 
 @author: qchat
 """
@@ -10,5 +10,5 @@ import webbrowser
 def community():
     webbrowser.open('https://autolab-community.org')
 
-def docs():
+def doc():
     webbrowser.open('https://autolab.readthedocs.io')
