@@ -13,6 +13,8 @@ import os
 from PyQt5.QtWidgets import QApplication
 from ..scanning.main import Scanner
 
+from ..ct400_interface.main import CT400Gui
+
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 
@@ -47,12 +49,18 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         # Scanner / Monitors
         self.scanner = None
+        self.ct400_gui = None
         self.monitors = {}
         
         
+        # BUG: tooltip not displayed
         scanAction = self.menuBar.addAction('Open scanner')
         scanAction.triggered.connect(self.openScanner)
-        scanAction.setToolTip('Open the scanner in another window')  
+        scanAction.setToolTip('Open the scanner in another window')
+
+        ct400Action = self.menuBar.addAction('Open CT400 GUI')
+        ct400Action.triggered.connect(self.openCT400Gui)
+        ct400Action.setToolTip('Open the CT400 GUI in another window')
 
         
         reportAction = self.menuBar.addAction('Report bugs / suggestions')
@@ -134,11 +142,46 @@ class ControlCenter(QtWidgets.QMainWindow):
         # If success, load the entire module (submodules, variables, actions)
         if check is True : 
             item.load(module)
-            
-                    
-                
-            
-            
+
+
+
+    def openCT400Gui(self):
+
+        """ This function open the CT400 GUI associated to this variable. """
+
+        # If the scanner is not already running, create one
+        if self.ct400_gui is None:
+
+            list_devices_gui = [devName for devName in autolab.list_local_configs()]  # All devices
+            check_list_gui = [bool(str(x).lower().startswith("ct400")) for x in list_devices_gui]
+
+            for i, check in enumerate(check_list_gui):  # Index of first ct400 find
+                if check:
+                    break
+            else:
+                i = None
+
+            if i is not None:  # If find a ct400 device
+                ct400_name = list_devices_gui[i]
+
+                if ct400_name not in autolab.list_devices():  # If not in connected devices connect ct400
+                    ct400_tree = self.tree.findItems(ct400_name, QtCore.Qt.MatchExactly)[0]
+                    self.associate(ct400_tree)
+                    ct400_tree.setExpanded(True)
+
+                ct400 = autolab.DEVICES.get(ct400_name)
+                if ct400 is not None:
+                    self.ct400_gui = CT400Gui(self, ct400)
+                    self.ct400_gui.show()
+                    self.ct400_gui.activateWindow()
+
+            else:
+                self.setStatus(f'No CT400 found in the devices list: {list_devices_gui}', 10000)
+
+        # If the CT400 GUI is already running, just make as the front window
+        else :
+            # self.ct400_gui.setWindowState(self.ct400_gui.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.ct400_gui.activateWindow()
 
     def openScanner(self):
         
@@ -180,21 +223,28 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This clear the gui instance reference when quitted """
         
         self.scanner = None
-        
-        
+
+
+    def clearCT400(self):
+
+        """ This clear the gui instance reference when quitted """
+
+        self.ct400_gui = None
+
+
     def closeEvent(self,event):
         
         """ This function does some steps before the window is really killed """
         
         if self.scanner is not None :
             self.scanner.close()
-            
+
+        if self.ct400_gui is not None :
+            self.ct400_gui.close()
+
         monitors = list(self.monitors.values())
-        for monitor in monitors :
+        for monitor in monitors:
             monitor.close()
-
-
-
 
         autolab.close()  # close all devices
 
