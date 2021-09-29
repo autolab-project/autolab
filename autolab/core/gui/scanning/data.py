@@ -7,12 +7,14 @@ Created on Sun Sep 29 18:10:31 2019
 
 import collections
 from queue import Queue
+import os
+import shutil
+import tempfile
+
 from PyQt5 import QtCore,QtWidgets
 from autolab import paths
-from distutils.dir_util import copy_tree
-import os 
 import pandas as pd
-import tempfile
+
 
 class DataManager :
     
@@ -35,16 +37,16 @@ class DataManager :
         
         # Clear button configuration
         self.gui.clear_pushButton.clicked.connect(self.clear)
-        
-        
-        
-    def getData(self,nbDataset,varList):
-        
+
+
+
+    def getData(self,nbDataset,varList, selectedData=0):
+
         """ This function returns to the figure manager the required data """
         
         dataList = []
-        
-        for i in range(nbDataset) :
+
+        for i in range(selectedData, nbDataset+selectedData) :
             if i < len(self.datasets) :
                 dataset = self.datasets[-(i+1)]
                 data = dataset.getData(varList)
@@ -62,23 +64,26 @@ class DataManager :
         
         """ This function is called when the save button is clicked. 
         It asks a path and starts the procedure to save the data """
-        
-        dataset = self.getLastDataset()
+
+        dataset = self.getLastSelectedDataset()
         if dataset is not None :
-            
-            path = str(QtWidgets.QFileDialog.getExistingDirectory(self.gui, 
-                                                              "Select Directory",
-                                                              paths.USER_LAST_CUSTOM_FOLDER))
-     
+
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(self.gui,
+                                              caption="Save data",
+                                              directory=paths.USER_LAST_CUSTOM_FOLDER,
+                                              filter="Text Files (*.txt)")
+            path = os.path.dirname(filename)
+
             if path != '' :
+                paths.USER_LAST_CUSTOM_FOLDER = path
                 self.gui.statusBar.showMessage(f'Saving data...',5000)
-                
-                dataset.save(path)
-                self.gui.figureManager.save(path)
-                
-                self.gui.statusBar.showMessage(f'Last dataset successfully saved in {path}',5000)
-        
-        
+
+                dataset.save(filename)
+                self.gui.figureManager.save(filename)
+
+                self.gui.statusBar.showMessage(f'Last dataset successfully saved in {filename}',5000)
+
+
 
     def clear(self):
         
@@ -89,19 +94,28 @@ class DataManager :
         self.gui.figureManager.clearData()
         self.gui.variable_x_comboBox.clear()
         self.gui.variable_y_comboBox.clear()
+        self.gui.data_comboBox.clear()
         self.gui.save_pushButton.setEnabled(False)
-        
-        
-        
+        self.gui.progressBar.setValue(0)
+
+
+
     def getLastDataset(self):
         
         """ This return the current (last created) dataset """
-        
-        if len(self.datasets)>0 :
+
+        if len(self.datasets) > 0:
             return self.datasets[-1]
-        
-        
-        
+
+
+    def getLastSelectedDataset(self):
+
+        """ This return the current (last selected) dataset """
+
+        return self.datasets[self.gui.data_comboBox.currentIndex()]
+
+
+
     def newDataset(self,config):
         
         """ This function creates and returns a new empty dataset """
@@ -121,15 +135,17 @@ class DataManager :
         count = 0
         dataset = self.getLastDataset()
         lenQueue = self.queue.qsize()
-        for i in range(lenQueue) :
+
+        for i in range(lenQueue):
+
             try : point = self.queue.get()
             except : break
             dataset.addPoint(point)
             count += 1
-        
+
+
         # Upload the plot if new data available
-        if count > 0 :
-            
+        if count > 0:
             # Updagte progress bar
             self.gui.progressBar.setValue(len(dataset))
             
@@ -153,9 +169,9 @@ class DataManager :
         
         """ This function update the combobox in the GUI that displays the names of
         the results that can be plotted """
-        
-        dataset = self.getLastDataset()
-        
+
+        dataset = self.getLastSelectedDataset()
+
         resultNamesList = []
         for resultName in dataset.data.columns :
             if resultName not in ['id'] :
@@ -180,15 +196,16 @@ class DataManager :
 class Dataset():
     
     def __init__(self,gui,config):
-        
+
+        self.all_data_temp = list()
+
         self.gui = gui
         self.config = config
      
         self.data = pd.DataFrame()
         self.tempFolderPath = tempfile.mkdtemp() # Creates a temporary directory for this dataset
         self.new = True
-        
-        # Save current config in the temp directory
+
         self.gui.configManager.export(os.path.join(self.tempFolderPath,'config.conf'))
         
         
@@ -200,17 +217,25 @@ class Dataset():
 
         if varList[0] == varList[1] : return self.data.loc[:,[varList[0]]]
         else : return self.data.loc[:,varList]
-    
-    
-    
-    def save(self,path):
-        
+
+
+
+    def save(self,filename):
+
         """ This function saved the dataset in the provided path """
-        
-        copy_tree(self.tempFolderPath,path)
-        
-    
-    
+
+        raw_name, extension = os.path.splitext(filename)
+        new_configname = raw_name+".conf"
+
+        config_name = os.path.join(self.tempFolderPath,'config.conf')
+        shutil.copy(config_name, new_configname)
+
+        data_name = os.path.join(self.tempFolderPath,'data.txt')
+        shutil.copy(data_name, filename)
+
+
+
+
     def addPoint(self,dataPoint):
         
         """ This function add a data point (parameter value, and results) in the dataset """
@@ -233,23 +258,26 @@ class Dataset():
             
             # If the result is displayable (numerical), keep it in memory
             if resultType in [int,float,bool]:
-               simpledata[resultName] = result
-                
+                simpledata[resultName] = result
+
             # Else write it on a file, in a temp directory
-            else : 
+
+            else :
                 folderPath = os.path.join(self.tempFolderPath,resultName)
                 if os.path.exists(folderPath) is False : os.mkdir(folderPath)
                 filePath = os.path.join(folderPath,f'{ID}.txt')
                 element.save(filePath,value=result)
-                
-            
-        # Store data in the dataset's dataframe
-        self.data = self.data.append(simpledata,ignore_index=True)
-        if ID == 1 : 
+
+        self.all_data_temp.append(simpledata)
+        self.data = pd.DataFrame(self.all_data_temp)
+
+
+        if ID == 1 :
             self.data = self.data[list(simpledata.keys())] # reorder columns
             header = True
         else :
             header = False
+
         self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,f'data.txt'),index=False,mode='a',header=header)
         
         
@@ -259,5 +287,4 @@ class Dataset():
         """ Returns the number of data point of this dataset """
         
         return len(self.data)
-    
-    
+

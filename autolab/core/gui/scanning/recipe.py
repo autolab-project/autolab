@@ -22,17 +22,15 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
 
 class RecipeManager :
-    
-    def __init__(self,gui):
-        
+
+    def __init__(self,gui, tree_layout):
+
         self.gui = gui
         
         # Tree configuration
         #self.tree = self.gui.recipe_treeWidget
         self.tree = MyQTreeWidget(self.gui)
-        self.gui.tree_layout.addWidget(self.tree)
-        spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gui.tree_layout.addItem(spacer)
+        tree_layout.addWidget(self.tree)
         self.tree.setHeaderLabels(['Step name','Type','Element address','Value'])
         self.tree.header().resizeSection(3, 50)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
@@ -41,7 +39,7 @@ class RecipeManager :
         self.tree.setDropIndicatorShown(True)
         self.tree.setAlternatingRowColors(True)        
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.tree.setMinimumSize(450,500)
+        # self.tree.setMinimumSize(450,500)
         self.tree.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.tree.customContextMenuRequested.connect(self.rightClick)
                 
