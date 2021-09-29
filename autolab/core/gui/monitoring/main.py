@@ -50,7 +50,19 @@ class Monitor(QtWidgets.QMainWindow):
         
         # Save
         self.saveButton.clicked.connect(self.saveButtonClicked)
-        
+
+        # Clear
+        self.clearButton.clicked.connect(self.clearButtonClicked)
+
+        # Mean
+        self.mean_checkBox.clicked.connect(self.mean_checkBoxClicked)
+
+        # Min
+        self.min_checkBox.clicked.connect(self.min_checkBoxClicked)
+
+        # Max
+        self.max_checkBox.clicked.connect(self.max_checkBoxClicked)
+
         # Managers
         self.dataManager = DataManager(self)
         self.figureManager = FigureManager(self)
@@ -115,25 +127,71 @@ class Monitor(QtWidgets.QMainWindow):
         # Make sure the monitoring is paused
         if self.monitorManager.isPaused() is False :
             self.pauseButtonClicked()
-        
-        # Ask the path of the output folder
-        path = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory",paths.USER_LAST_CUSTOM_FOLDER))
-        
+
+        # Ask the filename of the output data
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self,
+                                          caption="Save data",
+                                          directory=os.path.join(paths.USER_LAST_CUSTOM_FOLDER,
+                                                                 f'{self.variable.address()}_monitor.txt'),
+                                          filter="Text Files (*.txt)")
+
+        path = os.path.dirname(filename)
         # Save the given path for future, the data and the figure if the path provided is valid
         if path != '' :
             
             paths.USER_LAST_CUSTOM_FOLDER = path
             self.statusBar.showMessage('Saving data...',5000)
-            
-            try : 
-                self.dataManager.save(path)
-                self.figureManager.save(path)
-                self.statusBar.showMessage(f'Data successfully saved in {path}.',5000)
+
+            try :
+                self.dataManager.save(filename)
+                self.figureManager.save(filename)
+                self.statusBar.showMessage(f'Data successfully saved in {filename}.',5000)
             except :
                 self.statusBar.showMessage('An error occured while saving data !',10000)
             
 
-            
+
+    def clearButtonClicked(self):
+        """ This function clear the displayed data """
+
+        self.dataManager.clear()
+        self.figureManager.clear()
+
+
+    def mean_checkBoxClicked(self):
+        """ This function clear the mean plot """
+        if not self.mean_checkBox.isChecked():
+            self.figureManager.plot_mean.set_xdata([])
+            self.figureManager.plot_mean.set_ydata([])
+
+        xlist,ylist = self.dataManager.getData()
+
+        if len(xlist) > 0:
+            self.figureManager.update(xlist,ylist)
+
+
+    def min_checkBoxClicked(self):
+        """ This function clear the min plot """
+        if not self.min_checkBox.isChecked():
+            self.figureManager.plot_min.set_xdata([])
+            self.figureManager.plot_min.set_ydata([])
+
+        xlist,ylist = self.dataManager.getData()
+
+        if len(xlist) > 0:
+            self.figureManager.update(xlist,ylist)
+
+    def max_checkBoxClicked(self):
+        """ This function clear the max plot """
+        if not self.max_checkBox.isChecked():
+            self.figureManager.plot_max.set_xdata([])
+            self.figureManager.plot_max.set_ydata([])
+
+        xlist,ylist = self.dataManager.getData()
+
+        if len(xlist) > 0:
+            self.figureManager.update(xlist,ylist)
+
     def closeEvent(self,event):
         
         """ This function does some steps before the window is really killed """

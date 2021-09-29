@@ -6,7 +6,7 @@ Created on Sun Sep 29 18:22:43 2019
 """
 
 import pandas as pd
-import os
+
 
 class DataManager :
     
@@ -42,18 +42,18 @@ class DataManager :
         """ This function update the data of the provided plot object """
         
         return self.xlist,self.ylist
-        
-        
-        
-    def save(self,path):
-        
-        """ This function save the data in a file, in the provided path """
-        
+
+
+
+    def save(self,filename):
+
+        """ This function save the data in a file with the provided filename"""
+
         df = pd.DataFrame({'Time [s]':self.xlist,f'{self.gui.variable.address()}':self.ylist})
-        df.to_csv(os.path.join(path,'data.txt'),index=False)
-        
-        
-        
+        df.to_csv(filename, index=False)
+
+
+
     def addPoint(self,point):
         
         """ This function append a datapoint [x,y] in the lists of data """ 
@@ -68,7 +68,9 @@ class DataManager :
         while max(self.xlist)-min(self.xlist) > self.windowLength : 
             self.xlist.pop(0)
             self.ylist.pop(0)
-            
 
-        
-    
+
+    def clear(self):
+        self.xlist.clear()
+        self.ylist.clear()
+
