@@ -10,6 +10,7 @@ quentin.chateiller@c2n.upsaclay.fr
 import autolab
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 import os 
+from PyQt5.QtWidgets import QApplication
 from ..scanning.main import Scanner
 
 from .thread import ThreadManager
@@ -32,7 +33,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         # Tree widget configuration
         self.tree.setHeaderLabels(['Objects','Type','Actions','Values',''])
-        self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter);
+        self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
         self.tree.header().resizeSection(0, 200)
         self.tree.header().resizeSection(4, 15)
         self.tree.header().setStretchLastSection(False)
@@ -70,20 +71,20 @@ class ControlCenter(QtWidgets.QMainWindow):
         for devName in autolab.list_local_configs() :
             item = TreeWidgetItemModule(self.tree,devName,self)
             for i in range(5) :
-                item.setBackground(i, QtGui.QColor('#9EB7F5')) #vert
+                item.setBackground(i, QtGui.QColor('#9EB7F5'))  # blue
             if devName in autolab.list_devices() :
                 self.associate(item)
         
         
         
-    def setStatus(self,message):
     
+    def setStatus(self,message, timeout=0):
         """ Modify the message displayed in the status bar """
         
-        self.statusbar.showMessage(message)
         
         
         
+        self.statusbar.showMessage(message, msecs=timeout)
     def clearStatus(self):
         
         """ Erase the message displayed in the status bar """
@@ -122,14 +123,14 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         # Try to get / instantiated the device
         check = False
-        try : 
-            self.setStatus(f'Loading device {item.name}...')
+        try :
+            self.setStatus(f'Loading device {item.name}...', 5000)
             module = autolab.get_device(item.name)
             check = True
             self.clearStatus()
-        except Exception as e : 
-            self.setStatus(f'An error occured when loading device {item.name} : {str(e)}')
-            
+        except Exception as e :
+            self.setStatus(f'An error occured when loading device {item.name} : {str(e)}', 10000)
+
         # If success, load the entire module (submodules, variables, actions)
         if check is True : 
             item.load(module)
@@ -152,8 +153,8 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         
         # If the scanner is already running, just make as the front window
-        else :  
-            self.scanner.setWindowState(self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+        else :
+            # self.scanner.setWindowState(self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.scanner.activateWindow()
              
             
@@ -195,7 +196,9 @@ class ControlCenter(QtWidgets.QMainWindow):
 
 
 
+        autolab.close()  # close all devices
 
+        QApplication.quit()  # close the control center interface
 
 
 

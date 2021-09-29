@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtWidgets
 from ..monitoring.main import Monitor
 import os
 from autolab import paths
+from autolab import close
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -25,9 +26,10 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         self.loaded = False
         self.gui = gui
 
-        
-        
-        
+        self.is_not_submodule = type(gui.tree) is type(itemParent)
+
+
+
     def load(self,module):
         
         """ This function loads the entire module (submodules, variables, actions) """
@@ -56,13 +58,29 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
             
         # Change loaded status
         self.loaded = True
- 
+
+
+    def menu(self,position):
+
+        """ This function provides the menu when the user right click on an item """
+
+        if self.is_not_submodule and self.loaded:
+            menu = QtWidgets.QMenu()
+            disconnectDevice = menu.addAction(f"Disconnect {self.name}")
+
+            choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+
+            if choice == disconnectDevice :
+                close(self.name)
+
+                for i in range(self.childCount()):
+                    self.removeChild(self.child(0))
+                self.loaded = False
 
 
 
 
 
-       
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
     
     """ This class represents an action in an item of the tree """
@@ -150,14 +168,14 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             self.gui.addStepToScanRecipe('action',self.action)
 
 
-        
-        
-        
-        
-class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):   
 
-    """ This class represents a variable in an item of the tree """     
-    
+
+
+
+class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
+
+    """ This class represents a variable in an item of the tree """
+
     def __init__(self,itemParent,variable,gui) :
         
         displayName = f'{variable.name}'
@@ -170,8 +188,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.gui = gui
 
         self.variable = variable
-        
-        self.monitor = None
         
         # Signal creation and associations in autolab devices instances         
         self.readSignal = ReadSignal()
@@ -340,16 +356,18 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.saveValue()
             
     def saveValue(self):
-        
-        path = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value", 
-                                        os.path.join(paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'), 
+
+        filename = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value",
+                                        os.path.join(paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'),
                                         "Text file (*.txt)")[0]
+
+        path = os.path.dirname(filename)
         if path != '' :
             paths.USER_LAST_CUSTOM_FOLDER = path
             try : 
                 self.gui.statusbar.showMessage(f"Saving value of {self.variable.name}...",5000)
-                self.variable.save(path)
-                self.gui.statusbar.showMessage(f"Value of {self.variable.name} successfully read and save at {path}",5000)
+                self.variable.save(filename)
+                self.gui.statusbar.showMessage(f"Value of {self.variable.name} successfully read and save at {filename}",5000)
             except Exception as e :
                 self.gui.statusbar.showMessage(f"An error occured: {str(e)}",10000)
             
@@ -358,20 +376,21 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def openMonitor(self):
         
         """ This function open the monitor associated to this variable. """
-        
+
         # If the monitor is not already running, create one
         if id(self) not in self.gui.monitors.keys(): 
             self.gui.monitors[id(self)] = Monitor(self)
             self.gui.monitors[id(self)].show()
         
         # If the monitor is already running, just make as the front window
-        else :  
-            self.gui.monitors[id(self)].setWindowState(self.monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            self.gui.monitors[id(self)].activateWindow()
-        
+        else :
+            monitor = self.gui.monitors[id(self)]
+            # monitor.setWindowState(monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            monitor.activateWindow()
 
-        
-        
+
+
+
     def clearMonitor(self):
         
         """ This clear the gui instance reference when quitted """
