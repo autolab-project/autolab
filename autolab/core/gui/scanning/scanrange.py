@@ -4,11 +4,11 @@ Created on Sun Sep 29 18:14:28 2019
 
 @author: qchat
 """
-import numpy as np
 import math as m
 
-class RangeManager : 
-    
+
+class RangeManager :
+
     def __init__(self,gui):
         
         self.gui = gui
@@ -33,7 +33,9 @@ class RangeManager :
         # Push button
         self.gui.fromFigure_pushButton.clicked.connect(self.fromFigureButtonClicked)
         self.gui.fromFigure_pushButton.setEnabled(False)
-        
+
+
+        self.point_or_step = "point"
         self.refresh()
                         
         
@@ -79,21 +81,23 @@ class RangeManager :
         
         # Nbpts
         nbpts = self.gui.configManager.getNbPts()
+        step = self.gui.configManager.getStep()
+
         self.gui.nbpts_lineEdit.setText(f'{nbpts:g}')
         self.gui.setLineEditBackground(self.gui.nbpts_lineEdit,'synced')
         
         # Log 
         log = self.gui.configManager.getLog()
         self.gui.scanLog_checkBox.setChecked(log)
-        
-        # Step
-        if log is False :
-            step = width / (nbpts-1)
+
+        if log is False:
+
             self.gui.step_lineEdit.setText(f'{step:g}')
             self.gui.step_lineEdit.setEnabled(True)
-        else :
+        else:
             self.gui.step_lineEdit.setEnabled(False)
             self.gui.step_lineEdit.setText('')
+
         self.gui.setLineEditBackground(self.gui.step_lineEdit,'synced')
             
             
@@ -106,8 +110,9 @@ class RangeManager :
         
         try :
             value = int(float(value))
-            assert value > 2
+            assert value > 0
             self.gui.configManager.setNbPts(value)
+            self.point_or_step = "point"
         except :
             self.refresh()
         
@@ -120,14 +125,18 @@ class RangeManager :
         value = self.gui.step_lineEdit.text()
 
         try :
+
+            if value == "inf" or float(value) == 0:
+                self.gui.nbpts_lineEdit.setText('1')
+                self.nbptsChanged()
+                return
+
             value = float(value)
             assert value > 0
-            xrange = list(self.gui.configManager.getRange())
-            width = xrange[1]-xrange[0]
-            nbpts = round(abs(width)/value)+1
-            self.gui.configManager.setNbPts(nbpts)
-            xrange[1] = xrange[0]+np.sign(width)*(nbpts-1)*value
-            self.gui.configManager.setRange(xrange)
+
+            self.gui.configManager.setStep(value)
+
+            self.point_or_step = "step"
         except :
             self.refresh()
         
@@ -143,7 +152,7 @@ class RangeManager :
             value=float(value)
             log = self.gui.configManager.getLog()
             if log is True : assert value>0
-            print(value,log,'pas de soucis')
+
             xrange = list(self.gui.configManager.getRange())
             xrange[0] = value
             self.gui.configManager.setRange(xrange)
@@ -179,7 +188,7 @@ class RangeManager :
         try:
             value=float(value)
             log = self.gui.configManager.getLog()
-            if log is True : assert value>0
+            if log is True : assert value > 0
             xrange = list(self.gui.configManager.getRange())
             xrange_new = xrange.copy()
             xrange_new[0] = value - (xrange[1]-xrange[0])/2
@@ -220,6 +229,7 @@ class RangeManager :
         
         state = self.gui.scanLog_checkBox.isChecked()
         if state is True :
+            self.point_or_step = "point"
             xrange = list(self.gui.configManager.getRange())
             change = False
             if xrange[1] <= 0 : 
@@ -232,4 +242,3 @@ class RangeManager :
                 self.gui.configManager.setRange(xrange)
         
         self.gui.configManager.setLog(state)
-                

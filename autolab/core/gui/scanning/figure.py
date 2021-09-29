@@ -12,8 +12,13 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib
 
-class FigureManager :    
-    
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
+# matplotlib.rcParams.update({'figure.autolayout': True})  # good but can raise LinAlgError. alternative is to emit signal when change windows
+
+
+class FigureManager :
+
     def __init__(self,gui):
         
         self.gui = gui
@@ -23,8 +28,10 @@ class FigureManager :
         # Configure and initialize the figure in the GUI
         self.fig = Figure()
         matplotlib.rcParams.update({'font.size': 12})
-        self.ax = self.fig.add_subplot(111)  
-        self.ax.grid()
+        self.ax = self.fig.add_subplot(111)
+
+        self.add_grid(True)
+
         self.ax.set_xlim((0,10))
         self.ax.autoscale(enable=False)
         # The first time we open a monitor it doesn't work, I don't know why..
@@ -32,10 +39,14 @@ class FigureManager :
         # More accurately, FigureCanvas doesn't find the event loop the first time it is called
         # The second time it works..
         # Seems to be only in Spyder..
-        try : 
-            self.canvas = FigureCanvas(self.fig) 
+        try :
+            self.canvas = FigureCanvas(self.fig)
         except :
             self.canvas = FigureCanvas(self.fig)
+
+        self.toolbar = NavigationToolbar(self.canvas, self.gui)
+        self.gui.graph.addWidget(self.toolbar)
+
         self.gui.graph.addWidget(self.canvas)
         self.fig.tight_layout()
         self.canvas.draw()
@@ -52,14 +63,9 @@ class FigureManager :
         self.gui.goDown_pushButton.clicked.connect(lambda:self.moveButtonClicked('down'))
         self.gui.goLeft_pushButton.clicked.connect(lambda:self.moveButtonClicked('left'))
         self.gui.goRight_pushButton.clicked.connect(lambda:self.moveButtonClicked('right'))
-        
-        self.fig.canvas.mpl_connect('button_press_event', self.onPress)
-        self.fig.canvas.mpl_connect('scroll_event', self.onScroll)
-        self.fig.canvas.mpl_connect('motion_notify_event', self.onMotion)
-        self.fig.canvas.mpl_connect('button_release_event', self.onRelease)
-        self.press = None
-        
-        self.movestep = 0.05
+
+
+        self.MOVESTEP = 0.05
 
         # Number of traces
         self.nbtraces = 5
@@ -67,7 +73,6 @@ class FigureManager :
         self.gui.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
         self.gui.nbTraces_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
         self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
-        
 
         
         
@@ -102,17 +107,26 @@ class FigureManager :
         """ This function proceeds to an autoscale operation of the given axis """
         
         datas = [getattr(curve,f'get_{axe}data')() for curve in self.curves]
-        if len(datas)>0 :
-            min([min(data) for data in datas])
+        if len(datas) > 0 :
             minValue = min([min(data) for data in datas])
             maxValue = max([max(data) for data in datas])
             if (minValue,maxValue) != self.getRange(axe) :
                 self.setRange(axe,(minValue,maxValue))
 
+            self.toolbar.update()
 
-            
-            
-            
+
+    def add_grid(self, state):
+        if state:
+            self.ax.minorticks_on()
+        else:
+            self.ax.minorticks_off()
+
+        self.ax.grid(b=state, which='major')
+        self.ax.grid(b=state, which='minor', alpha=0.4)
+
+
+
     # LOGSCALING
     ###########################################################################
 
@@ -145,11 +159,15 @@ class FigureManager :
             scaleType = 'linear'
         
         self.checkLimPositive(axe)
-        self.ax.grid(state,which='minor',axis=axe)
-        getattr(self.ax,f'set_{axe}scale')(scaleType)
-        
-        
-        
+        getattr(self.ax,f'set_{axe}scale')(scaleType)  # BUG: crash python if ct400 is openned -> issue between matplotlib and ctypes from ct400 dll lib
+        self.add_grid(True)
+        # update for bug -> np.log crash python if a ddl lib is openned: https://stackoverflow.com/questions/52497031/python-kernel-crashes-if-i-use-np-log10-after-loading-a-dll
+        # could change log in matplotlib but not a good solution
+        # I added this:
+            # if 0 in a: # OPTIMIZE: used to fix the python crash with ddl lib openned
+            #     a[a == 0] += 1e-200
+        # in matplotlib.scale.transform_non_affine at line 210 to fixe the crash
+
     def checkLimPositive(self,axe):
         
         """ This function updates the current range of the given axis to be positive, 
@@ -166,13 +184,13 @@ class FigureManager :
             change = True
             
         if change is True :
-            self.setRange(axe,axeRange)
-        
-        
-        
-        
-        
-        
+            self.setRange(axe,tuple(axeRange))
+
+
+
+
+
+
     # AXE LABEL
     ###########################################################################
         
@@ -213,14 +231,17 @@ class FigureManager :
         # Get current displayed result
         variable_x = self.gui.variable_x_comboBox.currentText()
         variable_y = self.gui.variable_y_comboBox.currentText()
-        
+        data_id = int(self.gui.data_comboBox.currentIndex()) + 1
+        data_len = len(self.gui.dataManager.datasets)
+        selectedData = data_len - data_id
+
         # Label update
         self.setLabel('x',variable_x)
         self.setLabel('y',variable_y)
         
         # Load the last results data
         try :
-            data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y])       
+            data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y], selectedData=selectedData)
         except :
             data = None
         
@@ -267,6 +288,7 @@ class FigureManager :
         data = data.astype(float)
         
         # Update plot data
+        # BUG: got error here out index from sync data (scanning)
         self.curves[-1].set_xdata(data.loc[:,variable_x])
         self.curves[-1].set_ydata(data.loc[:,variable_y])
         
@@ -338,21 +360,21 @@ class FigureManager :
         
         if logState is False :
             if action == 'zoom' :
-                inf_new = inf + (sup-inf)*self.movestep
-                sup_new = sup - (sup-inf)*self.movestep
+                inf_new = inf + (sup-inf)*self.MOVESTEP
+                sup_new = sup - (sup-inf)*self.MOVESTEP
             elif action == 'unzoom' :
-                inf_new = inf - (sup-inf)*self.movestep/(1-2*self.movestep)
-                sup_new = sup + (sup-inf)*self.movestep/(1-2*self.movestep)
+                inf_new = inf - (sup-inf)*self.MOVESTEP/(1-2*self.MOVESTEP)
+                sup_new = sup + (sup-inf)*self.MOVESTEP/(1-2*self.MOVESTEP)
         else :
             log_inf = m.log10(inf)
             log_sup = m.log10(sup)
             if action == 'zoom' :
-                inf_new = 10**(log_inf+(log_sup-log_inf)*self.movestep)
-                sup_new = 10**(log_sup-(log_sup-log_inf)*self.movestep)
+                inf_new = 10**(log_inf+(log_sup-log_inf)*self.MOVESTEP)
+                sup_new = 10**(log_sup-(log_sup-log_inf)*self.MOVESTEP)
             elif action == 'unzoom' :
-                inf_new = 10**(log_inf-(log_sup-log_inf)*self.movestep/(1-2*self.movestep))
-                sup_new = 10**(log_sup+(log_sup-log_inf)*self.movestep/(1-2*self.movestep))
-                
+                inf_new = 10**(log_inf-(log_sup-log_inf)*self.MOVESTEP/(1-2*self.MOVESTEP))
+                sup_new = 10**(log_sup+(log_sup-log_inf)*self.MOVESTEP/(1-2*self.MOVESTEP))
+
         self.setRange(axe,(inf_new,sup_new))
         self.redraw()
 
@@ -382,163 +404,38 @@ class FigureManager :
         
         if logState is False :
             if action == 'increase' :
-                inf_new = inf + (sup-inf)*self.movestep
-                sup_new = sup + (sup-inf)*self.movestep
+                inf_new = inf + (sup - inf)*self.MOVESTEP
+                sup_new = sup + (sup - inf)*self.MOVESTEP
             elif action == 'decrease' :
-                inf_new = inf - (sup-inf)*self.movestep
-                sup_new = sup - (sup-inf)*self.movestep
+                inf_new = inf - (sup - inf)*self.MOVESTEP
+                sup_new = sup - (sup - inf)*self.MOVESTEP
         else :
             log_inf = m.log10(inf)
             log_sup = m.log10(sup)
             if action == 'increase' :
-                inf_new = 10**(log_inf+(log_sup-log_inf)*self.movestep)
-                sup_new = 10**(log_sup+(log_sup-log_inf)*self.movestep)
+                inf_new = 10**(log_inf + (log_sup - log_inf)*self.MOVESTEP)
+                sup_new = 10**(log_sup + (log_sup - log_inf)*self.MOVESTEP)
             elif action == 'decrease' :
-                inf_new = 10**(log_inf-(log_sup-log_inf)*self.movestep)
-                sup_new = 10**(log_sup-(log_sup-log_inf)*self.movestep)
-            
+                inf_new = 10**(log_inf - (log_sup - log_inf)*self.MOVESTEP)
+                sup_new = 10**(log_sup - (log_sup - log_inf)*self.MOVESTEP)
+
         self.setRange(axe,(inf_new,sup_new))
         self.redraw()
-   
-    
-    
-    
-        
-    # MOUSE SCROLL
-    ###########################################################################
-     
-    def onScroll(self,event):
-        
-        """ This function is called when the scrolling button of the mouse has been
-        actioned for a given axis has been pressed.
-        It proceeds to the change to the figure range """
-        
-        data = {'x':event.xdata,'y':event.ydata}
-        
-        for axe in ['x','y'] :
-            
-            logState = self.isLogScaleEnabled(axe)
-            inf,sup = self.getRange(axe)
-            
-            if logState :
-            
-                if event.button == 'up' : 
-                    inf_new = 10**(m.log10(data[axe]) * self.movestep + (1-self.movestep) * m.log10(inf)) 
-                    sup_new = 10**(m.log10(data[axe]) * self.movestep + (1-self.movestep) * m.log10(sup)) 
-                elif event.button == 'down' :
-                    inf_new = 10**( ( - m.log10(data[axe]) * self.movestep + m.log10(inf) ) / (1 - self.movestep) )
-                    sup_new = 10**( ( - m.log10(data[axe]) * self.movestep + m.log10(sup) ) / (1 - self.movestep) )
-                    
-            else :
-            
-                if event.button == 'up' : 
-                    inf_new = data[axe] * self.movestep + (1-self.movestep) * inf 
-                    sup_new = data[axe] * self.movestep + (1-self.movestep) * sup 
-                elif event.button == 'down' :
-                    inf_new = ( - data[axe] * self.movestep + inf ) / (1 - self.movestep)
-                    sup_new = ( - data[axe] * self.movestep + sup ) / (1 - self.movestep)   
-                
-            self.setRange(axe,(inf_new,sup_new))
-            self.redraw()
-            
-            
-            
-            
-        
-    # MOUSE DRAG
-    ###########################################################################
-        
-    def onPress(self,event):
-        
-        """ This function is called when the main button of the mouse is pressed on the figure.
-        It saves information about this location, in order to use it in the onMotion function. """
-        
-        xlim = self.getRange('x')
-        ylim = self.getRange('y')
-        
-        if self.isLogScaleEnabled('x') is False :
-            x_width_data = xlim[1]-xlim[0]
-        else :
-            x_width_data = m.log10(xlim[1])-m.log10(xlim[0])
-        
-        if self.isLogScaleEnabled('y') is False :
-            y_width_data = ylim[1]-ylim[0]
-        else :
-            y_width_data = m.log10(ylim[1])-m.log10(ylim[0])
-        
-        leftInfCornerCoords = self.ax.transData.transform((xlim[0],ylim[0]))
-        rightSupCornerCoords = self.ax.transData.transform((xlim[1],ylim[1]))       
-        x_width_pixel = rightSupCornerCoords[0] - leftInfCornerCoords[0]
-        y_width_pixel = rightSupCornerCoords[1] - leftInfCornerCoords[1]
-    
-        self.press = xlim,ylim,x_width_data,y_width_data,x_width_pixel,y_width_pixel,event.x,event.y
 
-        
 
-    def onMotion(self,event):
-        
-        """ This function is called when the mouse if moved above the figure. If its button is pressed, 
-        proceeds to the corresponding change in range with the help on the data saved with 
-        the onPress function. """
-        
-        if self.press is not None and event.inaxes is not None :
-            
-            xlim,ylim,x_width_data,y_width_data,x_width_pixel,y_width_pixel,x_press_pixel, y_press_pixel = self.press
 
-            x_pixel,y_pixel = event.x,event.y
-            
-            xlim_new = list(xlim)
-            ylim_new = list(ylim)
-            
-            dx_pixel = x_pixel - x_press_pixel
-            dy_pixel = y_pixel - y_press_pixel
-            
-            dx_data = dx_pixel * x_width_data / x_width_pixel
-            dy_data = dy_pixel * y_width_data / y_width_pixel
-            
-            if self.isLogScaleEnabled('x'):
-                xlim_new[0] = 10**(m.log10(xlim[0])-dx_data)
-                xlim_new[1] = 10**(m.log10(xlim[1])-dx_data)
-            else :
-                xlim_new[0] = xlim[0]-dx_data
-                xlim_new[1] = xlim[1]-dx_data
-  
-            if self.isLogScaleEnabled('y'):
-                ylim_new[0] = 10**(m.log10(ylim[0])-dy_data)
-                ylim_new[1] = 10**(m.log10(ylim[1])-dy_data)
-            else :
-                ylim_new[0] = ylim[0]-dy_data
-                ylim_new[1] = ylim[1]-dy_data
-            
-            self.setRange('x',xlim_new)
-            self.setRange('y',ylim_new)
-            self.redraw()
-            
-            
-    def onRelease(self,event):
-        
-        """ This function is called when the wiew change using the mouse is finshed.
-        It clears the data of the initial press position """
-        
-        self.press = None
-        
 
-        
-
-    
     # SAVE FIGURE
     ###########################################################################
-        
-    def save(self,path):
-        
-        """ This function save the figure in the provided path """
-        
-        self.fig.savefig(os.path.join(path,'figure.jpg'),dpi=300)
-        
-        
-        
-        
-        
+
+    def save(self,filename):
+        """ This function save the figure with the provided filename """
+
+        raw_name, extension = os.path.splitext(filename)
+        new_filename = raw_name+".png"
+        self.fig.savefig(new_filename, dpi=300)
+
+
     # redraw
     ###########################################################################
 
@@ -569,7 +466,12 @@ class FigureManager :
     def setRange(self,axe,r):
         
         """ This function sets the current range of the given axis """
-        
-        if r[0] != r[1] :
+
+        if r[0] != r[1]:
             getattr(self.ax,f'set_{axe}lim')(r)
-        
+        else:
+            if r[0] != 0:
+                getattr(self.ax,f'set_{axe}lim')(r[0]-r[0]*5e-3, r[1]+r[1]*5e-3)
+            else:
+                getattr(self.ax,f'set_{axe}lim')(-5e-3, 5e-3)
+

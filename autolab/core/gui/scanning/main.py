@@ -26,12 +26,20 @@ class Scanner(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
         uic.loadUi(ui_path,self)
         self.setWindowTitle(f"AUTOLAB Scanner")
-        
+        self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
+        # self.splitter_recipe.setSizes([80, 223, 80])  # set the height of the three recipe widgets
+
+        # OPTIMIZE: temporary untill begin and end are functionnal
+        self.splitter_recipe.setChildrenCollapsible(True)
+        self.splitter_recipe.setSizes([0, 483, 0])  # set the height of the three recipe widgets
+
         # Loading of the different centers
         self.configManager = ConfigManager(self)
         self.figureManager = FigureManager(self)
         self.parameterManager = ParameterManager(self)
-        self.recipeManager = RecipeManager(self)        
+        self.recipeManager_begin = RecipeManager(self, self.tree_layout_begin)
+        self.recipeManager = RecipeManager(self, self.tree_layout)
+        self.recipeManager_end = RecipeManager(self, self.tree_layout_end)
         self.scanManager = ScanManager(self)
         self.dataManager = DataManager(self)
         self.rangeManager = RangeManager(self)
@@ -41,7 +49,6 @@ class Scanner(QtWidgets.QMainWindow):
     def closeEvent(self,event):
         
         """ This function does some steps before the window is really killed """
-        
         # Stop ongoing scan
         if self.scanManager.isStarted() :
             self.scanManager.stop()
@@ -76,19 +83,7 @@ def cleanString(name):
     
     for character in '*."/\[]:;|, ' :
         name = name.replace(character,'')
-    return name        
-    
-    
-        
-        
-
-
-
-        
-    
-        
-
-        
+    return name
 
 
 
@@ -104,10 +99,21 @@ def cleanString(name):
 
 
 
-     
 
 
 
-        
 
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+

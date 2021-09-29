@@ -30,8 +30,11 @@ class ScanManager :
         
         # Thread
         self.thread = None
-        
-        
+
+        # comboBox with data id
+        self.gui.data_comboBox.activated['QString'].connect(self.data_comboBoxClicked)
+
+
 
     # START AND STOP
     #############################################################################  
@@ -59,12 +62,13 @@ class ScanManager :
     def start(self) :
         
         """ This function start a scan """
-        
+
+        self.gui.data_comboBox.setEnabled(False)
         # Test if current config is valid to start a scan
         test = False
         try : 
             config = self.gui.configManager.getConfig()
-            assert config['parameter']['element'] is not None, "Parameter no set"
+            assert config['parameter']['element'] is not None, "Parameter not set"
             assert len(config['recipe']) > 0, "Recipe is empty"
             test = True
         except Exception as e :
@@ -74,7 +78,13 @@ class ScanManager :
             
             # Prepare a new dataset in the datacenter
             self.gui.dataManager.newDataset(config)
-            
+
+            # put dataset id onto the combobox and associate data to it
+            dataSet_id = len(self.gui.dataManager.datasets)
+            self.gui.data_comboBox.addItem(str(dataSet_id))
+            self.gui.data_comboBox.setCurrentIndex(int(dataSet_id)-1)  # trigger the currentIndexChanged event but don't trigger activated['QString']
+
+
             # Start a new thread
             ## Opening
             self.thread = ScanThread(self.gui.dataManager.queue, config)
@@ -98,6 +108,8 @@ class ScanManager :
             self.gui.clear_pushButton.setEnabled(False)
             self.gui.progressBar.setValue(0)
             self.gui.configManager.importAction.setEnabled(False)
+            self.gui.configManager.undo.setEnabled(False)
+            self.gui.configManager.redo.setEnabled(False)
             self.gui.statusBar.showMessage(f'Scan started !',5000)
             
 
@@ -110,10 +122,11 @@ class ScanManager :
         self.thread.stopFlag.set()
         self.resume()
         self.thread.wait()
-        
-        
-        
-        
+
+        self.gui.data_comboBox.setEnabled(True)
+
+
+
     # SIGNALS
     #############################################################################  
         
@@ -127,11 +140,14 @@ class ScanManager :
         self.gui.clear_pushButton.setEnabled(True)
         self.gui.parameterManager.setProcessingState('idle')
         self.gui.configManager.importAction.setEnabled(True)
+        self.gui.configManager.updateUndoRedoButtons()
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
         self.thread = None
-        
-        if self.isContinuousModeEnabled() : 
+
+        self.gui.data_comboBox.setEnabled(True)
+
+        if self.isContinuousModeEnabled() :
             self.start()
         
         
@@ -209,14 +225,18 @@ class ScanManager :
         self.thread.pauseFlag.clear()
         self.gui.dataManager.timer.start()
         self.gui.pause_pushButton.setText('Pause')
-        
-        
 
-        
-        
-        
-        
-        
+
+    def data_comboBoxClicked(self):
+
+        """ This function select a dataset """
+
+        if len(self.gui.dataManager.datasets) != 0:
+            self.gui.figureManager.reloadData()
+
+
+
+
 class ScanThread(QtCore.QThread):
     
     """ This thread class is dedicated to read the variable, and send its data to GUI through a queue """
