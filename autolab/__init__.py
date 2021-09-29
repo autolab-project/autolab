@@ -38,4 +38,6 @@ from .core.recorder import Recorder, Recorder_V2
 # GUI
 from .core.gui import start as gui
 
+from .core.devices import close
+
 

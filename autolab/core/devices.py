@@ -58,7 +58,37 @@ def list_devices():
     return list(DEVICES.keys())
 
 
+# =============================================================================
+# CLOSE DEVICES
+# =============================================================================
 
+
+def close(device="all"):
+
+
+    if str(device) == "all":
+
+        for device_name in list_devices():
+            try:
+                DEVICES[device_name].close()
+            except Exception:
+                print(f"Warning: device \"{device_name}\" has not been closed properly")
+
+
+    elif isinstance(device, Device):
+
+        if device.name in DEVICES:
+            device.close()
+        else:
+            print(f"No device {device.name} in {list_devices()}")
+
+
+    elif isinstance(device, str):
+
+        if device in DEVICES:
+            DEVICES[device].close()
+        else:
+            print(f"No device {device} in {list_devices()}")
 
 
 # =============================================================================
