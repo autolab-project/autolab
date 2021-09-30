@@ -17,7 +17,7 @@ class Driver() :
 
     def _set_device_var(self):
         device_id = self.get_id()  # "Anritsu,MS9740A,6200123456,1.00.00"
-        device_name_list = ("MS9710B", "MS9710C", "MS9740A")  # order is important if find only part of string
+        device_name_list = ("MS9710B", "MS9710C", "MS9740A", "MS9740B")  # order is important if find only part of string
 
         for device_name in device_name_list:
            if str(device_id).upper().find(device_name) != -1:
@@ -31,19 +31,22 @@ class Driver() :
     def _MS9710B_variables(self):
         self.allowed_points = (51,101,251,501,1001,2001,5001)
         self.allowed_res = (0.07, 0.1, 0.2, 0.5, 1)
-        self.allowed_vbw = (10, 100, 200, 1000, 2000, 10000, 100000, 1000000)
+        self.allowed_vbw = (10, 100, 1000, 10000, 100000, 1000000)
 
     def _MS9710C_variables(self):
         self.allowed_points = (51,101,251,501,1001,2001,5001)
         self.allowed_res = (0.05, 0.07, 0.1, 0.2, 0.5, 1)
-        self.allowed_vbw = (10, 100, 200, 1000, 2000, 10000, 100000, 1000000)
+        self.allowed_vbw = (10, 100, 1000, 10000, 100000, 1000000)
 
     def _MS9740A_variables(self):
         self.allowed_points = (51,101,251,501,1001,2001,5001,10001,20001,50001)
         self.allowed_res = (0.03, 0.05, 0.07, 0.1, 0.2, 0.5, 1)
         self.allowed_vbw = (10, 100, 200, 1000, 2000, 10000, 100000, 1000000)
         # could set function/unit depending on device
-
+        
+    def _MS9740B_variables(self):
+        self._MS9740A_variables()
+        
     def _set_closest(self, allowed_list, value):
         a = allowed_list
         index = min(range(len(a)), key=lambda i: abs(a[i]-value))
@@ -67,7 +70,7 @@ class Driver() :
                            }
         unit_list = tuple(unit_conversion.keys())
         unit = str(self._get_unit(value))
-        value = self._remove_unit(value)
+        value = float(self._remove_unit(value))
 
         if unit in unit_list:
             value *= unit_conversion[unit]
@@ -105,7 +108,7 @@ class Driver() :
 
     def set_vbw(self, value):
         value = self._apply_unit(value)  # useless because must be float in GUI
-        value = float(self._set_closest(self.allowed_vbw, value))
+        value = int(self._set_closest(self.allowed_vbw, value))
         self.write(f'VBW {value}')
         self.opc()
 
