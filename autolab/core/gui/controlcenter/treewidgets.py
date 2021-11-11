@@ -385,7 +385,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # If the monitor is already running, just make as the front window
         else :
             monitor = self.gui.monitors[id(self)]
-            # monitor.setWindowState(monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            monitor.setWindowState(monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             monitor.activateWindow()
 
 

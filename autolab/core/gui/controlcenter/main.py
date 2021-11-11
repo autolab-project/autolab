@@ -31,6 +31,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         # Window configuration
         self.setWindowTitle("AUTOLAB - Control Panel")
         self.setFocus()
+        self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
         self.activateWindow()
         
         # Tree widget configuration
@@ -180,7 +181,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         # If the CT400 GUI is already running, just make as the front window
         else :
-            # self.ct400_gui.setWindowState(self.ct400_gui.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.ct400_gui.setWindowState(self.ct400_gui.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.ct400_gui.activateWindow()
 
     def openScanner(self):
@@ -197,7 +198,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         
         # If the scanner is already running, just make as the front window
         else :
-            # self.scanner.setWindowState(self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.scanner.setWindowState(self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.scanner.activateWindow()
              
             
