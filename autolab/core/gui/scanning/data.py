@@ -49,7 +49,10 @@ class DataManager :
         for i in range(selectedData, nbDataset+selectedData) :
             if i < len(self.datasets) :
                 dataset = self.datasets[-(i+1)]
-                data = dataset.getData(varList)
+                try:
+                    data = dataset.getData(varList)
+                except:
+                    data = None
                 dataList.append(data)
             else :
                 break

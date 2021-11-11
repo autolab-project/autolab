@@ -263,11 +263,11 @@ class FigureManager :
                 else:
                     color = 'k'
                     alpha = (self.nbtraces-(len(data)-1-i))/self.nbtraces
-                
+
                 # Plot
                 curve = self.ax.plot(x,y,'x-',color=color,alpha=alpha)[0]
                 self.curves.append(curve)
-            
+
             # Autoscale
             if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
             if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
@@ -286,12 +286,11 @@ class FigureManager :
         
         data = self.gui.dataManager.getData(1,[variable_x,variable_y])[0]
         data = data.astype(float)
-        
+
         # Update plot data
-        # BUG: got error here out index from sync data (scanning)
         self.curves[-1].set_xdata(data.loc[:,variable_x])
         self.curves[-1].set_ydata(data.loc[:,variable_y])
-        
+
         # Autoscale
         if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
         if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
