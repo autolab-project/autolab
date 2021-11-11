@@ -252,6 +252,9 @@ class FigureManager :
                                 
                 # Data
                 subdata = data[i]
+                if subdata is None:
+                    continue
+
                 subdata = subdata.astype(float)
                 x = subdata.loc[:,variable_x]
                 y = subdata.loc[:,variable_y]
