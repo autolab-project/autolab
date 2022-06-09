@@ -117,7 +117,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLCDNumber" name="dataDisplay">
+       <widget class="QLineEdit" name="dataDisplay">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -126,7 +126,7 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>40</width>
+          <width>70</width>
           <height>20</height>
          </size>
         </property>
@@ -135,6 +135,24 @@
           <width>200</width>
           <height>100</height>
          </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>ArrowCursor</cursorShape>
+        </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="acceptDrops">
+         <bool>false</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

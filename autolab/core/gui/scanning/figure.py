@@ -291,8 +291,9 @@ class FigureManager :
         data = data.astype(float)
 
         # Update plot data
-        self.curves[-1].set_xdata(data.loc[:,variable_x])
-        self.curves[-1].set_ydata(data.loc[:,variable_y])
+        if data is not None:
+            self.curves[-1].set_xdata(data.loc[:,variable_x])
+            self.curves[-1].set_ydata(data.loc[:,variable_y])
 
         # Autoscale
         if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')

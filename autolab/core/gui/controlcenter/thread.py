@@ -8,11 +8,11 @@ Created on Sun Sep 29 18:26:32 2019
 from PyQt5 import QtCore
 
 class ThreadManager :
-    
-    """ This class is dedicated to manage the different threads, 
-    from their creation, to their deletion them after they have been used """
-    
-    
+
+    """ This class is dedicated to manage the different threads,
+    from their creation, to their deletion after they have been used """
+
+
     def __init__(self,gui):
         self.gui = gui
         self.threads = {}
