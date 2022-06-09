@@ -17,18 +17,19 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 class FigureManager:
 
     def __init__(self,gui):
-        
+
         self.gui = gui
-        
+
         # Configure and initialize the figure in the GUI
         self.fig = Figure()
         matplotlib.rcParams.update({'font.size': 12})
-        self.ax = self.fig.add_subplot(111)        
+        self.ax = self.fig.add_subplot(111)
         self.ax.set_xlabel('Time [s]')
         ylabel = f'{self.gui.variable.address()}'
 
         if self.gui.variable.unit is not None :
-            ylabel += f' ({self.gui.variable.unit})'
+            ylabel += f'({self.gui.variable.unit})'
+
         self.ax.set_ylabel(ylabel)
         self.ax.grid()
 
@@ -43,8 +44,8 @@ class FigureManager:
         # More accurately, FigureCanvas doesn't find the event loop the first time it is called
         # The second time it works..
         # Seems to be only in Spyder..
-        try : 
-            self.canvas = FigureCanvas(self.fig) 
+        try :
+            self.canvas = FigureCanvas(self.fig)
         except :
             self.canvas = FigureCanvas(self.fig)
 
@@ -56,9 +57,9 @@ class FigureManager:
         self.canvas.draw()
 
     def update(self,xlist,ylist):
-        
-        """ This function update the figure in the GUI """ 
-        
+
+        """ This function update the figure in the GUI """
+
         # Data retrieval
         self.plot.set_xdata(xlist)
         self.plot.set_ydata(ylist)
@@ -77,7 +78,7 @@ class FigureManager:
             self.ax.set_xlim(xmin,xmax+0.15*(xmax-xmin))
         else :
             self.ax.set_xlim(xmin-0.1,xmin+0.1)
-        
+
         # Y axis update
         ylist = self.plot.get_ydata()
         ymin = min(ylist)
@@ -116,13 +117,26 @@ class FigureManager:
 
         # Figure finalization
         if len(ylist) >= 1:
-            self.gui.dataDisplay.display(ylist[-1])
+            # self.gui.dataDisplay.display(f'{ylist[-1]:g}')
+            self.gui.dataDisplay.setText(f'{ylist[-1]:g}')
+
+            # length = len(f'{ylist[-1]:g}')
+            width = self.gui.dataDisplay.geometry().width()
+            # height = self.gui.dataDisplay.geometry().height()
+            # limit = min((width, height))
+            new_size = max(width/8, 10)
+            new_size = min(new_size, 25)
+
+            font = self.gui.dataDisplay.font()
+            font.setPointSize(int(new_size))
+            self.gui.dataDisplay.setFont(font)
+            # print(font.pointSize())
 
         self.redraw()
 
 
     def redraw(self):
-        
+
         """ This function finalize the figure update in the GUI """
         try :
             self.fig.tight_layout()
@@ -135,6 +149,7 @@ class FigureManager:
         self.ymin = 0
         self.ymax = 0
         self.update([0],[0])
+        self.gui.dataDisplay.clear()
 
 
     def save(self,filename):

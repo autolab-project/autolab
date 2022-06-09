@@ -87,8 +87,8 @@ class Monitor(QtWidgets.QMainWindow):
         
         
     def sync(self):
-        
-        """ This function updates the data and than the figure. 
+
+        """ This function updates the data and then the figure.
         Function called by the time """
                 
         # Empty the queue

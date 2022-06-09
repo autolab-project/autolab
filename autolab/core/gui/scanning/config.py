@@ -4,6 +4,7 @@ Created on Sun Sep 29 18:16:09 2019
 
 @author: qchat
 """
+from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
 import autolab
@@ -57,11 +58,11 @@ class ConfigHistory:
 
 
 class ConfigManager :
-    
+
     def __init__(self,gui):
-        
+
         self.gui = gui
-        
+
         # Configuration menu
         configMenu = self.gui.menuBar.addMenu('Configuration')
         self.importAction = configMenu.addAction('Import configuration')
@@ -98,25 +99,25 @@ class ConfigManager :
 
     # NAMES
     ###########################################################################
-        
+
     def getNames(self,option=None):
-        
+
         """ This function returns a list of the names of the recipe step and of the parameter """
-        
+
         names = [step['name'] for step in self.config['recipe']]
         if self.config['parameter']['element'] is not None and option != 'recipe':
             names.append(self.config['parameter']['name'])
         return names
-        
-    
-    
+
+
+
     def getUniqueName(self,basename):
-        
+
         """ This function adds a number next to basename in case this basename is already taken """
-        
+
         names = self.getNames()
         name = basename
-        
+
         compt = 0
         while True :
             if name in names :
@@ -125,9 +126,9 @@ class ConfigManager :
             else :
                 break
         return name
-    
-    
-        
+
+
+
     # CONFIG MODIFICATIONS
     ###########################################################################
 
@@ -143,9 +144,9 @@ class ConfigManager :
 
 
     def setParameter(self,element,name=None):
-        
+
         """ This function set the element provided as the new parameter of the scan """
-        
+
         if self.gui.scanManager.isStarted() is False :
             self.config['parameter']['element'] = element
             if name is None : name = self.getUniqueName(element.name)
@@ -156,9 +157,9 @@ class ConfigManager :
 
 
     def setParameterName(self,name):
-        
+
         """ This function set the name of the current parameter of the scan """
-        
+
         if self.gui.scanManager.isStarted() is False :
             if name != self.config['parameter']['name']:
                 name = self.getUniqueName(name)
@@ -169,21 +170,21 @@ class ConfigManager :
 
 
     def addRecipeStep(self,stepType,element,name=None,value=None):
-        
+
         """ This function add a step to the scan recipe """
-        
+
         if self.gui.scanManager.isStarted() is False :
-            
+
             if name is None : name = self.getUniqueName(element.name)
             step = {'stepType':stepType,'element':element,'name':name,'value':None}
-            
+
             # Value
             if stepType == 'set' : setValue = True
             elif stepType == 'action' and element.type in [int,float,str] : setValue = True
             else : setValue = False
-            
+
             if setValue is True :
-                if value is None : 
+                if value is None :
                     if element.type in [int,float] :
                         value = 0
                     elif element.type in [str] :
@@ -191,7 +192,7 @@ class ConfigManager :
                     elif element.type in [bool]:
                         value = False
                 step['value'] = value
-            
+
             self.config['recipe'].append(step)
             self.gui.recipeManager.refresh()
             self.gui.dataManager.clear()
@@ -199,9 +200,9 @@ class ConfigManager :
 
 
     def delRecipeStep(self,name):
-        
+
         """ This function removes a step from the scan recipe """
-        
+
         if self.gui.scanManager.isStarted() is False :
             pos = self.getRecipeStepPosition(name)
             self.config['recipe'].pop(pos)
@@ -211,9 +212,9 @@ class ConfigManager :
 
 
     def renameRecipeStep(self,name,newName):
-        
+
         """ This function rename a step in the scan recipe """
-        
+
         if self.gui.scanManager.isStarted() is False :
             if newName != name :
                 pos = self.getRecipeStepPosition(name)
@@ -225,9 +226,9 @@ class ConfigManager :
 
 
     def setRecipeStepValue(self,name,value):
-        
+
         """ This function set the value of a step in the scan recipe """
-        
+
         if self.gui.scanManager.isStarted() is False :
             pos = self.getRecipeStepPosition(name)
             if value != self.config['recipe'][pos]['value'] :
@@ -238,7 +239,7 @@ class ConfigManager :
 
 
     def setRecipeOrder(self,stepOrder):
-        
+
         """ This function reorder the recipe as a function of the list of step names provided """
 
         if self.gui.scanManager.isStarted() is False :
@@ -251,9 +252,9 @@ class ConfigManager :
 
 
     def setNbPts(self,value):
-        
+
         """ This function set the value of the number of points of the scan """
-        
+
         if self.gui.scanManager.isStarted() is False :
 
             self.config['nbpts'] = value
@@ -293,9 +294,9 @@ class ConfigManager :
 
 
     def setRange(self,lim):
-        
+
         """ This function set the range (start and end value) of the scan """
-        
+
         if self.gui.scanManager.isStarted() is False :
             if lim != self.config['range'] :
                 self.config['range'] = tuple(lim)
@@ -311,70 +312,68 @@ class ConfigManager :
             self.addNewConfig()
 
         self.gui.rangeManager.refresh()
-        
-        
-        
+
+
     def setLog(self,state):
-        
+
         """ This function set the log state of the scan """
-        
+
         if self.gui.scanManager.isStarted() is False :
             if state != self.config['log']:
                 self.config['log'] = state
             self.addNewConfig()
         self.gui.rangeManager.refresh()
-                
-            
-            
-            
+
+
+
     # CONFIG READING
     ###########################################################################
 
     def getParameter(self):
-        
+
         """ This function returns the element of the current parameter of the scan """
-        
+
         return self.config['parameter']['element']
-    
-    
-    
+
+
+
     def getParameterName(self):
-        
+
         """ This function returns the name of the current parameter of the scan """
-        
+
         return self.config['parameter']['name']
-    
-    
-    
+
+
+
     def getRecipeStepElement(self,name):
-        
+
         """ This function returns the element of a recipe step """
 
         pos = self.getRecipeStepPosition(name)
         return self.config['recipe'][pos]['element']
-            
-    
-    
+
+
+
     def getRecipeStepType(self,name):
-        
+
         """ This function returns the type a recipe step """
 
         pos = self.getRecipeStepPosition(name)
         return self.config['recipe'][pos]['stepType']
-    
-    
-    
+
+
+
     def getRecipeStepValue(self,name):
 
         """ This function returns the value of a recipe step """
 
         pos = self.getRecipeStepPosition(name)
         return self.config['recipe'][pos]['value']
-    
-    
-    
+
+
+
     def getRecipeStepPosition(self,name):
-        
+
         """ This function returns the position of a recipe step in the recipe """
 
         return [i for i, step in enumerate(self.config['recipe']) if step['name'] == name][0]
@@ -382,17 +381,17 @@ class ConfigManager :
 
 
     def getLog(self):
-        
+
         """ This function returns the log state of the scan """
-        
+
         return self.config['log']
-    
-    
-    
+
+
+
     def getNbPts(self):
-        
+
         """ This function returns the number of points of the scan """
-        
+
         return self.config['nbpts']
 
 
@@ -406,30 +405,30 @@ class ConfigManager :
 
 
     def getRange(self):
-        
+
         """ This function returns the range (start and end value) of the scan """
-        
+
         return self.config['range']
-    
-    
-    
+
+
+
     def getRecipe(self):
-        
+
         """ This function returns the whole recipe of the scan """
-        
+
         return self.config['recipe']
-    
-    
-                        
+
+
+
     def getConfig(self):
-        
+
         """ This function returns the whole configuration of the scan """
-        
+
         return self.config
-  
-    
-    
-    
+
+
+
+
 
     # EXPORT IMPORT ACTIONS
     ###########################################################################
@@ -481,7 +480,7 @@ class ConfigManager :
         configPars['parameter']['start_value'] = str(self.config['range'][0])
         configPars['parameter']['end_value'] = str(self.config['range'][1])
         configPars['parameter']['log'] = str(int(self.config['log']))
-        
+
         configPars['recipe'] = {}
         for i in range(len(self.config['recipe'])) :
             configPars['recipe'][f'{i+1}_name'] = self.config['recipe'][i]['name']
@@ -490,10 +489,10 @@ class ConfigManager :
             stepType = self.config['recipe'][i]['stepType']
             if stepType == 'set' or (stepType == 'action' and self.config['recipe'][i]['element'].type in [int,float,str]) :
                 value = self.config['recipe'][i]['value']
-                if self.config['recipe'][i]['element'].type in [str] :
-                    valueStr = f'{value}'
-                else :
+                try:
                     valueStr = f'{value:g}'
+                except:
+                    valueStr = f'{value}'
                 configPars['recipe'][f'{i+1}_value'] = valueStr
 
         return configPars
@@ -577,16 +576,27 @@ class ConfigManager :
                     if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str]) :
                         assert f'{i}_value' in configPars['recipe'], f"Missing value in step {i} ({name})."
                         value = configPars['recipe'][f'{i}_value']
-                        if element.type in [int]:
-                            value = int(value)
-                        elif element.type in [float]:
-                            value = float(value)
-                        elif element.type in [str]:
+
+                            # Type conversions
+                        try:
+                            if element.type in [int]:
+                                value = int(value)
+                            elif element.type in [float] :
+                                value = float(value)
+                            elif element.type in [str] :
+                                value = str(value)
+                            elif element.type in [bool]:
+                                if value == "False": value = False
+                                elif value == "True": value = True
+                                value = int(value)
+                                assert value in [0,1]
+                                value = bool(value)
+                        except:
+                            try:
+                                self.checkErrorVariable(value)  # if don't use this method, would accept config with bad value. Downside is a config rejection if use a variable address from a closed device
+                            except:
+                                raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
                             value = str(value)
-                        elif element.type in [bool]:
-                            value = int(value)
-                            assert value in [0,1]
-                            value = bool(value)
                         step['value'] = value
                     else:
                         step['value'] = None
@@ -614,6 +624,16 @@ class ConfigManager :
 
         self._activate_historic = True
 
+
+    def checkErrorVariable(self, value):
+
+        """ Check if value is a valid device variable address. For example value='dummy.amplitude' """
+        module_name, *submodules_name, variable_name = value.split(".")
+        module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
+        for submodule_name in submodules_name:
+            module = module.get_module(submodule_name)
+
+        module.get_variable(variable_name)
 
     # UNDO REDO ACTIONS
     ###########################################################################
