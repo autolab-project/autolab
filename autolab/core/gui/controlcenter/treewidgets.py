@@ -9,8 +9,10 @@ Created on Sun Sep 29 18:29:07 2019
 from PyQt5 import QtCore, QtWidgets
 from ..monitoring.main import Monitor
 import os
-from autolab import paths
-from autolab import close
+from ... import paths
+from ...devices import close
+import pandas as pd
+import numpy as np
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -98,7 +100,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         self.action = action
 
         if self.action.has_parameter :
-            if self.action.type in [int,float,str] :
+            if self.action.type in [int,float,str,pd.DataFrame,np.ndarray] :
                 self.executable = True
                 self.has_value = True
             else :
@@ -120,6 +122,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             self.valueWidget = QtWidgets.QLineEdit()
             self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
+            self.valueWidget.returnPressed.connect(self.execute)
 
         # Tooltip
         if self.action._help is None : tooltip = 'No help available for this action'
@@ -136,11 +139,27 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             self.gui.statusbar.showMessage(f"Action {self.action.name} requires a value for its parameter",10000)
         else :
             try :
+                value = self.checkVariable(value)
                 value = self.action.type(value)
                 return value
             except :
                 self.gui.statusbar.showMessage(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000)
 
+
+    def checkVariable(self, value):
+
+        """ Try to execute the given command line (meant to contain device variables) and return the result """
+
+        if str(value).startswith("$eval:"):
+            value = str(value)[len("$eval:"):]
+            try:
+                import autolab  # OPTIMIZE: best not to import autolab in autolab
+                allowed_dict ={"np":np, "pd":pd}
+                allowed_dict.update(autolab.DEVICES)
+                value = eval(str(value), {}, allowed_dict)
+            except:
+                pass
+        return value
 
 
     def execute(self):
@@ -197,26 +216,33 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.writeSignal.signal.connect(self.valueEdited)
         self.variable._write_signal = self.writeSignal
 
-        # Main - Column 2 : Creation of a READ button
+        # Main - Column 2 : Creation of a READ button if the variable is readable
         if self.variable.readable and self.variable.type in [int,float,bool,str] :
             self.readButton = QtWidgets.QPushButton()
             self.readButton.setText("Read")
             self.readButton.pressed.connect(self.read)
             self.gui.tree.setItemWidget(self, 2, self.readButton)
 
-        # Main - column 3 : Creation of a VALUE widget, depending on the type, and if the variable is readable
+        # Main - column 3 : Creation of a VALUE widget, depending on the type
 
         ## QLineEdit or QLabel
-        if self.variable.type in [int,float,str] :
+        if self.variable.type in [int,float,str,pd.DataFrame,np.ndarray]:
 
             if self.variable.writable :
                 self.valueWidget = QtWidgets.QLineEdit()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
                 self.valueWidget.returnPressed.connect(self.write)
                 self.valueWidget.textEdited.connect(self.valueEdited)
-            else :
+                # self.valueWidget.setPlaceholderText(self.variable._help)  # OPTIMIZE: Could be nice but take too much place. Maybe add it as option
+            elif self.variable.readable and self.variable.type in [int,float,str] :
+                self.valueWidget = QtWidgets.QLineEdit()
+                self.valueWidget.setReadOnly(True)
+                self.valueWidget.setStyleSheet("QLineEdit {border : 1px solid #a4a4a4; background-color : #f4f4f4}")
+                self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
+            else:
                 self.valueWidget = QtWidgets.QLabel()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
+
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
 
         ## QCheckbox for boolean variables
@@ -236,13 +262,16 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.gui.tree.setItemWidget(self, 3, widget)
 
         # Main - column 4 : indicator (status of the actual value : known or not known)
-        if self.variable.type in [int,float,str,bool] :
+        if self.variable.type in [int,float,str,bool,np.ndarray,pd.DataFrame] :
             self.indicator = QtWidgets.QLabel()
             self.gui.tree.setItemWidget(self, 4, self.indicator)
 
         # Tooltip
         if self.variable._help is None : tooltip = 'No help available for this variable'
         else : tooltip = self.variable._help
+        if hasattr(self.variable, "type"):
+            variable_type = str(self.variable.type).split("'")[1]
+            tooltip += f" ({variable_type})"
         self.setToolTip(0,tooltip)
 
 
@@ -252,14 +281,14 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         # Update value
         if self.variable.numerical :
-            self.valueWidget.setText(f'{value:g}')
+            self.valueWidget.setText(f'{value:.10g}') # default is .6g
         elif self.variable.type in [str] :
             self.valueWidget.setText(value)
         elif self.variable.type in [bool] :
             self.valueWidget.setChecked(value)
 
         # Change indicator light to green
-        if self.variable.type in [int,float,bool,str] :
+        if self.variable.type in [int,float,bool,str,np.ndarray,pd.DataFrame] :
             self.setValueKnownState(True)
 
 
@@ -268,7 +297,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         """ This function returns the value in good format of the value in the GUI """
 
-        if self.variable.type in [int,float,str] :
+        if self.variable.type in [int,float,str,np.ndarray,pd.DataFrame] :
             value = self.valueWidget.text()
             if value == '' :
                 self.gui.statusbar.showMessage(f"Variable {self.variable.name} requires a value to be set",10000)
@@ -288,15 +317,16 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def checkVariable(self, value):
 
         """ Check if value is a device variable address and if is it, return its value """
-        try:
-            module_name, *submodules_name, variable_name = value.split(".")
-            module = self.gui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
-            for submodule_name in submodules_name:
-                module = module.get_module(submodule_name)
-            variable = module.get_variable(variable_name)
-            value = variable()  # Could be bad because send a measure signal to this device
-        except:
-            pass
+
+        if str(value).startswith("$eval:"):
+            value = str(value)[len("$eval:"):]
+            try:
+                import autolab
+                allowed_dict ={"np":np, "pd":pd}
+                allowed_dict.update(autolab.DEVICES)
+                value = eval(str(value), {}, allowed_dict)
+            except:
+                pass
         return value
 
 
@@ -304,8 +334,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         """ Turn the color of the indicator depending of the known state of the value """
 
-        if state is True : self.indicator.setStyleSheet(f"background-color:#70db70") #green
-        else : self.indicator.setStyleSheet(f"background-color:#ff8c1a") #orange
+        if state is True : self.indicator.setStyleSheet("background-color:#70db70") #green
+        else : self.indicator.setStyleSheet("background-color:#ff8c1a") #orange
 
 
 
@@ -351,7 +381,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         menu.addSeparator()
         saveAction = menu.addAction("Read and save as...")
 
-        monitoringAction.setEnabled( self.variable.readable and self.variable.numerical )
+        monitoringAction.setEnabled( self.variable.readable and self.variable.type in [int,float,np.ndarray,pd.DataFrame] )
         scanParameterAction.setEnabled(self.variable.parameter_allowed)
         scanMeasureStepAction.setEnabled(self.variable.readable)
         saveAction.setEnabled(self.variable.readable)
@@ -375,7 +405,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         filename = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value",
                                         os.path.join(paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'),
-                                        "Text file (*.txt)")[0]
+                                        filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
 
         path = os.path.dirname(filename)
         if path != '' :

@@ -19,6 +19,7 @@ class CT400Gui(QtWidgets.QMainWindow):
 
     def __init__(self,item, ct400):
 
+        print("CT400Gui is depreciated, use Plotter instead")
         self.item = item
         self.ct400 = ct400
 
@@ -179,7 +180,7 @@ class CT400Gui(QtWidgets.QMainWindow):
         manager, and then update the GUI """
 
         value = self.dataManager.getTargetWavelength()
-        self.targetWavelength_lineEdit.setText(f'{value:g}')
+        self.targetWavelength_lineEdit.setText(f'{value:.10g}')
         self.setLineEditBackground(self.targetWavelength_lineEdit,'synced')
 
 
@@ -261,7 +262,7 @@ class CT400Gui(QtWidgets.QMainWindow):
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(self,
                                           caption="Save data",
                                           directory=paths.USER_LAST_CUSTOM_FOLDER,
-                                          filter="Text Files (*.txt)")
+                                          filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")
 
         path = os.path.dirname(filename)
         # Save the given path for future, the data and the figure if the path provided is valid
@@ -282,7 +283,7 @@ class CT400Gui(QtWidgets.QMainWindow):
         self.clearStatusBar()
         filename = QtWidgets.QFileDialog.getOpenFileName(self, "Import Scan data",
                                                      paths.USER_LAST_CUSTOM_FOLDER,
-                                                     "Text Files (*.txt)")[0]
+                                                     filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
 
         path = os.path.dirname(filename)
         paths.USER_LAST_CUSTOM_FOLDER = path
@@ -313,26 +314,3 @@ class CT400Gui(QtWidgets.QMainWindow):
 
     def clearStatusBar(self):
         self.statusBar.showMessage('')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
