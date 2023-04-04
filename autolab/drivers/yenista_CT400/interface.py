@@ -19,15 +19,17 @@ class Data:
     pass
 
 
-class Interface():
+class Interface():  # TODO: delete or merge with Autolab plotting.analyze whicxh is the improved version of Interface
 
     def __init__(self, dev):
 
         self.dev = dev
-
+        self._x_label = "L"
+        self._y_label = "1"
         self._init_variables()
 
         self.verbose = True
+        self._remove_zero = True
 
 
     def _init_variables(self):
@@ -129,9 +131,14 @@ class Interface():
         sweep_data = pd.read_csv(filename, delimiter=" ")
 
         if list(sweep_data.keys()) != ["L", "O", "1"]:
-
             sweep_data = pd.read_csv(filename, delimiter=",")
-            assert list(sweep_data.keys()) == ["L", "O", "1"], "Bad data format. Need labels: 'L O 1'"
+
+            if list(sweep_data.keys()) != ["L", "O", "1"]:
+                sweep_data = pd.read_csv(filename, delimiter=";")
+
+                if list(sweep_data.keys()) != ["L", "O", "1"]:
+                    sweep_data = pd.read_csv(filename, delimiter="\t")
+                    assert list(sweep_data.keys()) == ["L", "O", "1"], "Bad data format. Need labels: 'L O 1'"
 
         data_name = self.getUniqueName(data_name)
 
@@ -224,12 +231,14 @@ class Interface():
         if data is None:
             raise IndexError("Could not find the asked data_name: '%s'.\nAvailable data: %s" % (data_name, self.getNames()))
 
-        wl, ref, power = np.array(data["L"]), np.array(data["O"]), np.array(data["1"])
-
-        keep_data = power != 0  # used to remove unwanted data if loading interpolated sweep
-        power = power[keep_data]
-        wl = wl[keep_data]
-        ref = ref[keep_data]
+        data = data.dropna()
+        # wl, ref, power = np.array(data["L"]), np.array(data["O"]), np.array(data["1"])
+        wl, power = np.array(data[self._x_label]), np.array(data[self._y_label])
+        if self._remove_zero:
+            keep_data = power != 0  # used to remove unwanted data if loading interpolated sweep
+            power = power[keep_data]
+            wl = wl[keep_data]
+        # ref = ref[keep_data]
 
         if wl_max != "default":
 
@@ -298,7 +307,8 @@ class Interface():
         else:
             maximum_raw = Data()
             maximum_raw.power = np.max(power)
-            maximum_raw.index = np.where(power == maximum_raw.power)[0][0]
+            maximum_raw.index = np.argmax(power)
+            # maximum_raw.index = np.where(power == maximum_raw.power)[0][0]
             maximum_raw.wl = wl[maximum_raw.index]
             maximum = maximum_raw
 
@@ -318,7 +328,8 @@ class Interface():
         new_interval.power = power[interval_low_index: interval_high_index]
 
         maximum = Data()
-        maximum.index = np.where(new_interval.power == np.max(new_interval.power))[0][0]
+        maximum.index = np.argmax(new_interval.power)
+        # maximum.index = np.where(new_interval.power == np.max(new_interval.power))[0][0]
         maximum.wl = new_interval.wl[maximum.index]
         maximum.power = new_interval.power[maximum.index]
 
@@ -327,7 +338,9 @@ class Interface():
     def find_3db(self, wl, power, maximum, interp=False):
 
         condition = np.abs(wl - maximum.wl)
-        index = np.where(condition == np.min(condition))[0][0]
+        index = np.argmin(condition)
+
+        # index = np.where(condition == np.min(condition))[0][0]
         wl_left = wl[:index][::-1]  # Reverse order to start at maximum
         wl_right = wl[index:]
         power_left = power[:index][::-1]
@@ -338,26 +351,36 @@ class Interface():
 
         # left 3db
         index = np.where(power_left <= quadrature_target.power)[0]
-
         quadrature_target.index = -1 if index.shape[0] == 0 else index[0]
 
-        quadrature_target.wl = wl_left[quadrature_target.index]
+        if len(wl_left) != 0:
+            quadrature_target.wl = wl_left[quadrature_target.index]
 
-        condition = np.abs(wl - quadrature_target.wl)
-        index = np.where(condition == np.min(condition))[0][0]
+            condition = np.abs(wl - quadrature_target.wl)
+            index = np.where(condition == np.min(condition))[0][0]
 
-        quadrature_left = self.interp_3db(wl, power, index, quadrature_target.power, "left", interp=interp)
+            quadrature_left = self.interp_3db(wl, power, index, quadrature_target.power, "left", interp=interp)
+        else:
+            quadrature_left = Data()
+            quadrature_left.wl = None
+            quadrature_left.power = None
 
 
         # right 3db
         index = np.where(power_right <= quadrature_target.power)[0]
         quadrature_target.index = -1 if index.shape[0] == 0 else index[0]
-        quadrature_target.wl = wl_right[quadrature_target.index]
 
-        condition = np.abs(wl - quadrature_target.wl)
-        index = np.where(condition == np.min(condition))[0][0]
+        if len(wl_right) != 0:
+            quadrature_target.wl = wl_right[quadrature_target.index]
 
-        quadrature_right = self.interp_3db(wl, power, index, quadrature_target.power, "right", interp=interp)
+            condition = np.abs(wl - quadrature_target.wl)
+            index = np.where(condition == np.min(condition))[0][0]
+
+            quadrature_right = self.interp_3db(wl, power, index, quadrature_target.power, "right", interp=interp)
+        else:
+            quadrature_right = Data()
+            quadrature_right.wl = None
+            quadrature_right.power = None
 
 
         return quadrature_left, quadrature_right

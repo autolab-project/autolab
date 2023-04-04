@@ -9,8 +9,10 @@ from PyQt5 import QtCore
 import time
 import threading
 import numpy as np
+import pandas as pd
 import collections
 import math as m
+
 
 class ScanManager :
 
@@ -33,7 +35,6 @@ class ScanManager :
 
         # comboBox with data id
         self.gui.data_comboBox.activated['QString'].connect(self.data_comboBoxClicked)
-
 
 
     # START AND STOP
@@ -111,7 +112,7 @@ class ScanManager :
             self.gui.configManager.importAction.setEnabled(False)
             self.gui.configManager.undo.setEnabled(False)
             self.gui.configManager.redo.setEnabled(False)
-            self.gui.statusBar.showMessage(f'Scan started !',5000)
+            self.gui.statusBar.showMessage('Scan started !',5000)
 
 
 
@@ -361,7 +362,8 @@ class ScanThread(QtCore.QThread):
             element(value)
         if stepType == 'action' :
             if stepInfos['value'] is not None :
-                element(stepInfos['value'])
+                value = self.checkVariable(stepInfos['value'])
+                element(value)
             else :
                 element()
 
@@ -369,17 +371,18 @@ class ScanThread(QtCore.QThread):
 
         return result
 
+
     def checkVariable(self, value):
 
         """ Check if value is a device variable address and if is it, return its value """
-        try:
-            module_name, *submodules_name, variable_name = value.split(".")
-            module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
-            for submodule_name in submodules_name:
-                module = module.get_module(submodule_name)
-            variable = module.get_variable(variable_name)
-            value = variable()  # Could be bad because send a measure signal to this device
 
-        except:
-            pass
+        if str(value).startswith("$eval:"):
+            value = str(value)[len("$eval:"):]
+            try:
+                import autolab
+                allowed_dict ={"np":np, "pd":pd}
+                allowed_dict.update(autolab.DEVICES)
+                value = eval(str(value), {}, allowed_dict)
+            except:
+                pass
         return value

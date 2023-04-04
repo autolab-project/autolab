@@ -4,7 +4,6 @@ Created on Sun Sep 29 18:16:09 2019
 
 @author: qchat
 """
-from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
 import autolab
@@ -12,7 +11,8 @@ from autolab import paths
 import configparser
 import datetime
 import os
-
+import numpy as np
+import pandas as pd
 
 
 class ConfigHistory:
@@ -180,14 +180,14 @@ class ConfigManager :
 
             # Value
             if stepType == 'set' : setValue = True
-            elif stepType == 'action' and element.type in [int,float,str] : setValue = True
+            elif stepType == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray] : setValue = True
             else : setValue = False
 
             if setValue is True :
                 if value is None :
                     if element.type in [int,float] :
                         value = 0
-                    elif element.type in [str] :
+                    elif element.type in [str,pd.DataFrame,np.ndarray] :
                         value = ''
                     elif element.type in [bool]:
                         value = False
@@ -440,7 +440,7 @@ class ConfigManager :
 
         filename = QtWidgets.QFileDialog.getSaveFileName(self.gui, "Export AUTOLAB configuration file",
                                                      os.path.join(paths.USER_LAST_CUSTOM_FOLDER,'config.conf'),
-                                                     "AUTOLAB configuration file (*.conf)")[0]
+                                                     "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
 
         if filename != '' :
             path = os.path.dirname(filename)
@@ -487,10 +487,10 @@ class ConfigManager :
             configPars['recipe'][f'{i+1}_stepType'] = self.config['recipe'][i]['stepType']
             configPars['recipe'][f'{i+1}_address'] = self.config['recipe'][i]['element'].address()
             stepType = self.config['recipe'][i]['stepType']
-            if stepType == 'set' or (stepType == 'action' and self.config['recipe'][i]['element'].type in [int,float,str]) :
+            if stepType == 'set' or (stepType == 'action' and self.config['recipe'][i]['element'].type in [int,float,str,pd.DataFrame,np.ndarray]) :
                 value = self.config['recipe'][i]['value']
                 try:
-                    valueStr = f'{value:g}'
+                    valueStr = f'{value:.10g}'
                 except:
                     valueStr = f'{value}'
                 configPars['recipe'][f'{i+1}_value'] = valueStr
@@ -505,7 +505,7 @@ class ConfigManager :
 
         filename = QtWidgets.QFileDialog.getOpenFileName(self.gui, "Import AUTOLAB configuration file",
                                                      paths.USER_LAST_CUSTOM_FOLDER,
-                                                     "AUTOLAB configuration file (*.conf)")[0]
+                                                     "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
         if filename != '':
 
             path = os.path.dirname(filename)
@@ -534,7 +534,7 @@ class ConfigManager :
             if 'address' in configPars['parameter'] :
                 element = autolab.get_element_by_address(configPars['parameter']['address'])
                 assert element is not None, f"Parameter {configPars['parameter']['address']} not found."
-                assert 'name' in configPars['parameter'], f"Parameter name not found."
+                assert 'name' in configPars['parameter'], "Parameter name not found."
                 config['parameter'] = {'element':element,'name':configPars['parameter']['name']}
 
 
@@ -573,30 +573,31 @@ class ConfigManager :
                     assert element is not None, f"Address {address} not found for step {i} ({name})."
                     step['element'] = element
 
-                    if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str]) :
+                    if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
                         assert f'{i}_value' in configPars['recipe'], f"Missing value in step {i} ({name})."
                         value = configPars['recipe'][f'{i}_value']
 
-                            # Type conversions
                         try:
-                            if element.type in [int]:
-                                value = int(value)
-                            elif element.type in [float] :
-                                value = float(value)
-                            elif element.type in [str] :
-                                value = str(value)
-                            elif element.type in [bool]:
-                                if value == "False": value = False
-                                elif value == "True": value = True
-                                value = int(value)
-                                assert value in [0,1]
-                                value = bool(value)
-                        except:
                             try:
-                                self.checkErrorVariable(value)  # if don't use this method, would accept config with bad value. Downside is a config rejection if use a variable address from a closed device
+                                assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
                             except:
-                                raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
-                            value = str(value)
+                                # Type conversions
+                                if element.type in [int]:
+                                    value = int(value)
+                                elif element.type in [float] :
+                                    value = float(value)
+                                elif element.type in [str] :
+                                    value = str(value)
+                                elif element.type in [bool]:
+                                    if value == "False": value = False
+                                    elif value == "True": value = True
+                                    value = int(value)
+                                    assert value in [0,1]
+                                    value = bool(value)
+                                else:
+                                    assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
+                        except:
+                            raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
                         step['value'] = value
                     else:
                         step['value'] = None
@@ -615,7 +616,7 @@ class ConfigManager :
             self.gui.rangeManager.refresh()
 
 
-            self.gui.statusBar.showMessage(f"Configuration file loaded successfully",5000)
+            self.gui.statusBar.showMessage("Configuration file loaded successfully",5000)
 
         except Exception as error:
             self._got_error = True
@@ -625,15 +626,14 @@ class ConfigManager :
         self._activate_historic = True
 
 
-    def checkErrorVariable(self, value):
+    def checkVariable(self, value):
 
-        """ Check if value is a valid device variable address. For example value='dummy.amplitude' """
-        module_name, *submodules_name, variable_name = value.split(".")
-        module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
-        for submodule_name in submodules_name:
-            module = module.get_module(submodule_name)
+        """ Check if value start with '$eval:'. Will not try to check if variables exists"""
 
-        module.get_variable(variable_name)
+        if str(value).startswith("$eval:"):
+            return 0
+        else:
+            return -1
 
     # UNDO REDO ACTIONS
     ###########################################################################

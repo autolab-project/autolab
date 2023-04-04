@@ -7,6 +7,9 @@ Created on Sun Sep 29 18:15:26 2019
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from . import main
+import numpy as np
+import pandas as pd
+
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
 
@@ -46,7 +49,7 @@ class RecipeManager :
         self.defaultItemBackground = None
 
 
-    def orderChanged(self,event):
+    def orderChanged(self,event): # TODO: track why sometime error when moving to top
         newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
         self.gui.configManager.setRecipeOrder(newOrder)
 
@@ -87,7 +90,7 @@ class RecipeManager :
                     if step['element'].type in [bool,str] :
                        item.setText(3,f'{value}')
                     else :
-                       item.setText(3,f'{value:g}')
+                       item.setText(3,f'{value:.10g}')
                 except ValueError:
                     item.setText(3,f'{value}')
             # Add item to the tree
@@ -112,7 +115,7 @@ class RecipeManager :
 
             menu = QtWidgets.QMenu()
             menuActions['rename'] = menu.addAction("Rename")
-            if stepType == 'set' or (stepType == 'action' and element.type in [int,float,str]) :
+            if stepType == 'set' or (stepType == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
                 menuActions['setvalue'] = menu.addAction("Set value")
             menuActions['remove'] = menu.addAction("Remove")
 
@@ -149,7 +152,7 @@ class RecipeManager :
 
         # Default value displayed in the QInputDialog
         try:
-            defaultValue = f'{value:g}'
+            defaultValue = f'{value:.10g}'
         except ValueError:
             defaultValue = f'{value}'
         value,state = QtWidgets.QInputDialog.getText(self.gui,
@@ -161,8 +164,11 @@ class RecipeManager :
 
             try :
 
-                # Type conversions
                 try:
+                    assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
+
+                except :
+                    # Type conversions
                     if element.type in [int]:
                         value = int(value)
                     elif element.type in [float] :
@@ -175,25 +181,37 @@ class RecipeManager :
                         value = int(value)
                         assert value in [0,1]
                         value = bool(value)
-                except:
-                    self.checkErrorVariable(value)
-                    value = str(value)
+                    else:
+                        assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
 
                 # Apply modification
                 self.gui.configManager.setRecipeStepValue(name,value)
 
-            except :
+            except Exception as er:
+                print("Can't set step:", er)
+                self.gui.statusBar.showMessage(f"Can't set step: {er}", 5000)
                 pass
 
+    ## OLD: this code was used to check if a given variable exists in a device.  Only work for one variable.
+    ## If someone think it could be usefull to check if variables exists,
+    ## You are welcome to implement a parsing system to check all the variables in the given string
+    # def checkVariable(self, value):
 
-    def checkErrorVariable(self, value):
+    #     """ Check if value is a valid device variable address. For example value='dummy.amplitude' """
+    #     module_name, *submodules_name, variable_name = value.split(".")
+    #     module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
+    #     for submodule_name in submodules_name:
+    #         module = module.get_module(submodule_name)
+    #     module.get_variable(variable_name)
 
-        """ Check if value is a valid device variable address. For example value='dummy.amplitude' """
-        module_name, *submodules_name, variable_name = value.split(".")
-        module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
-        for submodule_name in submodules_name:
-            module = module.get_module(submodule_name)
-        module.get_variable(variable_name)
+    def checkVariable(self, value):
+
+        """ Check if value start with '$eval:'. Will not try to check if variables exists"""
+
+        if str(value).startswith("$eval:"):
+            return 0
+        else:
+            return -1
 
 
     def itemDoubleClicked(self,item,column):
@@ -207,7 +225,7 @@ class RecipeManager :
         if column == 0 :
             self.renameStep(name)
         if column == 3 :
-            if stepType == 'set' or (stepType == 'action' and element.type in [int,float,str]) :
+            if stepType == 'set' or (stepType == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
                 self.setStepValue(name)
 
 

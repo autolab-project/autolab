@@ -69,7 +69,7 @@
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QLabel" name="label_3">
+         <widget class="QLabel" name="windowLength_label">
           <property name="font">
            <font>
             <pointsize>9</pointsize>
@@ -171,28 +171,6 @@
       </item>
       <item>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="1">
-         <widget class="QPushButton" name="saveButton">
-          <property name="font">
-           <font>
-            <pointsize>9</pointsize>
-           </font>
-          </property>
-          <property name="toolTip">
-           <string>Save data displayed</string>
-          </property>
-          <property name="text">
-           <string>Save</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QPushButton" name="clearButton">
-          <property name="text">
-           <string>Clear</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="0">
          <widget class="QPushButton" name="pauseButton">
           <property name="font">
@@ -205,6 +183,20 @@
           </property>
           <property name="text">
            <string>Pause</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QCheckBox" name="mean_checkBox">
+          <property name="text">
+           <string>Mean</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QPushButton" name="clearButton">
+          <property name="text">
+           <string>Clear</string>
           </property>
          </widget>
         </item>
@@ -222,10 +214,38 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="QCheckBox" name="mean_checkBox">
+        <item row="0" column="1">
+         <widget class="QPushButton" name="saveButton">
+          <property name="font">
+           <font>
+            <pointsize>9</pointsize>
+           </font>
+          </property>
+          <property name="toolTip">
+           <string>Save data displayed</string>
+          </property>
           <property name="text">
-           <string>Mean</string>
+           <string>Save</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="autoscale_x_checkBox">
+          <property name="toolTip">
+           <string>Enable (disable) autoscale on X axis</string>
+          </property>
+          <property name="text">
+           <string>Autoscale x</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QCheckBox" name="autoscale_y_checkBox">
+          <property name="toolTip">
+           <string>Enable (disable) autoscale on X axis</string>
+          </property>
+          <property name="text">
+           <string>Autoscale y</string>
           </property>
          </widget>
         </item>
