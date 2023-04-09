@@ -4,40 +4,40 @@ Created on Fri May 17 15:04:04 2019
 
 @author: quentin.chateiller
 """
-import os
 
-# VERSION
-with open(os.path.join(os.path.dirname(__file__), 'version.txt')) as version_file:
+# Load current version in version file
+from .core import paths as _paths
+with open(_paths.VERSION) as version_file:
     __version__ = version_file.read().strip()
 del version_file
 
-# PATHS
-from .core import paths
+# Process updates from previous versions
+from .core import version_adapter
+version_adapter.process_all_changes()
+del version_adapter
 
-# CONFIG
-from .core import stats as _stats
+# Load user config
 from .core import config as _config
-_config.check()
+_config.initialize_local_directory()
+_config.check_autolab_config()
 
-# STATS
-from .core.stats import set_stats_enabled, is_stats_enabled
+# Statistics
+from .core import stats as _stats
 _stats.startup()
 
-# DRIVERS
-from .core.drivers import *
+# infos
+from .core.infos import list_devices, list_drivers, infos, config_help, statistics
 
-# DEVICES
-from .core.devices import *
+# Devices
+from .core.devices import get_device
 
-# WEBBROWSER FUNCTIONS
-from .core.web import *
+# Webbrowser shortcuts
+from .core.web import report, doc
 
-# RECORDER (to be removed at some point)
-from .core.recorder import Recorder, Recorder_V2
+# Server
+from .core.server import Server as server
 
 # GUI
 from .core.gui import start as gui
 
 from .core.devices import close
-
-

@@ -10,7 +10,7 @@ from PyQt5 import QtCore, QtWidgets
 from ..monitoring.main import Monitor
 import os
 from ... import paths
-from ...devices import close
+from ...devices import close, DEVICES
 import pandas as pd
 import numpy as np
 
@@ -153,9 +153,8 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         if str(value).startswith("$eval:"):
             value = str(value)[len("$eval:"):]
             try:
-                import autolab  # OPTIMIZE: best not to import autolab in autolab
                 allowed_dict ={"np":np, "pd":pd}
-                allowed_dict.update(autolab.DEVICES)
+                allowed_dict.update(DEVICES)
                 value = eval(str(value), {}, allowed_dict)
             except:
                 pass
@@ -321,9 +320,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if str(value).startswith("$eval:"):
             value = str(value)[len("$eval:"):]
             try:
-                import autolab
                 allowed_dict ={"np":np, "pd":pd}
-                allowed_dict.update(autolab.DEVICES)
+                allowed_dict.update(DEVICES)
                 value = eval(str(value), {}, allowed_dict)
             except:
                 pass

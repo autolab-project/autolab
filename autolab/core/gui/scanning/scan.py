@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import collections
 import math as m
-
+from ...devices import DEVICES
 
 class ScanManager :
 
@@ -379,9 +379,8 @@ class ScanThread(QtCore.QThread):
         if str(value).startswith("$eval:"):
             value = str(value)[len("$eval:"):]
             try:
-                import autolab
                 allowed_dict ={"np":np, "pd":pd}
-                allowed_dict.update(autolab.DEVICES)
+                allowed_dict.update(DEVICES)
                 value = eval(str(value), {}, allowed_dict)
             except:
                 pass
