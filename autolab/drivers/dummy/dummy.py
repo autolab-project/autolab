@@ -94,10 +94,12 @@ class Driver():
 
     def get_dataframe(self):
         df = pd.DataFrame()
-        d = {'e':1,'f':2}
-        df=df.append(d,ignore_index=True)
+        df["e"] = [1,2,3]
+        df["f"] = [4,5,3]
+        # d = {'e':1,'f':2}
+        # df=df.append(d,ignore_index=True)
         time.sleep(self.sleep)
-        if self.verbose : print('get dataframe',d)
+        if self.verbose : print('get dataframe',df)
         return df
 
     def set_option(self,value):
@@ -113,6 +115,14 @@ class Driver():
     def get_array(self):
         time.sleep(self.sleep)
         return np.ones((3,4))
+
+    def get_array_one_dim(self):
+        time.sleep(self.sleep)
+        return np.random.random(1000)
+
+    def get_array_two_dim(self):
+        time.sleep(self.sleep)
+        return np.random.random((1000,2))
 
     def get_constant(self):
         return self.constant
@@ -135,6 +145,8 @@ class Driver():
         model.append({'element':'variable','name':'dataframe','type':pd.DataFrame,'read':self.get_dataframe})
         model.append({'element':'variable','name':'option','type':bool,'read':self.get_option,'write':self.set_option})
         model.append({'element':'variable','name':'array','type':np.ndarray,'read':self.get_array})
+        model.append({'element':'variable','name':'array_1D','type':np.ndarray,'read':self.get_array_one_dim})
+        model.append({'element':'variable','name':'array_2D','type':np.ndarray,'read':self.get_array_two_dim})
         model.append({'element':'variable','name':'sleep','type':float,'read':self.get_sleep,'write':self.set_sleep})
         model.append({'element':'variable','name':'verbose','type':bool,'read':self.get_verbose,'write':self.set_verbose})
         model.append({'element':'variable','name':'constant','type':float,'read':self.get_constant,'write':self.set_constant,'help':'Constant variable.'})

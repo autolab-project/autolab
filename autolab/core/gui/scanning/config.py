@@ -6,8 +6,8 @@ Created on Sun Sep 29 18:16:09 2019
 """
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
-import autolab
-from autolab import paths
+from ... import paths, devices
+from .... import __version__
 import configparser
 import datetime
 import os
@@ -469,7 +469,7 @@ class ConfigManager :
         """ This function create the current scan configuration parser """
 
         configPars = configparser.ConfigParser()
-        configPars['autolab'] = {'version':autolab.__version__,
+        configPars['autolab'] = {'version':__version__,
                                  'timestamp':str(datetime.datetime.now())}
 
         configPars['parameter'] = {}
@@ -532,7 +532,7 @@ class ConfigManager :
             config = {}
 
             if 'address' in configPars['parameter'] :
-                element = autolab.get_element_by_address(configPars['parameter']['address'])
+                element = devices.get_element_by_address(configPars['parameter']['address'])
                 assert element is not None, f"Parameter {configPars['parameter']['address']} not found."
                 assert 'name' in configPars['parameter'], "Parameter name not found."
                 config['parameter'] = {'element':element,'name':configPars['parameter']['name']}
@@ -569,7 +569,7 @@ class ConfigManager :
 
                     assert f'{i}_address' in configPars['recipe'], f"Missing address in step {i} ({name})."
                     address = configPars['recipe'][f'{i}_address']
-                    element = autolab.get_element_by_address(address)
+                    element = devices.get_element_by_address(address)
                     assert element is not None, f"Address {address} not found for step {i} ({name})."
                     step['element'] = element
 

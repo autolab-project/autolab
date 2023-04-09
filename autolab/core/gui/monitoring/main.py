@@ -8,7 +8,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 import os
 import queue
 
-from autolab import paths
+from ... import paths
 
 from .data import DataManager
 from .figure import FigureManager

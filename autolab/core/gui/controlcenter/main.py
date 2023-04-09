@@ -9,7 +9,7 @@ quentin.chateiller@c2n.upsaclay.fr
 
 import os
 
-import autolab
+from ... import devices, web
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QApplication
 from ..scanning.main import Scanner
@@ -66,17 +66,28 @@ class ControlCenter(QtWidgets.QMainWindow):
         plotAction.triggered.connect(self.openPlotter)
         plotAction.setToolTip('Open the plotter in another window')
 
+        if self.ct400_gui is None:
 
-        ct400Action = self.menuBar.addAction('Open CT400 GUI')
-        ct400Action.triggered.connect(self.openCT400Gui)
-        ct400Action.setToolTip('Open the CT400 GUI in another window')
+            list_devices_gui = [devName for devName in devices.list_devices()]  # All devices
+            check_list_gui = [bool(str(x).lower().startswith("ct400")) for x in list_devices_gui]
+
+            for i, check in enumerate(check_list_gui):  # Index of first ct400 find
+                if check:
+                    break
+            else:
+                i = None
+
+            if i is not None:  # If find a ct400 device
+                ct400Action = self.menuBar.addAction('Open CT400 GUI')
+                ct400Action.triggered.connect(self.openCT400Gui)
+                ct400Action.setToolTip('Open the CT400 GUI in another window')
 
         reportAction = self.menuBar.addAction('Report bugs / suggestions')
-        reportAction.triggered.connect(autolab.report)
+        reportAction.triggered.connect(web.report)
         reportAction.setToolTip('Open the issue webpage of this project on GitHub')
 
-        helpAction = self.menuBar.addAction('Help')
-        helpAction.triggered.connect(autolab.doc)
+        helpAction = self.menuBar.addAction('Documentation')
+        helpAction.triggered.connect(web.doc)
         helpAction.setToolTip('Open the documentation on Read The Docs website')
 
     def initialize(self):
@@ -84,11 +95,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function will create the first items in the tree, but will
         associate only the ones already loaded in autolab """
 
-        for devName in autolab.list_local_configs() :
+        for devName in devices.list_devices() :
             item = TreeWidgetItemModule(self.tree,devName,self)
             for i in range(5) :
                 item.setBackground(i, QtGui.QColor('#9EB7F5'))  # blue
-            if devName in autolab.list_devices() :
+            if devName in devices.list_loaded_devices() :
                 self.associate(item)
 
 
@@ -141,7 +152,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         check = False
         try :
             self.setStatus(f'Loading device {item.name}...', 5000)
-            module = autolab.get_device(item.name)
+            module = devices.get_device(item.name)
 
             # If the driver has an openGUI method, a button will be added to the Autolab menu to access it.
             if hasattr(module.instance, "openGUI"):
@@ -177,7 +188,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         # If the scanner is not already running, create one
         if self.ct400_gui is None:
 
-            list_devices_gui = [devName for devName in autolab.list_local_configs()]  # All devices
+            list_devices_gui = [devName for devName in devices.list_devices()]  # All devices
             check_list_gui = [bool(str(x).lower().startswith("ct400")) for x in list_devices_gui]
 
             for i, check in enumerate(check_list_gui):  # Index of first ct400 find
@@ -189,12 +200,12 @@ class ControlCenter(QtWidgets.QMainWindow):
             if i is not None:  # If find a ct400 device
                 ct400_name = list_devices_gui[i]
 
-                if ct400_name not in autolab.list_devices():  # If not in connected devices connect ct400
+                if ct400_name not in devices.list_loaded_devices():  # If not in connected devices connect ct400
                     ct400_tree = self.tree.findItems(ct400_name, QtCore.Qt.MatchExactly)[0]
                     self.associate(ct400_tree)
                     ct400_tree.setExpanded(True)
 
-                ct400 = autolab.DEVICES.get(ct400_name)
+                ct400 = devices.DEVICES.get(ct400_name)
                 if ct400 is not None:
                     self.ct400_gui = CT400Gui(self, ct400)
                     self.ct400_gui.show()
@@ -297,6 +308,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         for monitor in monitors:
             monitor.close()
 
-        autolab.close()  # close all devices
+        devices.close()  # close all devices
 
         QApplication.quit()  # close the control center interface

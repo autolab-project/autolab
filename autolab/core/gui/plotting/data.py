@@ -10,7 +10,7 @@ import os
 import csv
 
 from PyQt5 import QtCore,QtWidgets
-from autolab import paths
+from ... import paths
 import pandas as pd
 
 try:
