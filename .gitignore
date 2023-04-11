@@ -2,3 +2,8 @@
 *.pyc
 *.spyproject
 test.py
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
