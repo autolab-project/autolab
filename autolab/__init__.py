@@ -30,6 +30,11 @@ from .core.infos import list_devices, list_drivers, infos, config_help, statisti
 
 # Devices
 from .core.devices import get_device
+from .core import devices as _devices
+
+# Drivers
+from .core.drivers import get_driver
+from .core import drivers as _drivers
 
 # Webbrowser shortcuts
 from .core.web import report, doc

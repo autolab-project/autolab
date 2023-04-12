@@ -178,7 +178,7 @@ def get_connection_class(driver_lib,connection):
 
     ''' Returns the class Driver_XXX of the provided driver library and connection type '''
 
-    assert connection in get_connection_names(driver_lib),f"Invalid connection type {connection} for driver {driver_lib.__name__}"
+    assert connection in get_connection_names(driver_lib),f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
     return getattr(driver_lib,f'Driver_{connection}')
 
 
@@ -273,7 +273,7 @@ def load_drivers_paths():
 
 
 def update_drivers_paths():
-    global DRIVERS_PATH
+    global DRIVERS_PATHS
     DRIVERS_PATHS = load_drivers_paths()
 
 # Loading the drivers informations at startup

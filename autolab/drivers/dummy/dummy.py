@@ -37,6 +37,7 @@ class Driver():
 
     def set_verbose(self,value):
         self.verbose = value
+        print("Activate verbose") if self.verbose else print("Deactivate verbose")
 
     def get_verbose(self):
         return self.verbose
