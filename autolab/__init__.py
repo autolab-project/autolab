@@ -33,7 +33,7 @@ from .core.devices import get_device
 from .core import devices as _devices
 
 # Drivers
-from .core.drivers import get_driver
+from .core.drivers import get_driver, explore_driver
 from .core import drivers as _drivers
 
 # Webbrowser shortcuts

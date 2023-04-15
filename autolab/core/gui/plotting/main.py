@@ -80,10 +80,10 @@ class Plotter(QtWidgets.QMainWindow):
         # Cursor checkbox
         self.displayCursorCheckBox.clicked.connect(self.displayCursorCheckBoxClicked)
 
-        self.driver_lineEdit.setText(f'{self.dataManager.driverValue}')
-        self.driver_lineEdit.returnPressed.connect(self.driverChanged)
-        self.driver_lineEdit.textEdited.connect(lambda : self.setLineEditBackground(self.driver_lineEdit,'edited'))
-        self.setLineEditBackground(self.driver_lineEdit,'synced')
+        self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
+        self.device_lineEdit.returnPressed.connect(self.deviceChanged)
+        self.device_lineEdit.textEdited.connect(lambda : self.setLineEditBackground(self.device_lineEdit,'edited'))
+        self.setLineEditBackground(self.device_lineEdit,'synced')
 
         # Plot button
         self.plotDataButton.clicked.connect(self.refreshPlotData)
@@ -109,7 +109,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.dataManager.setOverwriteData(self.overwriteDataButton.isChecked())
 
     def autoRefreshChanged(self):
-        """ Set if auto refresh call for driver data """
+        """ Set if auto refresh call for device data """
 
         if self.auto_plotDataButton.isChecked():
             self.timer.start()
@@ -124,38 +124,38 @@ class Plotter(QtWidgets.QMainWindow):
     def refreshPlotData(self):
         """ This function get the last dataset data and display it onto the Plotter GUI """
 
-        driverValue = self.dataManager.getDriverValue()
+        deviceValue = self.dataManager.getDeviceValue()
 
         try:
-            driverVariable = self.dataManager.getDriverName(driverValue)
-            dataset = self.dataManager.importDriverData(driverVariable)
+            deviceVariable = self.dataManager.getDeviceName(deviceValue)
+            dataset = self.dataManager.importDeviceData(deviceVariable)
             data_name = dataset.name
             self.figureManager.start(dataset)
             self.statusBar.showMessage(f"Display the data: '{data_name}'",5000)
         except Exception as error:
             self.statusBar.showMessage(f"Can't refresh data: {error}",10000)
 
-    def driverChanged(self):
+    def deviceChanged(self):
         """ This function start the update of the target value in the data manager
         when a changed has been detected """
 
         # Send the new value
         try:
-            value = str(self.driver_lineEdit.text())
-            self.dataManager.setDriverValue(value)
+            value = str(self.device_lineEdit.text())
+            self.dataManager.setDeviceValue(value)
         except Exception as er:
-            self.statusBar.showMessage(f"ERROR Can't change driver variable: {er}", 10000)
+            self.statusBar.showMessage(f"ERROR Can't change device variable: {er}", 10000)
         else:
             # Rewrite the GUI with the current value
-            self.updateDriverValueGui()
+            self.updateDeviceValueGui()
 
-    def updateDriverValueGui(self):
+    def updateDeviceValueGui(self):
         """ This function ask the current value of the target value in the data
         manager, and then update the GUI """
 
-        value = self.dataManager.getDriverValue()
-        self.driver_lineEdit.setText(f'{value}')
-        self.setLineEditBackground(self.driver_lineEdit,'synced')
+        value = self.dataManager.getDeviceValue()
+        self.device_lineEdit.setText(f'{value}')
+        self.setLineEditBackground(self.device_lineEdit,'synced')
 
     def logScaleChanged(self,axe):
         """ This function is called when the log scale state is changed in the GUI. """

@@ -28,8 +28,9 @@ usage:    autolab driver [options] args
 
     def add_parser_arguments(self,parser):
         """Add arguments to the parser passed as input"""
-        parser.add_argument("-verb", "--verbose", type=bool, dest="verbose", default=None, help="Set verbose" )
-        parser.add_argument("-a", "--amplitude", type=float, dest="amplitude", default=None, help="Set the amplitude" )
+        # BUG: Only use type=str not bool or other because OS Shell is always str so will do bool('0') or bool('1') which is always True
+        parser.add_argument("-verb", "--verbose", type=str, dest="verbose", default=None, help="Set verbose")
+        parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the amplitude" )
         #parser.add_argument("-c", "--channels", type=str, dest="channels", default=None, help="Set the traces to act on/acquire from." )
         #parser.add_argument("-o", "--filename", type=str, dest="filename", default=None, help="Set the name of the output file" )
         #parser.add_argument("-F", "--force",action="store_true", dest="force", default=None, help="Allows overwriting file" )
@@ -50,5 +51,5 @@ usage:    autolab driver [options] args
         pass
 
     def exit(self):
-        #self.Instance.close()
+        self.Instance.close()
         pass

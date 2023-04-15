@@ -11,7 +11,6 @@ import time
 import numpy as np
 import pandas as pd
 
-from scipy.signal import argrelextrema
 from .data import DataManager
 
 
@@ -602,6 +601,8 @@ def find_local_maximum(x_data, y_data, x_max, order=10, level=-3):
 
     """ Find local maximum with wl close to x_max.
         order is used to filter local maximum. """
+
+    from scipy.signal import argrelextrema
 
     maximum_array = Data()
     maximum_array.index = argrelextrema(y_data, np.greater, order=order)[0]

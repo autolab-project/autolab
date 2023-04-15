@@ -66,7 +66,7 @@ class DataManager :
         self.depthValue = 1
         self.levelValue = -3.
 
-        self.driverValue = "ct400.scan.data"
+        self.deviceValue = "ct400.scan.data"
 
     def _clear(self):
         self.datasets = []
@@ -107,23 +107,23 @@ class DataManager :
                 break
         return name
 
-    def setDriverValue(self,value):
-        """ This function set the value of the target driver value """
+    def setDeviceValue(self,value):
+        """ This function set the value of the target device value """
 
         try:
-            self.getDriverName(value)
+            self.getDeviceName(value)
         except:
-            raise NameError(f"The given value '{value}' is not a driver variable or the driver is closed")
+            raise NameError(f"The given value '{value}' is not a device variable or the device is closed")
         else:
-            self.driverValue = value
+            self.deviceValue = value
 
-    def getDriverValue(self):
-        """ This function returns the value of the target driver value """
+    def getDeviceValue(self):
+        """ This function returns the value of the target device value """
 
-        return self.driverValue
+        return self.deviceValue
 
-    def getDriverName(self, name):
-        """ This function returns the name of the target driver value """
+    def getDeviceName(self, name):
+        """ This function returns the name of the target device value """
 
         try:
             module_name, *submodules_name, variable_name = name.split(".")
@@ -132,7 +132,7 @@ class DataManager :
                 module = module.get_module(submodule_name)
             variable = module.get_variable(variable_name)
         except:
-            raise NameError(f"The given value '{name}' is not a driver variable or the driver is closed")
+            raise NameError(f"The given value '{name}' is not a device variable or the device is closed")
         return variable
 
     def setTargetValue(self,value):
@@ -210,18 +210,18 @@ class DataManager :
 
                     self.gui.figureManager.start(dataset)
 
-    def importDriverData(self, driverVariable):
-        """ This function open the data of the provided driver """
+    def importDeviceData(self, deviceVariable):
+        """ This function open the data of the provided device """
 
-        data = driverVariable()
+        data = deviceVariable()
 
         data = self.formatData(data)
 
         if self.overwriteData:
-            data_name = self.driverValue
+            data_name = self.deviceValue
         else:
             names_list = self.getDatasetsNames()
-            data_name = DataManager.getUniqueName(self.driverValue, names_list)
+            data_name = DataManager.getUniqueName(self.deviceValue, names_list)
 
         dataset = self.newDataset(data_name, data)
         return dataset

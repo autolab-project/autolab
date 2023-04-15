@@ -36,7 +36,9 @@ class Driver():
         return self.sleep
 
     def set_verbose(self,value):
-        self.verbose = value
+        if value == "False": value = False
+        elif value == "True": value = True
+        self.verbose = bool(int(float(value)))
         print("Activate verbose") if self.verbose else print("Deactivate verbose")
 
     def get_verbose(self):
@@ -73,9 +75,6 @@ class Driver():
         self.amp = value
         if self.verbose : print('set amplitude',self.amp)
         #raise ValueError('Test error')
-
-    def close(self):
-        if self.verbose : print('DUMMY DEVICE CLOSED')
 
     def get_phase(self):
         time.sleep(self.sleep)
@@ -161,6 +160,9 @@ class Driver_CONN(Driver):
         print('DUMMY DEVICE INSTANTIATED with address',address)
 
         Driver.__init__(self)
+
+    def close(self):
+        print('DUMMY DEVICE CLOSED')
 
 
 class Slot() :
