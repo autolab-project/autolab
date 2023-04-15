@@ -110,6 +110,7 @@ def get_devices_status():
 
 
 def close(device="all"):
+    """ Close a device by providing its name or its instance. Use 'all' to close all openned devices. """
 
 
     if str(device) == "all":
@@ -135,6 +136,8 @@ def close(device="all"):
             DEVICES[device].close()
         else:
             print(f"No device {device} in {list_loaded_devices()}")
+    else:
+        print(f"Warning, {device} is not a reconized device")
 
 
 # =============================================================================

@@ -15,7 +15,7 @@ from . import paths, server
 # DRIVERS INSTANTIATION
 # =============================================================================
 
-def get_driver(driver_name,connection_type,**kwargs):
+def get_driver(driver_name,connection,**kwargs):
 
     ''' Returns a driver instance using configuration provided in kwargs '''
 
@@ -25,7 +25,7 @@ def get_driver(driver_name,connection_type,**kwargs):
     else :
         assert driver_name in list_drivers(), f"Driver {driver_name} not found in autolab's drivers"
         driver_lib = load_driver_lib(driver_name)
-        driver_instance = get_connection_class(driver_lib,connection_type)(**kwargs)
+        driver_instance = get_connection_class(driver_lib,connection)(**kwargs)
 
     return driver_instance
 
@@ -248,7 +248,7 @@ def get_class_args(clas):
 def get_driver_path(driver_name):
 
     ''' Returns the config associated with driver_name '''
-
+    assert type(driver_name) is str, "drive_name must be a string."
     assert driver_name in DRIVERS_PATHS.keys(), f'Driver {driver_name} not found.'
     return DRIVERS_PATHS[driver_name]['path']
 

@@ -23,7 +23,7 @@ def print_help():
     print('  device                Device interface')
     print('  doc                   Open the online documentation (readthedocs)')
     print('  report                Open the online report/suggestions webpage (github)')
-    print('  infos                 Displays the avalaible drivers and local configurations we ')
+    print('  infos                 Displays the available drivers and devices configuration')
     print()
     print('General Options:')
     print('  -h, --help            Show this help message')
@@ -69,7 +69,7 @@ def main() :
 def process_config(args_list):
 
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-D", "--driver", type=str, dest="driver", help="Set the nickname or driver to use: 1) uses nickname if it is defined in local_config.ini OR(if it is not) 2) Set the driver name to use." )
+    parser.add_argument("-D", "--driver", type=str, dest="driver", help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_config.ini OR(if it is not) 2) Set the driver name to use." )
     parser.add_argument("-C", "--connection", type=str, dest="connection", help="Set the connection type to use for the connection." )
     parser.add_argument("-A", "--address", type=str, dest="address", help="Set the address to use for the communication." )
     parser.add_argument("-O","--other", nargs='+', dest="other", help="Set other parameters [ports (e.g SOCKET), board_index, slots,...)." )
@@ -87,7 +87,12 @@ def process_config(args_list):
     # Help for autolab driver/device -h/--help and autolab driver/device -h/--help -D driver_name
     if not args.driver or (not args.driver and args_list[1]=='-h' or args_list[1]=='--help'): print_help_parser(parser,args_list); sys.exit()
     if args.driver and (args_list[1]=='-h' or args_list[1]=='--help'):
-        assert args.driver in autolab.list_drivers(), f"Driver {args.driver} not known"
+        if args.driver in autolab._devices.list_devices():
+            try:
+                args.driver = autolab._devices.get_final_device_config(args.driver)["driver"]
+            except:
+                pass
+        assert args.driver in autolab._drivers.list_drivers(), f"Driver {args.driver} not known"
         autolab.config_help(args.driver,_parser=True)
         sys.exit()
 
@@ -103,7 +108,7 @@ This is a very basic help message for usage of {args_list[0]}. More info can be 
     Usage:   {args_list[0]} -D driver_name -C connection -A address -h
 
 Recquired connection arguments (capital letters):
-    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the local_config.ini. See below for accessing the list of available drivers.
+    -D driver_name: name of the driver to use (e.g.: agilent_33220A). driver_name can be either the driver_name or the defined nickname, as defined by the user in the devices_config.ini. See below for accessing the list of available drivers.
     -C connection type to use to communicate with the device (e.g.: VISA, VXI11, SOCKET, TELNET, USB, GPIB, ...). You may access the available connections types with an help (see below helps section).
     -A address: full address to reach the device that depends on the connection type (e.g.: 192.168.0.2  [for VXI11]) and on the way you configured the instrument.
 
@@ -151,7 +156,7 @@ def driver_parser(args_list):
     # Instantiation of driver.py and driver_utilities.py
     global driver_instance
     assert 'connection' in config.keys(), f"Must provide a connection for the driver using -C connection with connection being for this driver among {autolab._drivers.get_connection_names(autolab._drivers.load_driver_lib(driver_name))}"
-    driver_instance           = autolab.get_driver(driver_name,config['connection'],**config)
+    driver_instance           = autolab.get_driver(driver_name,**config)
 
     if driver_name in autolab._config.list_all_devices_configs():
         # Load config object
@@ -245,6 +250,9 @@ def device_parser(args_list):
     parser.add_argument("-h", "--help", action='store_true', dest="help", help='Display element help')
 
     # In autolab driver, this is done after the last help request
+    if "-e" in list(set([x for x in args_list if args_list.count(x) >= 2])):
+        print("Warning, device will only consider the last element provided with -e. Use driver instead to do multiple operations in the same command")
+
     args, unknown = parser.parse_known_args(args_list)
 
     # Instantiation
@@ -265,13 +273,14 @@ def device_parser(args_list):
         element.save(args.path,value=value)
 
     elif args.value is not None :
+        assert element._element_type in ('variable', 'action'), "Please provide a Variable or Action element using -e <element>"
         if element._element_type == 'variable' : element(args.value)
         elif element._element_type == 'action' : element(args.value)
-
-    else :
-        assert element._element_type in ['variable','action'], "Please provide a Variable or Action element"
+    else:
         if element._element_type == 'variable' : print(element())
         elif element._element_type == 'action' : element()
+
+    args = parser.parse_args()  # return error if give bad arg
 
     instance.close()
 ################################## autolab device ###################################
