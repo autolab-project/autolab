@@ -60,28 +60,27 @@ def load_config(config_name):
     return config
 
 
-#def get_attribute(name,config,header,attribute):
+# def get_attribute(config,section_name,attribute_name):
 
-#    ''' This function get the value of the given parameter of the given header in the provided configparser '''
+#     ''' This function get the value of the given parameter of the given header in the provided configparser '''
+#     config_section = get_config_section(config,section_name)
+#     assert attribute_name in config_section.keys(), f"Attribute '{attribute_name}' not found in section {section_name}."
+#     return config_section[attribute_name]
 
-#    assert header in config.sections(), f"Header '{header}' not found in the configuration file."
-#    assert parameter in config[header].keys(), f"Parameter '{parameter}' not found in header {header}."
-#    return config[header][parameter]
+# def get_config_section(config,section_name):
 
-#def get_config_section(config,section_name):
+#     ''' Returns section <section_name> from existing <config> object '''
 
-#    ''' Returns section <section_name> from existing <config> object '''
-
-#    assert section_name in config.sections(), f"Section {section_name} not found in configuration file"
-#    return config[section_name]
+#     assert section_name in config.sections(), f"Section {section_name} not found in configuration file"
+#     return config[section_name]
 
 
-#def load_config_section(config_name,section_name):
+# def load_config_section(config_name,section_name):
 
-#    ''' Returns section <section_name> from configuration file <config_name>_config.ini '''
+#     ''' Returns section <section_name> from configuration file <config_name>_config.ini '''
 
-#    config = load_config(config_name)
-#    return get_config_section(config,section_name)
+#     config = load_config(config_name)
+#     return get_config_section(config,section_name)
 
 
 # ==============================================================================
@@ -99,12 +98,11 @@ def check_autolab_config():
 
         ans = input(f'{stats.startup_text} Do you agree? [default:yes] > ')
         if ans.strip().lower() == 'no' :
-            print('This feature has been disabled. You can enable it back with the function autolab.set_stats_enabled(True).')
+            print('This feature has been disabled.')
             autolab_config['stats'] = {'enabled': '0'}
         else :
             print('Thank you !')
             autolab_config['stats'] = {'enabled': '1'}
-
 
     # Check server configuration
     if 'server' not in autolab_config.sections() :
@@ -112,28 +110,80 @@ def check_autolab_config():
     if 'port' not in autolab_config['server'].keys() :
         autolab_config['server']['port'] = 4001
 
+    # Check control center configuration
+    control_center_dict = {'precision': 7,
+                           'slider_instantaneous': False,
+                           }
+    if 'control_center' not in autolab_config.sections() or not set(control_center_dict.keys()).issubset(autolab_config['control_center'].keys()) :
+        autolab_config['control_center'] = control_center_dict
+
+    # Check monitor configuration
+    monitor_dict = {'precision': 4,
+                    }
+    if 'monitor' not in autolab_config.sections() or not set(monitor_dict.keys()).issubset(autolab_config['monitor'].keys()) :
+        autolab_config['monitor'] = monitor_dict
+
+    # Check scanner configuration
+    scanner_dict = {'precision': 15,
+                    }
+    if 'scanner' not in autolab_config.sections() or not set(scanner_dict.keys()).issubset(autolab_config['scanner'].keys()) :
+        autolab_config['scanner'] = scanner_dict
+
+    # # Check plotter configuration
+    # plotter_dict = {'precision': 10,
+    #                 }
+    # if 'plotter' not in autolab_config.sections() or not set(plotter_dict.keys()).issubset(autolab_config['plotter'].keys()) :
+    #     autolab_config['plotter'] = plotter_dict
+
 
     save_config('autolab',autolab_config)
 
 
-def get_stats_config():
 
-    ''' Returns section stats from autolab_config.ini '''
+def get_config(section_name):
+    ''' Returns section with section_name from autolab_config.ini '''
 
     config = load_config('autolab')
-    assert 'stats' in config.sections(), 'Missing section stats in autolab_config.ini'
+    assert section_name in config.sections(), f'Missing {section_name} stats in autolab_config.ini'
 
-    return config['stats']
+    return config[section_name]
+
+
+def get_stats_config():
+    ''' Returns section stats from autolab_config.ini '''
+
+    return get_config('stats')
 
 
 def get_server_config():
-
     ''' Returns section server from autolab_config.ini '''
 
-    config = load_config('autolab')
-    assert 'server' in config.sections(), 'Missing section server in autolab_config.ini'
+    return get_config('server')
 
-    return config['server']
+
+def get_control_center_config():
+    ''' Returns section control_center from autolab_config.ini '''
+
+    return get_config('control_center')
+
+
+def get_monitor_config():
+    ''' Returns section monitor from autolab_config.ini '''
+
+    return get_config('monitor')
+
+
+def get_scanner_config():
+    ''' Returns section scanner from autolab_config.ini '''
+
+    return get_config('scanner')
+
+
+# def get_plotter_config():
+#     ''' Returns section plotter from autolab_config.ini '''
+
+#     return get_config('plotter')
+
 
 
 

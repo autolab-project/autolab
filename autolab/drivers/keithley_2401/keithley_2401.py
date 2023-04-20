@@ -101,6 +101,10 @@ class Driver_VISA(Driver):
 
     def close(self):
         try:
+            self.write(':SYSTEM:KEY 23')  # Go to local: Look at 'Simulate key presses' in doc
+        except:
+            pass
+        try:
             self.controller.close()
         except:
             pass

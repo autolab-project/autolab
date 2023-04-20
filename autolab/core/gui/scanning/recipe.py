@@ -7,6 +7,7 @@ Created on Sun Sep 29 18:15:26 2019
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from . import main
+from ... import config
 import numpy as np
 import pandas as pd
 
@@ -29,6 +30,10 @@ class RecipeManager :
     def __init__(self,gui, tree_layout):
 
         self.gui = gui
+
+        # Import Autolab config
+        scanner_config = config.get_scanner_config()
+        self.precision = scanner_config['precision']
 
         # Tree configuration
         #self.tree = self.gui.recipe_treeWidget
@@ -90,7 +95,7 @@ class RecipeManager :
                     if step['element'].type in [bool,str] :
                        item.setText(3,f'{value}')
                     else :
-                       item.setText(3,f'{value:.10g}')
+                       item.setText(3,f'{value:.{self.precision}g}')
                 except ValueError:
                     item.setText(3,f'{value}')
             # Add item to the tree
@@ -152,7 +157,7 @@ class RecipeManager :
 
         # Default value displayed in the QInputDialog
         try:
-            defaultValue = f'{value:.10g}'
+            defaultValue = f'{value:.{self.precision}g}'
         except ValueError:
             defaultValue = f'{value}'
         value,state = QtWidgets.QInputDialog.getText(self.gui,

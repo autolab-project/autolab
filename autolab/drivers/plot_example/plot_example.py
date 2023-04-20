@@ -8,7 +8,7 @@ Created on Wed Dec 14 21:04:12 2022
 import queue
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -21,27 +21,28 @@ class MplCanvas(FigureCanvasQTAgg):
     """https://www.pythonguis.com/tutorials/plotting-matplotlib/"""
 
     def __init__(self, parent=None, width=13, height=6, dpi=100):
-        with plt.style.context('ggplot'):  # to use your custom style only for your figure and not every other figures form Autolab
-            fig = Figure(figsize=(width, height), dpi=dpi)
-            self.fig = fig
-            self.axes = fig.add_subplot(111)
-            super(MplCanvas, self).__init__(fig)
-            self.axes.set_ylabel('Amplitude (mV)')
-            self.axes.set_xlabel('Frequency (Hz)')
-            self.axes.set_title('Real-time acquisition')
-            self.axes.minorticks_on()
-            self.axes.grid(b=True, which='major')
-            self.axes.grid(b=True, which='minor', alpha=0.4)
-            self.data_line, = self.axes.plot([], [], alpha=0.8)#,'-',color='C0')  # not needed, data_line is just a way to extract data if needed and to keep a single line instance to avoid deleting and creating a new plot every plotting loop
+        # with plt.style.context('ggplot'):  # to use your custom style only for your figure and not every other figures form Autolab
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.fig = fig
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+        self.axes.set_ylabel('Amplitude (mV)')
+        self.axes.set_xlabel('Frequency (Hz)')
+        self.axes.set_title('Real-time acquisition')
+        self.axes.minorticks_on()
+        self.axes.grid(True, which='major')
+        self.axes.grid(True, which='minor', alpha=0.4)
+        self.data_line, = self.axes.plot([], [], alpha=0.8)#,'-',color='C0')  # not needed, data_line is just a way to extract data if needed and to keep a single line instance to avoid deleting and creating a new plot every plotting loop
 
 
 class Monitor(QtWidgets.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, main=False):
         super(Monitor, self).__init__()
 
-        self.setWindowTitle("FFT plotter")
+        self.main = main
 
+        self.setWindowTitle("FFT plotter")
         # Queue
         self.queue = queue.Queue()
         self.timer = QtCore.QTimer(self)
@@ -59,14 +60,16 @@ class Monitor(QtWidgets.QMainWindow):
     def deactivate(self):
         self.timer.stop()
         self.active = False
-        self.figureManager.canvas.stop_event_loop()  # Don't think it is necessary
+        if self.main:
+            self.figureManager.canvas.stop_event_loop()  # Don't think it is necessary
 
     def plot(self,xlist,ylist):
         """Send data to queue"""
 
         self.queue.put([xlist,ylist])
         """https://stackoverflow.com/questions/59199702/how-to-make-plt-pause-work-if-last-open-figure-is-closed"""
-        self.figureManager.canvas.start_event_loop(0.001)  # Allow plotting from driver without crash
+        if self.main:
+            self.figureManager.canvas.start_event_loop(0.001)  # Allow plotting from driver without crash
 
     def sync(self):
         """ This function updates the data and then the figure.
@@ -154,14 +157,14 @@ class Driver():
             print("Can't plot data if plotter is closed")
 
 
-    def openGUI(self):
+    def openGUI(self, main=False):
         """ This function create the canvas.
         openGUI is a special name so Autolab can linked to it. Don't change it.
         Can only be called from Autolab's top menu, once the driver has been initialized by clicking on it in the controlcenter. """
 
         # Create monitor if doesn't exist
         if self.monitor is None:
-            self.monitor = Monitor()
+            self.monitor = Monitor(main)
             self.monitor.active = False
         # If the monitor is not active, open it
         if not self.monitor.active:
@@ -209,6 +212,6 @@ class Driver_EXAMPLE(Driver):
 
 if __name__ == "__main__":
     Board = Driver_EXAMPLE()
-    Board.openGUI()
+    Board.openGUI(main=True)
     Board.measurement_loop()
     # Board.measurement_once()

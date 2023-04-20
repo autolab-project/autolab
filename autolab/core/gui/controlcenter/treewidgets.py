@@ -6,11 +6,12 @@ Created on Sun Sep 29 18:29:07 2019
 """
 
 
-from PyQt5 import QtCore, QtWidgets
-from ..monitoring.main import Monitor
 import os
-from ... import paths
+from PyQt5 import QtCore, QtWidgets
+from .slider import Slider
+from ..monitoring.main import Monitor
 from ...devices import close, DEVICES
+from ... import paths, config
 import pandas as pd
 import numpy as np
 
@@ -29,8 +30,6 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         self.gui = gui
 
         self.is_not_submodule = type(gui.tree) is type(itemParent)
-
-
 
     def load(self,module):
 
@@ -196,16 +195,21 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
     def __init__(self,itemParent,variable,gui) :
 
-        displayName = f'{variable.name}'
-        if variable.unit is not None :
-            displayName += f' ({variable.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[displayName,'Variable'])
+        self.displayName = f'{variable.name}'
+        if variable.unit is not None :
+            self.displayName += f' ({variable.unit})'
+
+        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[self.displayName,'Variable'])
         self.setTextAlignment(1,QtCore.Qt.AlignHCenter)
 
         self.gui = gui
 
         self.variable = variable
+
+        # Import Autolab config
+        control_center_config = config.get_control_center_config()
+        self.precision = int(control_center_config['precision'])
 
         # Signal creation and associations in autolab devices instances
         self.readSignal = ReadSignal()
@@ -280,7 +284,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         # Update value
         if self.variable.numerical :
-            self.valueWidget.setText(f'{value:.10g}') # default is .6g
+            self.valueWidget.setText(f'{value:.{self.precision}g}') # default is .6g
         elif self.variable.type in [str] :
             self.valueWidget.setText(value)
         elif self.variable.type in [bool] :
@@ -373,6 +377,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         monitoringAction = menu.addAction("Start monitoring")
         menu.addSeparator()
+        sliderAction = menu.addAction("Create a slider")
+        menu.addSeparator()
         scanParameterAction = menu.addAction("Set as scan parameter")
         scanMeasureStepAction = menu.addAction("Measure in scan recipe")
         scanSetStepAction = menu.addAction("Set value in scan recipe")
@@ -380,16 +386,18 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         saveAction = menu.addAction("Read and save as...")
 
         monitoringAction.setEnabled( self.variable.readable and self.variable.type in [int,float,np.ndarray,pd.DataFrame] )
+        sliderAction.setEnabled( self.variable.writable and self.variable.readable and self.variable.type in [int,float] )
         scanParameterAction.setEnabled(self.variable.parameter_allowed)
         scanMeasureStepAction.setEnabled(self.variable.readable)
         saveAction.setEnabled(self.variable.readable)
         scanSetStepAction.setEnabled(self.variable.writable)
 
-
         choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
         if choice == monitoringAction :
             self.openMonitor()
+        elif choice == sliderAction :
+            self.openSlider()
         elif choice == scanParameterAction :
             self.gui.setScanParameter(self.variable)
         elif choice == scanMeasureStepAction :
@@ -399,8 +407,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         elif choice == saveAction :
             self.saveValue()
 
-    def saveValue(self):
 
+    def saveValue(self):
         filename = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value",
                                         os.path.join(paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'),
                                         filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
@@ -434,12 +442,36 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
 
 
+    def openSlider(self):
+
+        """ This function open the monitor associated to this variable. """
+
+        # If the slider is not already running, create one
+        if id(self) not in self.gui.sliders.keys():
+            self.gui.sliders[id(self)] = Slider(self)
+            self.gui.sliders[id(self)].show()
+
+        # If the slider is already running, just make as the front window
+        else :
+            slider = self.gui.sliders[id(self)]
+            slider.setWindowState(slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            slider.activateWindow()
+
+
 
     def clearMonitor(self):
 
         """ This clear the gui instance reference when quitted """
         if id(self) in self.gui.monitors.keys():
             self.gui.monitors.pop(id(self))
+
+
+
+    def clearSlider(self):
+
+        """ This clear the gui instance reference when quitted """
+        if id(self) in self.gui.sliders.keys():
+            self.gui.sliders.pop(id(self))
 
 
 

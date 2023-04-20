@@ -9,7 +9,7 @@ quentin.chateiller@c2n.upsaclay.fr
 
 import os
 
-from ... import devices, web
+from ... import devices, web, paths
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QApplication
 from ..scanning.main import Scanner
@@ -55,16 +55,16 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.plotter = None
         self.ct400_gui = None
         self.monitors = {}
+        self.sliders = {}
         self.customGUIdict = {}
 
-        # BUG: tooltip not displayed
         scanAction = self.menuBar.addAction('Open scanner')
         scanAction.triggered.connect(self.openScanner)
-        scanAction.setToolTip('Open the scanner in another window')
+        scanAction.setStatusTip('Open the scanner in another window')
 
         plotAction = self.menuBar.addAction('Open plotter')
         plotAction.triggered.connect(self.openPlotter)
-        plotAction.setToolTip('Open the plotter in another window')
+        plotAction.setStatusTip('Open the plotter in another window')
 
         if self.ct400_gui is None:
 
@@ -80,15 +80,31 @@ class ControlCenter(QtWidgets.QMainWindow):
             if i is not None:  # If find a ct400 device
                 ct400Action = self.menuBar.addAction('Open CT400 GUI')
                 ct400Action.triggered.connect(self.openCT400Gui)
-                ct400Action.setToolTip('Open the CT400 GUI in another window')
+                ct400Action.setStatusTip('Open the CT400 GUI in another window')
 
-        reportAction = self.menuBar.addAction('Report bugs / suggestions')
+        # Settings menu
+        settingsMenu = self.menuBar.addMenu('Settings')
+
+        autolabConfig = settingsMenu.addAction('Autolab config')
+        autolabConfig.triggered.connect(self.openAutolabConfig)
+        autolabConfig.setStatusTip("Open the Autolab configuration file")
+
+        devicesConfig = settingsMenu.addAction('Devices config')
+        devicesConfig.triggered.connect(self.openDevicesConfig)
+        devicesConfig.setStatusTip("Open the devices configuration file")
+
+        # Help menu
+        helpMenu = self.menuBar.addMenu('Help')
+
+        reportAction = helpMenu.addAction('Report bugs / suggestions')
+        reportAction.setIcon(QtGui.QIcon("bug.png"))
         reportAction.triggered.connect(web.report)
-        reportAction.setToolTip('Open the issue webpage of this project on GitHub')
+        reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
 
-        helpAction = self.menuBar.addAction('Documentation')
-        helpAction.triggered.connect(web.doc)
-        helpAction.setToolTip('Open the documentation on Read The Docs website')
+        helpAction = helpMenu.addAction('Documentation')
+        helpAction.triggered.connect(lambda : web.doc('default'))
+        helpAction.setStatusTip('Open the documentation on Read The Docs website')
+
 
     def initialize(self):
 
@@ -255,6 +271,15 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.plotter.activateWindow()
 
 
+    def openAutolabConfig(self):
+        """ Open the Autolab configuration file """
+        os.startfile(paths.AUTOLAB_CONFIG)
+
+
+    def openDevicesConfig(self):
+        """ Open the devices configuration file """
+        os.startfile(paths.DEVICES_CONFIG)
+
 
     def setScanParameter(self,variable):
 
@@ -307,6 +332,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         monitors = list(self.monitors.values())
         for monitor in monitors:
             monitor.close()
+
+        sliders = list(self.sliders.values())
+        for slider in sliders:
+            slider.close()
 
         devices.close()  # close all devices
 
