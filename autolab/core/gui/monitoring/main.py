@@ -8,11 +8,11 @@ from PyQt5 import QtCore, QtWidgets, uic
 import os
 import queue
 
-from ... import paths
-
 from .data import DataManager
 from .figure import FigureManager
 from .monitor import MonitorManager
+from ... import paths
+
 
 class Monitor(QtWidgets.QMainWindow):
 
@@ -20,6 +20,7 @@ class Monitor(QtWidgets.QMainWindow):
 
         self.item = item
         self.variable = item.variable
+
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
@@ -257,7 +258,7 @@ class Monitor(QtWidgets.QMainWindow):
         manager, and then update the GUI """
 
         value = self.dataManager.getWindowLength()
-        self.windowLength_lineEdit.setText(f'{value:.10g}')
+        self.windowLength_lineEdit.setText(f'{value:g}')
         self.setLineEditBackground(self.windowLength_lineEdit,'synced')
 
 
@@ -270,5 +271,5 @@ class Monitor(QtWidgets.QMainWindow):
         manager, and then update the GUI """
 
         value = self.monitorManager.getDelay()
-        self.delay_lineEdit.setText(f'{value:.10g}')
+        self.delay_lineEdit.setText(f'{value:g}')
         self.setLineEditBackground(self.delay_lineEdit,'synced')

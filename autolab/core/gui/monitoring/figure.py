@@ -5,13 +5,14 @@ Created on Sun Sep 29 18:22:35 2019
 @author: qchat
 """
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib
 import os
 import numpy as np
-
+import matplotlib
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
+from ... import config
 
 
 class FigureManager:
@@ -19,6 +20,10 @@ class FigureManager:
     def __init__(self,gui):
 
         self.gui = gui
+
+        # Import Autolab config
+        monitor_config = config.get_monitor_config()
+        self.precision = int(monitor_config['precision'])
 
         # Configure and initialize the figure in the GUI
         self.fig = Figure()
@@ -177,10 +182,8 @@ class FigureManager:
 
         # Figure finalization
         if len(ylist) >= 1:
-            # self.gui.dataDisplay.display(f'{ylist[-1]:g}')
-            self.gui.dataDisplay.setText(f'{ylist[-1]:g}')
+            self.gui.dataDisplay.setText(f'{ylist[-1]:.{self.precision}g}')
 
-            # length = len(f'{ylist[-1]:g}')
             width = self.gui.dataDisplay.geometry().width()
             # height = self.gui.dataDisplay.geometry().height()
             # limit = min((width, height))
@@ -190,7 +193,6 @@ class FigureManager:
             font = self.gui.dataDisplay.font()
             font.setPointSize(int(new_size))
             self.gui.dataDisplay.setFont(font)
-            # print(font.pointSize())
 
         self.redraw()
 

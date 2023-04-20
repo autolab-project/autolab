@@ -340,7 +340,7 @@ class Plotter(QtWidgets.QMainWindow):
         manager, and then update the GUI """
 
         value = self.timer_time
-        self.delay_lineEdit.setText(f'{value:.10g}')
+        self.delay_lineEdit.setText(f'{value:g}')
         self.timer.setInterval(int(value*1000))  # ms
         self.setLineEditBackground(self.delay_lineEdit,'synced')
 

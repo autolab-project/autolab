@@ -6,7 +6,7 @@ Created on Sun Sep 29 18:16:09 2019
 """
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
-from ... import paths, devices
+from ... import paths, devices, config
 from .... import __version__
 import configparser
 import datetime
@@ -62,6 +62,10 @@ class ConfigManager :
     def __init__(self,gui):
 
         self.gui = gui
+
+        # Import Autolab config
+        scanner_config = config.get_scanner_config()
+        self.precision = scanner_config['precision']
 
         # Configuration menu
         configMenu = self.gui.menuBar.addMenu('Configuration')
@@ -490,7 +494,7 @@ class ConfigManager :
             if stepType == 'set' or (stepType == 'action' and self.config['recipe'][i]['element'].type in [int,float,str,pd.DataFrame,np.ndarray]) :
                 value = self.config['recipe'][i]['value']
                 try:
-                    valueStr = f'{value:.10g}'
+                    valueStr = f'{value:.{self.precision}g}'
                 except:
                     valueStr = f'{value}'
                 configPars['recipe'][f'{i+1}_value'] = valueStr
