@@ -125,6 +125,8 @@ class Monitor(QtWidgets.QMainWindow):
             self.timer.stop()
             self.pauseButton.setText('Resume')
             self.monitorManager.pause()
+            while not self.queue.empty():
+                self.queue.get()
         else :
             self.timer.start()
             self.pauseButton.setText('Pause')

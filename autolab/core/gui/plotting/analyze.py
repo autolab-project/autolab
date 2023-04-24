@@ -410,6 +410,8 @@ class BandwidthModule:
         self.data = data
         self.results = self.init_variables()
         self._remove_zero = True
+        self.comparator = True
+        self._comparator = np.greater
         self.depth = 1
         self.level = -3.
 
@@ -460,14 +462,28 @@ class BandwidthModule:
         self.level = float(value)
 
 
+    def get_comparator(self):
+        """ This function returns the comparator state """
 
-    def search_bandwitdh(self, x_max="default", depth="default", level="default"):
+        return bool(int(float(self.comparator)))
+
+    def set_comparator(self,value):
+        """ This function set the comparator state """
+
+        self.comparator = bool(int(float(value)))
+        self._comparator = np.greater if self.comparator is True else np.less
+
+
+    def search_bandwitdh(self, x_max="default", depth="default", level="default", comparator="default"):
 
         if depth == "default":
             depth = self.depth
 
         if level == "default":
             level = self.level
+
+        if comparator == "default":
+            comparator = self._comparator
 
         try:
             dataset = self.data._data
@@ -479,7 +495,7 @@ class BandwidthModule:
             x_data, y_data = np.array(data[variable_x]), np.array(data[variable_y])
 
             self.results = sweep_analyse(x_data, y_data,
-                x_max=x_max, depth=depth, level=level, remove_zero=self._remove_zero)
+                x_max=x_max, depth=depth, level=level, remove_zero=self._remove_zero, comparator=comparator)
 
         except Exception as error:
             print("Couldn't find the bandwitdh:", error)
@@ -537,6 +553,12 @@ class BandwidthModule:
                        'type':int,
                        'help':'Set algorithm depth to find the local maximum'})
 
+        config.append({'element':'variable','name':'comparator',
+                       'read':self.get_comparator,
+                       'write':self.set_comparator,
+                       'type':bool,
+                       'help':'Set comparator state. True for greater and False for less'})
+
         config.append({'element':'variable','name':'level',
                        'read':self.get_level,
                        'write':self.set_level,
@@ -546,7 +568,7 @@ class BandwidthModule:
         return config
 
 
-def sweep_analyse(x_data, y_data, x_max="default", depth=1, level=-3, remove_zero=True):
+def sweep_analyse(x_data, y_data, x_max="default", depth=1, level=-3, remove_zero=True, comparator=np.greater):
     """ x_max : x value close to the desired maximum y """
     # OPTIMIZE: put back this line -> data = data.dropna()  # BUG: crash python if ct400 dll loaded
     # x_data, y_data = np.array(data[variable_x]), np.array(data[variable_y])
@@ -563,7 +585,7 @@ def sweep_analyse(x_data, y_data, x_max="default", depth=1, level=-3, remove_zer
         data = list()
 
         for order in order_array:  # search local maximum with different filter setting
-            maximum_filter = find_local_maximum(x_data, y_data, x_max, order=order, level=level)
+            maximum_filter = find_local_maximum(x_data, y_data, x_max, order=order, level=level, comparator=comparator)
             point = {"x": maximum_filter.x, "y": maximum_filter.y}
             data.append(point)
 
@@ -583,21 +605,25 @@ def sweep_analyse(x_data, y_data, x_max="default", depth=1, level=-3, remove_zer
     else:
         # get maximum y_data and change it only if user want a different x_max
         maximum = Data()
-        maximum.y = np.max(y_data)
-        maximum.index = np.argmax(y_data)
+        if comparator is np.greater:
+            maximum.y = np.max(y_data)
+            maximum.index = np.argmax(y_data)
+        elif comparator is np.less:
+            maximum.y = np.min(y_data)
+            maximum.index = np.argmin(y_data)
         maximum.x = x_data[maximum.index]
 
     # df.hist()  # used to see the selection process
-    quadrature_left, quadrature_right = find_3db(x_data, y_data, maximum, level=level, interp=True)
+    quadrature_left, quadrature_right = find_3db(x_data, y_data, maximum, level=level, interp=True, comparator=comparator)
 
     results = {"x_left": quadrature_left.x, "y_left": quadrature_left.y,
-                     "x_right": quadrature_right.x, "y_right": quadrature_right.y,
-                     "x_max": maximum.x, "y_max": maximum.y}
+               "x_right": quadrature_right.x, "y_right": quadrature_right.y,
+               "x_max": maximum.x, "y_max": maximum.y}
 
     return results
 
 
-def find_local_maximum(x_data, y_data, x_max, order=10, level=-3):
+def find_local_maximum(x_data, y_data, x_max, order=10, level=-3, comparator=np.greater):
 
     """ Find local maximum with wl close to x_max.
         order is used to filter local maximum. """
@@ -605,7 +631,7 @@ def find_local_maximum(x_data, y_data, x_max, order=10, level=-3):
     from scipy.signal import argrelextrema
 
     maximum_array = Data()
-    maximum_array.index = argrelextrema(y_data, np.greater, order=order)[0]
+    maximum_array.index = argrelextrema(y_data, comparator, order=order)[0]
 
     if len(y_data) > 1:
         if y_data[-1] > y_data[-2]:
@@ -628,7 +654,7 @@ def find_local_maximum(x_data, y_data, x_max, order=10, level=-3):
         maximum_filter.x = maximum_array.x[index]  # maximum wavelength from filter maximum list
         maximum_filter.y = maximum_array.y[index]
 
-        maximum = find_maximum_from_maximum_filter(x_data, y_data, maximum_filter, level=level)
+        maximum = find_maximum_from_maximum_filter(x_data, y_data, maximum_filter, level=level, comparator=comparator)
     else:
         maximum_raw = Data()
         maximum_raw.y = np.max(y_data)
@@ -639,9 +665,9 @@ def find_local_maximum(x_data, y_data, x_max, order=10, level=-3):
     return maximum
 
 
-def find_maximum_from_maximum_filter(x_data, y_data, maximum_filter, level=-3):
+def find_maximum_from_maximum_filter(x_data, y_data, maximum_filter, level=-3, comparator=np.greater):
 
-    quadrature_filter_left, quadrature_filter_right = find_3db(x_data, y_data, maximum_filter, level=level)
+    quadrature_filter_left, quadrature_filter_right = find_3db(x_data, y_data, maximum_filter, level=level, comparator=comparator)
 
     interval_low_index = np.where(x_data <= quadrature_filter_left.x)[0][-1]
     interval_high_index = np.where(x_data >= quadrature_filter_right.x)[0][0]
@@ -654,15 +680,17 @@ def find_maximum_from_maximum_filter(x_data, y_data, maximum_filter, level=-3):
     new_interval.y = y_data[interval_low_index: interval_high_index+1]
 
     maximum = Data()
-    maximum.index = np.argmax(new_interval.y)
+    if comparator is np.greater:
+        maximum.index = np.argmax(new_interval.y)
+    elif comparator is np.less:
+        maximum.index = np.argmin(new_interval.y)
     maximum.x = new_interval.x[maximum.index]
     maximum.y = new_interval.y[maximum.index]
 
     return maximum
 
 
-def find_3db(x_data, y_data, maximum, interp=False, level=-3):
-
+def find_3db(x_data, y_data, maximum, interp=False, level=-3, comparator=np.greater):
     condition = np.abs(x_data - maximum.x)
     index = np.argmin(condition)
 
@@ -676,7 +704,11 @@ def find_3db(x_data, y_data, maximum, interp=False, level=-3):
     quadrature_target.y = maximum.y + level
 
     # left 3db
-    index = np.where(y_left <= quadrature_target.y)[0]
+    if level <= 0:
+        index = np.where(y_left <= quadrature_target.y)[0]
+    else:
+        index = np.where(y_left >= quadrature_target.y)[0]
+
     quadrature_target.index = -1 if index.shape[0] == 0 else index[0]
 
     if len(x_left) != 0:
@@ -685,7 +717,7 @@ def find_3db(x_data, y_data, maximum, interp=False, level=-3):
         condition = np.abs(x_data - quadrature_target.x)
         index = np.where(condition == np.min(condition))[0][0]
 
-        quadrature_left = interp_3db(x_data, y_data, index, quadrature_target.y, "left", interp=interp)
+        quadrature_left = interp_3db(x_data, y_data, index, quadrature_target.y, "left", interp=interp, comparator=comparator)
     else:
         quadrature_left = Data()
         try:
@@ -695,9 +727,12 @@ def find_3db(x_data, y_data, maximum, interp=False, level=-3):
             quadrature_left.x = None
             quadrature_left.y = None
 
-
     # right 3db
-    index = np.where(y_right <= quadrature_target.y)[0]
+    if level <= 0:
+        index = np.where(y_right <= quadrature_target.y)[0]
+    else:
+        index = np.where(y_right >= quadrature_target.y)[0]
+
     quadrature_target.index = -1 if index.shape[0] == 0 else index[0]
 
     if len(x_right) != 0:
@@ -706,7 +741,7 @@ def find_3db(x_data, y_data, maximum, interp=False, level=-3):
         condition = np.abs(x_data - quadrature_target.x)
         index = np.where(condition == np.min(condition))[0][0]
 
-        quadrature_right = interp_3db(x_data, y_data, index, quadrature_target.y, "right", interp=interp)
+        quadrature_right = interp_3db(x_data, y_data, index, quadrature_target.y, "right", interp=interp, comparator=comparator)
     else:
         quadrature_right = Data()
         try:
@@ -720,12 +755,12 @@ def find_3db(x_data, y_data, maximum, interp=False, level=-3):
     return quadrature_left, quadrature_right
 
 
-def interp_3db(x_data, y_data, index, target, direction, interp=False):
+def interp_3db(x_data, y_data, index, target, direction, interp=False, comparator=np.greater):
 
     x1 = x_data[index]
     y1 = y_data[index]
 
-    if interp and y1 <= target:
+    if interp and ((y1 <= target and comparator is np.greater) or (y1 >= target and comparator is np.less)):
 
         assert direction in ("left", "right")
 

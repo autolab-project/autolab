@@ -159,8 +159,8 @@ class FigureManager :
         else:
             self.ax.minorticks_off()
 
-        self.ax.grid(b=state, which='major')
-        self.ax.grid(b=state, which='minor', alpha=0.4)
+        self.ax.grid(state, which='major')
+        self.ax.grid(state, which='minor', alpha=0.4)
 
 
     # RANGE
