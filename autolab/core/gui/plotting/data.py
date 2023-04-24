@@ -9,6 +9,7 @@ Created on Oct 2022
 import os
 import csv
 
+import numpy as np
 from PyQt5 import QtCore,QtWidgets
 from ... import paths
 import pandas as pd
@@ -65,6 +66,7 @@ class DataManager :
         self.targetValue = -1
         self.depthValue = 1
         self.levelValue = -3.
+        self.comparatorState = np.greater
 
         self.deviceValue = "ct400.scan.data"
 
@@ -171,6 +173,18 @@ class DataManager :
         """ This function returns the value of the algorithm depth to find the local maximum """
 
         return self.levelValue
+
+
+    def setComparatorState(self,value):
+
+        """ This function set np.greater comparator for True and np.less comparator for False """
+        self.comparatorState = np.greater if value is True else  np.less
+
+    def getComparatorState(self):
+
+        """ This function returns True for greater and False for less comparator """
+
+        return self.comparatorState
 
 
     def data_comboBoxClicked(self):

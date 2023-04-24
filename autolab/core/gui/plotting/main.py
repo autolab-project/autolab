@@ -77,6 +77,9 @@ class Plotter(QtWidgets.QMainWindow):
         self.levelValue_doubleSpinBox.setValue(-3.)
         self.levelValue_doubleSpinBox.valueChanged.connect(self.levelValueChanged)
 
+        # Greater Less
+        self.greaterRadioButton.toggled.connect(self.greaterChanged)
+
         # Cursor checkbox
         self.displayCursorCheckBox.clicked.connect(self.displayCursorCheckBoxClicked)
 
@@ -246,6 +249,10 @@ class Plotter(QtWidgets.QMainWindow):
 
         self.displayCursorCheckBoxClicked()
 
+    def greaterChanged(self):
+        self.dataManager.setComparatorState(self.greaterRadioButton.isChecked())
+        self.displayCursorCheckBoxClicked()
+
     def displayCursorCheckBoxClicked(self):
         """ This function set the cursors ON/OFF """
 
@@ -261,6 +268,7 @@ class Plotter(QtWidgets.QMainWindow):
         targetValue = self.dataManager.getTargetValue()
         depth = self.dataManager.getDepthValue()
         level = self.dataManager.getLevelValue()
+        comparator = self.dataManager.getComparatorState()  # np.greater or np.less
 
         if targetValue == -1:
             targetValue = "default"
@@ -272,7 +280,7 @@ class Plotter(QtWidgets.QMainWindow):
             self.analyzeManager.data.set_y_label(self.figureManager.getLabel("y"))
 
             # TODO: add  x_left right.. output to GUI
-            results = self.analyzeManager.analyze.bandwidth.search_bandwitdh(targetValue, depth=depth, level=level)
+            results = self.analyzeManager.analyze.bandwidth.search_bandwitdh(targetValue, depth=depth, level=level, comparator=comparator)
             x_left = results["x_left"]
             x_right = results["x_right"]
             x_max = results["x_max"]

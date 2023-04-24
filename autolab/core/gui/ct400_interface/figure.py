@@ -29,8 +29,8 @@ class FigureManager:
         self.ax.set_ylabel('Transfert function (dB)')
 
         self.ax.minorticks_on()
-        self.ax.grid(b=True, which='major')
-        self.ax.grid(b=True, which='minor', alpha=0.4)
+        self.ax.grid(True, which='major')
+        self.ax.grid(True, which='minor', alpha=0.4)
 
         self.curves = []
 
