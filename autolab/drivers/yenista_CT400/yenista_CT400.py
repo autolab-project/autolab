@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Supported instruments (identified): Yenista CT400.
+Supported instruments (identified): Yenista CT400, EXFO CT440.
 -
 """
 
@@ -13,7 +13,6 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 import numpy as np
-
 
 # Definition of various constants to use the same names as the C interface
 (LS_TunicsPlus, LS_TunicsPurity, LS_TunicsReference, LS_TunicsT100s,
@@ -51,20 +50,14 @@ def laser_code(name, permute=False):
         else:
             code = code_dict["TunicsPlus"]
 
-    return code # {name:code}
+    return code
 
 
 def read_xml(file):
     try:
         tree = ET.parse(file)
 
-        common = tree.findall('Configuration/Sources/Common')[0].attrib
-        power_scan = float(common["Power"])
-        low_wavelength_scan = float(common["Lambda_Min"])
-        high_wavelength_scan = float(common["Lambda_Max"])
-
-        res_scan = int(tree.findall('Configuration/Application/Sampling_Step')[0].attrib["Value"])
-
+        GPIBID = []
         address = []
         low_wavelength = []
         high_wavelength = []
@@ -72,22 +65,58 @@ def read_xml(file):
         connected = []
         laser_model = []
 
-        sources = tree.findall('Configuration/Sources/Source')
-        for source in sources:
-            src_att = source.attrib
-            # print(src_att)
-            address.append(int(src_att["Address"]))
-            low_wavelength.append(float(src_att["Lambda_Min"]))
-            high_wavelength.append(float(src_att["Lambda_Max"]))
-            speed.append(int(src_att["Speed"]))
+        model = "CT400" if tree.findall("Configuration/Sources/Common") else "CT440"
 
-            connected.append(True if src_att["Enable"] == "True" else False)
-            laser_model.append(laser_code(src_att["Type"]))   # doesn't seems to bother execution
+        if model == "CT440":
+            scan = tree.find("Scan")
+            lasers = scan.find("Lasers") if scan.find("Lasers") else scan.find("Laser")
 
-        Detector_Array = tree.findall('Configuration/Application/Detector_Array')[0].attrib
-        detector_array = []
-        for i in (2, 3, 4):  # can add Ext and Orl
-            detector_array.append(True if Detector_Array[f"Enable{i}"] == "True" else False)
+            power_scan = float(lasers.attrib["Power"])
+            low_wavelength_scan = float(scan.attrib["Start"])
+            high_wavelength_scan = float(scan.attrib["Stop"])
+            res_scan = int(float(scan.attrib["Resolution"]))
+
+            sources = [lasers] if len(lasers) == 0 else lasers
+            for source in sources:
+                src_att = source.attrib
+                GPIBID.append(int(src_att["GPIBID"]))
+                address.append(int(src_att["GPIBAddress"]))
+                low_wavelength.append(float(src_att["MinWL"]))
+                high_wavelength.append(float(src_att["MaxWL"]))
+                speed.append(int(float(src_att["Speed"])))
+
+                if len(sources) == 1:
+                    connected.append(True)
+                else:
+                    connected.append(True if src_att["Id"] < lasers.attrib["Number"] else False)
+                laser_model.append(int(src_att["Type"]))
+
+            detector_array = [False, False, False]  # TODO: don't known which variable correspond to this. Maybe
+            # hypothesis is that Detector="0" in trace mean is active so could activate detector if exist in trace
+        else:
+            common = tree.find('Configuration/Sources/Common').attrib
+            power_scan = float(common["Power"])
+            low_wavelength_scan = float(common["Lambda_Min"])
+            high_wavelength_scan = float(common["Lambda_Max"])
+
+            res_scan = int(tree.find('Configuration/Application/Sampling_Step').attrib["Value"])
+
+            sources = tree.findall('Configuration/Sources/Source')
+            for source in sources:
+                src_att = source.attrib
+                GPIBID.append(-1)  # useless for ct400 but usefull to know if is ct400 compare to ct440
+                address.append(int(src_att["Address"]))
+                low_wavelength.append(float(src_att["Lambda_Min"]))
+                high_wavelength.append(float(src_att["Lambda_Max"]))
+                speed.append(int(src_att["Speed"]))
+
+                connected.append(True if src_att["Enable"] == "True" else False)
+                laser_model.append(laser_code(src_att["Type"]))   # doesn't seems to bother execution
+
+            Detector_Array = tree.find('Configuration/Application/Detector_Array').attrib
+            detector_array = []
+            for i in (2, 3, 4):  # can add Ext and Orl
+                detector_array.append(True if Detector_Array[f"Enable{i}"] == "True" else False)
 
     except Exception as er:
         print(er, ". Taking default driver value")
@@ -96,6 +125,7 @@ def read_xml(file):
         high_wavelength_scan = 1610.
         res_scan = 5
 
+        GPIBID = [0, 0, 0, 0]
         address = [12, 13, 14, 15]
         low_wavelength = [1510., 1310., 1600., 1700.]
         high_wavelength = [1610., 1400., 1700., 1800.]
@@ -107,6 +137,7 @@ def read_xml(file):
         detector_array = [DISABLE, DISABLE, DISABLE]
 
     config = {
+        "GPIBID": GPIBID,
         "address": address,
         "low_wavelength": low_wavelength,
         "high_wavelength": high_wavelength,
@@ -121,7 +152,7 @@ def read_xml(file):
     return config
 
 
-def default_xml():
+def default_xml():  # OPTIMIZE: update to add ct440 but should be useless anyway
     import xml.etree.ElementTree as ET
 
     # create the default file structure
@@ -162,6 +193,7 @@ def default_xml():
     Source1 = ET.SubElement(Sources, 'Source')
     Source1.set('Name', 'TLS_0')
     Source1.set('Enable', 'True')
+    # Source1.set('GPIBID', '0')
     Source1.set('Address', '12')
     Source1.set('Lambda_Min', '1510.000000')
     Source1.set('Lambda_Max', '1590.000000')
@@ -171,6 +203,7 @@ def default_xml():
     Source2 = ET.SubElement(Sources, 'Source')
     Source2.set('Name', 'TLS_1')
     Source2.set('Enable', 'False')
+    # Source2.set('GPIBID', '0')
     Source2.set('Address', '9')
     Source2.set('Lambda_Min', '1350.000000')
     Source2.set('Lambda_Max', '1510.000000')
@@ -180,6 +213,7 @@ def default_xml():
     Source3 = ET.SubElement(Sources, 'Source')
     Source3.set('Name', 'TLS_2')
     Source3.set('Enable', 'False')
+    # Source3.set('GPIBID', '0')
     Source3.set('Address', '12')
     Source3.set('Lambda_Min', '1500.000000')
     Source3.set('Lambda_Max', '1680.000000')
@@ -189,6 +223,7 @@ def default_xml():
     Source4 = ET.SubElement(Sources, 'Source')  # True default values for unknown laser (take CT400 min max values and tell variable name to use for communication)
     Source4.set('Name', 'TLS_3')
     Source4.set('Enable', 'False')
+    # Source4.set('GPIBID', '0')
     Source4.set('Address', '1')
     Source4.set('Lambda_Min', '1250.000000')
     Source4.set('Lambda_Max', '1650.000000')
@@ -282,31 +317,66 @@ def write_xml(config, configpath):
         else:
             CT400 = default_xml()
 
-        # modify the file structure values using config (not all variables are included in config)
-        Common = CT400.findall('Configuration/Sources/Common')[0]
-        Sampling_Step = CT400.findall('Configuration/Application/Sampling_Step')[0]
-        sources = CT400.findall('Configuration/Sources/Source')
+        model = "CT400" if -1 in config["GPIBID"] else "CT440"
 
-        Common.set('Power', "%.6f" % (config["power_scan"]))
-        Common.set('Lambda_Min', "%.6f" % (config["low_wavelength_scan"]))
-        Common.set('Lambda_Max', "%.6f" % (config["high_wavelength_scan"]))
-        Sampling_Step.set('Value', "%i" % (config["res_scan"]))
+        if model == "CT440":
+            # modify the file structure values using config (not all variables are included in config)
+            scan = CT400.find("Scan")
 
-        for i, source in enumerate(sources):
-            try:
-                source.set('Address', "%i" % (config["address"][i]))
-                source.set('Enable', str(config["connected"][i]))
-                source.set('Lambda_Min', "%.6f" % (config["low_wavelength"][i]))
-                source.set('Lambda_Max', "%.6f" % (config["high_wavelength"][i]))
-                source.set('Speed', "%i" % (config["speed"][i]))
-                source.set('Type', str(laser_code(config["laser_model"][i], permute=True)))
-            except IndexError:
-                pass
-        Detector_Array = CT400.findall('Configuration/Application/Detector_Array')[0]
-        for ind, i in enumerate((2, 3, 4)):  # can add Ext and Orl
-        # TODO: same try expect here if no detector ?
-            Detector_Array.set(f"Enable{i}", str(config["detector_array"][ind]))
+            scan.set("Start", "%.6f" % (config["low_wavelength_scan"]))
+            scan.set("Stop", "%.6f" % (config["high_wavelength_scan"]))
+            scan.set("Resolution", "%.6f" % (config["res_scan"]))
 
+            if scan.find("Laser"):
+                laser = scan.find("Laser")
+                laser.set('Power', "%.6f" % (config["power_scan"]))
+                laser.set('MinWL', "%.6f" % (config["low_wavelength_scan"]))
+                laser.set('MaxWL', "%.6f" % (config["high_wavelength_scan"]))
+                laser.set('GPIBID', "%i" % (config["GPIBID"][0]))
+                laser.set('GPIBAddress', "%i" % (config["address"][0]))
+                laser.set('Speed', "%.6f" % (config["speed"][0]))
+                laser.set('Type', str(config["laser_model"][0]))
+            else:
+                lasers = scan.find("Lasers")
+                lasers.set('Power', "%.6f" % (config["power_scan"]))
+                lasers.set('Number', "%i" % (sum(config["connected"])))
+
+                sources = lasers
+                for i, source in enumerate(sources):
+                    try:
+                        source.set('GPIBID', "%i" % (config["GPIBID"][i]))
+                        source.set('GPIBAddress', "%i" % (config["address"][i]))
+                        source.set('MinWL', "%.6f" % (config["low_wavelength"][i]))
+                        source.set('MaxWL', "%.6f" % (config["high_wavelength"][i]))
+                        source.set('Speed', "%.6f" % (config["speed"][i]))
+                        source.set('Type', str(config["laser_model"][i]))
+                    except IndexError:
+                        pass
+        else:
+            # modify the file structure values using config (not all variables are included in config)
+            Common = CT400.find('Configuration/Sources/Common')
+            Sampling_Step = CT400.find('Configuration/Application/Sampling_Step')
+            sources = CT400.findall('Configuration/Sources/Source')
+
+            Common.set('Power', "%.6f" % (config["power_scan"]))
+            Common.set('Lambda_Min', "%.6f" % (config["low_wavelength_scan"]))
+            Common.set('Lambda_Max', "%.6f" % (config["high_wavelength_scan"]))
+            Sampling_Step.set('Value', "%i" % (config["res_scan"]))
+
+            for i, source in enumerate(sources):
+                try:
+                    source.set('Address', "%i" % (config["address"][i]))
+                    source.set('Enable', str(config["connected"][i]))
+                    source.set('Lambda_Min', "%.6f" % (config["low_wavelength"][i]))
+                    source.set('Lambda_Max', "%.6f" % (config["high_wavelength"][i]))
+                    source.set('Speed', "%i" % (config["speed"][i]))
+                    source.set('Type', str(laser_code(config["laser_model"][i], permute=True)))
+                except IndexError:
+                    pass
+            Detector_Array = CT400.find('Configuration/Application/Detector_Array')
+            for ind, i in enumerate((2, 3, 4)):  # can add Ext and Orl
+            # TODO: same try expect here if no detector ?
+                Detector_Array.set(f"Enable{i}", str(config["detector_array"][ind]))
 
         # create and format xml file
         dom = minidom.parseString(ET.tostring(CT400))
@@ -330,10 +400,11 @@ def write_xml(config, configpath):
 # %%
 
 class Laser:
-    """ Contain all the ct400 commands related to the laser"""
+    """ Contain all the ct400/ct440 commands related to the laser"""
 
     def __init__(self, dev, num=LI_1):  # dev is the detector instance
         self.dev = dev
+        self.model = self.dev.dev.model
         self.config = self.dev.dev.config
         self.NUM = num
         self._init_variables()
@@ -347,7 +418,7 @@ class Laser:
         try:
             self.controller = self.dev.controller
         except Exception:
-            raise FileNotFoundError("Can't found the CT400")
+            raise FileNotFoundError(f"Can't found the {self.model}")
 
         self.uiHandle = self.dev.uiHandle
 
@@ -357,25 +428,33 @@ class Laser:
             raise FileNotFoundError("Can't found the laser")
 
     def _init_variables(self):
-        self._address = self.config["address"][self.NUM-1]
+        self._GPIBID = self.config["GPIBID"][self.NUM-1]
+        self._GPIBAdress = self.config["address"][self.NUM-1]
         self._laser_model = self.config["laser_model"][self.NUM-1]
         self._connected = self.config["connected"][self.NUM-1]
         self._low_wavelength = self.config["low_wavelength"][self.NUM-1]
         self._high_wavelength = self.config["high_wavelength"][self.NUM-1]
         self._speed = self.config["speed"][self.NUM-1]
-
         self._state = False
         self._power = 1.
         self._wavelength = 1550.
 
     def _init_laser(self):
-        self.controller.CT400_SetLaser(self.uiHandle, self.NUM, self._connected, self._address,
-                             self._laser_model,
-                             ct.c_double(self._low_wavelength),
-                             ct.c_double(self._high_wavelength),
-                             self._speed)
+        if self.model == "CT440":
+            self.controller.set_laser(self.uiHandle, self.NUM, self._connected,
+                                      self._GPIBID, self._GPIBAdress,  # for set_laser2 use this: str.encode(f"GPIB{self._GPIBGPIBID}::{self._GPIBAdress}"),  #
+                                      self._laser_model,
+                                      ct.c_double(self._low_wavelength),
+                                      ct.c_double(self._high_wavelength),
+                                      self._speed)
 
-
+        else:
+            self.controller.set_laser(self.uiHandle, self.NUM, self._connected,
+                                           self._GPIBAdress,
+                                           self._laser_model,
+                                           ct.c_double(self._low_wavelength),
+                                           ct.c_double(self._high_wavelength),
+                                           self._speed)
     def get_model(self):
         return self._laser_model
 
@@ -383,12 +462,18 @@ class Laser:
         self._laser_model = int(value)
         self._init_laser()
 
+    def get_GPIBID(self):
+        return self._GPIBID
 
-    def get_address(self):
-        return self._address
+    def set_GPIBID(self, value):
+        self._GPIBID = int(value)
+        self._init_laser()
 
-    def set_address(self, value):
-        self._address = int(value)
+    def get_GPIBAdress(self):
+        return self._GPIBAdress
+
+    def set_GPIBAdress(self, value):
+        self._GPIBAdress = int(value)
         self._init_laser()
 
 
@@ -413,7 +498,7 @@ class Laser:
 
     def set_speed(self, value):
         self._speed = int(value)
-        self.controller.CT400_SetSamplingResolution(self.uiHandle, self._speed)
+        self._init_laser()
 
 
     def get_connected(self):
@@ -429,8 +514,7 @@ class Laser:
 
     def set_output_state(self, state):
         self._state = ENABLE if bool(int(float(state))) else DISABLE
-        self.controller.CT400_CmdLaser(self.uiHandle, self.NUM, self._state,
-                             ct.c_double(self._wavelength), ct.c_double(self._power))
+        self._CmdLaser()
 
 
     def get_wavelength(self):
@@ -438,8 +522,7 @@ class Laser:
 
     def set_wavelength(self, value):
         self._wavelength = float(value)
-        self.controller.CT400_CmdLaser(self.uiHandle, self.NUM, self._state,
-                             ct.c_double(self._wavelength), ct.c_double(self._power))
+        self._CmdLaser()
 
 
     def get_power(self):
@@ -447,8 +530,11 @@ class Laser:
 
     def set_power(self, value):
         self._power = float(value)
-        self.controller.CT400_CmdLaser(self.uiHandle, self.NUM, self._state,
-                             ct.c_double(self._wavelength), ct.c_double(self._power))
+        self._CmdLaser()
+
+
+    def _CmdLaser(self):
+        self.controller.cmd_laser(self.uiHandle, self.NUM, self._state, ct.c_double(self._wavelength), ct.c_double(self._power))
 
 
     def get_driver_model(self):
@@ -478,14 +564,16 @@ class Laser:
                        'read':self.get_speed,'write':self.set_speed,
                        'help':'Set the laser wavelength scan speed in nm/s'})
 
-        # config.append({'element':'action','name':'connect_laser','do':self.connect,
-        #                "help": "Try to connect to the laser"})
+        if self.model == "CT440":
+            config.append({'element':'variable','name':'GPIBID','type':int,
+                           'read':self.get_GPIBID,'write':self.set_GPIBID,
+                           "help": "Set the laser gbib id address. Usually 0"})
 
-        config.append({'element':'variable','name':'laser_address','type':int,
-                       'read':self.get_address,'write':self.set_address,
-                       "help": "Set the laser address"})
+        config.append({'element':'variable','name':'GPIBAdress','type':int,
+                       'read':self.get_GPIBAdress,'write':self.set_GPIBAdress,
+                       "help": "Set the laser gbib address."})
 
-        config.append({'element':'variable','name':'laser_model','type':int,
+        config.append({'element':'variable','name':'model','type':int,
                        'read':self.get_model,'write':self.set_model,
                        "help": "Set the laser model \n(LS_TunicsPlus, LS_TunicsPurity, LS_TunicsReference, LS_TunicsT100s, LS_TunicsT100r, LS_JdsuSws, LS_Agilent, NB_SOURCE) \n(0, 1, 2, 3, 4, 5, 6, 7)"})
 
@@ -496,10 +584,11 @@ class Laser:
 
 
 class Scan:
-    """ Contain all the ct400 commands related to the laser"""
+    """ Contain all the ct400/ct440 commands related to the laser"""
 
-    def __init__(self, dev):  # dev is the detector instance
+    def __init__(self, dev):  # dev is the detector instance, dev.dev is Driver
         self.dev = dev
+        self.model = self.dev.dev.model
         self.config = self.dev.dev.config
         self._init_variables()
 
@@ -516,7 +605,7 @@ class Scan:
         try:
             self.controller = self.dev.controller
         except Exception:
-            raise FileNotFoundError("Can't found the CT400")
+            raise FileNotFoundError(f"Can't found the {self.model}")
 
         self.uiHandle = self.dev.uiHandle
 
@@ -555,22 +644,36 @@ class Scan:
         self._high_wavelength_scan = float(value)
         self.set_scan(self._power_scan, self._low_wavelength_scan, self._high_wavelength_scan)
 
-
-    def set_scan(self, power, low_wl, high_wl):
-        self.controller.CT400_SetScan(
-                self.uiHandle,
-                ct.c_double(power),
-                ct.c_double(low_wl),
-                ct.c_double(high_wl))
-
+    def set_scan(self, power, low_wl, high_wl, res="default"):
+        if self.model == "CT440":
+            if res == "default":
+                res = self._res
+            PI = ct.POINTER(ct.c_int)
+            res_pointer = PI(ct.c_int(res))
+            self.controller.set_scan(
+                    self.uiHandle,
+                    ct.c_double(power),
+                    ct.c_double(low_wl),
+                    ct.c_double(high_wl),
+                    res_pointer)
+            self._res = int(res_pointer.contents.value)  # CT440 can change the resolution
+        else:
+            self.controller.set_scan(
+                    self.uiHandle,
+                    ct.c_double(power),
+                    ct.c_double(low_wl),
+                    ct.c_double(high_wl))
 
     def get_res(self):
         return self._res
 
     def set_res(self, value):
-        self._res = int(value)
-        self.controller.CT400_SetSamplingResolution(self.uiHandle, self._res)
-
+        if self.model == "CT440":
+            self._res = int(value)
+            self.set_scan(self._power_scan, self._low_wavelength_scan, self._high_wavelength_scan)
+        else:
+            self._res = int(value)
+            self.controller.set_resolution(self.uiHandle, self._res)
 
     def get_interpolate(self):
         return self._interpolate
@@ -612,33 +715,38 @@ class Scan:
             if laser is not None and laser._connected:
                 laser._state = ENABLE
 
-        self.controller.CT400_SetDetectorArray(self.uiHandle,
-                                               self._detector2_state,
-                                               self._detector3_state,
-                                               self._detector4_state,
-                                               DISABLE)  # eExt
+        self.controller.set_detector_array(self.uiHandle,
+                                                   self._detector2_state,
+                                                   self._detector3_state,
+                                                   self._detector4_state,
+                                                   DISABLE)  # eExt
 
-        self.controller.CT400_SetBNC(self.uiHandle, DISABLE, ct.c_double(0.0), ct.c_double(0.0), Unit_mW)
+        self.controller.set_bnc(self.uiHandle, DISABLE, ct.c_double(0.0), ct.c_double(0.0), Unit_mW)
 
         self.set_scan(self._power_scan, self._low_wavelength_scan, self._high_wavelength_scan)
 
-        self.controller.CT400_ScanStart(self.uiHandle)
-        iErrorID = self.controller.CT400_ScanWaitEnd(self.uiHandle, self.tcError)
+        if self.model == "CT440":
+            self.controller.scan_start(self.uiHandle, DISABLE)  # ENABLE seems to be used for calibration only
+        else:
+            self.controller.scan_start(self.uiHandle)
+
+        iErrorID = self.controller.scan_wait_end(self.uiHandle, self.tcError)
 
         assert iErrorID == 0, 'Error during sweep: '+repr(self.tcError.value)[2:-1]
-
 
         self._get_data_sweep()
 
 
     def _get_data_sweep(self):
         if self._interpolate:
-            iPointsNumberResampled = self.controller.CT400_GetNbDataPointsResampled(self.uiHandle)
+
+            iPointsNumberResampled = self.controller.get_nb_datapoints_resampled(self.uiHandle)
             DataArraySizeResampled = ct.c_double * iPointsNumberResampled
             (dWavelengthResampled, dPowerResampled, dDetector1Resampled) = (DataArraySizeResampled(), DataArraySizeResampled(), DataArraySizeResampled())
-            self.controller.CT400_ScanGetWavelengthResampledArray(self.uiHandle, ct.byref(dWavelengthResampled), iPointsNumberResampled)
-            self.controller.CT400_ScanGetPowerResampledArray(self.uiHandle, ct.byref(dPowerResampled), iPointsNumberResampled)
-            self.controller.CT400_ScanGetDetectorResampledArray(self.uiHandle, DE_1, ct.byref(dDetector1Resampled), iPointsNumberResampled)
+
+            self.controller.scan_get_wavelength_resampled_array(self.uiHandle, dWavelengthResampled, iPointsNumberResampled)
+            self.controller.scan_get_power_resampled_array(self.uiHandle, dPowerResampled, iPointsNumberResampled)
+            self.controller.scan_get_detector_resampled_array(self.uiHandle, DE_1, dDetector1Resampled, iPointsNumberResampled)
 
             results_interp = {"L": np.array(dWavelengthResampled, dtype=float),
                               "O": np.array(dPowerResampled, dtype=float),
@@ -646,28 +754,35 @@ class Scan:
 
             if self._detector2_state:
                 dDetector2Resampled = DataArraySizeResampled()
-                self.controller.CT400_ScanGetDetectorResampledArray(self.uiHandle, DE_2, ct.byref(dDetector2Resampled), iPointsNumberResampled)
+                self.controller.scan_get_detector_resampled_array(self.uiHandle, DE_2, dDetector2Resampled, iPointsNumberResampled)
                 results_interp["2"] = np.array(dDetector2Resampled, dtype=float)
 
             if self._detector3_state:
                 dDetector3Resampled = DataArraySizeResampled()
-                self.controller.CT400_ScanGetDetectorResampledArray(self.uiHandle, DE_3, ct.byref(dDetector3Resampled), iPointsNumberResampled)
+                self.controller.scan_get_detector_resampled_array(self.uiHandle, DE_3, dDetector3Resampled, iPointsNumberResampled)
                 results_interp["3"] = np.array(dDetector3Resampled, dtype=float)
 
             if self._detector4_state:
                 dDetector4Resampled = DataArraySizeResampled()
-                self.controller.CT400_ScanGetDetectorResampledArray(self.uiHandle, DE_4, ct.byref(dDetector4Resampled), iPointsNumberResampled)
+                self.controller.scan_get_detector_resampled_array(self.uiHandle, DE_4, dDetector4Resampled, iPointsNumberResampled)
                 results_interp["4"] = np.array(dDetector4Resampled, dtype=float)
 
             results = results_interp
 
         else:
-            iPointsNumber = self.controller.CT400_GetNbDataPoints(self.uiHandle)
+            if self.model == "CT440":
+                DataPointSize = ct.c_int * 1
+                (iDataPoints, iDiscardPoints) =(DataPointSize(), DataPointSize())
+                self.controller.get_nb_datapoints(self.uiHandle, iDataPoints, iDiscardPoints)
+                iPointsNumber = iDataPoints[0]
+            else:
+                iPointsNumber = self.controller.get_nb_datapoints(self.uiHandle)
             DataArraySize = ct.c_double * iPointsNumber
             (dWavelengthSync, dPowerSync, dDetector1Sync) = (DataArraySize(), DataArraySize(), DataArraySize())
-            self.controller.CT400_ScanGetWavelengthSyncArray(self.uiHandle, ct.byref(dWavelengthSync), iPointsNumber)
-            self.controller.CT400_ScanGetPowerSyncArray(self.uiHandle, ct.byref(dPowerSync), iPointsNumber)
-            self.controller.CT400_ScanGetDetectorArray(self.uiHandle, DE_1, ct.byref(dDetector1Sync), iPointsNumber)
+
+            self.controller.scan_get_wavelength_sync_array(self.uiHandle, dWavelengthSync, iPointsNumber)
+            self.controller.scan_get_power_sync_array(self.uiHandle, dPowerSync, iPointsNumber)
+            self.controller.scan_get_detector_array(self.uiHandle, DE_1, dDetector1Sync, iPointsNumber)
 
             results_raw = {"L": np.array(dWavelengthSync, dtype=float),
                            "O": np.array(dPowerSync, dtype=float),
@@ -676,17 +791,18 @@ class Scan:
 
             if self._detector2_state:
                 dDetector2Sync = DataArraySize()
-                self.controller.CT400_ScanGetDetectorArray(self.uiHandle, DE_2, ct.byref(dDetector2Sync), iPointsNumber)
+                self.controller.scan_get_detector_array(self.uiHandle, DE_2, dDetector2Sync, iPointsNumber)
                 results_raw["2"] = np.array(dDetector2Sync, dtype=float)
 
             if self._detector3_state:
                 dDetector3Sync = DataArraySize()
-                self.controller.CT400_ScanGetDetectorArray(self.uiHandle, DE_3, ct.byref(dDetector3Sync), iPointsNumber)
+                self.controller.scan_get_detector_array(self.uiHandle, DE_3, dDetector3Sync, iPointsNumber)
                 results_raw["3"] = np.array(dDetector3Sync, dtype=float)
 
             if self._detector4_state:
                 dDetector4Sync = DataArraySize()
-                self.controller.CT400_ScanGetDetectorArray(self.uiHandle, DE_4, ct.byref(dDetector4Sync), iPointsNumber)
+
+                self.controller.scan_get_detector_array(self.uiHandle, DE_4, dDetector4Sync, iPointsNumber)
                 results_raw["4"] = np.array(dDetector4Sync, dtype=float)
 
             results = results_raw
@@ -714,9 +830,9 @@ class Scan:
         return self._input_source
 
     def set_input_source(self, value):
-        assert value in (1,2,3,4), f"Laser number could be 1,2,3,4 not {value}"
-        self._input_source = int(value)  # OPTIMIZE: could only take available source using self.detectors._NBR_INPUT
-        self.controller.CT400_SwitchInput(self.uiHandle, self._input_source)  # BUG: doesn't work for me
+        assert value in range(1,self.dev._NBR_INPUT+1), f"Laser number can only be among {[i for i in range(1,self.dev._NBR_INPUT+1)]}, not {value}"
+        self._input_source = int(value)
+        self.controller.switch_input(self.uiHandle, self._input_source)  # BUG: doesn't work for me (ct400)
 
 
     def get_driver_model(self):
@@ -769,12 +885,13 @@ class Scan:
 
 
 class Detectors:
-    """ Contain only the ct400 commands related to the detectors (no laser commands)"""
+    """ Contain only the ct400/ct440 commands related to the detectors (no laser commands)"""
 
     def __init__(self, dev, libpath):
         self.libpath = libpath
 
-        self.dev = dev  # used by the laser
+        self.dev = dev  # used by the laser. dev is Driver
+        self.model = self.dev.model
 
         try:
             self.connect()
@@ -783,36 +900,52 @@ class Detectors:
 
     def connect(self):
         try:
-            ct.windll.LoadLibrary(os.path.join(os.path.dirname(self.libpath), "SiUSBXp.dll"))
-            self.controller = ct.windll.LoadLibrary(self.libpath)
+            if self.model == "CT440":
+                from ct440_lib import CT440
+                self.controller = CT440(self.libpath)
+            else:
+                from ct400_lib import CT400
+                self.controller = CT400(self.libpath)
         except OSError:
-            raise OSError("Can't found the CT400")
+            raise OSError(f"Can't found the {self.model}")
 
-
-        uiHandle = ct.c_longlong(self.controller.CT400_Init())
-
-        assert uiHandle != 0, CONNECTION_ERROR
-
+        iError = ct.c_int32()
+        uiHandle = self.controller.init(iError)
         self.uiHandle = uiHandle
-        self._NBR_INPUT = self.controller.CT400_GetNbInputs(self.uiHandle)
-        self._NBR_DETECTOR = self.controller.CT400_GetNbDetectors(self.uiHandle)
-        self._OPTION = self.controller.CT400_GetCT400Type(self.uiHandle)
 
-        assert self.controller.CT400_CheckConnected(self.uiHandle), CONNECTION_ERROR
+        if self.uiHandle:
+            pass
+        else:
+            raise ConnectionError(CONNECTION_ERROR)
+
+        self._NBR_INPUT = self.controller.get_nb_inputs(self.uiHandle)
+        self._NBR_DETECTOR = self.controller.get_nb_detectors(self.uiHandle)
+
+        #  CT440 and CT400 option (0: SMF, 1: PM13, 2: PM15)
+        if (self.controller.get_ct_type(self.uiHandle) == 1):
+            self._OPTION = "PM13 (1260-1360 nm)"
+        elif (self.controller.get_ct_type(self.uiHandle) == 2):
+            self._OPTION = "PM15 (1440-1640 nm)"
+        else:
+            self._OPTION = "SMF(1240-1680nm)"
+
+        assert self.controller.check_connected(self.uiHandle), CONNECTION_ERROR
 
 
     def get_spectral_lines(self):
-        iLinesDetected = self.controller.CT400_GetNbLinesDetected(self.uiHandle)
+        iLinesDetected = self.controller.get_nb_lines_detected(self.uiHandle)
         LinesArraySize = ct.c_double * iLinesDetected
         dLinesValues = LinesArraySize()
-        self.controller.CT400_ScanGetLinesDetectionArray(self.uiHandle, ct.byref(dLinesValues) ,iLinesDetected)
+
+        self.controller.scan_get_lines_detection_array(self.uiHandle, dLinesValues, iLinesDetected)
         return dLinesValues
 
 
     def get_detector_power(self):
         PowerArraySize = ct.c_double * 1
         (Pout, P1, P2, P3, P4, Vext) = (PowerArraySize(), PowerArraySize(), PowerArraySize(), PowerArraySize(), PowerArraySize(), PowerArraySize())
-        self.controller.CT400_ReadPowerDetectors(self.uiHandle, ct.byref(Pout), ct.byref(P1), ct.byref(P2), ct.byref(P3), ct.byref(P4), ct.byref(Vext))
+
+        self.controller.read_power_detectors(self.uiHandle, Pout, P1, P2, P3, P4, Vext)
         (Pout, P1, P2, P3, P4, Vext) = (float(Pout[0]), float(P1[0]), float(P2[0]), float(P3[0]), float(P4[0]), float(Vext[0]))
         (Pout, P1, P2, P3, P4, Vext) = (round(Pout, 3), round(P1, 3), round(P2, 3), round(P3, 3), round(P4, 3), round(Vext, 3))
         return Pout, P1, P2, P3, P4, Vext
@@ -856,22 +989,19 @@ class Detectors:
         config.append({'element':'variable','name':'Vext','unit':'V','type':float,
                         'read':self.get_vext,'help':'Voltage ext in V'})
 
-        # config.append({'element':'action','name':'connect_ct400','do':self.connect, "help": "Try to connect the ct400"})
         return config
 
-
     def close(self):
-        #print("removed close func due to error") # BUG: find it, if add 4 laser but only contain 3, error when closing ct400. Need to only add the correct number of laser (use variable nbr_laser)
-        self.controller.CT400_Close(self.uiHandle)
-
+        self.controller.close(self.uiHandle)
 
 
 class Driver():
 
-    def __init__(self, libpath, configpath):
+    def __init__(self, libpath, configpath, model):
 
         self.libpath = libpath
         self.configpath = configpath
+        self.model = model
 
         self.config = read_xml(configpath)
 
@@ -888,7 +1018,8 @@ class Driver():
         if not hasattr(self.detectors, "_NBR_INPUT"):
             self.detectors._NBR_INPUT = 4
 
-        self.nl = self.detectors._NBR_INPUT
+        self.nl = len(self.config['address'])
+       
         for i in range(1,self.nl+1):
             setattr(self,f'laser{i}',Laser(self.detectors,i))
 
@@ -903,7 +1034,8 @@ class Driver():
 
     def get_config(self):
         config = {
-            "address": [getattr(self, f"laser{i}")._address for i in range(1, self.nl+1)],
+            "GPIBID": [getattr(self, f"laser{i}")._GPIBID for i in range(1, self.nl+1)],
+            "address": [getattr(self, f"laser{i}")._GPIBAdress for i in range(1, self.nl+1)],
             "low_wavelength": [getattr(self, f"laser{i}")._low_wavelength for i in range(1, self.nl+1)],
             "high_wavelength": [getattr(self, f"laser{i}")._high_wavelength for i in range(1, self.nl+1)],
             "speed":[getattr(self, f"laser{i}")._speed for i in range(1, self.nl+1)],
@@ -941,7 +1073,10 @@ class Driver_DLL(Driver):
     def __init__(self,
         libpath=r"C:\Program Files (x86)\Yenista Optics\CT400\Library 1.3.2\Win64\CT400_lib.dll",
         configpath=r'C:\Users\Public\Documents\Yenista Optics\CT400\Config\CT400.config.xml',
+        model="CT400",
         **kwargs):
+
+        self.model = model
 
         self.ct400_command_list = [
             "CT400_Init",
@@ -979,20 +1114,29 @@ class Driver_DLL(Driver):
             "CT400_SetExternalSynchronization",
             "ScanGetLineDetectionArray",
             ## see CT400_PG.pdf for all commands and explainations
+
+            ## New function from ct440
+            # TODO: add new functions introduced with ct440
+            "CT440_GetCT440Model",
+            "CT440_GetCt440SN",
+            "CT440_GetCT440DSPver",
+            "CT440_PolState",
+            "CT440_ScanGetProgress",
+
             ]
 
-        Driver.__init__(self, libpath, configpath)
+        Driver.__init__(self, libpath, configpath, model=model)
 
 
     def close(self):
         try:
             self.detectors.close()
         except Exception as er:
-            print("Warning, CT400 didn't close properly:", er)
+            print(f"Warning, {self.model} didn't close properly:", er)
         try:
             self.config = self.get_config()
             write_xml(self.config, self.configpath)
         except Exception as er:
-            print("Warning, CT400 config file not saved:", er)
+            print(f"Warning, {self.model} config file not saved:", er)
 ############################## Connections classes ##############################
 #################################################################################
