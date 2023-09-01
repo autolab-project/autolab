@@ -232,7 +232,7 @@ class Dataset():
         dataset_folder, extension = os.path.splitext(filename)
         new_configname = dataset_folder+".conf"
 
-        config_name = os.path.join(self.tempFolderPath,'config.conf')
+        config_name = os.path.join(self.tempFolderPath,'config.conf')  # TODO: add option to choose if want config saved in autolab config
         shutil.copy(config_name, new_configname)
 
         data_name = os.path.join(self.tempFolderPath,'data.txt')
@@ -272,7 +272,6 @@ class Dataset():
                 simpledata[resultName] = result
 
             # Else write it on a file, in a temp directory
-
             else :
                 folderPath = os.path.join(self.tempFolderPath,resultName)
                 if not os.path.exists(folderPath) : os.mkdir(folderPath)

@@ -8,7 +8,6 @@ Created on Mon Nov 18 14:53:10 2019
 import configparser
 from . import paths, stats
 import os
-import shutil
 
 
 

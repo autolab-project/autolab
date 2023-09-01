@@ -19,7 +19,7 @@ class Data:
     pass
 
 
-class Interface():  # TODO: delete or merge with Autolab plotting.analyze whicxh is the improved version of Interface
+class Interface():  # TODO: delete or merge with Autolab plotting.analyze which is the improved version of Interface
 
     def __init__(self, dev):
 
