@@ -51,12 +51,6 @@ class FigureManager :
         self.fig.tight_layout()
         self.canvas.draw()
 
-        self.cursor_left = self.ax.plot([None],[None],'--',color='grey', label="Cursor left")[0]
-        self.cursor_right = self.ax.plot([None],[None],'--',color='grey', label="Cursor right")[0]
-        self.cursor_max = self.ax.plot([None],[None],'--',color='grey', label="Cursor max")[0]
-        self.cursor_left_3db = self.ax.plot([None],[None],'--',color='grey', label="Cursor left 3db")[0]
-        self.cursor_right_3db = self.ax.plot([None],[None],'--',color='grey', label="Cursor right 3db")[0]
-
         # Number of traces
         self.nbtraces = 10
 
@@ -347,7 +341,7 @@ class FigureManager :
                 if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
                 if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
 
-            self.gui.targetValueChanged()
+            self.gui.plugin_refresh()
             self.redraw()
 
 
@@ -375,38 +369,6 @@ class FigureManager :
         self.redraw()
 
 
-
-    def displayCursors(self, wl, power):
-
-        xmin, xmax = -1e99, 1e99
-        ymin, ymax = -1e99, 1e99
-
-        # left cursor
-        self.cursor_left.set_xdata([wl[0], wl[0]])
-        self.cursor_left.set_ydata([ymin, ymax])
-
-        # right cursor
-        self.cursor_right.set_xdata([wl[2], wl[2]])
-        self.cursor_right.set_ydata([ymin, ymax])
-
-        # max cursor
-        self.cursor_max.set_xdata([xmin, xmax])
-        self.cursor_max.set_ydata([power[1], power[1]])
-
-        # left 3db marker
-        self.cursor_left_3db.set_xdata([xmin, xmax])
-        self.cursor_left_3db.set_ydata([power[0], power[0]])
-
-        # right 3db marker
-        self.cursor_right_3db.set_xdata([xmin, xmax])
-        self.cursor_right_3db.set_ydata([power[2], power[2]])
-
-        # remove right 3db marker if same as left
-        if len(wl) == 3 and len(power) == 3 and power[0] == power[2]:
-            self.cursor_right_3db.set_xdata([None, None])
-            self.cursor_right_3db.set_ydata([None, None])
-
-        self.redraw()
 
 
 

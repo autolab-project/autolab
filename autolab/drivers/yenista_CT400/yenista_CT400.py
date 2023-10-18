@@ -315,13 +315,14 @@ def write_xml(config, configpath):
             except:
                 pass
         else:
+            print(f"No config {configpath}. Taking default driver value")
             CT400 = default_xml()
 
         model = "CT400" if -1 in config["GPIBID"] else "CT440"
 
         if model == "CT440":
             # modify the file structure values using config (not all variables are included in config)
-            scan = CT400.find("Scan")
+            scan = CT400.find("Scan")  # OPTIMIZE: need to add this in default_xml to avoir error when no file exists for ct440 config
 
             scan.set("Start", "%.6f" % (config["low_wavelength_scan"]))
             scan.set("Stop", "%.6f" % (config["high_wavelength_scan"]))
@@ -415,17 +416,15 @@ class Laser:
             print(f"laser{self.NUM}:", er)
 
     def connect(self):
-        try:
+
+        if self.dev.controller is not None:
             self.controller = self.dev.controller
-        except Exception:
-            raise FileNotFoundError(f"Can't found the {self.model}")
+            self.uiHandle = self.dev.uiHandle
 
-        self.uiHandle = self.dev.uiHandle
-
-        try:
-            self._init_laser()
-        except Exception:
-            raise FileNotFoundError("Can't found the laser")
+            try:
+                self._init_laser()
+            except Exception:
+                raise FileNotFoundError("Can't found the laser")
 
     def _init_variables(self):
         self._GPIBID = self.config["GPIBID"][self.NUM-1]
@@ -437,7 +436,7 @@ class Laser:
         self._speed = self.config["speed"][self.NUM-1]
         self._state = False
         self._power = 1.
-        self._wavelength = 1550.
+        self._wavelength = (self._low_wavelength+self._high_wavelength)/2
 
     def _init_laser(self):
         if self.model == "CT440":
@@ -602,17 +601,14 @@ class Scan:
             print("Scan: ", er)
 
     def connect(self):
-        try:
+        if self.dev.controller is not None:
             self.controller = self.dev.controller
-        except Exception:
-            raise FileNotFoundError(f"Can't found the {self.model}")
+            self.uiHandle = self.dev.uiHandle
 
-        self.uiHandle = self.dev.uiHandle
-
-        try:
-            self._init_scan()
-        except Exception:
-            raise FileNotFoundError("Can't found any laser")
+            try:
+                self._init_scan()
+            except Exception:
+                raise FileNotFoundError("Can't found any laser")
 
 
     def _init_variables(self):
@@ -815,14 +811,26 @@ class Scan:
         # dPowerResampled = dPowerSync
         # dDetector1Resampled = dDetector1Sync
 
-        data = {"Last Scan": pd.DataFrame(results)}
+        # Change rounding format to match detector precision
+        df_res = pd.DataFrame(results)
+        df_res['L'] = df_res['L'].map(lambda x: '%1.3f' % x)
+        df_res['O'] = df_res['O'].map(lambda x: '%1.2f' % x)
+        df_res['1'] = df_res['1'].map(lambda x: '%1.2f' % x)
+        if df_res.get("2"):
+            df_res['2'] = df_res['2'].map(lambda x: '%1.2f' % x)
+        if df_res.get("3"):
+            df_res['3'] = df_res['3'].map(lambda x: '%1.2f' % x)
+        if df_res.get("4"):
+            df_res['4'] = df_res['4'].map(lambda x: '%1.2f' % x)
+        data = {"Last Scan": df_res}
 
         self.dev.dev.data.update(data)
         self.dev.dev._last_data_name = "Last Scan"
 
 
     def get_data(self):
-        return pd.DataFrame(self.dev.dev.data.get("Last Scan"))  # better to let Last Scan to avoid saving data from loaded data
+        return pd.DataFrame(self.dev.dev.data.get("Last Scan"))  # OPTIMIZE: in future should remove interface from ct400 to have it independent, ct400 will only have one data at a time (remove dict)
+    # better to let Last Scan to avoid saving data from loaded data
         # return pd.DataFrame(self.dev.dev.data.get(self.dev.dev._last_data_name))
 
 
@@ -907,6 +915,8 @@ class Detectors:
                 from ct400_lib import CT400
                 self.controller = CT400(self.libpath)
         except OSError:
+            self.controller = None
+            self.uiHandle = -1
             raise OSError(f"Can't found the {self.model}")
 
         iError = ct.c_int32()
@@ -992,7 +1002,9 @@ class Detectors:
         return config
 
     def close(self):
-        self.controller.close(self.uiHandle)
+
+        if self.controller is not None:
+            self.controller.close(self.uiHandle)
 
 
 class Driver():
@@ -1019,7 +1031,7 @@ class Driver():
             self.detectors._NBR_INPUT = 4
 
         self.nl = len(self.config['address'])
-       
+
         for i in range(1,self.nl+1):
             setattr(self,f'laser{i}',Laser(self.detectors,i))
 

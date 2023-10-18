@@ -450,9 +450,20 @@ class Action(Element):
         # DO FUNCTION
         assert self.function is not None, f"The action {self.name} is not configured to be actionable"
         if self.has_parameter :
-            assert value is not None, f"The action {self.name} requires an argument"
-            value = self.type(value)
-            self.function(value)
+            if value is not None:
+                value = self.type(value)
+                self.function(value)
+            elif self.unit == "filename":
+                    import sys
+                    from PyQt5 import QtWidgets
+                    app = QtWidgets.QApplication(sys.argv)
+                    filename = QtWidgets.QFileDialog.getOpenFileName(caption="Filename", filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+                    if filename != '':
+                        self.function(filename)
+                    else:
+                        print("Filename prompt cancelled")
+            else:
+                assert value is not None, f"The action {self.name} requires an argument"
         else :
             assert value is None, f"The action {self.name} doesn't require an argument"
             self.function()

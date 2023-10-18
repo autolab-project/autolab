@@ -28,6 +28,7 @@ class Driver():
         self.constant = 0
 
         self.verbose = False
+        self.instance_active = True
 
     def set_sleep(self,value):
         self.sleep = value
@@ -45,6 +46,8 @@ class Driver():
         return self.verbose
 
     def get_amplitude(self):
+        if not self.instance_active:
+            raise ValueError("DUMMY DEVICE IS CLOSED")
         time.sleep(self.sleep)
         #raise ValueError('Test error')
         #self.count += 1
@@ -71,6 +74,8 @@ class Driver():
         return self.phrase
 
     def set_amplitude(self,value):
+        if not self.instance_active:
+            raise ValueError("DUMMY DEVICE IS CLOSED")
         time.sleep(self.sleep)
         self.amp = value
         if self.verbose : print('set amplitude',self.amp)
@@ -163,6 +168,7 @@ class Driver_CONN(Driver):
 
     def close(self):
         print('DUMMY DEVICE CLOSED')
+        self.instance_active = False
 
 
 class Slot() :

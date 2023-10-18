@@ -511,17 +511,24 @@ class ConfigManager :
                                                      paths.USER_LAST_CUSTOM_FOLDER,
                                                      "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
         if filename != '':
+            self.import_configPars(filename)
 
-            path = os.path.dirname(filename)
-            paths.USER_LAST_CUSTOM_FOLDER = path
+    def import_configPars(self, filename):
 
-            configPars = configparser.ConfigParser()
+        configPars = configparser.ConfigParser()
+        try:
             configPars.read(filename)
+        except Exception as error:
+            self.gui.statusBar.showMessage(f"Impossible to load configuration file: {error}",10000)
+            return
 
-            self.load_configPars(configPars)
+        path = os.path.dirname(filename)
+        paths.USER_LAST_CUSTOM_FOLDER = path
 
-            if self._got_error is False:
-                self.addNewConfig()
+        self.load_configPars(configPars)
+
+        if self._got_error is False:
+            self.addNewConfig()
 
 
     def load_configPars(self, configPars):

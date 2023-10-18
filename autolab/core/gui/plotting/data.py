@@ -17,7 +17,7 @@ import pandas as pd
 try:
     from pandas._libs.lib import no_default
 except:
-    no_default = None  # OPTIMIZE: make it compatible with old version in a more elegant way
+    no_default = None
 
 
 def find_delimiter(filename):
@@ -54,6 +54,41 @@ def find_header(filename, sep=no_default, skiprows=None):
     return "infer" if tuple(df.dtypes) != tuple(df_header.dtypes) else None
 
 
+def formatData(data):
+    """ Format data """
+
+    try:
+        data = pd.DataFrame(data)
+    except ValueError:
+        data = pd.DataFrame([data])
+    data.columns = data.columns.astype(str)
+    data_type = data.values.dtype
+    data[data.columns] = data[data.columns].apply(pd.to_numeric, errors="coerce")
+    assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
+
+    if data.shape[1] == 1:
+        data.rename(columns = {'0':'1'}, inplace=True)
+        data.insert(0, "0", range(data.shape[0]))
+    return data
+
+
+def importData(filename):
+    """ This function open the data with the provided filename """
+
+    skiprows = _skiprows(filename)
+    sep = find_delimiter(filename)
+    header = find_header(filename, sep, skiprows)
+    try:
+        data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows)
+    except:
+        data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows)
+
+    data = formatData(data)
+    return data
+
+
+
+
 class DataManager :
 
     def __init__(self,gui):
@@ -63,10 +98,6 @@ class DataManager :
         self._clear()
 
         self.overwriteData = True
-        self.targetValue = -1
-        self.depthValue = 1
-        self.levelValue = -3.
-        self.comparatorState = np.greater
 
         self.deviceValue = "ct400.scan.data"
 
@@ -137,55 +168,6 @@ class DataManager :
             raise NameError(f"The given value '{name}' is not a device variable or the device is closed")
         return variable
 
-    def setTargetValue(self,value):
-
-        """ This function set the value of the target abscissa value """
-
-        self.targetValue = value
-
-    def getTargetValue(self):
-
-        """ This function returns the value of the target abscissa value """
-
-        return self.targetValue
-
-    def setDepthValue(self,value):
-
-        """ This function set the value of the algorithm depth to find the local maximum """
-
-        self.depthValue = value
-
-    def getDepthValue(self):
-
-        """ This function returns the value of the algorithm depth to find the local maximum """
-
-        return self.depthValue
-
-
-    def setLevelValue(self,value):
-
-        """ This function set the value of the algorithm depth to find the local maximum """
-
-        self.levelValue = value
-
-    def getLevelValue(self):
-
-        """ This function returns the value of the algorithm depth to find the local maximum """
-
-        return self.levelValue
-
-
-    def setComparatorState(self,value):
-
-        """ This function set np.greater comparator for True and np.less comparator for False """
-        self.comparatorState = np.greater if value is True else  np.less
-
-    def getComparatorState(self):
-
-        """ This function returns True for greater and False for less comparator """
-
-        return self.comparatorState
-
 
     def data_comboBoxClicked(self):
 
@@ -208,28 +190,32 @@ class DataManager :
         if not filenames:
             return
         else:
+            self.importAction(filenames)
 
-            for i, filename in enumerate(filenames):
-                path = os.path.dirname(filename)
-                paths.USER_LAST_CUSTOM_FOLDER = path
+    def importAction(self, filenames):
 
-                try :
-                    dataset = self.importData(filename)
-                except Exception as error:
-                    self.gui.statusBar.showMessage(f"Impossible to load data from {filename}: {error}",10000)
-                    if len(filenames) != 1:
-                        print(f"Impossible to load data from {filename}: {error}")
-                else:
-                    self.gui.statusBar.showMessage(f"File {filename} loaded successfully",5000)
+        for i, filename in enumerate(filenames):
 
-                    self.gui.figureManager.start(dataset)
+            try :
+                dataset = self.importData(filename)
+            except Exception as error:
+                self.gui.statusBar.showMessage(f"Impossible to load data from {filename}: {error}",10000)
+                if len(filenames) != 1:
+                    print(f"Impossible to load data from {filename}: {error}")
+            else:
+                self.gui.statusBar.showMessage(f"File {filename} loaded successfully",5000)
+
+                self.gui.figureManager.start(dataset)
+
+        path = os.path.dirname(filename)
+        paths.USER_LAST_CUSTOM_FOLDER = path
 
     def importDeviceData(self, deviceVariable):
         """ This function open the data of the provided device """
 
         data = deviceVariable()
 
-        data = self.formatData(data)
+        data = formatData(data)
 
         if self.overwriteData:
             data_name = self.deviceValue
@@ -244,7 +230,7 @@ class DataManager :
         """ This function open the data with the provided filename """
         # OPTIMIZE: could add option to choose in GUI all options
 
-        data = DataManager._importData(filename)
+        data = importData(filename)
 
         name = os.path.basename(filename)
 
@@ -257,39 +243,6 @@ class DataManager :
         dataset = self.newDataset(data_name, data)
         return dataset
 
-    @staticmethod
-    def _importData(filename):
-        """ This function open the data with the provided filename """
-
-        skiprows = _skiprows(filename)
-        sep = find_delimiter(filename)
-        header = find_header(filename, sep, skiprows)
-        try:
-            data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows)
-        except:
-            data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows)
-
-        data = DataManager.formatData(data)
-        return data
-
-    @staticmethod
-    def formatData(data):
-        """ Format data """
-
-        try:
-            data = pd.DataFrame(data)
-        except ValueError:
-            data = pd.DataFrame([data])
-        data.columns = data.columns.astype(str)
-        data_type = data.values.dtype
-        data[data.columns] = data[data.columns].apply(pd.to_numeric, errors="coerce")
-        assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
-
-        if data.shape[1] == 1:
-            data.rename(columns = {'0':'1'}, inplace=True)
-            data.insert(0, "0", range(data.shape[0]))
-
-        return data
 
     def getData(self,nbDataset,varList, selectedData=0):
         """ This function returns to the figure manager the required data """
@@ -358,6 +311,7 @@ class DataManager :
             self.gui.data_comboBox.setCurrentIndex(index)
 
         self.data_comboBoxClicked()
+        self.gui.plugin_refresh()
 
     def clear_all(self):
         """ This reset any recorded data, and the GUI accordingly """
@@ -370,22 +324,18 @@ class DataManager :
         self.gui.data_comboBox.clear()
 
         self.data_comboBoxClicked()
+        self.gui.plugin_refresh()
 
     def deleteData(self, dataset):
         """ This function remove dataset from the datasets"""
 
         self.datasets.remove(dataset)
 
-    def getLastDataset(self):
-        """ This return the current (last created) dataset """
-
-        if len(self.datasets) > 0:
-            return self.datasets[-1]
-
     def getLastSelectedDataset(self):
         """ This return the current (last selected) dataset """
 
-        return self.datasets[self.gui.data_comboBox.currentIndex()]
+        if len(self.datasets) > 0:
+            return self.datasets[self.gui.data_comboBox.currentIndex()] # OPTIMIZE: should be local variable, not gui. thread should change local from gui
 
     def addDataset(self, dataset):
         """ This function add the given dataset to datasets list """

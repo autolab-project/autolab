@@ -41,6 +41,12 @@ def initialize_local_directory():
         save_config('autolab',configparser.ConfigParser())
         print(f'The configuration file autolab_config.ini has been created: {paths.AUTOLAB_CONFIG}')
 
+    # PLOTTER CONFIGURATION FILE
+    if os.path.exists(paths.PLOTTER_CONFIG) is False :
+        plotter_config = configparser.ConfigParser()
+        plotter_config['plugin'] = {'plotter':'plotter'}
+        save_config('plotter',plotter_config)
+        print(f'The configuration file plotter_config.ini has been created: {paths.PLOTTER_CONFIG}')
 
 def save_config(config_name,config):
 
