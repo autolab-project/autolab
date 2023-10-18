@@ -14,7 +14,6 @@ from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QApplication
 from ..scanning.main import Scanner
 
-from ..ct400_interface.main import CT400Gui
 from ..plotting.main import Plotter
 
 from .thread import ThreadManager
@@ -36,13 +35,16 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.activateWindow()
 
         # Tree widget configuration
+        self.tree.last_drag = None
+        self.tree.gui = self
         self.tree.setHeaderLabels(['Objects','Type','Actions','Values',''])
         self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
         self.tree.header().resizeSection(0, 200)
         self.tree.header().resizeSection(4, 15)
-
+        self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragOnly)
         self.tree.header().setStretchLastSection(False)
         self.tree.itemClicked.connect(self.itemClicked)
+        self.tree.itemPressed.connect(self.itemPressed)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.rightClick)
         self.tree.setAlternatingRowColors(True)
@@ -53,10 +55,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         # Scanner / Monitors
         self.scanner = None
         self.plotter = None
-        self.ct400_gui = None
         self.monitors = {}
         self.sliders = {}
         self.customGUIdict = {}
+        self.threadModuleDict = {}
+        self.threadItemDict = {}
 
         scanAction = self.menuBar.addAction('Open scanner')
         scanAction.triggered.connect(self.openScanner)
@@ -65,22 +68,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         plotAction = self.menuBar.addAction('Open plotter')
         plotAction.triggered.connect(self.openPlotter)
         plotAction.setStatusTip('Open the plotter in another window')
-
-        if self.ct400_gui is None:
-
-            list_devices_gui = [devName for devName in devices.list_devices()]  # All devices
-            check_list_gui = [bool(str(x).lower().startswith("ct400")) for x in list_devices_gui]
-
-            for i, check in enumerate(check_list_gui):  # Index of first ct400 find
-                if check:
-                    break
-            else:
-                i = None
-
-            if i is not None:  # If find a ct400 device
-                ct400Action = self.menuBar.addAction('Open CT400 GUI')
-                ct400Action.triggered.connect(self.openCT400Gui)
-                ct400Action.setStatusTip('Open the CT400 GUI in another window')
 
         # Settings menu
         settingsMenu = self.menuBar.addMenu('Settings')
@@ -92,6 +79,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         devicesConfig = settingsMenu.addAction('Devices config')
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
+
+        plotterConfig = settingsMenu.addAction('Plotter config')
+        plotterConfig.triggered.connect(self.openPlotterConfig)
+        plotterConfig.setStatusTip("Open the plotter configuration file")
 
         # Help menu
         helpMenu = self.menuBar.addMenu('Help')
@@ -105,6 +96,30 @@ class ControlCenter(QtWidgets.QMainWindow):
         helpAction.triggered.connect(lambda : web.doc('default'))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
 
+        self.timerDevice = QtCore.QTimer(self)
+        self.timerDevice.setInterval(50) # ms
+        self.timerDevice.timeout.connect(self.timerAction)
+
+    def timerAction(self):
+
+        """ This function checks if a module has been loaded and put to the queue. If so, associate item and module """
+
+        threadItemDictTemp = self.threadItemDict.copy()
+        threadModuleDictTemp = self.threadModuleDict.copy()
+
+        for item_id in threadModuleDictTemp.keys():
+
+            item = threadItemDictTemp[item_id]
+            module = threadModuleDictTemp[item_id]
+
+            self.associate(item, module)
+            item.setExpanded(True)
+
+            self.threadItemDict.pop(item_id)
+            self.threadModuleDict.pop(item_id)
+
+        if len(threadItemDictTemp) == 0:
+            self.timerDevice.stop()
 
     def initialize(self):
 
@@ -116,7 +131,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             for i in range(5) :
                 item.setBackground(i, QtGui.QColor('#9EB7F5'))  # blue
             if devName in devices.list_loaded_devices() :
-                self.associate(item)
+                self.itemClicked(item)
 
 
 
@@ -124,7 +139,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         """ Modify the message displayed in the status bar """
 
-        self.statusbar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, msecs=timeout)
 
 
 
@@ -154,86 +169,51 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Function called when a normal click has been detected in the tree.
             Check the association if it is a main item """
 
-        if item.parent() is None and item.loaded is False :
-            self.associate(item)
-            item.setExpanded(True)
+        if item.parent() is None and item.loaded is False and id(item) not in self.threadItemDict.keys():
+            self.threadManager.start(item,'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
+            self.timerDevice.start()
+
+    def itemPressed(self,item):
+
+        """ Function called when a click (not released) has been detected in the tree.
+            Store last dragged variable in tree so scanner can know it when it is dropped there """
+
+        if hasattr(item, "module"):
+            if item.is_not_submodule:
+                self.tree.last_drag = item.name
+            else:
+                self.tree.last_drag = None
+        elif hasattr(item, "variable"):
+            self.tree.last_drag = item.variable
+        elif hasattr(item, "action"):
+            self.tree.last_drag = item.action
+        else:
+            self.tree.last_drag = None
 
 
-
-    def associate(self,item):
+    def associate(self,item, module):
 
         """ Function called to associate a main module to one item in the tree """
 
-        # Try to get / instantiated the device
-        check = False
-        try :
-            self.setStatus(f'Loading device {item.name}...', 5000)
-            module = devices.get_device(item.name)
-
-            # If the driver has an openGUI method, a button will be added to the Autolab menu to access it.
-            if hasattr(module.instance, "openGUI"):
-                if hasattr(module.instance, "gui_name"):
-                    gui_name = str(module.instance.gui_name)
-                else:
-                    gui_name = 'Custom GUI'
-
-                customButton = self.customGUIdict.get(gui_name, None)
-
-                if customButton is None:
-                    customButton = self.menuBar.addAction(gui_name)
-                    self.customGUIdict[gui_name] = customButton
-
-                customButton.triggered.disconnect()
-                customButton.triggered.connect(module.instance.openGUI)
-
-            check = True
-            self.clearStatus()
-        except Exception as e :
-            self.setStatus(f'An error occured when loading device {item.name} : {str(e)}', 10000)
-
-        # If success, load the entire module (submodules, variables, actions)
-        if check is True :
-            item.load(module)
-
-
-
-    def openCT400Gui(self):
-
-        """ This function open the CT400 GUI associated to this variable. """
-        # TODO: merge CT400GUI into Plotter and integrate plotting.analyze as standalone GUI feature (no driver)
-        # If the scanner is not already running, create one
-        if self.ct400_gui is None:
-
-            list_devices_gui = [devName for devName in devices.list_devices()]  # All devices
-            check_list_gui = [bool(str(x).lower().startswith("ct400")) for x in list_devices_gui]
-
-            for i, check in enumerate(check_list_gui):  # Index of first ct400 find
-                if check:
-                    break
+        # If the driver has an openGUI method, a button will be added to the Autolab menu to access it.
+        if hasattr(module.instance, "openGUI"):
+            if hasattr(module.instance, "gui_name"):
+                gui_name = str(module.instance.gui_name)
             else:
-                i = None
+                gui_name = 'Custom GUI'
 
-            if i is not None:  # If find a ct400 device
-                ct400_name = list_devices_gui[i]
+            customButton = self.customGUIdict.get(gui_name, None)
 
-                if ct400_name not in devices.list_loaded_devices():  # If not in connected devices connect ct400
-                    ct400_tree = self.tree.findItems(ct400_name, QtCore.Qt.MatchExactly)[0]
-                    self.associate(ct400_tree)
-                    ct400_tree.setExpanded(True)
+            if customButton is None:
+                customButton = self.menuBar.addAction(gui_name)
+                self.customGUIdict[gui_name] = customButton
 
-                ct400 = devices.DEVICES.get(ct400_name)
-                if ct400 is not None:
-                    self.ct400_gui = CT400Gui(self, ct400)
-                    self.ct400_gui.show()
-                    self.ct400_gui.activateWindow()
+            customButton.triggered.disconnect()
+            customButton.triggered.connect(module.instance.openGUI)
 
-            else:
-                self.setStatus(f'No CT400 found in the devices list: {list_devices_gui}', 10000)
+        # load the entire module (submodules, variables, actions)
+        item.load(module)
 
-        # If the CT400 GUI is already running, just make as the front window
-        else :
-            self.ct400_gui.setWindowState(self.ct400_gui.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            self.ct400_gui.activateWindow()
 
     def openScanner(self):
 
@@ -280,6 +260,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Open the devices configuration file """
         os.startfile(paths.DEVICES_CONFIG)
 
+    def openPlotterConfig(self):
+        """ Open the plotter configuration file """
+        os.startfile(paths.PLOTTER_CONFIG)
+
 
     def setScanParameter(self,variable):
 
@@ -309,12 +293,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         if self.plotter is not None:
             self.plotter.active = False  # don't want to close plotter because want to keep data
 
-    def clearCT400(self):
-
-        """ This clear the gui instance reference when quitted """
-
-        self.ct400_gui = None
-
 
     def closeEvent(self,event):
 
@@ -325,9 +303,6 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         if self.plotter is not None :
             self.plotter.close()
-
-        if self.ct400_gui is not None :
-            self.ct400_gui.close()
 
         monitors = list(self.monitors.values())
         for monitor in monitors:

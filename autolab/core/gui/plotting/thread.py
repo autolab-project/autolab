@@ -7,6 +7,7 @@ Created on Sun Sep 29 18:26:32 2019
 
 from PyQt5 import QtCore
 from ... import devices
+from ... import drivers
 import sip
 
 
@@ -47,7 +48,7 @@ class ThreadManager :
         if intType == 'read' : status = f'Reading {item.variable.address()}...'
         elif intType == 'write' : status = f'Writing {item.variable.address()}...'
         elif intType == 'execute' : status = f'Executing {item.action.address()}...'
-        elif intType == 'load' : status = f'Loading device {item.name}...'
+        elif intType == 'load' : status = f'Loading plugin {item.name}...'
         self.gui.setStatus(status)
 
         # Thread configuration
@@ -129,10 +130,24 @@ class InteractionThread(QtCore.QThread):
                 else :
                     self.item.action()
             elif self.intType == 'load' :
-                self.item.gui.threadItemDict[id(self.item)] = self.item  # needed before get_device so gui can know an item has been clicked to block multiple clicks
-                module = devices.get_device(self.item.name)  # Try to get / instantiated the device
-                self.item.gui.threadModuleDict[id(self.item)] = module
+                self.item.gui.threadItemDict[id(self.item)] = self.item  # needed before get_device so gui can know an item has been clicked and prevent from multiple clicks
 
+                plugin_name = self.item.name
+                device_config = devices.get_final_device_config(plugin_name)
+
+                try:
+                    instance = drivers.get_driver(device_config['driver'],
+                                                  device_config['connection'],
+                                                  **{ k:v for k,v in device_config.items() if k not in ['driver','connection']},
+                                                  gui=self.item.gui)
+                    module = devices.Device(plugin_name,instance)
+                    self.item.gui.threadModuleDict[id(self.item)] = module
+                except Exception:
+                    instance = drivers.get_driver(device_config['driver'],
+                                                  device_config['connection'],
+                                                  **{ k:v for k,v in device_config.items() if k not in ['driver','connection']})
+                    module = devices.Device(plugin_name,instance)
+                    self.item.gui.threadModuleDict[id(self.item)] = module
         except Exception as e:
             error = e
             if self.intType == 'load' :

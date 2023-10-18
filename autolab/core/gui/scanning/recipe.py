@@ -20,9 +20,61 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
         QtWidgets.QTreeWidget.__init__(self,parent)
 
+        self.setAcceptDrops(True)
+
     def dropEvent(self, event):
-        QtWidgets.QTreeWidget.dropEvent(self, event)
-        self.reorderSignal.emit(event)
+
+        """ This function is used to reorder the recipe or to add a step from a controlcenter drop """
+
+        self.setGraphicsEffect(None)
+
+        if event.source() is self:  # if event comes frop recipe -> reorder
+            self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)  # needed to not create new step but reorder
+            QtWidgets.QTreeWidget.dropEvent(self, event)
+            self.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
+            self.reorderSignal.emit(event)
+        else: # event comes from controlcenter -> check type to add step
+            gui = event.source().gui
+            variable = event.source().last_drag
+            if variable:
+                if variable._element_type == "variable" :
+                    if variable.readable and variable.writable:
+                        self.menu(gui, variable, event.pos())
+                    elif variable.readable:
+                        gui.addStepToScanRecipe('measure',variable)
+                    elif variable.writable:
+                        gui.addStepToScanRecipe('set',variable)
+                elif variable._element_type == "action":
+                    gui.addStepToScanRecipe('action',variable)
+
+    def dragEnterEvent(self, event):
+
+        if (event.source() is self) or (
+                hasattr(event.source(), "last_drag") and hasattr(event.source().last_drag, "_element_type") and event.source().last_drag._element_type != "module"):
+            event.accept()
+
+            shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
+            self.setGraphicsEffect(shadow)
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event):
+        self.setGraphicsEffect(None)
+
+    def menu(self, gui, variable, position):
+
+        """ This function provides the menu when the user right click on an item """
+
+        menu = QtWidgets.QMenu()
+        scanMeasureStepAction = menu.addAction("Measure in scan recipe")
+        scanSetStepAction = menu.addAction("Set value in scan recipe")
+        scanMeasureStepAction.setEnabled(variable.readable)
+        scanSetStepAction.setEnabled(variable.writable)
+        choice = menu.exec_(self.viewport().mapToGlobal(position))
+        if choice == scanMeasureStepAction :
+            gui.addStepToScanRecipe('measure',variable)  # OPTIMIZE: need to change function to tell which loop (begin, recipe, end)
+        elif choice == scanSetStepAction :
+            gui.addStepToScanRecipe('set',variable)
 
 
 class RecipeManager :
@@ -36,14 +88,13 @@ class RecipeManager :
         self.precision = scanner_config['precision']
 
         # Tree configuration
-        #self.tree = self.gui.recipe_treeWidget
         self.tree = MyQTreeWidget(self.gui)
         tree_layout.addWidget(self.tree)
         self.tree.setHeaderLabels(['Step name','Type','Element address','Value'])
         self.tree.header().resizeSection(3, 50)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
         self.tree.reorderSignal.connect(self.orderChanged)
-        self.tree.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
         self.tree.setDropIndicatorShown(True)
         self.tree.setAlternatingRowColors(True)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)

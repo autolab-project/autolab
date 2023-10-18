@@ -314,11 +314,6 @@ class FigureManager :
         if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1 :
             self.reloadData()
 
-        if self.gui.variable_x_comboBox.currentText() == self.gui.configManager.getParameterName() :
-            self.gui.fromFigure_pushButton.setEnabled(True)
-        else :
-            self.gui.fromFigure_pushButton.setEnabled(False)
-
 
 
 

@@ -8,9 +8,7 @@ Created on Sun Sep 29 18:29:07 2019
 
 import os
 from PyQt5 import QtCore, QtWidgets
-from .slider import Slider
-from ..monitoring.main import Monitor
-from ...devices import close, DEVICES
+from ...devices import DEVICES
 from ... import paths, config
 import pandas as pd
 import numpy as np
@@ -21,11 +19,12 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
     """ This class represents a module in an item of the tree """
 
-    def __init__(self,itemParent,name,gui):
+    def __init__(self,itemParent,name,nickname,gui):
 
-        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[name,'Module'])
+        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[nickname,'Module'])
         self.setTextAlignment(1,QtCore.Qt.AlignHCenter)
         self.name = name
+        self.nickname = nickname
         self.module = None
         self.loaded = False
         self.gui = gui
@@ -42,7 +41,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         subModuleNames = self.module.list_modules()
         for subModuleName in subModuleNames :
             subModule = getattr(self.module,subModuleName)
-            item = TreeWidgetItemModule(self, subModuleName,self.gui)
+            item = TreeWidgetItemModule(self, subModuleName,subModuleName,self.gui)
             item.load(subModule)
 
         # Variables
@@ -68,12 +67,15 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
         if self.is_not_submodule and self.loaded:
             menu = QtWidgets.QMenu()
-            disconnectDevice = menu.addAction(f"Disconnect {self.name}")
+            disconnectDevice = menu.addAction(f"Disconnect {self.nickname}")
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
             if choice == disconnectDevice :
-                close(self.name)
+                device = self.gui.active_plugin_dict[self.nickname]
+                try: device.instance.close()  # not device close because device.close will remove device from DEVICES list
+                except: pass
+                self.gui.active_plugin_dict.pop(self.nickname)
 
                 for i in range(self.childCount()):
                     self.removeChild(self.child(0))
@@ -173,28 +175,11 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         """ Start a new thread to execute the associated action """
 
-        if not self.isDisabled():
-            if self.has_value :
-                value = self.readGui()
-                if value is not None : self.gui.threadManager.start(self,'execute',value=value)
-            else :
-                self.gui.threadManager.start(self,'execute')
-
-
-
-    def menu(self,position):
-
-        """ This function provides the menu when the user right click on an item """
-
-        if not self.isDisabled():
-            menu = QtWidgets.QMenu()
-            scanRecipe = menu.addAction("Do in scan recipe")
-
-            choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
-
-            if choice == scanRecipe :
-                self.gui.addStepToScanRecipe('action',self.action)
-
+        if self.has_value :
+            value = self.readGui()
+            if value is not None : self.gui.threadManager.start(self,'execute',value=value)
+        else :
+            self.gui.threadManager.start(self,'execute')
 
 
 
@@ -292,7 +277,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def writeGui(self,value):
 
         """ This function displays a new value in the GUI """
-        if not sip.isdeleted(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finished)
+        if not sip.isdeleted(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finihsed)
             # Update value
             if self.variable.numerical :
                 self.valueWidget.setText(f'{value:.{self.precision}g}') # default is .6g
@@ -356,20 +341,17 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         """ Start a new thread to READ the associated variable """
 
-        if not self.isDisabled():
-            self.setValueKnownState(False)
-            self.gui.threadManager.start(self,'read')
+        self.setValueKnownState(False)
+        self.gui.threadManager.start(self,'read')
 
 
 
     def write(self):
 
         """ Start a new thread to WRITE the associated variable """
-
-        if not self.isDisabled():
-            value = self.readGui()
-            if value is not None :
-                self.gui.threadManager.start(self,'write',value=value)
+        value = self.readGui()
+        if value is not None :
+            self.gui.threadManager.start(self,'write',value=value)
 
 
 
@@ -390,36 +372,15 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if not self.isDisabled():
             menu = QtWidgets.QMenu()
 
-            monitoringAction = menu.addAction("Start monitoring")
-            menu.addSeparator()
-            sliderAction = menu.addAction("Create a slider")
-            menu.addSeparator()
-            scanParameterAction = menu.addAction("Set as scan parameter")
-            scanMeasureStepAction = menu.addAction("Measure in scan recipe")
-            scanSetStepAction = menu.addAction("Set value in scan recipe")
-            menu.addSeparator()
+
             saveAction = menu.addAction("Read and save as...")
 
-            monitoringAction.setEnabled( self.variable.readable and self.variable.type in [int,float,np.ndarray,pd.DataFrame] )
-            sliderAction.setEnabled( self.variable.writable and self.variable.readable and self.variable.type in [int,float] )
-            scanParameterAction.setEnabled(self.variable.parameter_allowed)
-            scanMeasureStepAction.setEnabled(self.variable.readable)
+
             saveAction.setEnabled(self.variable.readable)
-            scanSetStepAction.setEnabled(self.variable.writable)
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
-            if choice == monitoringAction :
-                self.openMonitor()
-            elif choice == sliderAction :
-                self.openSlider()
-            elif choice == scanParameterAction :
-                self.gui.setScanParameter(self.variable)
-            elif choice == scanMeasureStepAction :
-                self.gui.addStepToScanRecipe('measure',self.variable)
-            elif choice == scanSetStepAction :
-                self.gui.addStepToScanRecipe('set',self.variable)
-            elif choice == saveAction :
+            if choice == saveAction :
                 self.saveValue()
 
 
@@ -437,57 +398,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.gui.statusBar.showMessage(f"Value of {self.variable.name} successfully read and save at {filename}",5000)
             except Exception as e :
                 self.gui.statusBar.showMessage(f"An error occured: {str(e)}",10000)
-
-
-
-    def openMonitor(self):
-
-        """ This function open the monitor associated to this variable. """
-
-        # If the monitor is not already running, create one
-        if id(self) not in self.gui.monitors.keys():
-            self.gui.monitors[id(self)] = Monitor(self)
-            self.gui.monitors[id(self)].show()
-
-        # If the monitor is already running, just make as the front window
-        else :
-            monitor = self.gui.monitors[id(self)]
-            monitor.setWindowState(monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            monitor.activateWindow()
-
-
-
-    def openSlider(self):
-
-        """ This function open the monitor associated to this variable. """
-
-        # If the slider is not already running, create one
-        if id(self) not in self.gui.sliders.keys():
-            self.gui.sliders[id(self)] = Slider(self)
-            self.gui.sliders[id(self)].show()
-
-        # If the slider is already running, just make as the front window
-        else :
-            slider = self.gui.sliders[id(self)]
-            slider.setWindowState(slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            slider.activateWindow()
-
-
-
-    def clearMonitor(self):
-
-        """ This clear the gui instance reference when quitted """
-        if id(self) in self.gui.monitors.keys():
-            self.gui.monitors.pop(id(self))
-
-
-
-    def clearSlider(self):
-
-        """ This clear the gui instance reference when quitted """
-        if id(self) in self.gui.sliders.keys():
-            self.gui.sliders.pop(id(self))
-
 
 
 # Signals can be emitted only from QObjects
