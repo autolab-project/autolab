@@ -5,14 +5,17 @@ Created on Sun Sep 29 18:08:45 2019
 @author: qchat
 """
 
-from PyQt5 import QtCore
 import time
+import math as m
 import threading
+import collections
+
 import numpy as np
 import pandas as pd
-import collections
-import math as m
+from PyQt5 import QtCore
+
 from ...devices import DEVICES
+
 
 class ScanManager :
 
@@ -73,7 +76,7 @@ class ScanManager :
             assert len(config['recipe']) > 0, "Recipe is empty"
             test = True
         except Exception as e :
-            self.gui.statusBar.showMessage(f'ERROR The scan cannot start with the current configuration : {str(e)}',10000)
+            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration : {str(e)}',10000, False)
 
         if test is True :
 
@@ -112,7 +115,7 @@ class ScanManager :
             self.gui.configManager.importAction.setEnabled(False)
             self.gui.configManager.undo.setEnabled(False)
             self.gui.configManager.redo.setEnabled(False)
-            self.gui.statusBar.showMessage('Scan started !',5000)
+            self.gui.setStatus('Scan started !',5000)
 
 
 
@@ -159,7 +162,7 @@ class ScanManager :
         """ This function is called if an error occured during the scan.
         It displays it in the status bar """
 
-        self.gui.statusBar.showMessage(f'Error : {error} ',10000)
+        self.gui.setStatus(f'Error : {error} ',10000, False)
 
 
 
@@ -235,7 +238,6 @@ class ScanManager :
 
         if len(self.gui.dataManager.datasets) != 0:
             self.gui.figureManager.reloadData()
-
 
 
 

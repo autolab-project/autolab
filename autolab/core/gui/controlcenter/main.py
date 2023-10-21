@@ -8,16 +8,49 @@ quentin.chateiller@c2n.upsaclay.fr
 """
 
 import os
+import sys
 
-from ... import devices, web, paths
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QApplication
-from ..scanning.main import Scanner
-
-from ..plotting.main import Plotter
 
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
+from ..scanning.main import Scanner
+from ..plotting.main import Plotter
+from ... import devices, web, paths, config
+
+
+class OutputWrapper(QtCore.QObject):
+    """ https://stackoverflow.com/questions/19855288/duplicate-stdout-stderr-in-qtextedit-widget """
+    outputWritten = QtCore.pyqtSignal(object, object)
+
+    def __init__(self, parent, stdout=True, logger_active=False, print_active=True):
+        super().__init__(parent)
+        if stdout:
+            self._stream = sys.stdout
+            sys.stdout = self
+        else:
+            self._stream = sys.stderr
+            sys.stderr = self
+        self._stdout = stdout
+        self.logger_active = logger_active
+        self.print_active = print_active
+
+    def write(self, text):
+        if self.print_active: self._stream.write(text)
+        if self.logger_active: self.outputWritten.emit(text, self._stdout)
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+    def __del__(self):
+        try:
+            if self._stdout:
+                sys.stdout = self._stream
+            else:
+                sys.stderr = self._stream
+        except AttributeError:
+            pass
 
 
 class ControlCenter(QtWidgets.QMainWindow):
@@ -28,6 +61,34 @@ class ControlCenter(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
         uic.loadUi(ui_path,self)
+
+        # Import Autolab config
+        control_center_config = config.get_control_center_config()
+        logger_active = control_center_config['logger']
+        if logger_active == "True":
+            logger_active = True
+        elif logger_active == "False":
+            logger_active = False
+        else:
+            logger_active = bool(int(float(logger_active)))
+        print_active = control_center_config['print']
+        if print_active == "True":
+            print_active = True
+        elif print_active == "False":
+            print_active = False
+        else:
+            print_active = bool(int(float(print_active)))
+
+        # Set logger
+        self.stdout = OutputWrapper(self, True, logger_active, print_active)
+        self.stderr = OutputWrapper(self, False, logger_active, print_active)
+        if logger_active:
+            self.logger = QtWidgets.QTextBrowser(self)
+            # self.verticalLayout.addWidget(self.logger)
+            self.splitter.insertWidget(1, self.logger)
+            self.splitter.setSizes([500,100])
+            self.stdout.outputWritten.connect(self.handleOutput)
+            self.stderr.outputWritten.connect(self.handleOutput)
 
         # Window configuration
         self.setWindowTitle("AUTOLAB - Control Panel")
@@ -100,6 +161,13 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.timerDevice.setInterval(50) # ms
         self.timerDevice.timeout.connect(self.timerAction)
 
+    def handleOutput(self, text, stdout):
+        color = self.logger.textColor()
+        if not stdout: self.logger.setTextColor(QtCore.Qt.red)
+        self.logger.insertPlainText(text)
+        self.logger.moveCursor(QtGui.QTextCursor.End)
+        self.logger.setTextColor(color)
+
     def timerAction(self):
 
         """ This function checks if a module has been loaded and put to the queue. If so, associate item and module """
@@ -134,13 +202,12 @@ class ControlCenter(QtWidgets.QMainWindow):
                 self.itemClicked(item)
 
 
+    def setStatus(self,message, timeout=0, stdout=True):
 
-    def setStatus(self,message, timeout=0):
-
-        """ Modify the message displayed in the status bar """
+        """ Modify the message displayed in the status bar and add error message to logger """
 
         self.statusBar.showMessage(message, msecs=timeout)
-
+        if not stdout: print(message, file=sys.stderr)
 
 
     def clearStatus(self):
@@ -315,3 +382,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         devices.close()  # close all devices
 
         QApplication.quit()  # close the control center interface
+
+        if hasattr(self, 'stdout'):
+            sys.stdout = self.stdout._stream
+            sys.stderr = self.stderr._stream

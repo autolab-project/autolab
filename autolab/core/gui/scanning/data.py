@@ -10,10 +10,12 @@ from queue import Queue
 import os
 import shutil
 import tempfile
+import sys
 
-from PyQt5 import QtCore,QtWidgets
-from ... import paths
 import pandas as pd
+from PyQt5 import QtCore,QtWidgets
+
+from ... import paths
 
 
 class DataManager :
@@ -53,7 +55,7 @@ class DataManager :
                     data = dataset.getData(varList)  # OPTIMIZE: Currently can't recover dataset if error during first recipe loop
                 except:
                     data = None
-                    print(f"Error encountered for scan id {selectedData+1}")
+                    print(f"Error encountered for scan id {selectedData+1}", file=sys.stderr)
                 dataList.append(data)
             else :
                 break
@@ -80,12 +82,12 @@ class DataManager :
 
             if path != '' :
                 paths.USER_LAST_CUSTOM_FOLDER = path
-                self.gui.statusBar.showMessage('Saving data...',5000)
+                self.gui.setStatus('Saving data...',5000)
 
                 dataset.save(filename)
                 self.gui.figureManager.save(filename)
 
-                self.gui.statusBar.showMessage(f'Last dataset successfully saved in {filename}',5000)
+                self.gui.setStatus(f'Last dataset successfully saved in {filename}',5000)
 
 
 

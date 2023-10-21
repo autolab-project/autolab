@@ -6,6 +6,7 @@ Created on Sun Sep 29 18:14:28 2019
 """
 import math as m
 
+
 class RangeManager :
 
     def __init__(self,gui):
@@ -31,7 +32,6 @@ class RangeManager :
 
         # Push button
         self.gui.fromFigure_pushButton.clicked.connect(self.fromFigureButtonClicked)
-
 
         self.point_or_step = "point"
         self.refresh()

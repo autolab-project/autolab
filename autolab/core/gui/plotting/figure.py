@@ -8,10 +8,10 @@ Created on Oct 2022
 
 import os
 import math as m
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib
 
+import matplotlib
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 # matplotlib.rcParams.update({'figure.autolayout': True})  # good but can raise LinAlgError. alternative is to emit signal when change windows
@@ -70,7 +70,7 @@ class FigureManager :
                 if new_dataset.data.equals(current_dataset.data):
                     data_name = self.gui.data_comboBox.currentText()
                     if new_dataset.name == data_name:
-                        self.gui.statusBar.showMessage(f'Data {new_dataset.name} already plotted !',5000)
+                        self.gui.setStatus(f'Data {new_dataset.name} already plotted !',5000)
                         return
                     else:
                         self.gui.data_comboBox.setCurrentIndex(dataSet_id-1)
@@ -82,7 +82,7 @@ class FigureManager :
                         self.gui.clear_all_pushButton.setEnabled(True)
                         self.gui.openButton.setEnabled(True)
 
-                        self.gui.statusBar.showMessage(f'Data {new_dataset.name} updated !',5000)
+                        self.gui.setStatus(f'Data {new_dataset.name} updated !',5000)
                         return
                 else:
                     current_dataset.update(new_dataset)
@@ -107,10 +107,10 @@ class FigureManager :
             self.gui.clear_all_pushButton.setEnabled(True)
             self.gui.openButton.setEnabled(True)
 
-            self.gui.statusBar.showMessage(f'Data {new_dataset.name} plotted !',5000)
+            self.gui.setStatus(f'Data {new_dataset.name} plotted !',5000)
 
         except Exception as e :
-            self.gui.statusBar.showMessage(f'ERROR The data cannot be plotted with the given dataset : {str(e)}',10000)
+            self.gui.setStatus(f'ERROR The data cannot be plotted with the given dataset : {str(e)}',10000, False)
 
 
     # AUTOSCALING

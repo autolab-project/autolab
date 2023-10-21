@@ -4,9 +4,11 @@ Created on Fri Sep 20 22:08:29 2019
 
 @author: qchat
 """
-from PyQt5 import QtCore, QtWidgets, uic
 import os
+import sys
 import queue
+
+from PyQt5 import QtCore, QtWidgets, uic
 
 from .data import DataManager
 from .figure import FigureManager
@@ -156,14 +158,14 @@ class Monitor(QtWidgets.QMainWindow):
         if path != '' :
 
             paths.USER_LAST_CUSTOM_FOLDER = path
-            self.statusBar.showMessage('Saving data...',5000)
+            self.setStatus('Saving data...',5000)
 
             try :
                 self.dataManager.save(filename)
                 self.figureManager.save(filename)
-                self.statusBar.showMessage(f'Data successfully saved in {filename}.',5000)
+                self.setStatus(f'Data successfully saved in {filename}.',5000)
             except :
-                self.statusBar.showMessage('An error occured while saving data !',10000)
+                self.setStatus('An error occured while saving data !',10000, False)
 
 
     def clearButtonClicked(self):
@@ -275,3 +277,11 @@ class Monitor(QtWidgets.QMainWindow):
         value = self.monitorManager.getDelay()
         self.delay_lineEdit.setText(f'{value:g}')
         self.setLineEditBackground(self.delay_lineEdit,'synced')
+
+
+    def setStatus(self,message, timeout=0, stdout=True):
+
+        """ Modify the message displayed in the status bar and add error message to logger """
+
+        self.statusBar.showMessage(message, msecs=timeout)
+        if not stdout: print(message, file=sys.stderr)

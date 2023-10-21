@@ -5,9 +5,9 @@ Created on Sun Sep 29 18:26:32 2019
 @author: qchat
 """
 
+import sip
 from PyQt5 import QtCore
 from ... import devices
-import sip
 
 
 class ThreadManager :
@@ -67,7 +67,7 @@ class ThreadManager :
         It updates the status bar of the GUI in consequence and enabled back the correspondig item """
 
         if error is None : self.gui.clearStatus()
-        else : self.gui.setStatus(str(error))
+        else : self.gui.setStatus(str(error), 10000, False)
 
         item = self.threads[tid].item
 
@@ -102,14 +102,11 @@ class InteractionThread(QtCore.QThread):
 
     endSignal = QtCore.pyqtSignal(object)
 
-
     def __init__(self,item,intType,value):
         QtCore.QThread.__init__(self)
         self.item = item
         self.intType = intType
         self.value = value
-
-
 
     def run(self):
 
@@ -139,4 +136,5 @@ class InteractionThread(QtCore.QThread):
                 error = f'An error occured when loading device {self.item.name} : {str(e)}'
                 if id(self.item) in self.item.gui.threadItemDict.keys():
                     self.item.gui.threadItemDict.pop(id(self.item))
+
         self.endSignal.emit(error)

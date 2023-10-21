@@ -110,39 +110,56 @@ def check_autolab_config():
             autolab_config['stats'] = {'enabled': '1'}
 
     # Check server configuration
-    if 'server' not in autolab_config.sections() :
-        autolab_config['server'] = {'port':4001}
-    if 'port' not in autolab_config['server'].keys() :
-        autolab_config['server']['port'] = 4001
+    server_dict = {'port': 4001,
+                   }
+    if 'server' in autolab_config.sections() :
+        if 'port' in autolab_config['server'].keys() :
+            server_dict['port'] = autolab_config['server']['port']
+    autolab_config['server'] = server_dict
 
     # Check control center configuration
     control_center_dict = {'precision': 7,
                            'slider_instantaneous': False,
+                           'print': True,
+                           'logger': False,
                            }
-    if 'control_center' not in autolab_config.sections() or not set(control_center_dict.keys()).issubset(autolab_config['control_center'].keys()) :
-        autolab_config['control_center'] = control_center_dict
+    if 'control_center' in autolab_config.sections():
+        if 'precision' in autolab_config['control_center'].keys() :
+            control_center_dict['precision'] = autolab_config['control_center']['precision']
+        if 'slider_instantaneous' in autolab_config['control_center'].keys() :
+            control_center_dict['slider_instantaneous'] = autolab_config['control_center']['slider_instantaneous']
+        if 'print' in autolab_config['control_center'].keys() :
+            control_center_dict['print'] = autolab_config['control_center']['print']
+        if 'logger' in autolab_config['control_center'].keys() :
+            control_center_dict['logger'] = autolab_config['control_center']['logger']
+    autolab_config['control_center'] = control_center_dict
 
     # Check monitor configuration
     monitor_dict = {'precision': 4,
                     }
-    if 'monitor' not in autolab_config.sections() or not set(monitor_dict.keys()).issubset(autolab_config['monitor'].keys()) :
-        autolab_config['monitor'] = monitor_dict
+    if 'monitor' in autolab_config.sections():
+        if 'precision' in autolab_config['monitor'].keys() :
+            monitor_dict['precision'] = autolab_config['monitor']['precision']
+    autolab_config['monitor'] = monitor_dict
 
     # Check scanner configuration
     scanner_dict = {'precision': 15,
                     }
-    if 'scanner' not in autolab_config.sections() or not set(scanner_dict.keys()).issubset(autolab_config['scanner'].keys()) :
+    if 'scanner' in autolab_config.sections():
         autolab_config['scanner'] = scanner_dict
+        if 'precision' in autolab_config['scanner'].keys() :
+            scanner_dict['precision'] = autolab_config['scanner']['precision']
+    autolab_config['scanner'] = scanner_dict
 
     # # Check plotter configuration
     # plotter_dict = {'precision': 10,
     #                 }
-    # if 'plotter' not in autolab_config.sections() or not set(plotter_dict.keys()).issubset(autolab_config['plotter'].keys()) :
-    #     autolab_config['plotter'] = plotter_dict
-
+    # if 'plotter' in autolab_config.sections():
+    #     if 'precision' in autolab_config['plotter'].keys() :
+    #         plotter_dict['precision'] = autolab_config['plotter']['precision']
+    # autolab_config['plotter'] = plotter_dict
 
     save_config('autolab',autolab_config)
-
 
 
 def get_config(section_name):

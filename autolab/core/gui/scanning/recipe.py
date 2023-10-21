@@ -5,11 +5,13 @@ Created on Sun Sep 29 18:15:26 2019
 @author: qchat
 """
 
-from PyQt5 import QtCore, QtWidgets, QtGui
-from . import main
-from ... import config
 import numpy as np
 import pandas as pd
+
+from PyQt5 import QtCore, QtWidgets, QtGui
+
+from . import main
+from ... import config
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
@@ -19,7 +21,6 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
     def __init__(self,parent):
 
         QtWidgets.QTreeWidget.__init__(self,parent)
-
         self.setAcceptDrops(True)
 
     def dropEvent(self, event):
@@ -244,8 +245,7 @@ class RecipeManager :
                 self.gui.configManager.setRecipeStepValue(name,value)
 
             except Exception as er:
-                print("Can't set step:", er)
-                self.gui.statusBar.showMessage(f"Can't set step: {er}", 5000)
+                self.gui.setStatus(f"Can't set step: {er}", 10000, False)
                 pass
 
     ## OLD: this code was used to check if a given variable exists in a device.  Only work for one variable.
