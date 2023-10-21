@@ -4,8 +4,10 @@ Created on Fri Sep 20 22:08:29 2019
 
 @author: qchat
 """
-from PyQt5 import QtWidgets, uic, QtGui
 import os
+import sys
+
+from PyQt5 import QtWidgets, uic, QtGui
 
 from .config import ConfigManager
 from .figure import FigureManager
@@ -14,6 +16,7 @@ from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
 from .scanrange import RangeManager
+
 
 class Scanner(QtWidgets.QMainWindow):
 
@@ -100,6 +103,12 @@ class Scanner(QtWidgets.QMainWindow):
         # Delete reference of this window in the control center
         self.mainGui.clearScanner()
 
+    def setStatus(self,message, timeout=0, stdout=True):
+
+        """ Modify the message displayed in the status bar and add error message to logger """
+
+        self.statusBar.showMessage(message, msecs=timeout)
+        if not stdout: print(message, file=sys.stderr)
 
 
     def setLineEditBackground(self,obj,state):

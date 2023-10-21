@@ -7,12 +7,14 @@ Created on Sun Sep 29 18:29:07 2019
 
 
 import os
-from PyQt5 import QtCore, QtWidgets
-from ...devices import DEVICES
-from ... import paths, config
+
 import pandas as pd
 import numpy as np
 import sip
+from PyQt5 import QtCore, QtWidgets
+
+from ...devices import DEVICES
+from ... import paths, config
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -144,16 +146,16 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 if value != '':
                     return value
                 else:
-                    self.gui.statusBar.showMessage(f"Action {self.action.name} cancel filename selection",10000)
+                    self.gui.setStatus(f"Action {self.action.name} cancel filename selection",10000)
             else:
-                self.gui.statusBar.showMessage(f"Action {self.action.name} requires a value for its parameter",10000)
+                self.gui.setStatus(f"Action {self.action.name} requires a value for its parameter",10000, False)
         else :
             try :
                 value = self.checkVariable(value)
                 value = self.action.type(value)
                 return value
             except :
-                self.gui.statusBar.showMessage(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000)
+                self.gui.setStatus(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000, False)
 
 
     def checkVariable(self, value):
@@ -299,14 +301,14 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if self.variable.type in [int,float,str,np.ndarray,pd.DataFrame] :
             value = self.valueWidget.text()
             if value == '' :
-                self.gui.statusBar.showMessage(f"Variable {self.variable.name} requires a value to be set",10000)
+                self.gui.setStatus(f"Variable {self.variable.name} requires a value to be set",10000, False)
             else :
                 try :
                     value = self.checkVariable(value)
                     value = self.variable.type(value)
                     return value
                 except :
-                    self.gui.statusBar.showMessage(f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",10000)
+                    self.gui.setStatus(f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",10000, False)
 
         elif self.variable.type in [bool] :
             value = self.valueWidget.isChecked()
@@ -393,11 +395,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if path != '' :
             paths.USER_LAST_CUSTOM_FOLDER = path
             try :
-                self.gui.statusBar.showMessage(f"Saving value of {self.variable.name}...",5000)
+                self.gui.setStatus(f"Saving value of {self.variable.name}...",5000)
                 self.variable.save(filename)
-                self.gui.statusBar.showMessage(f"Value of {self.variable.name} successfully read and save at {filename}",5000)
+                self.gui.setStatus(f"Value of {self.variable.name} successfully read and save at {filename}",5000)
             except Exception as e :
-                self.gui.statusBar.showMessage(f"An error occured: {str(e)}",10000)
+                self.gui.setStatus(f"An error occured: {str(e)}",10000, False)
 
 
 # Signals can be emitted only from QObjects

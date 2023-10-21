@@ -195,7 +195,7 @@ class AnalyzeManager :
                     if str(error) == "Empty dataframe":
                         self.displayCursors([(None,None)]*3)
                     else:
-                        self.gui.statusBar.showMessage(f"Can't display markers: {error}",10000)
+                        self.gui.setStatus(f"Can't display markers: {error}",10000, False)
             else:
                 self.displayCursors([(None,None)]*3)
 
@@ -207,7 +207,7 @@ class AnalyzeManager :
             try:
                 self.displayCursors(cursors_coordinate)
             except Exception as error:
-                self.gui.statusBar.showMessage(f"Can't display markers: {error}",10000)
+                self.gui.setStatus(f"Can't display markers: {error}",10000, False)
 
     def displayCursors(self, cursors_coordinate):
 

@@ -4,14 +4,15 @@ Created on Oct 2022
 
 @author: jonathan based on qchat
 """
-from PyQt5 import QtCore, QtWidgets, uic, QtGui
 import os
+import sys
+
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
 
 from .figure import FigureManager
 from .data import DataManager
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
-
 from ... import devices
 from ... import config
 
@@ -226,7 +227,7 @@ class Plotter(QtWidgets.QMainWindow):
 
             self.itemClicked(item)
         else:
-            self.statusBar.showMessage(f"Error: plugin {plugin_name} not found in devices_config.ini",5000)
+            self.setStatus(f"Error: plugin {plugin_name} not found in devices_config.ini",10000, False)
 
     def associate(self, item, module):
 
@@ -285,7 +286,7 @@ class Plotter(QtWidgets.QMainWindow):
 
     def plugin_refresh(self):
         if self.active_plugin_dict:
-            self.clearStatusBar()
+            self.clearStatus()
             if hasattr(self.dataManager.getLastSelectedDataset(),"data"):
                 data = self.dataManager.getLastSelectedDataset().data
                 data = data[[self.figureManager.getLabel("x"),self.figureManager.getLabel("y")]].copy()
@@ -297,7 +298,7 @@ class Plotter(QtWidgets.QMainWindow):
                     try:
                         module.instance.refresh(data)
                     except Exception as error:
-                        self.statusBar.showMessage(f"Error in plugin {module.name}: '{error}'",5000)
+                        self.setStatus(f"Error in plugin {module.name}: '{error}'",10000, False)
 
     def overwriteDataChanged(self):
         """ Set overwrite name for data import """
@@ -327,9 +328,9 @@ class Plotter(QtWidgets.QMainWindow):
             dataset = self.dataManager.importDeviceData(deviceVariable)
             data_name = dataset.name
             self.figureManager.start(dataset)
-            self.statusBar.showMessage(f"Display the data: '{data_name}'",5000)
+            self.setStatus(f"Display the data: '{data_name}'",5000)
         except Exception as error:
-            self.statusBar.showMessage(f"Can't refresh data: {error}",10000)
+            self.setStatus(f"Can't refresh data: {error}",10000, False)
 
     def deviceChanged(self):
         """ This function start the update of the target value in the data manager
@@ -340,7 +341,7 @@ class Plotter(QtWidgets.QMainWindow):
             value = str(self.device_lineEdit.text())
             self.dataManager.setDeviceValue(value)
         except Exception as er:
-            self.statusBar.showMessage(f"ERROR Can't change device variable: {er}", 10000)
+            self.setStatus(f"ERROR Can't change device variable: {er}", 10000, False)
         else:
             # Rewrite the GUI with the current value
             self.updateDeviceValueGui()
@@ -416,9 +417,6 @@ class Plotter(QtWidgets.QMainWindow):
         # else:
         #     print(str(obj), "Not implemented")
 
-    def clearStatusBar(self):
-        self.statusBar.showMessage('')
-
 
     def delayChanged(self):
         """ This function start the update of the delay in the thread manager
@@ -446,11 +444,12 @@ class Plotter(QtWidgets.QMainWindow):
         self.setLineEditBackground(self.delay_lineEdit,'synced')
 
 
-    def setStatus(self,message, timeout=0):
+    def setStatus(self,message, timeout=0, stdout=True):
 
-        """ Modify the message displayed in the status bar """
+        """ Modify the message displayed in the status bar and add error message to logger """
 
         self.statusBar.showMessage(message, msecs=timeout)
+        if not stdout: print(message, file=sys.stderr)
 
 
     def clearStatus(self):
@@ -458,6 +457,7 @@ class Plotter(QtWidgets.QMainWindow):
         """ Erase the message displayed in the status bar """
 
         self.setStatus('')
+
 
 def cleanString(name):
 

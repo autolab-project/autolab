@@ -5,19 +5,19 @@ Created on Oct 2022
 @author: jonathan based on qchat
 """
 
-# import collections
 import os
+import sys
 import csv
 
 import numpy as np
-from PyQt5 import QtCore,QtWidgets
-from ... import paths
 import pandas as pd
-
 try:
     from pandas._libs.lib import no_default
 except:
     no_default = None
+
+from PyQt5 import QtCore, QtWidgets
+from ... import paths
 
 
 def find_delimiter(filename):
@@ -199,11 +199,11 @@ class DataManager :
             try :
                 dataset = self.importData(filename)
             except Exception as error:
-                self.gui.statusBar.showMessage(f"Impossible to load data from {filename}: {error}",10000)
+                self.gui.setStatus(f"Impossible to load data from {filename}: {error}",10000, False)
                 if len(filenames) != 1:
-                    print(f"Impossible to load data from {filename}: {error}")
+                    print(f"Impossible to load data from {filename}: {error}", file=sys.stderr)
             else:
-                self.gui.statusBar.showMessage(f"File {filename} loaded successfully",5000)
+                self.gui.setStatus(f"File {filename} loaded successfully",5000)
 
                 self.gui.figureManager.start(dataset)
 
@@ -278,12 +278,12 @@ class DataManager :
 
             if path != '' :
                 paths.USER_LAST_CUSTOM_FOLDER = path
-                self.gui.statusBar.showMessage('Saving data...',5000)
+                self.gui.setStatus('Saving data...',5000)
 
                 dataset.save(filename)
                 self.gui.figureManager.save(filename)
 
-                self.gui.statusBar.showMessage(f'Last dataset successfully saved in {filename}',5000)
+                self.gui.setStatus(f'Last dataset successfully saved in {filename}',5000)
 
     def clear(self):
         """ Clear displayed dataset """
@@ -295,9 +295,9 @@ class DataManager :
             dataset = self.getLastSelectedDataset()
             self.deleteData(dataset)
             self.gui.data_comboBox.removeItem(index)
-            self.gui.statusBar.showMessage(f"Removed {data_name}", 5000)
+            self.gui.setStatus(f"Removed {data_name}", 5000)
         except Exception as error:
-            self.gui.statusBar.showMessage(f"Can't delete: {error}", 10000)
+            self.gui.setStatus(f"Can't delete: {error}", 10000, False)
             pass
 
         if self.gui.data_comboBox.count() == 0:
@@ -365,7 +365,7 @@ class DataManager :
                         float(dataset.data.iloc[0][resultName])
                         resultNamesList.append(resultName)
                     except Exception as er:
-                        self.gui.statusBar.showMessage(f"Can't plot data: {er}", 10000)
+                        self.gui.setStatus(f"Can't plot data: {er}", 10000, False)
                         return
 
             variable_x = self.gui.variable_x_comboBox.currentText()

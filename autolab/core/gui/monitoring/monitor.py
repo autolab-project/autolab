@@ -6,7 +6,9 @@ Created on Sun Sep 29 18:21:49 2019
 """
 import time
 import threading
+
 from PyQt5 import QtCore
+
 
 class MonitorManager :
 
@@ -26,7 +28,7 @@ class MonitorManager :
         It update the pause button and displays the error in the GUI """
 
         self.gui.pauseButton.setText('Resume')
-        self.gui.statusBar.showMessage(f'Error : {error} ',10000)
+        self.gui.setStatus(f'Error : {error} ',10000, False)
 
 
 

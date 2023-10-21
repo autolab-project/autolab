@@ -5,10 +5,11 @@ Created on Sun Sep 29 18:26:32 2019
 @author: qchat
 """
 
+import sip
 from PyQt5 import QtCore
+
 from ... import devices
 from ... import drivers
-import sip
 
 
 class ThreadManager :
@@ -68,7 +69,7 @@ class ThreadManager :
         It updates the status bar of the GUI in consequence and enabled back the correspondig item """
 
         if error is None : self.gui.clearStatus()
-        else : self.gui.setStatus(str(error))
+        else : self.gui.setStatus(str(error), 10000, False)
 
         item = self.threads[tid].item
 

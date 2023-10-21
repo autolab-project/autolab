@@ -4,15 +4,17 @@ Created on Sun Sep 29 18:16:09 2019
 
 @author: qchat
 """
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIcon
-from ... import paths, devices, config
-from .... import __version__
 import configparser
 import datetime
 import os
+
 import numpy as np
 import pandas as pd
+from PyQt5 import QtWidgets
+from PyQt5.QtGui import QIcon
+
+from ... import paths, devices, config
+from .... import __version__
 
 
 class ConfigHistory:
@@ -452,9 +454,9 @@ class ConfigManager :
 
             try :
                 self.export(filename)
-                self.gui.statusBar.showMessage(f"Current configuration successfully saved at {filename}",5000)
+                self.gui.setStatus(f"Current configuration successfully saved at {filename}",5000)
             except Exception as e :
-                self.gui.statusBar.showMessage(f"An error occured: {str(e)}",10000)
+                self.gui.setStatus(f"An error occured: {str(e)}",10000, False)
 
 
 
@@ -519,7 +521,7 @@ class ConfigManager :
         try:
             configPars.read(filename)
         except Exception as error:
-            self.gui.statusBar.showMessage(f"Impossible to load configuration file: {error}",10000)
+            self.gui.setStatus(f"Impossible to load configuration file: {error}",10000, False)
             return
 
         path = os.path.dirname(filename)
@@ -627,11 +629,11 @@ class ConfigManager :
             self.gui.rangeManager.refresh()
 
 
-            self.gui.statusBar.showMessage("Configuration file loaded successfully",5000)
+            self.gui.setStatus("Configuration file loaded successfully",5000)
 
         except Exception as error:
             self._got_error = True
-            self.gui.statusBar.showMessage(f"Impossible to load configuration file: {error}",10000)
+            self.gui.setStatus(f"Impossible to load configuration file: {error}",10000, False)
             self.config = previous_config
 
         self._activate_historic = True
