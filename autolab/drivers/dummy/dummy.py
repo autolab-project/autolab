@@ -46,9 +46,9 @@ class Driver():
         return self.verbose
 
     def get_amplitude(self):
+        time.sleep(self.sleep)
         if not self.instance_active:
             raise ValueError("DUMMY DEVICE IS CLOSED")
-        time.sleep(self.sleep)
         #raise ValueError('Test error')
         #self.count += 1
 #        if np.random.uniform() > 0.5 : sign = 1
@@ -74,9 +74,9 @@ class Driver():
         return self.phrase
 
     def set_amplitude(self,value):
+        time.sleep(self.sleep)
         if not self.instance_active:
             raise ValueError("DUMMY DEVICE IS CLOSED")
-        time.sleep(self.sleep)
         self.amp = value
         if self.verbose : print('set amplitude',self.amp)
         #raise ValueError('Test error')

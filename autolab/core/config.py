@@ -119,15 +119,12 @@ def check_autolab_config():
 
     # Check control center configuration
     control_center_dict = {'precision': 7,
-                           'slider_instantaneous': False,
                            'print': True,
                            'logger': False,
                            }
     if 'control_center' in autolab_config.sections():
         if 'precision' in autolab_config['control_center'].keys() :
             control_center_dict['precision'] = autolab_config['control_center']['precision']
-        if 'slider_instantaneous' in autolab_config['control_center'].keys() :
-            control_center_dict['slider_instantaneous'] = autolab_config['control_center']['slider_instantaneous']
         if 'print' in autolab_config['control_center'].keys() :
             control_center_dict['print'] = autolab_config['control_center']['print']
         if 'logger' in autolab_config['control_center'].keys() :
