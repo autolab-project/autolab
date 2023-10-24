@@ -10,7 +10,6 @@ import csv
 import numpy as np
 import pandas as pd
 
-
 try:
     from pandas._libs.lib import no_default
 except:
@@ -35,34 +34,63 @@ def find_delimiter(filename):
 
 def _skiprows(filename):
     with open(filename) as fp:
-        skiprows = 1 if fp.read(1) == "#" else None
+        if fp.read(1) not in ("#", "!", "\n"):
+            skiprows = None
+        else:
+            skiprows = 1
+            fp.readline()
+            while fp.read(1) in ("#", "!", "\n"):
+                skiprows += 1
+                fp.readline()
     return skiprows
 
 
 def find_header(filename, sep=no_default, skiprows=None):
-    df = pd.read_csv(filename, sep=sep, header=None, nrows=5, skiprows=skiprows)
+    try:
+        df = pd.read_csv(filename, sep=sep, header=None, nrows=5, skiprows=skiprows)
+    except Exception:
+        if type(skiprows) is not None: skiprows += 1
+        df = pd.read_csv(filename, sep=sep, header=None, nrows=5, skiprows=skiprows)
+    else:
+        if skiprows == 1:
+            try:
+                df_columns = pd.read_csv(filename, sep=sep, header="infer", skiprows=0, nrows=0)
+            except Exception:
+                pass
+            else:
+                columns = list(df_columns.columns)
+                if columns[0] == "#":
+                    columns.pop(0)
+                    if len(columns) == len(df):
+                        return (0, 1, columns)  # (header, skiprows, columns)
+
     try:
         first_row = df.iloc[0].values.astype("float")
-        return "infer" if tuple(first_row) == tuple([i for i in range(len(first_row))]) else None
+        return ("infer", skiprows, no_default) if tuple(first_row) == tuple([i for i in range(len(first_row))]) else (None, skiprows, no_default)
     except:
         pass
-    df_header = pd.read_csv(filename, sep=sep, nrows=5)
+    df_header = pd.read_csv(filename, sep=sep, nrows=5, skiprows=skiprows)
 
-    return "infer" if tuple(df.dtypes) != tuple(df_header.dtypes) else None
+    return ("infer", skiprows, no_default) if tuple(df.dtypes) != tuple(df_header.dtypes) else (None, skiprows, no_default)
 
 
 def formatData(data):
     """ Format data """
-
     try:
         data = pd.DataFrame(data)
     except ValueError:
         data = pd.DataFrame([data])
     data.columns = data.columns.astype(str)
     data_type = data.values.dtype
-    data[data.columns] = data[data.columns].apply(pd.to_numeric, errors="coerce")
-    assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
 
+    try:
+        data[data.columns] = data[data.columns].apply(pd.to_numeric, errors="coerce")
+    except ValueError:
+        pass  # OPTIMIZE: This happens when their is identical column name
+    if len(data) != 0:
+        assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
+        if data.iloc[-1].isnull().values.all():  # if last line is full of nan, remove it
+            data = data[:-1]
     if data.shape[1] == 1:
         data.rename(columns = {'0':'1'}, inplace=True)
         data.insert(0, "0", range(data.shape[0]))
@@ -74,12 +102,13 @@ def importData(filename):
 
     skiprows = _skiprows(filename)
     sep = find_delimiter(filename)
-    header = find_header(filename, sep, skiprows)
+    (header, skiprows, columns) = find_header(filename, sep, skiprows)
     try:
-        data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows)
+        data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows, names=columns)
     except:
-        data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows)
+        data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows, names=columns)
 
+    assert len(data) != 0, "Can't import empty DataFrame"
     data = formatData(data)
     return data
 
@@ -171,12 +200,12 @@ class AnalyzeManager :
         try:
             self.set_x_label(df.keys()[0])
         except:
-            pass
+            self.set_x_label("")
 
         try:
             self.set_y_label(df.keys()[-1])
         except:
-            pass
+            self.set_y_label("")
 
     def refresh(self, data):
         """ Called by plotter"""

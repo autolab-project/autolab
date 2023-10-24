@@ -24,15 +24,9 @@ class Slider(QtWidgets.QMainWindow):
         # Load configuration
         control_center_config = config.get_control_center_config()
         self.precision = int(control_center_config['precision'])
-        self.slider_instantaneous = control_center_config['slider_instantaneous']
-        if self.slider_instantaneous == "True":
-            self.slider_instantaneous = True
-        elif self.slider_instantaneous == "False":
-            self.slider_instantaneous = False
-        else:
-            self.slider_instantaneous = bool(int(float(self.slider_instantaneous)))
 
         # Slider
+        self.slider_instantaneous = False
         self.true_min = self.item.variable.type(0)
         self.true_max = self.item.variable.type(10)
         self.true_step = self.item.variable.type(1)
@@ -48,18 +42,24 @@ class Slider(QtWidgets.QMainWindow):
         layoutWindow.addLayout(layoutSlider)
         layoutWindow.addLayout(layoutBottomValues)
 
+        self.instantCheckBox = QtWidgets.QCheckBox()
+        self.instantCheckBox.setToolTip("True: Changes instantaneously the value.\nFalse: Changes the value when click released.")
+        self.instantCheckBox.stateChanged.connect(self.instantChanged)
+
+        layoutTopValue.addWidget(QtWidgets.QLabel("Instant"))
+        layoutTopValue.addWidget(self.instantCheckBox)
+
         self.valueWidget = QtWidgets.QLineEdit()
         self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
         self.valueWidget.setReadOnly(True)
         self.valueWidget.setText(f'{self.true_min}')
         self.setLineEditBackground(self.valueWidget,'edited')
 
-        layoutTopValue.addSpacing(20)
         layoutTopValue.addStretch()
         layoutTopValue.addWidget(QtWidgets.QLabel("Value"))
         layoutTopValue.addWidget(self.valueWidget)
         layoutTopValue.addStretch()
-        layoutTopValue.addSpacing(20)
+        layoutTopValue.addSpacing(40)
 
         self.sliderWidget = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.sliderWidget.setValue(self.item.variable.type(self.true_min))
@@ -146,15 +146,22 @@ class Slider(QtWidgets.QMainWindow):
     def stepWidgetValueChanged(self):
 
         old_true_value = self.item.variable.type(self.valueWidget.text())
-        self.true_step = self.item.variable.type(self.stepWidget.text())
+        try:
+            self.true_step = self.item.variable.type(self.stepWidget.text())
+        except:
+            self.item.gui.setStatus(f"Variable {self.item.variable.name}: Impossible to convert {self.stepWidget.text()} in type {self.item.variable.type.__name__}",10000, False)
+            return None
         self.updateStep()
         self.updateTrueValue(old_true_value)
 
 
     def minWidgetValueChanged(self):
-
         old_true_value = self.item.variable.type(self.valueWidget.text())
-        self.true_min = self.item.variable.type(self.minWidget.text())
+        try:
+            self.true_min = self.item.variable.type(self.minWidget.text())
+        except:
+            self.item.gui.setStatus(f"Variable {self.item.variable.name}: Impossible to convert {self.minWidget.text()} in type {self.item.variable.type.__name__}",10000, False)
+            return None
         self.updateStep()
         self.updateTrueValue(old_true_value)
 
@@ -162,7 +169,11 @@ class Slider(QtWidgets.QMainWindow):
     def maxWidgetValueChanged(self):
 
         old_true_value = self.item.variable.type(self.valueWidget.text())
-        self.true_max = self.item.variable.type(self.maxWidget.text())
+        try:
+            self.true_max = self.item.variable.type(self.maxWidget.text())
+        except:
+            self.item.gui.setStatus(f"Variable {self.item.variable.name}: Impossible to convert {self.maxWidget.text()} in type {self.item.variable.type.__name__}",10000, False)
+            return None
         self.updateStep()
         self.updateTrueValue(old_true_value)
 
@@ -187,6 +198,11 @@ class Slider(QtWidgets.QMainWindow):
             self.item.gui.threadManager.start(self.item,'write',value=true_value)
         else:
             self.setLineEditBackground(self.valueWidget,'edited')
+        self.updateStep()
+
+
+    def instantChanged(self, value):
+        self.slider_instantaneous = self.instantCheckBox.isChecked()
 
 
     def closeEvent(self,event):
