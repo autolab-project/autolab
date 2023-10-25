@@ -44,7 +44,7 @@ def laser_code(name, permute=False):
     code = code_dict.get(name)
 
     if code is None:
-        print(f"Didn't recognized the laser name: {name}, took TunicsPlus instead")
+        print(f"Didn't recognized the laser name: {name}, took TunicsPlus instead", file=sys.stderr)
         if permute:
             code = "TunicsPlus"
         else:
@@ -119,7 +119,7 @@ def read_xml(file):
                 detector_array.append(True if Detector_Array[f"Enable{i}"] == "True" else False)
 
     except Exception as er:
-        print(er, ". Taking default driver value")
+        print(er, ". Taking default driver value", file=sys.stderr)
         power_scan = 1.
         low_wavelength_scan = 1510.
         high_wavelength_scan = 1610.
@@ -315,7 +315,7 @@ def write_xml(config, configpath):
             except:
                 pass
         else:
-            print(f"No config {configpath}. Taking default driver value")
+            print(f"No config {configpath}. Taking default driver value", file=sys.stderr)
             CT400 = default_xml()
 
         model = "CT400" if -1 in config["GPIBID"] else "CT440"
@@ -404,7 +404,7 @@ class Laser:
     """ Contain all the ct400/ct440 commands related to the laser"""
 
     def __init__(self, dev, num=LI_1):  # dev is the detector instance
-        self.dev = dev
+        self.dev = dev  # TODO: change dev to detector and dev.dev to driver
         self.model = self.dev.dev.model
         self.config = self.dev.dev.config
         self.NUM = num
@@ -413,7 +413,7 @@ class Laser:
         try:
             self.connect()
         except Exception as er:
-            print(f"laser{self.NUM}:", er)
+            print(f"laser{self.NUM}:", er, file=sys.stderr)
 
     def connect(self):
 
@@ -598,7 +598,7 @@ class Scan:
         try:
             self.connect()
         except Exception as er:
-            print("Scan: ", er)
+            print("Scan: ", er, file=sys.stderr)
 
     def connect(self):
         if self.dev.controller is not None:
@@ -712,10 +712,10 @@ class Scan:
                 laser._state = ENABLE
 
         self.controller.set_detector_array(self.uiHandle,
-                                                   self._detector2_state,
-                                                   self._detector3_state,
-                                                   self._detector4_state,
-                                                   DISABLE)  # eExt
+                                           self._detector2_state,
+                                           self._detector3_state,
+                                           self._detector4_state,
+                                           DISABLE)  # eExt
 
         self.controller.set_bnc(self.uiHandle, DISABLE, ct.c_double(0.0), ct.c_double(0.0), Unit_mW)
 
@@ -803,17 +803,24 @@ class Scan:
 
             results = results_raw
 
-        # dWavelengthSync = np.linspace(1510.2, 1610, 1001)  # used to test without the ct400
+        # dWavelengthSync = np.linspace(1510, 1610, 1001)  # used to test without the ct400
         # dPowerSync = np.random.random(dWavelengthSync.shape)
         # dDetector1Sync = np.random.random(dWavelengthSync.shape)
 
-        # dWavelengthResampled = np.linspace(1510, 1610, 1001)  # used to test without the ct400
-        # dPowerResampled = dPowerSync
-        # dDetector1Resampled = dDetector1Sync
+        # if self._interpolate:
+        #     dWavelengthSync = dWavelengthSync + np.random.random(dWavelengthSync.shape)/1000 # used to test without the ct400
+        #     dPowerSync = -5+dPowerSync
+        #     dDetector1Sync = -20+dDetector1Sync
+
+        # results_test = {"L": np.array(dWavelengthSync, dtype=float),
+        #                "O": np.array(dPowerSync, dtype=float),
+        #                "1": np.array(dDetector1Sync, dtype=float),
+        #                }
+        # results = results_test
 
         # Change rounding format to match detector precision
         df_res = pd.DataFrame(results)
-        df_res['L'] = df_res['L'].map(lambda x: '%1.3f' % x)
+        df_res['L'] = df_res['L'].map(lambda x: '%1.3f' % x)  # Set nbr of digit to save but change datatype to object: float -> str
         df_res['O'] = df_res['O'].map(lambda x: '%1.2f' % x)
         df_res['1'] = df_res['1'].map(lambda x: '%1.2f' % x)
         if df_res.get("2"):
@@ -822,16 +829,17 @@ class Scan:
             df_res['3'] = df_res['3'].map(lambda x: '%1.2f' % x)
         if df_res.get("4"):
             df_res['4'] = df_res['4'].map(lambda x: '%1.2f' % x)
-        data = {"Last Scan": df_res}
 
-        self.dev.dev.data.update(data)
-        self.dev.dev._last_data_name = "Last Scan"
+        df_res = df_res.apply(pd.to_numeric)  # OPTIMIZE: good to have float for plotting but bad rounding for saving data. could have get_data_str() for saving and get_data() for plotting
+
+        self.dev.dev.data = df_res
+
+        if hasattr(self.dev.dev, "interface"):
+            self.dev.dev.interface.set_data(df_res)
 
 
     def get_data(self):
-        return pd.DataFrame(self.dev.dev.data.get("Last Scan"))  # OPTIMIZE: in future should remove interface from ct400 to have it independent, ct400 will only have one data at a time (remove dict)
-    # better to let Last Scan to avoid saving data from loaded data
-        # return pd.DataFrame(self.dev.dev.data.get(self.dev.dev._last_data_name))
+        return pd.DataFrame(self.dev.dev.data)
 
 
     def get_input_source(self):
@@ -904,7 +912,7 @@ class Detectors:
         try:
             self.connect()
         except Exception as er:
-            print("Detectors: ", er)
+            print("Detectors: ", er, file=sys.stderr)
 
     def connect(self):
         try:
@@ -1017,13 +1025,9 @@ class Driver():
 
         self.config = read_xml(configpath)
 
-        self.data = dict()
-        self._last_data_name = ""
+        self.data = pd.DataFrame()
 
-        sys.path.append(os.path.dirname(__file__))
-        from interface import Interface
-
-        self.interface = Interface(self)
+        sys.path.append(os.path.dirname(__file__))  # needed for ct400_lib import
 
         self.detectors = Detectors(self, self.libpath)
 
@@ -1037,12 +1041,13 @@ class Driver():
 
         self.scan = Scan(self.detectors)
 
+        try:
+            from autolab.drivers.plotter.plotter import Driver_DEFAULT
+            self.interface = Driver_DEFAULT()
+        except Exception as e:
+            print("Error", e, file=sys.stderr)
+            pass
 
-    def available_data(self):
-        return list(self.data.keys())
-
-    def disp_available_data(self):
-        return str(self.available_data())
 
     def get_config(self):
         config = {
@@ -1070,7 +1075,6 @@ class Driver():
             config.append({'element':'module','name':'interface','object':getattr(self,'interface')})
 
         config.append({'element':'module','name':'detectors','object':getattr(self,'detectors')})
-        config.append({'element':'variable','name':'available_data','read':self.disp_available_data,'type':str})
         for i in range(1,self.nl+1):
             config.append({'element':'module','name':f'laser{i}','object':getattr(self,f'laser{i}')})
 
@@ -1144,11 +1148,11 @@ class Driver_DLL(Driver):
         try:
             self.detectors.close()
         except Exception as er:
-            print(f"Warning, {self.model} didn't close properly:", er)
+            print(f"Warning, {self.model} didn't close properly:", er, file=sys.stderr)
         try:
             self.config = self.get_config()
             write_xml(self.config, self.configpath)
         except Exception as er:
-            print(f"Warning, {self.model} config file not saved:", er)
+            print(f"Warning, {self.model} config file not saved:", er, file=sys.stderr)
 ############################## Connections classes ##############################
 #################################################################################

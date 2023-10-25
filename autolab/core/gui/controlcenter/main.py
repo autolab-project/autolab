@@ -84,6 +84,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.stderr = OutputWrapper(self, False, logger_active, print_active)
         if logger_active:
             self.logger = QtWidgets.QTextBrowser(self)
+            self.loggerDefaultColor = self.logger.textColor()
             # self.verticalLayout.addWidget(self.logger)
             self.splitter.insertWidget(1, self.logger)
             self.splitter.setSizes([500,100])
@@ -162,11 +163,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.timerDevice.timeout.connect(self.timerAction)
 
     def handleOutput(self, text, stdout):
-        color = self.logger.textColor()
         if not stdout: self.logger.setTextColor(QtCore.Qt.red)
         self.logger.insertPlainText(text)
         self.logger.moveCursor(QtGui.QTextCursor.End)
-        self.logger.setTextColor(color)
+        self.logger.setTextColor(self.loggerDefaultColor)
 
     def timerAction(self):
 
