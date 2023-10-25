@@ -280,6 +280,8 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         # load the entire module (submodules, variables, actions)
         item.load(module)
+        for variable in module._read_init_list:
+            variable()
 
 
     def openScanner(self):
