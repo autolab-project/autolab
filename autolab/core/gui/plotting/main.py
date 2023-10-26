@@ -160,6 +160,7 @@ class Plotter(QtWidgets.QMainWindow):
             Check the association if it is a main item """
 
         if item.parent() is None and item.loaded is False and id(item) not in self.threadItemDict.keys():
+            self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
             self.threadManager.start(item,'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerPlugin.start()
 

@@ -126,7 +126,7 @@ class InteractionThread(QtCore.QThread):
                 else :
                     self.item.action()
             elif self.intType == 'load' :
-                self.item.gui.threadItemDict[id(self.item)] = self.item  # needed before get_device so gui can know an item has been clicked to block multiple clicks
+                # Note that threadItemDict needs to be updated outside of thread to avoid timing error
                 module = devices.get_device(self.item.name)  # Try to get / instantiated the device
                 self.item.gui.threadModuleDict[id(self.item)] = module
 

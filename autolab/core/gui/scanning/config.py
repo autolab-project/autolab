@@ -10,7 +10,7 @@ import os
 
 import numpy as np
 import pandas as pd
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QIcon
 
 from ... import paths, devices, config
@@ -539,8 +539,9 @@ class ConfigManager :
         self._activate_historic = False
         previous_config = self.config.copy()  # used to recover old config if error in loading new one
 
-        try :
+        already_loaded_devices = devices.list_loaded_devices()
 
+        try :
             assert 'parameter' in configPars
             config = {}
 
@@ -637,6 +638,12 @@ class ConfigManager :
             self.config = previous_config
 
         self._activate_historic = True
+
+        for device in (set(devices.list_loaded_devices()) - set(already_loaded_devices)):
+            item_list = self.gui.mainGui.tree.findItems(device, QtCore.Qt.MatchExactly, 0)
+            if len(item_list) == 1:
+                item = item_list[0]
+                self.gui.mainGui.itemClicked(item)
 
 
     def checkVariable(self, value):
