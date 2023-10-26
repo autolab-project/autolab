@@ -433,8 +433,10 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
     - 'name': nickname for your element (argument type: string)
     - 'element': element type, exclusively in: 'module', 'variable', 'action' (argument type: string)
     - 'help': quick help, optionnal (argument type: string)
+
 *Module*:
     - 'object' : attribute of the class (argument type: Instance)
+
 *Variable*:
     - 'read': class attribute (argument type: function)
     - 'write': class attribute (argument type: function)
@@ -445,7 +447,11 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
         Either 'read' or 'write' key, or both of them, must be provided.
 
 *Action*:
-    - 'do' : class attribute
+    - 'do': class attribute (argument type: function)
+    - 'param_type': python type, exclusively in: int, float, bool, str, bytes, np.ndarray, pd.DataFrame, optional
+    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit "filename" to open a file dialog)
+
+
 
 Example code:
 
@@ -453,9 +459,10 @@ Example code:
 
     def get_driver_model(self):
         model = []
-        model .append({'name':'line1', 'element':'module','object':self.slot1,'help':'Simple help for line1 module'})
-        model .append({'name':'amplitude', 'element':'variable', 'type':float, 'read':self.get_amplitude, 'write':self.set_amplitude, 'unit':'V', 'help':'Simple help for amplitude variable'}
-        model.append({'name':'go_home', 'element':'action', 'read':self.home, 'help':'Simple help for go_home action'})
+        model.append({'name':'line1', 'element':'module', 'object':self.slot1, 'help':'Simple help for line1 module'})
+        model.append({'name':'amplitude', 'element':'variable', 'type':float, 'read':self.get_amplitude, 'write':self.set_amplitude, 'unit':'V', 'help':'Simple help for amplitude variable'}
+        model.append({'name':'go_home', 'element':'action', 'do':self.home, 'help':'Simple help for go_home action'})
+        model.append({'name':'open', 'element':'action', 'do':self.open, 'param_type':str, 'param_unit':'filename', 'help':'Open data with the provided filename'})
     return model
 
 .. _name_driver_utilities.py:

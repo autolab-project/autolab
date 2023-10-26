@@ -19,7 +19,7 @@ class Slider(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.item = item
         self.resize(self.minimumSizeHint())
-        self.setWindowTitle(self.item.displayName)
+        self.setWindowTitle(self.item.variable.address())
 
         # Load configuration
         control_center_config = config.get_control_center_config()
@@ -147,9 +147,11 @@ class Slider(QtWidgets.QMainWindow):
 
         old_true_value = self.item.variable.type(self.valueWidget.text())
         try:
-            self.true_step = self.item.variable.type(self.stepWidget.text())
-        except:
-            self.item.gui.setStatus(f"Variable {self.item.variable.name}: Impossible to convert {self.stepWidget.text()} in type {self.item.variable.type.__name__}",10000, False)
+            true_step = self.item.variable.type(self.stepWidget.text())
+            assert true_step != 0, "Can't have step=0"
+            self.true_step = true_step
+        except Exception as e:
+            self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",10000, False)
             return None
         self.updateStep()
         self.updateTrueValue(old_true_value)
@@ -159,8 +161,8 @@ class Slider(QtWidgets.QMainWindow):
         old_true_value = self.item.variable.type(self.valueWidget.text())
         try:
             self.true_min = self.item.variable.type(self.minWidget.text())
-        except:
-            self.item.gui.setStatus(f"Variable {self.item.variable.name}: Impossible to convert {self.minWidget.text()} in type {self.item.variable.type.__name__}",10000, False)
+        except Exception as e:
+            self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",10000, False)
             return None
         self.updateStep()
         self.updateTrueValue(old_true_value)
@@ -171,8 +173,8 @@ class Slider(QtWidgets.QMainWindow):
         old_true_value = self.item.variable.type(self.valueWidget.text())
         try:
             self.true_max = self.item.variable.type(self.maxWidget.text())
-        except:
-            self.item.gui.setStatus(f"Variable {self.item.variable.name}: Impossible to convert {self.maxWidget.text()} in type {self.item.variable.type.__name__}",10000, False)
+        except Exception as e:
+            self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",10000, False)
             return None
         self.updateStep()
         self.updateTrueValue(old_true_value)
@@ -186,6 +188,7 @@ class Slider(QtWidgets.QMainWindow):
         self.valueWidget.setText(f'{true_value:.{self.precision}g}')
         self.setLineEditBackground(self.valueWidget,'synced')
         self.item.gui.threadManager.start(self.item,'write',value=true_value)
+        self.updateStep()
 
 
     def valueChanged(self, value):
@@ -198,7 +201,7 @@ class Slider(QtWidgets.QMainWindow):
             self.item.gui.threadManager.start(self.item,'write',value=true_value)
         else:
             self.setLineEditBackground(self.valueWidget,'edited')
-        self.updateStep()
+        # self.updateStep()  # Don't use it here, infinite loop leading to crash if set min > max
 
 
     def instantChanged(self, value):
