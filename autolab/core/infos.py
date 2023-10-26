@@ -132,7 +132,10 @@ def config_help(driver_name, _print=True, _parser=False):
             for arg,value in params['connection'][conn].items():
                 args_str += f", {arg}='{value}'"
             for arg,value in params['other'].items():
-                args_str += f", {arg}='{value}'"
+                if type(value) is str:
+                    args_str += f", {arg}='{value}'"
+                else:
+                    args_str += f", {arg}={value}"
             mess += f"   a = autolab.get_driver({args_str})\n"
         else :
             args_str = f"-D {params['driver']} -C {conn} "

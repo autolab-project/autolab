@@ -280,8 +280,15 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         # load the entire module (submodules, variables, actions)
         item.load(module)
-        for variable in module._read_init_list:
-            variable()
+
+        read_init_list = module._read_init_list
+        for mod in module._mod.values():
+            read_init_list.extend(mod._read_init_list)
+        for variable in read_init_list:
+            try:
+                variable()
+            except:
+                self.setStatus(f"Can't read variable {variable.address()} on instantiation", 10000, False)
 
 
     def openScanner(self):
