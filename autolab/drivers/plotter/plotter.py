@@ -113,7 +113,7 @@ def importData(filename):
     return data
 
 
-class AnalyzeManager :
+class Driver :
 
     def __init__(self, gui=None):
 
@@ -311,10 +311,10 @@ class AnalyzeManager :
         self.displayCursors([(None,None)]*3)
 
 
-class Driver_DEFAULT(AnalyzeManager):
-    def __init__(self, gui=None):
+class Driver_DEFAULT(Driver):
+    def __init__(self, **kwargs):
 
-        AnalyzeManager.__init__(self, gui=gui)
+        Driver.__init__(self, **kwargs)
 
 
 class DataModule:

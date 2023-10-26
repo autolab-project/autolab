@@ -263,9 +263,22 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         ## QCheckbox for boolean variables
         elif self.variable.type in [bool] :
-            self.valueWidget = QtWidgets.QCheckBox()
-            self.valueWidget.stateChanged.connect(self.valueEdited)
-            self.valueWidget.stateChanged.connect(self.write)
+
+            class MyQCheckBox(QtWidgets.QCheckBox):
+
+                def __init__(self, parent):
+                    self.parent = parent
+                    QtWidgets.QTreeWidget.__init__(self)
+
+                def mouseReleaseEvent(self, event):
+                    super(MyQCheckBox, self).mouseReleaseEvent(event)
+                    self.parent.valueEdited()
+                    self.parent.write()
+
+            self.valueWidget = MyQCheckBox(self)
+            # self.valueWidget = QtWidgets.QCheckBox()
+            # self.valueWidget.stateChanged.connect(self.valueEdited)
+            # self.valueWidget.stateChanged.connect(self.write)  # removed this to avoid setting a second time when reading a change
             hbox = QtWidgets.QHBoxLayout()
             hbox.addWidget(self.valueWidget)
             hbox.setAlignment(QtCore.Qt.AlignCenter)

@@ -417,10 +417,10 @@ class Laser:
 
     def connect(self):
 
-        if self.dev.controller is not None:
-            self.controller = self.dev.controller
-            self.uiHandle = self.dev.uiHandle
+        self.controller = self.dev.controller
+        self.uiHandle = self.dev.uiHandle
 
+        if self.controller is not None:
             try:
                 self._init_laser()
             except Exception:
@@ -449,11 +449,11 @@ class Laser:
 
         else:
             self.controller.set_laser(self.uiHandle, self.NUM, self._connected,
-                                           self._GPIBAdress,
-                                           self._laser_model,
-                                           ct.c_double(self._low_wavelength),
-                                           ct.c_double(self._high_wavelength),
-                                           self._speed)
+                                      self._GPIBAdress,
+                                      self._laser_model,
+                                      ct.c_double(self._low_wavelength),
+                                      ct.c_double(self._high_wavelength),
+                                      self._speed)
     def get_model(self):
         return self._laser_model
 
@@ -540,44 +540,44 @@ class Laser:
         config = []
 
         config.append({'element':'variable','name':'output','type':bool,
-                       'read':self.get_output_state, 'write':self.set_output_state,
+                       'read_init':True,'read':self.get_output_state, 'write':self.set_output_state,
                        "help": "Turn on/off the laser using boolean"})
 
         config.append({'element':'variable','name':'wavelength','unit':'nm','type':float,
-                       'read':self.get_wavelength,'write':self.set_wavelength,
+                       'read_init':True,'read':self.get_wavelength,'write':self.set_wavelength,
                        "help": "Set the laser wavelength in nm"})
 
         config.append({'element':'variable','name':'power','unit':'mW','type':float,
-                       'read':self.get_power,'write':self.set_power,
+                       'read_init':True,'read':self.get_power,'write':self.set_power,
                        'help':'Set the laser output power in mW'})
 
         config.append({'element':'variable','name':'low_wavelength','unit':'nm','type':float,
-                       'read':self.get_low_wavelength,'write':self.set_low_wavelength,
+                       'read_init':True,'read':self.get_low_wavelength,'write':self.set_low_wavelength,
                        'help':'Set the starting wavelength of this laser for the scan in nm'})
 
         config.append({'element':'variable','name':'high_wavelength','unit':'nm','type':float,
-                       'read':self.get_high_wavelength,'write':self.set_high_wavelength,
+                       'read_init':True,'read':self.get_high_wavelength,'write':self.set_high_wavelength,
                        'help':'Set the end wavelength of this laser for the scan in nm'})
 
         config.append({'element':'variable','name':'speed','unit':'nm/s','type':int,
-                       'read':self.get_speed,'write':self.set_speed,
+                       'read_init':True,'read':self.get_speed,'write':self.set_speed,
                        'help':'Set the laser wavelength scan speed in nm/s'})
 
         if self.model == "CT440":
             config.append({'element':'variable','name':'GPIBID','type':int,
-                           'read':self.get_GPIBID,'write':self.set_GPIBID,
+                           'read_init':True,'read':self.get_GPIBID,'write':self.set_GPIBID,
                            "help": "Set the laser gbib id address. Usually 0"})
 
         config.append({'element':'variable','name':'GPIBAdress','type':int,
-                       'read':self.get_GPIBAdress,'write':self.set_GPIBAdress,
+                       'read_init':True,'read':self.get_GPIBAdress,'write':self.set_GPIBAdress,
                        "help": "Set the laser gbib address."})
 
         config.append({'element':'variable','name':'model','type':int,
-                       'read':self.get_model,'write':self.set_model,
+                       'read_init':True,'read':self.get_model,'write':self.set_model,
                        "help": "Set the laser model \n(LS_TunicsPlus, LS_TunicsPurity, LS_TunicsReference, LS_TunicsT100s, LS_TunicsT100r, LS_JdsuSws, LS_Agilent, NB_SOURCE) \n(0, 1, 2, 3, 4, 5, 6, 7)"})
 
         config.append({'element':'variable','name':'connected','type':bool,
-                       'read':self.get_connected, 'write':self.set_connected,
+                       'read_init':True,'read':self.get_connected, 'write':self.set_connected,
                        "help": "Boolean for connected laser"})
         return config
 
@@ -855,19 +855,19 @@ class Scan:
         config = []
 
         config.append({'element':'variable','name':'power','unit':'mW','type':float,
-                       'read':self.get_power_scan,'write':self.set_power_scan,
+                       'read_init':True,'read':self.get_power_scan,'write':self.set_power_scan,
                        'help':'Set the lasers output power in mW for the scan'})
 
         config.append({'element':'variable','name':'low_wavelength','unit':'nm','type':float,
-                       'read':self.get_low_wavelength_scan,'write':self.set_low_wavelength_scan,
+                       'read_init':True,'read':self.get_low_wavelength_scan,'write':self.set_low_wavelength_scan,
                        'help':'Set the starting wavelength of the scan in nm'})
 
         config.append({'element':'variable','name':'high_wavelength','unit':'nm','type':float,
-                       'read':self.get_high_wavelength_scan,'write':self.set_high_wavelength_scan,
+                       'read_init':True,'read':self.get_high_wavelength_scan,'write':self.set_high_wavelength_scan,
                        'help':'Set the end wavelength of the scan in nm'})
 
         config.append({'element':'variable','name':'resolution','unit':'pm','type':int,
-                       'read':self.get_res,'write':self.set_res,
+                       'read_init':True,'read':self.get_res,'write':self.set_res,
                        'help':'Set the wavelength resolution of the scan in pm'})
 
         config.append({'element':'action','name':'sweep','do':self.do_sweep,
@@ -878,23 +878,23 @@ class Scan:
                        "help": "Return the data stored"})
 
         config.append({'element':'variable','name':'interpolate','type':bool,
-                       'read':self.get_interpolate,'write':self.set_interpolate,
+                       'read_init':True,'read':self.get_interpolate,'write':self.set_interpolate,
                        'help':'Set if want interpolated or raw scan data'})
 
         config.append({'element':'variable','name':'detector2','type':bool,
-                       'read':self.get_detector2_state,'write':self.set_detector2_state,
+                       'read_init':True,'read':self.get_detector2_state,'write':self.set_detector2_state,
                        'help':'Set if detector 2 is measured in scan'})
 
         config.append({'element':'variable','name':'detector3','type':bool,
-                       'read':self.get_detector3_state,'write':self.set_detector3_state,
+                       'read_init':True,'read':self.get_detector3_state,'write':self.set_detector3_state,
                        'help':'Set if detector 3 is measured in scan'})
 
         config.append({'element':'variable','name':'detector4','type':bool,
-                       'read':self.get_detector4_state,'write':self.set_detector4_state,
+                       'read_init':True,'read':self.get_detector4_state,'write':self.set_detector4_state,
                        'help':'Set if detector 4 is measured in scan'})
 
         config.append({'element':'variable','name':'input_source','type':int,
-                       'read':self.get_input_source,'write':self.set_input_source,
+                       'read_init':True,'read':self.get_input_source,'write':self.set_input_source,
                        'help':'Select the input source laser (1,2,3,4)'})
 
         return config
