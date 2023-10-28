@@ -165,6 +165,8 @@ class Module(Element):
 
 
     def get_structure(self):
+        """ Returns the structure of the module as a list containing each element address associated with its type as
+        [['address1', 'variable'], ['address2', 'action'],...] """
 
         structure = []
 
