@@ -61,6 +61,7 @@ def load_config(config_name):
     """ This function loads the autolab configuration file in a config parser """
 
     config = configparser.ConfigParser()
+    config.optionxform = str
     config.read(getattr(paths,f'{config_name.upper()}_CONFIG'))
     return config
 

@@ -12,6 +12,7 @@ import inspect
 
 
 def report():
+    """ Open the github link to open an issue: https://github.com/qcha41/autolab/issues """
     webbrowser.open('https://github.com/qcha41/autolab/issues')
 
 def doc(online="default"):
