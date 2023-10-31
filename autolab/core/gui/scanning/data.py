@@ -7,12 +7,16 @@ Created on Sun Sep 29 18:10:31 2019
 
 import collections
 from queue import Queue
-from PyQt5 import QtCore,QtWidgets
-from ... import paths
-from distutils.dir_util import copy_tree
 import os
-import pandas as pd
+import shutil
 import tempfile
+import sys
+
+import pandas as pd
+from PyQt5 import QtCore,QtWidgets
+
+from ... import paths
+
 
 class DataManager :
 
@@ -38,16 +42,20 @@ class DataManager :
 
 
 
-    def getData(self,nbDataset,varList):
+    def getData(self,nbDataset,varList, selectedData=0):
 
         """ This function returns to the figure manager the required data """
 
         dataList = []
 
-        for i in range(nbDataset) :
+        for i in range(selectedData, nbDataset+selectedData) :
             if i < len(self.datasets) :
                 dataset = self.datasets[-(i+1)]
-                data = dataset.getData(varList)
+                try:
+                    data = dataset.getData(varList)  # OPTIMIZE: Currently can't recover dataset if error during first recipe loop
+                except:
+                    data = None
+                    print(f"Error encountered for scan id {selectedData+1}", file=sys.stderr)
                 dataList.append(data)
             else :
                 break
@@ -63,20 +71,23 @@ class DataManager :
         """ This function is called when the save button is clicked.
         It asks a path and starts the procedure to save the data """
 
-        dataset = self.getLastDataset()
+        dataset = self.getLastSelectedDataset()
         if dataset is not None :
 
-            path = str(QtWidgets.QFileDialog.getExistingDirectory(self.gui,
-                                                              "Select Directory",
-                                                              paths.USER_LAST_CUSTOM_FOLDER))
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(self.gui,
+                                              caption="Save data",
+                                              directory=paths.USER_LAST_CUSTOM_FOLDER,
+                                              filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")
+            path = os.path.dirname(filename)
 
             if path != '' :
-                self.gui.statusBar.showMessage(f'Saving data...',5000)
+                paths.USER_LAST_CUSTOM_FOLDER = path
+                self.gui.setStatus('Saving data...',5000)
 
-                dataset.save(path)
-                self.gui.figureManager.save(path)
+                dataset.save(filename)
+                self.gui.figureManager.save(filename)
 
-                self.gui.statusBar.showMessage(f'Last dataset successfully saved in {path}',5000)
+                self.gui.setStatus(f'Last dataset successfully saved in {filename}',5000)
 
 
 
@@ -89,7 +100,9 @@ class DataManager :
         self.gui.figureManager.clearData()
         self.gui.variable_x_comboBox.clear()
         self.gui.variable_y_comboBox.clear()
+        self.gui.data_comboBox.clear()
         self.gui.save_pushButton.setEnabled(False)
+        self.gui.progressBar.setValue(0)
 
 
 
@@ -97,8 +110,15 @@ class DataManager :
 
         """ This return the current (last created) dataset """
 
-        if len(self.datasets)>0 :
+        if len(self.datasets) > 0:
             return self.datasets[-1]
+
+
+    def getLastSelectedDataset(self):
+
+        """ This return the current (last selected) dataset """
+
+        return self.datasets[self.gui.data_comboBox.currentIndex()]
 
 
 
@@ -121,15 +141,17 @@ class DataManager :
         count = 0
         dataset = self.getLastDataset()
         lenQueue = self.queue.qsize()
-        for i in range(lenQueue) :
+
+        for i in range(lenQueue):
+
             try : point = self.queue.get()
             except : break
             dataset.addPoint(point)
             count += 1
 
-        # Upload the plot if new data available
-        if count > 0 :
 
+        # Upload the plot if new data available
+        if count > 0:
             # Updagte progress bar
             self.gui.progressBar.setValue(len(dataset))
 
@@ -154,7 +176,7 @@ class DataManager :
         """ This function update the combobox in the GUI that displays the names of
         the results that can be plotted """
 
-        dataset = self.getLastDataset()
+        dataset = self.getLastSelectedDataset()
 
         resultNamesList = []
         for resultName in dataset.data.columns :
@@ -181,14 +203,20 @@ class Dataset():
 
     def __init__(self,gui,config):
 
+        self.all_data_temp = list()
+
         self.gui = gui
         self.config = config
 
-        self.data = pd.DataFrame()
+        recipes_list = self.config['initrecipe'] + self.config['recipe'] + self.config['endrecipe']
+        self.header = ["id", self.config['parameter']['name']
+                       ] + [step['name'] for step in recipes_list if step['element'].type in [int,float,bool]]
+        self.data = pd.DataFrame(columns=self.header)
+
+        self.list_array = list()
         self.tempFolderPath = tempfile.mkdtemp() # Creates a temporary directory for this dataset
         self.new = True
 
-        # Save current config in the temp directory
         self.gui.configManager.export(os.path.join(self.tempFolderPath,'config.conf'))
 
 
@@ -203,12 +231,26 @@ class Dataset():
 
 
 
-    def save(self,path):
+    def save(self,filename):
 
         """ This function saved the dataset in the provided path """
 
-        copy_tree(self.tempFolderPath,path)
+        dataset_folder, extension = os.path.splitext(filename)
+        new_configname = dataset_folder+".conf"
 
+        config_name = os.path.join(self.tempFolderPath,'config.conf')  # TODO: add option to choose if want config saved in autolab config
+        shutil.copy(config_name, new_configname)
+
+        data_name = os.path.join(self.tempFolderPath,'data.txt')
+        shutil.copy(data_name, filename)
+
+        if self.list_array:
+            if not os.path.exists(dataset_folder): os.mkdir(dataset_folder)
+
+            for tmp_folder in self.list_array:
+                array_name = os.path.basename(tmp_folder)
+                dest_folder = os.path.join(dataset_folder, array_name)
+                shutil.copytree(tmp_folder, dest_folder, dirs_exist_ok=True)
 
 
     def addPoint(self,dataPoint):
@@ -227,30 +269,32 @@ class Dataset():
             if resultName == self.config['parameter']['name'] :
                 element = self.config['parameter']['element']
             else :
-                element = [step['element'] for step in self.config['recipe'] if step['name']==resultName][0]
+                recipes_list = self.config['initrecipe'] + self.config['recipe'] + self.config['endrecipe']
+                element = [step['element'] for step in recipes_list if step['name']==resultName][0]
 
             resultType = element.type
 
             # If the result is displayable (numerical), keep it in memory
             if resultType in [int,float,bool]:
-               simpledata[resultName] = result
+                simpledata[resultName] = result
 
             # Else write it on a file, in a temp directory
             else :
                 folderPath = os.path.join(self.tempFolderPath,resultName)
-                if os.path.exists(folderPath) is False : os.mkdir(folderPath)
+                if not os.path.exists(folderPath) : os.mkdir(folderPath)
                 filePath = os.path.join(folderPath,f'{ID}.txt')
                 element.save(filePath,value=result)
+                if folderPath not in self.list_array:
+                    self.list_array.append(folderPath)
 
+        self.all_data_temp.append(simpledata)
+        self.data = pd.DataFrame(self.all_data_temp, columns=self.header)
 
-        # Store data in the dataset's dataframe
-        self.data = self.data.append(simpledata,ignore_index=True)
         if ID == 1 :
-            self.data = self.data[list(simpledata.keys())] # reorder columns
-            header = True
+            self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,'data.txt'),index=False,mode='a',header=self.header)
         else :
-            header = False
-        self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,f'data.txt'),index=False,mode='a',header=header)
+            self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,'data.txt'),index=False,mode='a', header=False)
+
 
 
 

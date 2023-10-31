@@ -105,6 +105,42 @@ def get_devices_status():
 
 
 # =============================================================================
+# CLOSE DEVICES
+# =============================================================================
+
+
+def close(device="all"):
+    """ Close a device by providing its name or its instance. Use 'all' to close all openned devices. """
+
+
+    if str(device) == "all":
+
+        for device_name in list_loaded_devices():
+            try:
+                DEVICES[device_name].close()
+            except Exception:
+                print(f"Warning: device \"{device_name}\" has not been closed properly")
+
+
+    elif isinstance(device, Device):
+
+        if device.name in DEVICES:
+            device.close()
+        else:
+            print(f"No device {device.name} in {list_loaded_devices()}")
+
+
+    elif isinstance(device, str):
+
+        if device in DEVICES:
+            DEVICES[device].close()
+        else:
+            print(f"No device {device} in {list_loaded_devices()}")
+    else:
+        print(f"Warning, {device} is not a reconized device")
+
+
+# =============================================================================
 # DEVICE CLASS
 # =============================================================================
 

@@ -4,7 +4,7 @@ Created on Fri May 17 15:04:04 2019
 
 @author: quentin.chateiller
 """
-
+import numpy  # OPTIMIZE: temporary fix to an infinite loading on some computer following the master merge (commit 25fd4d6)
 # Load current version in version file
 from .core import paths as _paths
 with open(_paths.VERSION) as version_file:
@@ -29,10 +29,15 @@ _stats.startup()
 from .core.infos import list_devices, list_drivers, infos, config_help, statistics
 
 # Devices
-from .core.devices import get_device
+from .core.devices import get_device, close
+from .core import devices as _devices
+
+# Drivers
+from .core.drivers import get_driver, explore_driver
+from .core import drivers as _drivers
 
 # Webbrowser shortcuts
-from .core.web import community, doc
+from .core.web import report, doc
 
 # Server
 from .core.server import Server as server

@@ -2,7 +2,7 @@
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
 
@@ -10,17 +10,31 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
 
+
+with open("../autolab/version.txt", "r") as fh:
+    version = fh.read().strip()
+
+sys.path.insert(0, os.path.abspath('..'))
+
+# use this command in the docs folder to create the html or pdf file:
+# cd docs
+# sphinx-build -b html . html
+# sphinx-build -M latexpdf . latexpdf
+# cd latexpdf/latex
+# latexmk
+# move autolab.pdf ..\..\..\autolab\autolab.pdf
 
 # -- Project information -----------------------------------------------------
 
 project = 'Autolab'
-copyright = '2019, Quentin Chateiller & Bruno Garbin, (C2N-CNRS)'
+copyright = '2023, Quentin Chateiller & Bruno Garbin, (C2N-CNRS)'
 author = 'Quentin Chateiller & Bruno Garbin'
 
+# The full version, including alpha/beta/rc tags
+release = version
 
 # -- General configuration ---------------------------------------------------
 

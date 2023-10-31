@@ -4,13 +4,60 @@ Created on Sun Sep 29 18:16:09 2019
 
 @author: qchat
 """
-from PyQt5 import QtWidgets
-
-from ... import paths, devices
-from .... import __version__
 import configparser
 import datetime
 import os
+
+import numpy as np
+import pandas as pd
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtGui import QIcon
+
+from ... import paths, devices, config
+from .... import __version__
+
+
+class ConfigHistory:
+
+    def __init__(self):
+        self.list = []
+        self.index = -1
+        # Note: it's normal to have the first data unchangeable by append method
+        # use pop if need to remove first data
+
+    def __repr__(self):
+        return object.__repr__(self)+"\n\t"+self.list.__repr__()+f"\n\tCurrent data: {self.get_data()}"
+
+    def __len__(self):
+        return len(self.list)
+
+    def append(self, data):
+
+        if data is not None:
+            if self.index != len(self)-1:  # if in middle remove right indexes
+                self.list = self.list[:self.index+1]
+
+            self.index += 1
+            self.list.append(data)
+
+    def pop(self):  # OBSOLETE
+        if len(self) != 0:
+            if self.index == len(self)-1:
+                self.index -= 1
+            self.list.pop()
+
+    def go_up(self):
+        if (self.index+1) <= (len(self)-1):
+            self.index += 1
+
+    def go_down(self):
+        if self.index-1 >= 0:
+            self.index -= 1
+
+    def get_data(self):
+        if self.index >= 0:
+            return self.list[self.index]
+
 
 class ConfigManager :
 
@@ -18,31 +65,54 @@ class ConfigManager :
 
         self.gui = gui
 
+        # Import Autolab config
+        scanner_config = config.get_scanner_config()
+        self.precision = scanner_config['precision']
+
         # Configuration menu
-        configMenu = self.gui.menuBar.addMenu('&Configuration')
+        configMenu = self.gui.menuBar.addMenu('Configuration')
         self.importAction = configMenu.addAction('Import configuration')
+        self.importAction.setIcon(QIcon.fromTheme("folder-open"))
         self.importAction.triggered.connect(self.importActionClicked)
         exportAction = configMenu.addAction('Export current configuration')
         exportAction.triggered.connect(self.exportActionClicked)
+        exportAction.setIcon(QIcon.fromTheme("document-save-as"))
+
+        # Edition menu
+        editMenu = self.gui.menuBar.addMenu('Edit')
+        self.undo = editMenu.addAction('Undo')
+        self.undo.setIcon(QIcon.fromTheme("edit-undo"))
+        self.undo.triggered.connect(self.undoClicked)
+        self.undo.setEnabled(False)
+        self.redo = editMenu.addAction('Redo')
+        self.redo.setIcon(QIcon.fromTheme("edit-redo"))
+        self.redo.triggered.connect(self.redoClicked)
+        self.redo.setEnabled(False)
 
         # Initializing configuration values
         self.config = {}
         self.config['parameter'] = {'element':None,'name':None}
         self.config['nbpts'] = 11
         self.config['range'] = (0,10)
-        self.config['log'] = False
-        self.config['recipe'] = []
+        self.config['step'] = 1
 
+        self.config['log'] = False
+        self.config['initrecipe'] = []
+        self.config['recipe'] = []
+        self.config['endrecipe'] = []
+
+        self.historic = ConfigHistory()
+        self._activate_historic = True
 
 
     # NAMES
     ###########################################################################
 
-    def getNames(self,option=None):
+    def getNames(self,option=None, recipe_name='recipe'):
 
         """ This function returns a list of the names of the recipe step and of the parameter """
 
-        names = [step['name'] for step in self.config['recipe']]
+        names = [step['name'] for step in self.config[recipe_name]]
         if self.config['parameter']['element'] is not None and option != 'recipe':
             names.append(self.config['parameter']['name'])
         return names
@@ -53,7 +123,7 @@ class ConfigManager :
 
         """ This function adds a number next to basename in case this basename is already taken """
 
-        names = self.getNames()
+        names = self.getNames(recipe_name='initrecipe') + self.getNames(recipe_name='recipe') + self.getNames(recipe_name='endrecipe')
         name = basename
 
         compt = 0
@@ -70,6 +140,17 @@ class ConfigManager :
     # CONFIG MODIFICATIONS
     ###########################################################################
 
+    def addNewConfig(self):
+
+        """ Add new config to historic list """
+
+        if self._activate_historic:
+            self.historic.append(self.create_configPars())  # BUG: small issue if add recipe or scanrange change without any parameter set
+
+            self.undo.setEnabled(True)
+            self.redo.setEnabled(False)
+
+
     def setParameter(self,element,name=None):
 
         """ This function set the element provided as the new parameter of the scan """
@@ -80,7 +161,7 @@ class ConfigManager :
             self.config['parameter']['name'] = name
             self.gui.parameterManager.refresh()
             self.gui.dataManager.clear()
-
+            self.addNewConfig()
 
 
     def setParameterName(self,name):
@@ -92,11 +173,11 @@ class ConfigManager :
                 name = self.getUniqueName(name)
                 self.config['parameter']['name'] = name
                 self.gui.dataManager.clear()
+                self.addNewConfig()
         self.gui.parameterManager.refresh()
 
 
-
-    def addRecipeStep(self,stepType,element,name=None,value=None):
+    def addRecipeStep(self,stepType,element,name=None,value=None, recipe_name='recipe'):
 
         """ This function add a step to the scan recipe """
 
@@ -107,74 +188,82 @@ class ConfigManager :
 
             # Value
             if stepType == 'set' : setValue = True
-            elif stepType == 'action' and element.type in [int,float,str] : setValue = True
+            elif stepType == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray] : setValue = True
             else : setValue = False
 
             if setValue is True :
                 if value is None :
                     if element.type in [int,float] :
                         value = 0
-                    elif element.type in [str] :
+                    elif element.type in [str,pd.DataFrame,np.ndarray] :
                         value = ''
                     elif element.type in [bool]:
                         value = False
                 step['value'] = value
 
-            self.config['recipe'].append(step)
-            self.gui.recipeManager.refresh()
+            self.config[recipe_name].append(step)
+            self.refreshRecipe(recipe_name)
             self.gui.dataManager.clear()
+            self.addNewConfig()
 
+    def refreshRecipe(self, recipe_name='recipe'):
+        if recipe_name == "initrecipe":
+            self.gui.recipeManager_begin.refresh()
+        if recipe_name == "recipe":
+            self.gui.recipeManager.refresh()
+        if recipe_name == "endrecipe":
+            self.gui.recipeManager_end.refresh()
 
-
-    def delRecipeStep(self,name):
+    def delRecipeStep(self,name, recipe_name='recipe'):
 
         """ This function removes a step from the scan recipe """
 
         if self.gui.scanManager.isStarted() is False :
-            pos = self.getRecipeStepPosition(name)
-            self.config['recipe'].pop(pos)
-            self.gui.recipeManager.refresh()
+            pos = self.getRecipeStepPosition(name, recipe_name)
+            self.config[recipe_name].pop(pos)
+            self.refreshRecipe(recipe_name)
             self.gui.dataManager.clear()
+            self.addNewConfig()
 
 
-
-    def renameRecipeStep(self,name,newName):
+    def renameRecipeStep(self,name,newName, recipe_name='recipe'):
 
         """ This function rename a step in the scan recipe """
 
         if self.gui.scanManager.isStarted() is False :
             if newName != name :
-                pos = self.getRecipeStepPosition(name)
+                pos = self.getRecipeStepPosition(name, recipe_name)
                 newName = self.getUniqueName(newName)
-                self.config['recipe'][pos]['name'] = newName
-                self.gui.recipeManager.refresh()
+                self.config[recipe_name][pos]['name'] = newName
+                self.refreshRecipe(recipe_name)
                 self.gui.dataManager.clear()
+                self.addNewConfig()
 
 
-
-    def setRecipeStepValue(self,name,value):
+    def setRecipeStepValue(self,name,value, recipe_name='recipe'):
 
         """ This function set the value of a step in the scan recipe """
 
         if self.gui.scanManager.isStarted() is False :
-            pos = self.getRecipeStepPosition(name)
-            if value != self.config['recipe'][pos]['value'] :
-                self.config['recipe'][pos]['value'] = value
-                self.gui.recipeManager.refresh()
+            pos = self.getRecipeStepPosition(name, recipe_name)
+            if value != self.config[recipe_name][pos]['value'] :
+                self.config[recipe_name][pos]['value'] = value
+                self.refreshRecipe(recipe_name)
                 self.gui.dataManager.clear()
+                self.addNewConfig()
 
 
-
-    def setRecipeOrder(self,stepOrder):
+    def setRecipeOrder(self,stepOrder, recipe_name='recipe'):
 
         """ This function reorder the recipe as a function of the list of step names provided """
 
-        newOrder = [self.getRecipeStepPosition(name) for name in stepOrder]
-        recipe = self.config['recipe']
-        self.config['recipe'] = [recipe[i] for i in newOrder]
-        self.gui.recipeManager.refresh()
-        self.gui.dataManager.clear()
-
+        if self.gui.scanManager.isStarted() is False :
+            newOrder = [self.getRecipeStepPosition(name, recipe_name) for name in stepOrder]
+            recipe = self.config[recipe_name]
+            self.config[recipe_name] = [recipe[i] for i in newOrder]
+            self.gui.dataManager.clear()
+            self.addNewConfig()
+        self.refreshRecipe(recipe_name)
 
 
     def setNbPts(self,value):
@@ -182,9 +271,41 @@ class ConfigManager :
         """ This function set the value of the number of points of the scan """
 
         if self.gui.scanManager.isStarted() is False :
+
             self.config['nbpts'] = value
+
+            if value == 1:
+                self.config['step'] = 0
+            else:
+                xrange = tuple(self.getRange())
+                width = abs(xrange[1]-xrange[0])
+                self.config['step'] = width / (value-1)
+            self.addNewConfig()
+
         self.gui.rangeManager.refresh()
 
+
+
+    def setStep(self,value):
+
+        """ This function set the value of the step between points of the scan """
+
+        if self.gui.scanManager.isStarted() is False :
+
+            self.config['step'] = value
+
+            if value == 0:
+                self.config['nbpts'] = 1
+                self.config['step'] = 0
+            else:
+                xrange = tuple(self.getRange())
+                width = abs(xrange[1]-xrange[0])
+                self.config['nbpts'] = int(round(width/value)+1)
+                if width != 0:
+                    self.config['step'] = width / (self.config['nbpts']-1)
+            self.addNewConfig()
+
+        self.gui.rangeManager.refresh()
 
 
     def setRange(self,lim):
@@ -194,8 +315,18 @@ class ConfigManager :
         if self.gui.scanManager.isStarted() is False :
             if lim != self.config['range'] :
                 self.config['range'] = tuple(lim)
-        self.gui.rangeManager.refresh()
 
+            width = abs(lim[1]-lim[0])
+
+            if self.gui.rangeManager.point_or_step == "point":
+                self.config['step'] = width / (self.getNbPts()-1)
+
+            elif self.gui.rangeManager.point_or_step == "step":
+                self.config['nbpts'] = int(round(width/self.getStep())+1)
+                self.config['step'] = width / (self.getNbPts()-1)
+            self.addNewConfig()
+
+        self.gui.rangeManager.refresh()
 
 
     def setLog(self,state):
@@ -205,8 +336,8 @@ class ConfigManager :
         if self.gui.scanManager.isStarted() is False :
             if state != self.config['log']:
                 self.config['log'] = state
+            self.addNewConfig()
         self.gui.rangeManager.refresh()
-
 
 
 
@@ -229,38 +360,38 @@ class ConfigManager :
 
 
 
-    def getRecipeStepElement(self,name):
+    def getRecipeStepElement(self,name, recipe_name='recipe'):
 
         """ This function returns the element of a recipe step """
 
-        pos =  self.getRecipeStepPosition(name)
-        return self.config['recipe'][pos]['element']
+        pos = self.getRecipeStepPosition(name, recipe_name)
+        return self.config[recipe_name][pos]['element']
 
 
 
-    def getRecipeStepType(self,name):
+    def getRecipeStepType(self,name, recipe_name='recipe'):
 
         """ This function returns the type a recipe step """
 
-        pos =  self.getRecipeStepPosition(name)
-        return self.config['recipe'][pos]['stepType']
+        pos = self.getRecipeStepPosition(name, recipe_name)
+        return self.config[recipe_name][pos]['stepType']
 
 
 
-    def getRecipeStepValue(self,name):
+    def getRecipeStepValue(self,name, recipe_name='recipe'):
 
         """ This function returns the value of a recipe step """
 
-        pos =  self.getRecipeStepPosition(name)
-        return self.config['recipe'][pos]['value']
+        pos = self.getRecipeStepPosition(name, recipe_name)
+        return self.config[recipe_name][pos]['value']
 
 
 
-    def getRecipeStepPosition(self,name):
+    def getRecipeStepPosition(self,name, recipe_name='recipe'):
 
         """ This function returns the position of a recipe step in the recipe """
 
-        return [i for i, step in enumerate(self.config['recipe']) if step['name'] == name][0]
+        return [i for i, step in enumerate(self.config[recipe_name]) if step['name'] == name][0]
 
 
 
@@ -280,6 +411,14 @@ class ConfigManager :
 
 
 
+    def getStep(self):
+
+        """ This function returns the value of the step between points of the scan """
+
+        return self.config['step']
+
+
+
     def getRange(self):
 
         """ This function returns the range (start and end value) of the scan """
@@ -288,11 +427,11 @@ class ConfigManager :
 
 
 
-    def getRecipe(self):
+    def getRecipe(self, recipe_name='recipe'):
 
         """ This function returns the whole recipe of the scan """
 
-        return self.config['recipe']
+        return self.config[recipe_name]
 
 
 
@@ -314,30 +453,39 @@ class ConfigManager :
         """ This function prompts the user for a configuration file path,
         and export the current scan configuration in it """
 
-        path = QtWidgets.QFileDialog.getSaveFileName(self.gui, "Export AUTOLAB configuration file",
+        filename = QtWidgets.QFileDialog.getSaveFileName(self.gui, "Export AUTOLAB configuration file",
                                                      os.path.join(paths.USER_LAST_CUSTOM_FOLDER,'config.conf'),
-                                                     "AUTOLAB configuration file (*.conf)")[0]
+                                                     "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
 
-        if path != '' :
+        if filename != '' :
+            path = os.path.dirname(filename)
             paths.USER_LAST_CUSTOM_FOLDER = path
 
             try :
-                self.export(path)
-                self.gui.statusBar.showMessage(f"Current configuration successfully saved at {path}",5000)
+                self.export(filename)
+                self.gui.setStatus(f"Current configuration successfully saved at {filename}",5000)
             except Exception as e :
-                self.gui.statusBar.showMessage(f"An error occured: {str(e)}",10000)
+                self.gui.setStatus(f"An error occured: {str(e)}",10000, False)
 
 
 
+    def export(self,filename):
+
+        """ This function exports the current scan configuration in the provided file """
+
+        configPars = self.create_configPars()
+
+        with open(filename, 'w') as configfile:
+            configPars.write(configfile)
 
 
-    def export(self,path):
+    def create_configPars(self):
 
-        """ This function exports the curr scan configuration in the provided path """
+        """ This function create the current scan configuration parser """
 
         configPars = configparser.ConfigParser()
         configPars['autolab'] = {'version':__version__,
-                                  'timestamp':str(datetime.datetime.now())}
+                                 'timestamp':str(datetime.datetime.now())}
 
         configPars['parameter'] = {}
         if self.config['parameter']['element'] is not None :
@@ -348,114 +496,280 @@ class ConfigManager :
         configPars['parameter']['end_value'] = str(self.config['range'][1])
         configPars['parameter']['log'] = str(int(self.config['log']))
 
-        configPars['recipe'] = {}
-        for i in range(len(self.config['recipe'])) :
-            configPars['recipe'][f'{i+1}_name'] = self.config['recipe'][i]['name']
-            configPars['recipe'][f'{i+1}_stepType'] = self.config['recipe'][i]['stepType']
-            configPars['recipe'][f'{i+1}_address'] = self.config['recipe'][i]['element'].address()
-            stepType = self.config['recipe'][i]['stepType']
-            if stepType == 'set' or (stepType == 'action' and self.config['recipe'][i]['element'].type in [int,float,str]) :
-                value = self.config['recipe'][i]['value']
-                if self.config['recipe'][i]['element'].type in [str] :
-                    valueStr = f'{value}'
-                else :
-                    valueStr = f'{value:g}'
-                configPars['recipe'][f'{i+1}_value'] = valueStr
+        def create_configRecipe(recipe_name):
+            configPars[recipe_name] = {}
+            for i in range(len(self.config[recipe_name])) :
+                configPars[recipe_name][f'{i+1}_name'] = self.config[recipe_name][i]['name']
+                configPars[recipe_name][f'{i+1}_stepType'] = self.config[recipe_name][i]['stepType']
+                configPars[recipe_name][f'{i+1}_address'] = self.config[recipe_name][i]['element'].address()
+                stepType = self.config[recipe_name][i]['stepType']
+                if stepType == 'set' or (stepType == 'action' and self.config[recipe_name][i]['element'].type in [int,float,str,pd.DataFrame,np.ndarray]) :
+                    value = self.config[recipe_name][i]['value']
+                    try:
+                        valueStr = f'{value:.{self.precision}g}'
+                    except:
+                        valueStr = f'{value}'
+                    configPars[recipe_name][f'{i+1}_value'] = valueStr
 
-        with open(path, 'w') as configfile:
-            configPars.write(configfile)
+        if len(self.config['initrecipe']) != 0:
+            create_configRecipe('initrecipe')
+        create_configRecipe('recipe')
+        if len(self.config['endrecipe']) != 0:
+            create_configRecipe('endrecipe')
 
+        return configPars
 
 
     def importActionClicked(self):
 
-        """ This function prompts the user for a configuration file path,
+        """ This function prompts the user for a configuration filename,
         and import the current scan configuration from it """
 
-        path = QtWidgets.QFileDialog.getOpenFileName(self.gui, "Import AUTOLAB configuration file",
+        filename = QtWidgets.QFileDialog.getOpenFileName(self.gui, "Import AUTOLAB configuration file",
                                                      paths.USER_LAST_CUSTOM_FOLDER,
-                                                     "AUTOLAB configuration file (*.conf)")[0]
-        if path != '' :
+                                                     "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
+        if filename != '':
+            self.import_configPars(filename)
 
-            configPars = configparser.ConfigParser()
-            configPars.read(path)
+    def import_configPars(self, filename):
 
-            try :
+        configPars = configparser.ConfigParser()
+        try:
+            configPars.read(filename)
+        except Exception as error:
+            self.gui.setStatus(f"Impossible to load configuration file: {error}",10000, False)
+            return
 
-                assert 'parameter' in configPars
-                config = {}
+        path = os.path.dirname(filename)
+        paths.USER_LAST_CUSTOM_FOLDER = path
 
-                if 'address' in configPars['parameter'] :
-                    element = devices.get_element_by_address(configPars['parameter']['address'])
-                    assert element is not None, f"Parameter {configPars['parameter']['address']} not found."
-                    assert 'name' in configPars['parameter'], f"Parameter name not found."
-                    config['parameter'] = {'element':element,'name':configPars['parameter']['name']}
+        self.load_configPars(configPars)
 
-
-                assert 'recipe' in configPars
-                for key in ['nbpts','start_value','end_value','log'] :
-                    assert key in configPars['parameter'], "Missing parameter key {key}."
-                    config['nbpts'] = int(configPars['parameter']['nbpts'])
-                    start = float(configPars['parameter']['start_value'])
-                    end = float(configPars['parameter']['end_value'])
-                    config['range'] = (start,end)
-                    config['log'] = bool(int(configPars['parameter']['log']))
+        if self._got_error is False:
+            self.addNewConfig()
 
 
-                config['recipe'] = []
+    def load_configPars(self, configPars):
 
-                while True :
+        self._got_error = False
+        self._activate_historic = False
+        previous_config = self.config.copy()  # used to recover old config if error in loading new one
+
+        already_loaded_devices = devices.list_loaded_devices()
+
+        try :
+            assert 'parameter' in configPars
+            config = {}
+
+            if 'address' in configPars['parameter'] :
+                element = devices.get_element_by_address(configPars['parameter']['address'])
+                assert element is not None, f"Parameter {configPars['parameter']['address']} not found."
+                assert 'name' in configPars['parameter'], "Parameter name not found."
+                config['parameter'] = {'element':element,'name':configPars['parameter']['name']}
+
+
+            assert 'recipe' in configPars
+            for key in ['nbpts','start_value','end_value','log'] :
+                assert key in configPars['parameter'], "Missing parameter key {key}."
+                config['nbpts'] = int(configPars['parameter']['nbpts'])
+                start = float(configPars['parameter']['start_value'])
+                end = float(configPars['parameter']['end_value'])
+                config['range'] = (start,end)
+                config['log'] = bool(int(configPars['parameter']['log']))
+                if config['nbpts'] > 1:
+                    config['step'] = abs(end-start)/(config['nbpts']-1)
+                else:
+                    config['step'] = 0
+
+
+            def load_configRecipe(configPars, config, recipe_name):
+
+                config[recipe_name] = []
+
+                if not configPars.has_section(recipe_name):
+                    return
+
+                while True:
                     step = {}
 
-                    i = len(config['recipe'])+1
+                    i = len(config[recipe_name])+1
 
-                    if f'{i}_name' in configPars['recipe']:
+                    if f'{i}_name' in configPars[recipe_name]:
 
-                        step['name'] = configPars['recipe'][f'{i}_name']
+                        step['name'] = configPars[recipe_name][f'{i}_name']
                         name = step['name']
 
-                        assert f'{i}_stepType' in configPars['recipe'], f"Missing stepType in step {i} ({name})."
-                        step['stepType'] = configPars['recipe'][f'{i}_stepType']
+                        assert f'{i}_stepType' in configPars[recipe_name], f"Missing stepType in step {i} ({name})."
+                        step['stepType'] = configPars[recipe_name][f'{i}_stepType']
 
-                        assert f'{i}_address' in configPars['recipe'], f"Missing address in step {i} ({name})."
-                        address = configPars['recipe'][f'{i}_address']
+                        assert f'{i}_address' in configPars[recipe_name], f"Missing address in step {i} ({name})."
+                        address = configPars[recipe_name][f'{i}_address']
                         element = devices.get_element_by_address(address)
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
 
-                        if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str]) :
-                            assert f'{i}_value' in configPars['recipe'], f"Missing value in step {i} ({name})."
-                            value = configPars['recipe'][f'{i}_value']
-                            if element.type in [int]:
-                                value = int(value)
-                            elif element.type in [float] :
-                                value = float(value)
-                            elif element.type in [str] :
-                                value = str(value)
-                            elif element.type in [bool]:
-                                value = int(value)
-                                assert value in [0,1]
-                                value = bool(value)
+                        if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
+                            assert f'{i}_value' in configPars[recipe_name], f"Missing value in step {i} ({name})."
+                            value = configPars[recipe_name][f'{i}_value']
+
+                            try:
+                                try:
+                                    assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
+                                except:
+                                    # Type conversions
+                                    if element.type in [int]:
+                                        value = int(value)
+                                    elif element.type in [float] :
+                                        value = float(value)
+                                    elif element.type in [str] :
+                                        value = str(value)
+                                    elif element.type in [bool]:
+                                        if value == "False": value = False
+                                        elif value == "True": value = True
+                                        value = int(value)
+                                        assert value in [0,1]
+                                        value = bool(value)
+                                    else:
+                                        assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
+                            except:
+                                raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
                             step['value'] = value
-                        else :
+                        else:
                             step['value'] = None
 
-                        config['recipe'].append(step)
+                        config[recipe_name].append(step)
 
+                    step = {}
 
-                    else :
+                    i = len(config[recipe_name])+1
+
+                    if f'{i}_name' in configPars[recipe_name]:
+
+                        step['name'] = configPars[recipe_name][f'{i}_name']
+                        name = step['name']
+
+                        assert f'{i}_stepType' in configPars[recipe_name], f"Missing stepType in step {i} ({name})."
+                        step['stepType'] = configPars[recipe_name][f'{i}_stepType']
+
+                        assert f'{i}_address' in configPars[recipe_name], f"Missing address in step {i} ({name})."
+                        address = configPars[recipe_name][f'{i}_address']
+                        element = devices.get_element_by_address(address)
+                        assert element is not None, f"Address {address} not found for step {i} ({name})."
+                        step['element'] = element
+
+                        if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
+                            assert f'{i}_value' in configPars[recipe_name], f"Missing value in step {i} ({name})."
+                            value = configPars[recipe_name][f'{i}_value']
+
+                            try:
+                                try:
+                                    assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
+                                except:
+                                    # Type conversions
+                                    if element.type in [int]:
+                                        value = int(value)
+                                    elif element.type in [float] :
+                                        value = float(value)
+                                    elif element.type in [str] :
+                                        value = str(value)
+                                    elif element.type in [bool]:
+                                        if value == "False": value = False
+                                        elif value == "True": value = True
+                                        value = int(value)
+                                        assert value in [0,1]
+                                        value = bool(value)
+                                    else:
+                                        assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
+                            except:
+                                raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
+                            step['value'] = value
+                        else:
+                            step['value'] = None
+
+                        config[recipe_name].append(step)
+
+                    else:
                         break
 
+            load_configRecipe(configPars, config, 'initrecipe')
+            load_configRecipe(configPars, config, 'recipe')
+            load_configRecipe(configPars, config, 'endrecipe')
 
-                self.config = config
+            self.config = config
+            self.gui.dataManager.clear()
+            self.gui.parameterManager.refresh()
+            self.refreshRecipe('initrecipe')
+            self.refreshRecipe('recipe')
+            self.refreshRecipe('endrecipe')
+            self.gui.rangeManager.refresh()
 
-                self.gui.dataManager.clear()
-                self.gui.parameterManager.refresh()
-                self.gui.recipeManager.refresh()
-                self.gui.rangeManager.refresh()
 
-                self.gui.statusBar.showMessage(f"Configuration file loaded successfully",5000)
+            self.gui.setStatus("Configuration file loaded successfully",5000)
 
-            except Exception as e :
+        except Exception as error:
+            self._got_error = True
+            self.gui.setStatus(f"Impossible to load configuration file: {error}",10000, False)
+            self.config = previous_config
 
-                self.gui.statusBar.showMessage(f"Impossible to load configuration file: "+str(e),10000)
+        self._activate_historic = True
+
+        for device in (set(devices.list_loaded_devices()) - set(already_loaded_devices)):
+            item_list = self.gui.mainGui.tree.findItems(device, QtCore.Qt.MatchExactly, 0)
+            if len(item_list) == 1:
+                item = item_list[0]
+                self.gui.mainGui.itemClicked(item)
+
+
+    def checkVariable(self, value):
+
+        """ Check if value start with '$eval:'. Will not try to check if variables exists"""
+
+        if str(value).startswith("$eval:"):
+            return 0
+        else:
+            return -1
+
+    # UNDO REDO ACTIONS
+    ###########################################################################
+
+    def undoClicked(self):
+
+        """ Undo an action from parameter, recipe or range """
+
+        self.historic.go_down()
+        self.changeConfig()
+
+
+    def redoClicked(self):
+
+        """ Redo an action from parameter, recipe or range """
+
+        self.historic.go_up()
+        self.changeConfig()
+
+
+    def changeConfig(self):
+
+        """ Get config from historic and enable/disable undo/redo button accordingly """
+
+        configPars = self.historic.get_data()
+
+        if configPars is not None:
+            self.load_configPars(configPars)
+
+        self.updateUndoRedoButtons()
+
+
+    def updateUndoRedoButtons(self):
+
+        """ enable/disable undo/redo button depending on historic """
+
+        if self.historic.index == 0:
+            self.undo.setEnabled(False)
+        else:
+            self.undo.setEnabled(True)
+
+        if self.historic.index == len(self.historic)-1:
+            self.redo.setEnabled(False)
+        else:  # implicit <
+            self.redo.setEnabled(True)
