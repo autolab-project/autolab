@@ -9,9 +9,11 @@ from setuptools import setup,find_packages
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-    
+
 with open("./autolab/version.txt", "r") as fh:
     version = fh.read().strip()
+
+# Use python setup.py install to test if package is correct
 
 setup(
     name = 'autolab',
@@ -39,4 +41,3 @@ setup(
     package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:
     keywords = ['scanning','interface','automation','scientific','laboratory','devices','experiments','measures','interface','gui','scan']
 )
-

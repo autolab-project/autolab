@@ -42,6 +42,7 @@ class Module(Element):
         self._mod = {}
         self._var = {}
         self._act = {}
+        self._read_init_list = []
 
         # Object - instance
         assert 'object' in config.keys(), f"Module {self.name}: missing module object"
@@ -85,6 +86,8 @@ class Module(Element):
                 # Check name uniqueness
                 assert name not in self.get_names(), f"Module {self.name}, Variable {name} configuration: '{name}' already exists"
                 self._var[name] = Variable(self,config_line)
+                if self._var[name].read_init:
+                    self._read_init_list.append(self._var[name])
 
             elif element_type == 'action' :
 
@@ -162,6 +165,8 @@ class Module(Element):
 
 
     def get_structure(self):
+        """ Returns the structure of the module as a list containing each element address associated with its type as
+        [['address1', 'variable'], ['address2', 'action'],...] """
 
         structure = []
 
@@ -262,10 +267,13 @@ class Variable(Element):
 
         # Read function
         self.read_function = None
+        self.read_init = False
         if 'read' in config.keys():
             assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
-
+            if 'read_init' in config.keys():
+                assert type(config['read_init']) is bool, f"Variable {self.address()} configuration: read_init parameter must be a boolean"
+                self.read_init = bool(config['read_init'])
         # Write function
         self.write_function = None
         if 'write' in config.keys():
@@ -450,9 +458,20 @@ class Action(Element):
         # DO FUNCTION
         assert self.function is not None, f"The action {self.name} is not configured to be actionable"
         if self.has_parameter :
-            assert value is not None, f"The action {self.name} requires an argument"
-            value = self.type(value)
-            self.function(value)
+            if value is not None:
+                value = self.type(value)
+                self.function(value)
+            elif self.unit == "filename":
+                    import sys
+                    from PyQt5 import QtWidgets
+                    app = QtWidgets.QApplication(sys.argv)
+                    filename = QtWidgets.QFileDialog.getOpenFileName(caption="Filename", filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+                    if filename != '':
+                        self.function(filename)
+                    else:
+                        print("Filename prompt cancelled")
+            else:
+                assert value is not None, f"The action {self.name} requires an argument"
         else :
             assert value is None, f"The action {self.name} doesn't require an argument"
             self.function()

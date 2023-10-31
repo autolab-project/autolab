@@ -15,7 +15,7 @@ from . import paths, server
 # DRIVERS INSTANTIATION
 # =============================================================================
 
-def get_driver(driver_name,connection_type,**kwargs):
+def get_driver(driver_name,connection,**kwargs):
 
     ''' Returns a driver instance using configuration provided in kwargs '''
 
@@ -25,7 +25,7 @@ def get_driver(driver_name,connection_type,**kwargs):
     else :
         assert driver_name in list_drivers(), f"Driver {driver_name} not found in autolab's drivers"
         driver_lib = load_driver_lib(driver_name)
-        driver_instance = get_connection_class(driver_lib,connection_type)(**kwargs)
+        driver_instance = get_connection_class(driver_lib,connection)(**kwargs)
 
     return driver_instance
 
@@ -178,7 +178,7 @@ def get_connection_class(driver_lib,connection):
 
     ''' Returns the class Driver_XXX of the provided driver library and connection type '''
 
-    assert connection in get_connection_names(driver_lib),f"Invalid connection type {connection} for driver {driver_lib.__name__}"
+    assert connection in get_connection_names(driver_lib),f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
     return getattr(driver_lib,f'Driver_{connection}')
 
 
@@ -248,7 +248,7 @@ def get_class_args(clas):
 def get_driver_path(driver_name):
 
     ''' Returns the config associated with driver_name '''
-
+    assert type(driver_name) is str, "drive_name must be a string."
     assert driver_name in DRIVERS_PATHS.keys(), f'Driver {driver_name} not found.'
     return DRIVERS_PATHS[driver_name]['path']
 
@@ -273,7 +273,7 @@ def load_drivers_paths():
 
 
 def update_drivers_paths():
-    global DRIVERS_PATH
+    global DRIVERS_PATHS
     DRIVERS_PATHS = load_drivers_paths()
 
 # Loading the drivers informations at startup

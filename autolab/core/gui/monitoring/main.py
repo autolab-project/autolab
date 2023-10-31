@@ -4,15 +4,17 @@ Created on Fri Sep 20 22:08:29 2019
 
 @author: qchat
 """
-from PyQt5 import QtCore, QtWidgets, uic
 import os
+import sys
 import queue
 
-from ... import paths
+from PyQt5 import QtCore, QtWidgets, uic
 
 from .data import DataManager
 from .figure import FigureManager
 from .monitor import MonitorManager
+from ... import paths
+
 
 class Monitor(QtWidgets.QMainWindow):
 
@@ -34,10 +36,23 @@ class Monitor(QtWidgets.QMainWindow):
         self.timer.timeout.connect(self.sync)
 
         # Window length
-        self.windowLength_lineEdit.setText('10')
-        self.windowLength_lineEdit.returnPressed.connect(self.windowLengthChanged)
-        self.windowLength_lineEdit.textEdited.connect(lambda : self.setLineEditBackground(self.windowLength_lineEdit,'edited'))
-        self.setLineEditBackground(self.windowLength_lineEdit,'synced')
+        if self.variable.type in [int,float]:
+            self.xlabel = 'Time [s]'
+            self.windowLength_lineEdit.setText('10')
+            self.windowLength_lineEdit.returnPressed.connect(self.windowLengthChanged)
+            self.windowLength_lineEdit.textEdited.connect(lambda : self.setLineEditBackground(self.windowLength_lineEdit,'edited'))
+            self.setLineEditBackground(self.windowLength_lineEdit,'synced')
+        else:
+            self.xlabel = 'x'
+            self.windowLength_lineEdit.hide()
+            self.windowLength_label.hide()
+            self.dataDisplay.hide()
+
+        self.ylabel = f'{self.variable.address()}'  # OPTIMIZE: could depend on 1D or 2D
+
+        if self.variable.unit is not None :
+            self.ylabel += f'({self.variable.unit})'
+
 
         # Delay
         self.delay_lineEdit.setText('0.01')
@@ -50,6 +65,18 @@ class Monitor(QtWidgets.QMainWindow):
 
         # Save
         self.saveButton.clicked.connect(self.saveButtonClicked)
+
+        # Clear
+        self.clearButton.clicked.connect(self.clearButtonClicked)
+
+        # Mean
+        self.mean_checkBox.clicked.connect(self.mean_checkBoxClicked)
+
+        # Min
+        self.min_checkBox.clicked.connect(self.min_checkBoxClicked)
+
+        # Max
+        self.max_checkBox.clicked.connect(self.max_checkBoxClicked)
 
         # Managers
         self.dataManager = DataManager(self)
@@ -76,7 +103,7 @@ class Monitor(QtWidgets.QMainWindow):
 
     def sync(self):
 
-        """ This function updates the data and than the figure.
+        """ This function updates the data and then the figure.
         Function called by the time """
 
         # Empty the queue
@@ -100,6 +127,8 @@ class Monitor(QtWidgets.QMainWindow):
             self.timer.stop()
             self.pauseButton.setText('Resume')
             self.monitorManager.pause()
+            while not self.queue.empty():
+                self.queue.get()
         else :
             self.timer.start()
             self.pauseButton.setText('Pause')
@@ -116,23 +145,69 @@ class Monitor(QtWidgets.QMainWindow):
         if self.monitorManager.isPaused() is False :
             self.pauseButtonClicked()
 
-        # Ask the path of the output folder
-        path = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory",paths.USER_LAST_CUSTOM_FOLDER))
+        # Ask the filename of the output data
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self,
+                                          caption="Save data",
+                                          directory=os.path.join(paths.USER_LAST_CUSTOM_FOLDER,
+                                                                 f'{self.variable.address()}_monitor.txt'
+                                                                 ),
+                                          filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")
 
+        path = os.path.dirname(filename)
         # Save the given path for future, the data and the figure if the path provided is valid
         if path != '' :
 
             paths.USER_LAST_CUSTOM_FOLDER = path
-            self.statusBar.showMessage('Saving data...',5000)
+            self.setStatus('Saving data...',5000)
 
             try :
-                self.dataManager.save(path)
-                self.figureManager.save(path)
-                self.statusBar.showMessage(f'Data successfully saved in {path}.',5000)
+                self.dataManager.save(filename)
+                self.figureManager.save(filename)
+                self.setStatus(f'Data successfully saved in {filename}.',5000)
             except :
-                self.statusBar.showMessage('An error occured while saving data !',10000)
+                self.setStatus('An error occured while saving data !',10000, False)
 
 
+    def clearButtonClicked(self):
+        """ This function clear the displayed data """
+
+        self.dataManager.clear()
+        self.figureManager.clear()
+
+
+    def mean_checkBoxClicked(self):
+        """ This function clear the mean plot """
+        if not self.mean_checkBox.isChecked():
+            self.figureManager.plot_mean.set_xdata([])
+            self.figureManager.plot_mean.set_ydata([])
+
+        xlist,ylist = self.dataManager.getData()
+
+        if len(xlist) > 0:
+            self.figureManager.update(xlist,ylist)
+
+
+    def min_checkBoxClicked(self):
+        """ This function clear the min plot """
+        if not self.min_checkBox.isChecked():
+            self.figureManager.plot_min.set_xdata([])
+            self.figureManager.plot_min.set_ydata([])
+
+        xlist,ylist = self.dataManager.getData()
+
+        if len(xlist) > 0:
+            self.figureManager.update(xlist,ylist)
+
+    def max_checkBoxClicked(self):
+        """ This function clear the max plot """
+        if not self.max_checkBox.isChecked():
+            self.figureManager.plot_max.set_xdata([])
+            self.figureManager.plot_max.set_ydata([])
+
+        xlist,ylist = self.dataManager.getData()
+
+        if len(xlist) > 0:
+            self.figureManager.update(xlist,ylist)
 
     def closeEvent(self,event):
 
@@ -202,3 +277,11 @@ class Monitor(QtWidgets.QMainWindow):
         value = self.monitorManager.getDelay()
         self.delay_lineEdit.setText(f'{value:g}')
         self.setLineEditBackground(self.delay_lineEdit,'synced')
+
+
+    def setStatus(self,message, timeout=0, stdout=True):
+
+        """ Modify the message displayed in the status bar and add error message to logger """
+
+        self.statusBar.showMessage(message, msecs=timeout)
+        if not stdout: print(message, file=sys.stderr)

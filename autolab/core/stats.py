@@ -30,7 +30,7 @@ def send(action):
 
 def is_stats_enabled():
 
-    """ This function the activation state of the anonymous statistics feature of Autolab """
+    """ This function returns the activation state of the anonymous statistics feature of Autolab """
 
     config_section = config.get_stats_config()
     assert 'enabled' in config_section.keys(), "Missing 'enabled' parameter in section 'stats' of autolab_config.ini"

@@ -6,3 +6,13 @@ The purpose of this package it to provide easy and efficient tools to deal with 
 Created by Quentin Chateiller, Python drivers from Quentin Chateiller and Bruno Garbin, for the C2N-CNRS (Center for Nanosciences and Nanotechnologies, Palaiseau, France) ToniQ team.
 
 Visit https://autolab.readthedocs.io/ for the full documentation of this package.
+
+## Overview
+
+![Autolab scheme](docs/scheme.png)
+
+## GUI example
+
+![Autolab Scanning GUI](docs/gui/scanning.png)
+
+![Autolab Control Panel GUI](docs/gui/control_panel.png)
