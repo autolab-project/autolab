@@ -18,7 +18,8 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
     reorderSignal = QtCore.pyqtSignal(object)
 
-    def __init__(self,parent):
+    def __init__(self,parent, recipe_name):
+        self.recipe_name = recipe_name
 
         QtWidgets.QTreeWidget.__init__(self,parent)
         self.setAcceptDrops(True)
@@ -42,11 +43,11 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     if variable.readable and variable.writable:
                         self.menu(gui, variable, event.pos())
                     elif variable.readable:
-                        gui.addStepToScanRecipe('measure',variable)
+                        gui.addStepToScanRecipe('measure',variable, self.recipe_name)
                     elif variable.writable:
-                        gui.addStepToScanRecipe('set',variable)
+                        gui.addStepToScanRecipe('set',variable, self.recipe_name)
                 elif variable._element_type == "action":
-                    gui.addStepToScanRecipe('action',variable)
+                    gui.addStepToScanRecipe('action',variable, self.recipe_name)
 
     def dragEnterEvent(self, event):
 
@@ -73,24 +74,24 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         scanSetStepAction.setEnabled(variable.writable)
         choice = menu.exec_(self.viewport().mapToGlobal(position))
         if choice == scanMeasureStepAction :
-            gui.addStepToScanRecipe('measure',variable)  # OPTIMIZE: need to change function to tell which loop (begin, recipe, end)
+            gui.addStepToScanRecipe('measure',variable, self.recipe_name)
         elif choice == scanSetStepAction :
-            gui.addStepToScanRecipe('set',variable)
+            gui.addStepToScanRecipe('set',variable, self.recipe_name)
 
 
 class RecipeManager :
 
-    def __init__(self,gui, tree_layout):
+    def __init__(self,gui, recipe_name):
 
         self.gui = gui
+        self.recipe_name = recipe_name
 
         # Import Autolab config
         scanner_config = config.get_scanner_config()
         self.precision = scanner_config['precision']
 
         # Tree configuration
-        self.tree = MyQTreeWidget(self.gui)
-        tree_layout.addWidget(self.tree)
+        self.tree = MyQTreeWidget(self.gui, self.recipe_name)
         self.tree.setHeaderLabels(['Step name','Type','Element address','Value'])
         self.tree.header().resizeSection(3, 50)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
@@ -103,12 +104,19 @@ class RecipeManager :
         self.tree.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.tree.customContextMenuRequested.connect(self.rightClick)
 
+        if self.recipe_name == 'initrecipe':
+            self.gui.tree_layout_begin.addWidget(self.tree)
+        elif self.recipe_name == 'recipe':
+            self.gui.tree_layout.addWidget(self.tree)
+        elif self.recipe_name == 'endrecipe':
+            self.gui.tree_layout_end.addWidget(self.tree)
+
         self.defaultItemBackground = None
 
 
-    def orderChanged(self,event): # TODO: track why sometime error when moving to top
+    def orderChanged(self,event):
         newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
-        self.gui.configManager.setRecipeOrder(newOrder)
+        self.gui.configManager.setRecipeOrder(newOrder, self.recipe_name)
 
 
     def refresh(self):
@@ -117,7 +125,7 @@ class RecipeManager :
 
         self.tree.clear()
 
-        recipe = self.gui.configManager.getRecipe()
+        recipe = self.gui.configManager.getRecipe(self.recipe_name)
 
         for i in range(len(recipe)):
 
@@ -165,8 +173,8 @@ class RecipeManager :
         if item is not None and self.gui.scanManager.isStarted() is False :
 
             name = item.text(0)
-            stepType = self.gui.configManager.getRecipeStepType(name)
-            element = self.gui.configManager.getRecipeStepElement(name)
+            stepType = self.gui.configManager.getRecipeStepType(name, self.recipe_name)
+            element = self.gui.configManager.getRecipeStepElement(name, self.recipe_name)
 
             menuActions = {}
 
@@ -181,7 +189,7 @@ class RecipeManager :
             if 'rename' in menuActions.keys() and choice == menuActions['rename'] :
                 self.renameStep(name)
             elif 'remove' in menuActions.keys() and choice == menuActions['remove'] :
-                self.gui.configManager.delRecipeStep(name)
+                self.gui.configManager.delRecipeStep(name, self.recipe_name)
             elif 'setvalue' in menuActions.keys() and choice == menuActions['setvalue'] :
                 self.setStepValue(name)
 
@@ -196,7 +204,7 @@ class RecipeManager :
 
         newName = main.cleanString(newName)
         if newName != '' :
-            self.gui.configManager.renameRecipeStep(name,newName)
+            self.gui.configManager.renameRecipeStep(name,newName, self.recipe_name)
 
 
 
@@ -204,8 +212,8 @@ class RecipeManager :
 
         """ This function prompts the user for a new step value, and apply it to the selected step """
 
-        element = self.gui.configManager.getRecipeStepElement(name)
-        value = self.gui.configManager.getRecipeStepValue(name)
+        element = self.gui.configManager.getRecipeStepElement(name, self.recipe_name)
+        value = self.gui.configManager.getRecipeStepValue(name, self.recipe_name)
 
         # Default value displayed in the QInputDialog
         try:
@@ -242,7 +250,7 @@ class RecipeManager :
                         assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
 
                 # Apply modification
-                self.gui.configManager.setRecipeStepValue(name,value)
+                self.gui.configManager.setRecipeStepValue(name,value, self.recipe_name)
 
             except Exception as er:
                 self.gui.setStatus(f"Can't set step: {er}", 10000, False)
@@ -275,8 +283,8 @@ class RecipeManager :
         """ This function executes an action depending where the user double clicked """
 
         name = item.text(0)
-        stepType = self.gui.configManager.getRecipeStepType(name)
-        element = self.gui.configManager.getRecipeStepElement(name)
+        stepType = self.gui.configManager.getRecipeStepType(name, self.recipe_name)
+        element = self.gui.configManager.getRecipeStepElement(name, self.recipe_name)
 
         if column == 0 :
             self.renameStep(name)
@@ -305,7 +313,7 @@ class RecipeManager :
 
         """ This function reset the background color of a recipe once the scan is finished """
 
-        for name in self.gui.configManager.getNames(option='recipe'):
+        for name in self.gui.configManager.getNames(option='recipe', recipe_name=self.recipe_name):
             self.setStepProcessingState(name,None)
 
 

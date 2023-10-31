@@ -208,7 +208,11 @@ class Dataset():
         self.gui = gui
         self.config = config
 
-        self.data = pd.DataFrame()
+        recipes_list = self.config['initrecipe'] + self.config['recipe'] + self.config['endrecipe']
+        self.header = ["id", self.config['parameter']['name']
+                       ] + [step['name'] for step in recipes_list if step['element'].type in [int,float,bool]]
+        self.data = pd.DataFrame(columns=self.header)
+
         self.list_array = list()
         self.tempFolderPath = tempfile.mkdtemp() # Creates a temporary directory for this dataset
         self.new = True
@@ -265,7 +269,8 @@ class Dataset():
             if resultName == self.config['parameter']['name'] :
                 element = self.config['parameter']['element']
             else :
-                element = [step['element'] for step in self.config['recipe'] if step['name']==resultName][0]
+                recipes_list = self.config['initrecipe'] + self.config['recipe'] + self.config['endrecipe']
+                element = [step['element'] for step in recipes_list if step['name']==resultName][0]
 
             resultType = element.type
 
@@ -283,16 +288,13 @@ class Dataset():
                     self.list_array.append(folderPath)
 
         self.all_data_temp.append(simpledata)
-        self.data = pd.DataFrame(self.all_data_temp)
-
+        self.data = pd.DataFrame(self.all_data_temp, columns=self.header)
 
         if ID == 1 :
-            self.data = self.data[list(simpledata.keys())] # reorder columns
-            header = True
+            self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,'data.txt'),index=False,mode='a',header=self.header)
         else :
-            header = False
+            self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,'data.txt'),index=False,mode='a', header=False)
 
-        self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,'data.txt'),index=False,mode='a',header=header)
 
 
 

@@ -17,6 +17,7 @@ from .scan import ScanManager
 from .data import DataManager
 from .scanrange import RangeManager
 
+from ... import config
 
 class Scanner(QtWidgets.QMainWindow):
 
@@ -24,26 +25,28 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.mainGui = mainGui
 
+        # Import Autolab config
+        scanner_config = config.get_scanner_config()
+        import ast
+        self.recipe_size = [int(i) for i in ast.literal_eval(scanner_config['recipe_size'])]
+
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
         uic.loadUi(ui_path,self)
         self.setWindowTitle("AUTOLAB Scanner")
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
-        # self.splitter_recipe.setSizes([80, 223, 80])  # set the height of the three recipe widgets
-
-        # OPTIMIZE: temporary untill begin and end are functionnal
         self.splitter_recipe.setChildrenCollapsible(True)
-        self.splitter_recipe.setSizes([0, 483, 0])  # set the height of the three recipe widgets
+        self.splitter_recipe.setSizes(self.recipe_size)
 
         # Loading of the different centers
         self.configManager = ConfigManager(self)
         self.figureManager = FigureManager(self)
         self.parameterManager = ParameterManager(self)
-        self.recipeManager_begin = RecipeManager(self, self.tree_layout_begin)
+        self.recipeManager_begin = RecipeManager(self, 'initrecipe')
         # self.recipeManager_begin.tree.setDragDropMode(QtWidgets.QAbstractItemView.NoDragDrop)
-        self.recipeManager = RecipeManager(self, self.tree_layout)
-        self.recipeManager_end = RecipeManager(self, self.tree_layout_end)
+        self.recipeManager = RecipeManager(self, 'recipe')
+        self.recipeManager_end = RecipeManager(self, 'endrecipe')
         # self.recipeManager_end.tree.setDragDropMode(QtWidgets.QAbstractItemView.NoDragDrop)
         self.scanManager = ScanManager(self)
         self.dataManager = DataManager(self)

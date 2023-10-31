@@ -142,11 +142,13 @@ def check_autolab_config():
 
     # Check scanner configuration
     scanner_dict = {'precision': 15,
+                    'recipe_size': [0, 500, 0],
                     }
     if 'scanner' in autolab_config.sections():
-        autolab_config['scanner'] = scanner_dict
         if 'precision' in autolab_config['scanner'].keys() :
             scanner_dict['precision'] = autolab_config['scanner']['precision']
+        if 'recipe_size' in autolab_config['scanner'].keys() :
+            scanner_dict['recipe_size'] = autolab_config['scanner']['recipe_size']
     autolab_config['scanner'] = scanner_dict
 
     # # Check plotter configuration
