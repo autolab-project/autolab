@@ -350,12 +350,12 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.scanner.configManager.setParameter(variable)
 
 
-    def addStepToScanRecipe(self,stepType,element):
+    def addStepToScanRecipe(self,stepType,element, recipe_name='recipe'):
 
         if self.scanner is None :
             self.openScanner()
 
-        self.scanner.configManager.addRecipeStep(stepType,element)
+        self.scanner.configManager.addRecipeStep(stepType,element, recipe_name=recipe_name)
 
 
     def clearScanner(self):

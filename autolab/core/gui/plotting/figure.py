@@ -9,6 +9,7 @@ Created on Oct 2022
 import os
 import math as m
 
+import numpy as np
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -139,8 +140,11 @@ class FigureManager :
 
         datas = [getattr(curve,f'get_{axe}data')() for curve in self.curves]
         if len(datas) > 0 :
-            minValue = min([min(data) for data in datas])
-            maxValue = max([max(data) for data in datas])
+            min_list = [np.nanmin(data) for data in datas if ~np.isnan(data).all()]
+            max_list = [np.nanmax(data) for data in datas if ~np.isnan(data).all()]
+            minValue = np.nanmin(min_list) if ~np.isnan(min_list).all() else 0
+            maxValue = np.nanmax(max_list) if ~np.isnan(max_list).all() else 0
+
             if (minValue,maxValue) != self.getRange(axe) :
                 self.setRange(axe,(minValue,maxValue))
 

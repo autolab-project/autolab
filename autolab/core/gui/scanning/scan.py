@@ -94,11 +94,11 @@ class ScanManager :
             self.thread = ScanThread(self.gui.dataManager.queue, config, self.gui)
             ## Signal connections
             self.thread.errorSignal.connect(self.error)
-            self.thread.startStepSignal.connect(lambda stepName:self.gui.recipeManager.setStepProcessingState(stepName,'started'))
-            self.thread.finishStepSignal.connect(lambda stepName:self.gui.recipeManager.setStepProcessingState(stepName,'finished'))
+            self.thread.startStepSignal.connect(lambda stepName, recipe_name:self.setStepProcessingState(stepName, recipe_name, 'started'))
+            self.thread.finishStepSignal.connect(lambda stepName, recipe_name:self.setStepProcessingState(stepName, recipe_name, 'finished'))
             self.thread.startParameterSignal.connect(lambda:self.gui.parameterManager.setProcessingState('started'))
             self.thread.finishParameterSignal.connect(lambda:self.gui.parameterManager.setProcessingState('finished'))
-            self.thread.recipeCompletedSignal.connect(self.gui.recipeManager.resetStepsProcessingState)
+            self.thread.recipeCompletedSignal.connect(lambda recipe_name:self.resetStepsProcessingState(recipe_name))
             self.thread.finished.connect(self.finished)
 
             # Starting
@@ -117,7 +117,21 @@ class ScanManager :
             self.gui.configManager.redo.setEnabled(False)
             self.gui.setStatus('Scan started !',5000)
 
+    def setStepProcessingState(self, stepName, recipe_name, state):
+        if recipe_name == "initrecipe":
+            self.gui.recipeManager_begin.setStepProcessingState(stepName, state)
+        elif recipe_name == "recipe":
+            self.gui.recipeManager.setStepProcessingState(stepName, state)
+        elif recipe_name == "endrecipe":
+            self.gui.recipeManager_end.setStepProcessingState(stepName, state)
 
+    def resetStepsProcessingState(self, recipe_name):
+        if recipe_name == "initrecipe":
+            self.gui.recipeManager_begin.resetStepsProcessingState()
+        elif recipe_name == "recipe":
+            self.gui.recipeManager.resetStepsProcessingState()
+        elif recipe_name == "endrecipe":
+            self.gui.recipeManager_end.resetStepsProcessingState()
 
     def stop(self):
 
@@ -249,9 +263,9 @@ class ScanThread(QtCore.QThread):
     errorSignal = QtCore.pyqtSignal(object)
     startParameterSignal = QtCore.pyqtSignal()
     finishParameterSignal = QtCore.pyqtSignal()
-    startStepSignal = QtCore.pyqtSignal(object)
-    finishStepSignal = QtCore.pyqtSignal(object)
-    recipeCompletedSignal = QtCore.pyqtSignal()
+    startStepSignal = QtCore.pyqtSignal(object, object)
+    finishStepSignal = QtCore.pyqtSignal(object, object)
+    recipeCompletedSignal = QtCore.pyqtSignal(object)
 
 
 
@@ -282,13 +296,23 @@ class ScanThread(QtCore.QThread):
         else :
             paramValues = np.logspace(m.log10(startValue),m.log10(endValue),nbpts,endpoint=True)
 
-        # TODO: add begin here (and end after loop)
+        if len(self.config['initrecipe']) != 0:
+            dataPoint = collections.OrderedDict()
+            dataPoint[name] = paramValues[0]
+            try:
+                dataPoint = self.processRecipe(dataPoint, recipe_name='initrecipe')
+            except Exception as e :
+                # If an error occurs, stop the scan and send an error signal
+                self.errorSignal.emit(e)
+                self.stopFlag.set()
+
+            # Send the whole data in the queue
+            if self.stopFlag.is_set() is False : self.queue.put(dataPoint)
 
         # Start the scan
-        for paramValue in paramValues :
+        for i, paramValue in enumerate(paramValues):
 
             if self.stopFlag.is_set() is False :
-
                 try :
 
                     # Set the parameter value
@@ -299,7 +323,7 @@ class ScanThread(QtCore.QThread):
                     # Start the recipe
                     dataPoint = collections.OrderedDict()
                     dataPoint[name] = paramValue
-                    dataPoint = self.processRecipe(dataPoint)
+                    dataPoint = self.processRecipe(dataPoint, recipe_name='recipe')
 
                     # Send the whole data in the queue
                     if self.stopFlag.is_set() is False : self.queue.put(dataPoint)
@@ -319,18 +343,29 @@ class ScanThread(QtCore.QThread):
             else :
                 break
 
+        # Start the endrecipe
+        if len(self.config['endrecipe']) != 0:
+            dataPoint = collections.OrderedDict()
+            dataPoint[name] = paramValues[-1]
+            try:
+                dataPoint = self.processRecipe(dataPoint, recipe_name='endrecipe')
+            except Exception as e :
+                # If an error occurs, stop the scan and send an error signal
+                self.errorSignal.emit(e)
+                self.stopFlag.set()
+            # Send the whole data in the queue
+            if self.stopFlag.is_set() is False : self.queue.put(dataPoint)
 
 
-    def processRecipe(self,dataPoint):
+    def processRecipe(self,dataPoint, recipe_name='recipe'):
 
         """ This function executes the scan recipe """
-
-        for stepInfos in self.config['recipe'] :
+        for stepInfos in self.config[recipe_name] :
 
             if self.stopFlag.is_set() is False :
 
                 # Process the recipe step
-                result = self.processElement(stepInfos)
+                result = self.processElement(stepInfos, recipe_name)
                 if result is not None :
                     dataPoint[stepInfos['name']] =  result
 
@@ -341,20 +376,19 @@ class ScanThread(QtCore.QThread):
             else :
                 break
 
-        self.recipeCompletedSignal.emit()
+        self.recipeCompletedSignal.emit(recipe_name)
 
         return dataPoint
 
 
 
-    def processElement(self,stepInfos):
+    def processElement(self,stepInfos, recipe_name='recipe'):
 
         """ This function processes the recipe step """
-
         element = stepInfos['element']
         stepType = stepInfos['stepType']
 
-        self.startStepSignal.emit(stepInfos['name'])
+        self.startStepSignal.emit(stepInfos['name'], recipe_name)
 
         result = None
         if stepType == 'measure' :
@@ -369,7 +403,7 @@ class ScanThread(QtCore.QThread):
             else :
                 element()
 
-        self.finishStepSignal.emit(stepInfos['name'])
+        self.finishStepSignal.emit(stepInfos['name'], recipe_name)
 
         return result
 

@@ -1,7 +1,10 @@
 .. _extra:
 
-Extra function
-==============
+Experimental features
+=====================
+
+Executing Python codes in GUI
+#############################
 
 A function for executing python code directly in the GUI can be used to change a variable based on other device variables or purely mathematical equations.
 
@@ -30,3 +33,22 @@ The eval function only has access to all instantiated devices and to the pandas 
 It is also useful in a scan to set the frequency of a signal analyzer relative to the frequency of a signal generator. Here is a example of the recipe using ``$eval:`` to do so.
 
 .. image:: recipe_eval_example.png
+
+
+Executing init and end recipes
+##############################
+
+This feature allows to add and execute a recipe before and/or after the scan.
+It is only accessible, for now, by dragging and dropping a variable form the control panel to the corresponding init or end tree of the scanner.
+With this feature, it is possible within one config file to start instruments, set all the constant variables before the scan, do a scan, and turn off the instruments.
+
+.. image:: recipe_init_end.png
+
+By default, the init and end recipe trees are hidden.
+Use the layout slider to unhide them or, change the default tree size using the ``recipe_size`` option available in the ``autolab_config.ini`` file.
+
+.. code-block:: none
+
+    [scanner]
+    recipe_size = [<init tree size>, <recipe tree size>, <end tree size>]
+    recipe_size = [150, 500, 150]

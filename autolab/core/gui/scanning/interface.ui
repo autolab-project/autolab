@@ -53,6 +53,9 @@
              <height>80</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>Drag and drop a variable or use the right click option of a variable from the control panel to add a parameter to the scanner</string>
+           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
@@ -176,6 +179,9 @@
                <bool>false</bool>
               </property>
               <widget class="QFrame" name="frame_5">
+               <property name="toolTip">
+                <string>Drag and drop a variable from the control panel to add a recipe to the init tree</string>
+               </property>
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
@@ -198,7 +204,7 @@
                    </font>
                   </property>
                   <property name="text">
-                   <string>Begin :</string>
+                   <string>Init :</string>
                   </property>
                  </widget>
                 </item>
@@ -208,6 +214,9 @@
                </layout>
               </widget>
               <widget class="QFrame" name="frame_10">
+               <property name="toolTip">
+                <string>Drag and drop a variable or use the right click option of a variable from the control panel to add a recipe to the recipe tree</string>
+               </property>
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
@@ -243,6 +252,9 @@
                </layout>
               </widget>
               <widget class="QFrame" name="frame_11">
+               <property name="toolTip">
+                <string>Drag and drop a variable from the control panel to add a recipe to the end tree</string>
+               </property>
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
