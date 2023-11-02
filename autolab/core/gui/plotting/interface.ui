@@ -174,7 +174,7 @@
                </font>
               </property>
               <property name="toolTip">
-               <string>Display the sweep data</string>
+               <string>Display data from the given variable address</string>
               </property>
               <property name="text">
                <string>Get data</string>
@@ -184,7 +184,7 @@
             <item row="1" column="2">
              <widget class="QLineEdit" name="device_lineEdit">
               <property name="toolTip">
-               <string>Variable of a device taken from the controlcenter. Ex: </string>
+               <string>Variable address i.g. ct400.scan.data</string>
               </property>
               <property name="text">
                <string/>
@@ -241,7 +241,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>Number of visible traces</string>
+               <string>Pause delay between data acquisition</string>
               </property>
               <property name="text">
                <string>1</string>
@@ -269,7 +269,7 @@
             <item row="1" column="1">
              <widget class="QLabel" name="label">
               <property name="text">
-               <string>Device variable</string>
+               <string>Variable address</string>
               </property>
              </widget>
             </item>
@@ -298,7 +298,7 @@
               <item row="2" column="3">
                <widget class="QCheckBox" name="autoscale_y_checkBox">
                 <property name="toolTip">
-                 <string>Enable (disable) autoscale on X axis</string>
+                 <string>Enable (disable) autoscale on Y axis</string>
                 </property>
                 <property name="text">
                  <string>Autoscale</string>
@@ -308,7 +308,7 @@
               <item row="1" column="3">
                <widget class="QCheckBox" name="logScale_y_checkBox">
                 <property name="toolTip">
-                 <string>Enable (disable) log scale on X axis</string>
+                 <string>Enable (disable) log scale on Y axis</string>
                 </property>
                 <property name="text">
                  <string>Log</string>

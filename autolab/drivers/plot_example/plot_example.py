@@ -4,6 +4,7 @@ Created on Wed Dec 14 21:04:12 2022
 
 @author: jonathan
 """
+import sys
 
 from custom_GUI import GUI
 import numpy as np
@@ -25,7 +26,7 @@ class Driver(GUI):
             IntdBmV = np.random.random(1002)  # Measurement will come here
             self.plot(Freq,IntdBmV[:-1])
         else:
-            print("Can't plot data if plotter is closed")
+            print("Can't plot data if plotter is closed", file=sys.stderr)
 
     def measurement_loop(self):
         if self.monitor is not None and self.monitor.active:
@@ -34,7 +35,7 @@ class Driver(GUI):
                 IntdBmV = np.random.random(1002)  # Measurement will come here
                 self.plot(Freq,IntdBmV[:-1])
         else:
-            print("Can't plot data if plotter is closed")
+            print("Can't plot data if plotter is closed", file=sys.stderr)
 
     def get_driver_model(self):
         """

@@ -181,6 +181,7 @@ class Plotter(QtWidgets.QMainWindow):
         layout = QtWidgets.QVBoxLayout(self.frame)
 
         label = QtWidgets.QLabel('Plugin:',self.frame)
+        label.setToolTip("Drag and drop a device from the control panel to add a plugin to the plugin tree")
         layout.addWidget(label)
         font = QtGui.QFont()
         font.setBold(True)

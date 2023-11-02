@@ -1,6 +1,7 @@
 
 *.pyc
 *.spyproject
+autolab/*.spyproject
 test.py
 
 # Distribution / packaging

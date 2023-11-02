@@ -442,6 +442,7 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
     - 'write': class attribute (argument type: function)
     - 'type': python type, exclusively in: int, float, bool, str, bytes, np.ndarray, pd.DataFrame
     - 'unit': unit of the variable, optionnal (argument type: string)
+    - 'read_init': bool to tell :ref:`control_panel` to read variable on instantiation, optionnal
 
     .. caution::
         Either 'read' or 'write' key, or both of them, must be provided.
