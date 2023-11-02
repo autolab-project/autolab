@@ -53,9 +53,6 @@
              <height>80</height>
             </size>
            </property>
-           <property name="toolTip">
-            <string>Drag and drop a variable or use the right click option of a variable from the control panel to add a parameter to the scanner</string>
-           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
@@ -67,6 +64,9 @@
                 <weight>75</weight>
                 <bold>true</bold>
                </font>
+              </property>
+              <property name="toolTip">
+               <string>Drag and drop a variable or use the right click option of a variable from the control panel to add a parameter to the scanner</string>
               </property>
               <property name="text">
                <string>Parameter :</string>
@@ -179,9 +179,6 @@
                <bool>false</bool>
               </property>
               <widget class="QFrame" name="frame_5">
-               <property name="toolTip">
-                <string>Drag and drop a variable from the control panel to add a recipe to the init tree</string>
-               </property>
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
@@ -203,6 +200,9 @@
                     <bold>true</bold>
                    </font>
                   </property>
+                  <property name="toolTip">
+                   <string>Drag and drop a variable from the control panel to add a recipe to the init tree</string>
+                  </property>
                   <property name="text">
                    <string>Init :</string>
                   </property>
@@ -214,9 +214,6 @@
                </layout>
               </widget>
               <widget class="QFrame" name="frame_10">
-               <property name="toolTip">
-                <string>Drag and drop a variable or use the right click option of a variable from the control panel to add a recipe to the recipe tree</string>
-               </property>
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
@@ -238,6 +235,9 @@
                     <bold>true</bold>
                    </font>
                   </property>
+                  <property name="toolTip">
+                   <string>Drag and drop a variable or use the right click option of a variable from the control panel to add a recipe to the recipe tree</string>
+                  </property>
                   <property name="text">
                    <string>Recipe :</string>
                   </property>
@@ -252,9 +252,6 @@
                </layout>
               </widget>
               <widget class="QFrame" name="frame_11">
-               <property name="toolTip">
-                <string>Drag and drop a variable from the control panel to add a recipe to the end tree</string>
-               </property>
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
@@ -275,6 +272,9 @@
                     <weight>75</weight>
                     <bold>true</bold>
                    </font>
+                  </property>
+                  <property name="toolTip">
+                   <string>Drag and drop a variable from the control panel to add a recipe to the end tree</string>
                   </property>
                   <property name="text">
                    <string>End :</string>
@@ -818,7 +818,7 @@
                      </font>
                     </property>
                     <property name="toolTip">
-                     <string>Unzoom X axis</string>
+                     <string>Unzoom Y axis</string>
                     </property>
                     <property name="text">
                      <string>-</string>
@@ -839,7 +839,7 @@
                      </font>
                     </property>
                     <property name="toolTip">
-                     <string>Zoom X axis</string>
+                     <string>Zoom Y axis</string>
                     </property>
                     <property name="text">
                      <string>+</string>
@@ -851,7 +851,7 @@
                     <item>
                      <widget class="QCheckBox" name="logScale_y_checkBox">
                       <property name="toolTip">
-                       <string>Enable (disable) log scale on X axis</string>
+                       <string>Enable (disable) log scale on Y axis</string>
                       </property>
                       <property name="text">
                        <string>Log</string>
@@ -861,7 +861,7 @@
                     <item>
                      <widget class="QCheckBox" name="autoscale_y_checkBox">
                       <property name="toolTip">
-                       <string>Enable (disable) autoscale on X axis</string>
+                       <string>Enable (disable) autoscale on Y axis</string>
                       </property>
                       <property name="text">
                        <string>Autoscale</string>

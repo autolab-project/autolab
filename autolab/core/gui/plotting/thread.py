@@ -5,6 +5,8 @@ Created on Sun Sep 29 18:26:32 2019
 @author: qchat
 """
 
+import inspect
+
 import sip
 from PyQt5 import QtCore
 
@@ -135,19 +137,17 @@ class InteractionThread(QtCore.QThread):
                 plugin_name = self.item.name
                 device_config = devices.get_final_device_config(plugin_name)
 
-                try:
-                    instance = drivers.get_driver(device_config['driver'],
-                                                  device_config['connection'],
-                                                  **{ k:v for k,v in device_config.items() if k not in ['driver','connection']},
-                                                  gui=self.item.gui)
-                    module = devices.Device(plugin_name,instance)
-                    self.item.gui.threadModuleDict[id(self.item)] = module
-                except Exception:
-                    instance = drivers.get_driver(device_config['driver'],
-                                                  device_config['connection'],
-                                                  **{ k:v for k,v in device_config.items() if k not in ['driver','connection']})
-                    module = devices.Device(plugin_name,instance)
-                    self.item.gui.threadModuleDict[id(self.item)] = module
+                driver_kwargs = { k:v for k,v in device_config.items() if k not in ['driver','connection']}
+                driver_lib = drivers.load_driver_lib(device_config['driver'])
+
+                if hasattr(driver_lib, 'Driver') and 'gui' in inspect.getargspec(driver_lib.Driver.__init__).args:
+                        driver_kwargs['gui'] = self.item.gui
+
+                instance = drivers.get_driver(device_config['driver'],
+                                              device_config['connection'],
+                                              **driver_kwargs)
+                module = devices.Device(plugin_name,instance)
+                self.item.gui.threadModuleDict[id(self.item)] = module
         except Exception as e:
             error = e
             if self.intType == 'load' :

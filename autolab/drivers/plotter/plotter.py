@@ -6,6 +6,7 @@ Created on Mon Jun 13 21:26:10 2022
 """
 
 import csv
+import sys
 
 import numpy as np
 import pandas as pd
@@ -290,16 +291,16 @@ class Driver :
                            'do':self.open,
                            "param_type":str,
                            "param_unit":"filename",
-                           'help':'Open data with the provided filename'})
+                           'help':'Open DataFrame with the provided filename'})
 
             config.append({'element':'variable','name':'data','type':pd.DataFrame,
                            'read':self.get_data,
-                           "help": "Return data stored at data_name"})
+                           "help": "Return DataFrame stored"})
 
             config.append({'element':'action','name':'set_data',
                             'do':self.set_data,
                             'param_type':pd.DataFrame,
-                            'help':'Add DataFrame to dict using data_name as key'})
+                            'help':'Add DataFrame to device. In GUI, use $eval:df with df being for example dummy.array_1D() or any other df from another device.'})
 
         config.append({'element':'module','name':'min','object':getattr(self,'min')})
         config.append({'element':'module','name':'max','object':getattr(self,'max')})
@@ -577,7 +578,7 @@ class BandwidthModule:
             self.results = sweep_analyse(x_data, y_data, target_x=target_x, level=level, comparator=comparator, depth=depth, remove_zero=self._remove_zero)
 
         except Exception as error:
-            print("Couldn't find the bandwitdh:", error)
+            print("Couldn't find the bandwitdh:", error, file=sys.stderr)
             self.results = self.init_variables()
 
         self.analyzer.refresh_gui()

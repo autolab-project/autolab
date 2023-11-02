@@ -5,7 +5,7 @@ Plotting
 
 .. image:: plotting.png
 
-.. warning ::
+.. caution::
 
     The plotter still need some work, feed-back are more than welcome (october 2023).
 
