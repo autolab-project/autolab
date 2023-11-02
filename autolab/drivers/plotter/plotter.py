@@ -105,6 +105,8 @@ def importData(filename):
     (header, skiprows, columns) = find_header(filename, sep, skiprows)
     try:
         data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows, names=columns)
+    except TypeError:
+        data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows, names=None)  # for pandas 1.2: names=None but sep=no_default
     except:
         data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows, names=columns)
 
