@@ -20,6 +20,7 @@ except:
 from PyQt5 import QtCore, QtWidgets
 
 from ... import paths
+from ... import config
 
 
 def find_delimiter(filename):
@@ -132,7 +133,8 @@ class DataManager :
 
         self.overwriteData = True
 
-        self.deviceValue = "ct400.scan.data"
+        plotter_config = config.load_config("plotter")
+        self.deviceValue = str(plotter_config['device']['address'])
 
     def _clear(self):
         self.datasets = []

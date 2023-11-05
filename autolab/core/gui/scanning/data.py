@@ -210,7 +210,7 @@ class Dataset():
 
         recipes_list = self.config['initrecipe'] + self.config['recipe'] + self.config['endrecipe']
         self.header = ["id", self.config['parameter']['name']
-                       ] + [step['name'] for step in recipes_list if step['element'].type in [int,float,bool]]
+                       ] + [step['name'] for step in recipes_list if step['stepType'] == 'measure' and step['element'].type in [int,float,bool]]
         self.data = pd.DataFrame(columns=self.header)
 
         self.list_array = list()

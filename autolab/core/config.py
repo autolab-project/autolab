@@ -43,9 +43,7 @@ def initialize_local_directory():
 
     # PLOTTER CONFIGURATION FILE
     if os.path.exists(paths.PLOTTER_CONFIG) is False :
-        plotter_config = configparser.ConfigParser()
-        plotter_config['plugin'] = {'plotter':'plotter'}
-        save_config('plotter',plotter_config)
+        save_config('plotter',configparser.ConfigParser())
         print(f'The configuration file plotter_config.ini has been created: {paths.PLOTTER_CONFIG}')
 
 def save_config(config_name,config):
@@ -201,10 +199,34 @@ def get_scanner_config():
     return get_config('scanner')
 
 
-# def get_plotter_config():
-#     ''' Returns section plotter from autolab_config.ini '''
+# ==============================================================================
+# PLOTTER CONFIG
+# ==============================================================================
 
-#     return get_config('plotter')
+def check_plotter_config():
+
+    """ This function checks config file structures """
+
+    plotter_config = load_config('plotter')
+
+    # Check plugin configuration
+    plugin_dict = {'plotter': 'plotter'}
+    if 'plugin' in plotter_config.sections():
+        plugin_dict = dict()
+        for plugin_name in plotter_config['plugin'].keys():
+            plugin_dict[plugin_name] = plotter_config['plugin'][plugin_name]
+    plotter_config['plugin'] = plugin_dict
+
+    # Check device configuration
+    device_dict = {'address': 'dummy.array_1D'}
+    if 'device' in plotter_config.sections():
+        if 'address' in plotter_config['device'].keys():
+            device_dict['address'] = plotter_config['device']['address']
+
+    plotter_config['device'] = device_dict
+
+    save_config('plotter',plotter_config)
+
 
 
 
@@ -218,7 +240,7 @@ def get_all_devices_configs():
     ''' Returns current devices configuration '''
 
     config = load_config('devices')
-    assert len(set(config.sections())) == len(config.sections()), f"Each device must have a unique name."
+    assert len(set(config.sections())) == len(config.sections()), "Each device must have a unique name."
 
     return config
 

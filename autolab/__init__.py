@@ -20,6 +20,7 @@ del version_adapter
 from .core import config as _config
 _config.initialize_local_directory()
 _config.check_autolab_config()
+_config.check_plotter_config()
 
 # Statistics
 from .core import stats as _stats
