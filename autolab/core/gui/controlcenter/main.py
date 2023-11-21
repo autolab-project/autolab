@@ -17,7 +17,7 @@ from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
-from ... import devices, web, paths, config
+from ... import devices, web, paths, config, utilities
 
 
 class OutputWrapper(QtCore.QObject):
@@ -64,20 +64,9 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         # Import Autolab config
         control_center_config = config.get_control_center_config()
-        logger_active = control_center_config['logger']
-        if logger_active == "True":
-            logger_active = True
-        elif logger_active == "False":
-            logger_active = False
-        else:
-            logger_active = bool(int(float(logger_active)))
-        print_active = control_center_config['print']
-        if print_active == "True":
-            print_active = True
-        elif print_active == "False":
-            print_active = False
-        else:
-            print_active = bool(int(float(print_active)))
+        logger_active = utilities.boolean(control_center_config['logger'])
+        print_active = utilities.boolean(control_center_config['print'])
+
 
         # Set logger
         self.stdout = OutputWrapper(self, True, logger_active, print_active)

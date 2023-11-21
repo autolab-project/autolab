@@ -91,7 +91,7 @@ class ScanManager :
 
             # Start a new thread
             ## Opening
-            self.thread = ScanThread(self.gui.dataManager.queue, config, self.gui)
+            self.thread = ScanThread(self.gui.dataManager.queue, config)
             ## Signal connections
             self.thread.errorSignal.connect(self.error)
             self.thread.startStepSignal.connect(lambda stepName, recipe_name:self.setStepProcessingState(stepName, recipe_name, 'started'))
@@ -252,7 +252,9 @@ class ScanManager :
 
         if len(self.gui.dataManager.datasets) != 0:
             self.gui.figureManager.reloadData()
-
+            self.gui.displayScanData_pushButton.setEnabled(True)
+            if self.gui.figureManager.displayScan.active:
+                self.gui.figureManager.displayScan.refresh(self.gui.dataManager.getLastSelectedDataset().data)
 
 
 class ScanThread(QtCore.QThread):
@@ -269,12 +271,11 @@ class ScanThread(QtCore.QThread):
 
 
 
-    def __init__(self, queue, config, gui):
+    def __init__(self, queue, config):
 
         QtCore.QThread.__init__(self)
         self.config = config
         self.queue = queue
-        self.gui = gui
 
         self.pauseFlag = threading.Event()
         self.stopFlag = threading.Event()
