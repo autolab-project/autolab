@@ -6,6 +6,8 @@ Created on Sun Sep 29 18:14:28 2019
 """
 import math as m
 
+from .display import DisplayValues
+
 
 class RangeManager :
 
@@ -31,22 +33,22 @@ class RangeManager :
         self.gui.width_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.gui.width_lineEdit,'edited'))
 
         # Push button
-        self.gui.fromFigure_pushButton.clicked.connect(self.fromFigureButtonClicked)
+        self.gui.displayParameter_pushButton.clicked.connect(self.displayParameterButtonClicked)
+
+        self.displayParameter = DisplayValues(self.gui, "Parameter", size=(250,400))
 
         self.point_or_step = "point"
         self.refresh()
 
 
 
-    def fromFigureButtonClicked(self):
+    def displayParameterButtonClicked(self):
 
-        """ This function sets the start and end value, and log state, of the scan from currrent figure range """
+        """ This function opens a window showing the sweep points for the current scan range setting """
 
-        xrange = self.gui.figureManager.getRange('x')
-        self.gui.configManager.setRange(xrange)
-
-        log = self.gui.figureManager.isLogScaleEnabled('x')
-        self.gui.configManager.setLog(log)
+        if not self.displayParameter.active:
+            self.displayParameter.refresh(self.gui.configManager.getParamDataFrame())
+        self.displayParameter.show()
 
 
 
@@ -99,6 +101,8 @@ class RangeManager :
 
         self.gui.setLineEditBackground(self.gui.step_lineEdit,'synced')
 
+        if self.displayParameter.active:
+            self.displayParameter.refresh(self.gui.configManager.getParamDataFrame())
 
 
     def nbptsChanged(self) :

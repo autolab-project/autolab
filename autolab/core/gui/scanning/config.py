@@ -7,6 +7,7 @@ Created on Sun Sep 29 18:16:09 2019
 import configparser
 import datetime
 import os
+import math as m
 
 import numpy as np
 import pandas as pd
@@ -425,6 +426,26 @@ class ConfigManager :
 
         return self.config['range']
 
+
+    def getParamDataFrame(self):
+
+        """ This function returns a DataFrame with 'id' and 'Point' columns \
+            containing the parameter array """
+
+        startValue,endValue = self.getRange()
+        nbpts = self.getNbPts()
+        logScale = self.getLog()
+
+        if logScale is False :
+            paramValues = np.linspace(startValue,endValue,nbpts,endpoint=True)
+        else :
+            paramValues = np.logspace(m.log10(startValue),m.log10(endValue),nbpts,endpoint=True)
+
+        data = pd.DataFrame()
+        data["id"] = 1+np.arange(len(paramValues))
+        data["Point"] = paramValues
+
+        return data
 
 
     def getRecipe(self, recipe_name='recipe'):

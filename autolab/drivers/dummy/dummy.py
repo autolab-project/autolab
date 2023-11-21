@@ -26,6 +26,7 @@ class Driver():
         self.sleep = 0
         #raise ValueError('Test error')
         self.constant = 0
+        self._nbpts = 1000
 
         self.verbose = False
         self.instance_active = True
@@ -99,8 +100,10 @@ class Driver():
 
     def get_dataframe(self):
         df = pd.DataFrame()
-        df["e"] = [1,2,3]
-        df["f"] = [4,5,3]
+        df["x"] = np.linspace(1500, 1600, self._nbpts)
+        mu = self.constant + df["x"].mean()
+        sigma = 20
+        df["y"] = (0.6*np.random.random(len(df))+1)*50/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (df["x"] - mu)**2 / (2 * sigma**2) )
         # d = {'e':1,'f':2}
         # df=df.append(d,ignore_index=True)
         time.sleep(self.sleep)
@@ -121,19 +124,42 @@ class Driver():
         time.sleep(self.sleep)
         return np.ones((3,4))
 
-    def get_array_one_dim(self):
+    def get_array_1D(self):
         time.sleep(self.sleep)
-        return np.random.random(1000)
+        return np.random.random(self._nbpts)+self.constant
 
-    def get_array_two_dim(self):
+    def get_array_2D(self):
         time.sleep(self.sleep)
-        return np.random.random((1000,2))
+        x = np.linspace(1500, 1600, self._nbpts)
+        mu = self.constant + x.mean()
+        sigma = 20
+        y = (0.6*np.random.random(len(x))+1)*50/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+        array_2D = np.array([x,y]).T
+        # array_2D = np.random.random((self._nbpts,2))
+        return array_2D
+
+    # def get_array_3D(self):
+    #     # OPTIMIZE: currently not supported in autolab
+    #     import pyqtgraph as pg
+    #     img = pg.gaussianFilter(np.random.normal(size=(200, 200)), (5, 5)) * 20 + 100
+    #     img = img[np.newaxis,:,:]
+    #     decay = np.exp(-np.linspace(0,0.3,100))[:,np.newaxis,np.newaxis]
+    #     data = np.random.normal(size=(100, 200, 200))
+    #     data += img * decay
+    #     data += 2
+    #     return data
 
     def get_constant(self):
         return self.constant
 
     def set_constant(self,value):
         self.constant = value
+
+    def get_nbpts(self):
+        return self._nbpts
+
+    def set_nbpts(self,value):
+        self._nbpts = value
 
     def get_driver_model(self):
 
@@ -150,11 +176,13 @@ class Driver():
         model.append({'element':'variable','name':'dataframe','type':pd.DataFrame,'read':self.get_dataframe})
         model.append({'element':'variable','name':'option','type':bool,'read_init':True,'read':self.get_option,'write':self.set_option})
         model.append({'element':'variable','name':'array','type':np.ndarray,'read':self.get_array})
-        model.append({'element':'variable','name':'array_1D','type':np.ndarray,'read':self.get_array_one_dim})
-        model.append({'element':'variable','name':'array_2D','type':np.ndarray,'read':self.get_array_two_dim})
+        model.append({'element':'variable','name':'array_1D','type':np.ndarray,'read':self.get_array_1D})
+        model.append({'element':'variable','name':'array_2D','type':np.ndarray,'read':self.get_array_2D})
+        # model.append({'element':'variable','name':'array_3D','type':np.ndarray,'read':self.get_array_3D})
         model.append({'element':'variable','name':'sleep','type':float,'read':self.get_sleep,'write':self.set_sleep})
         model.append({'element':'variable','name':'verbose','type':bool,'read_init':True,'read':self.get_verbose,'write':self.set_verbose})
         model.append({'element':'variable','name':'constant','type':float,'read':self.get_constant,'write':self.set_constant,'help':'Constant variable.'})
+        model.append({'element':'variable','name':'nbpts','type':int,'read':self.get_nbpts,'write':self.set_nbpts,'help':'Set number of point for aray_1D, array_2D and dataframe.'})
 
         return model
 

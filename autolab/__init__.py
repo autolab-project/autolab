@@ -5,6 +5,8 @@ Created on Fri May 17 15:04:04 2019
 @author: quentin.chateiller
 """
 import numpy  # OPTIMIZE: temporary fix to an infinite loading on some computer following the master merge (commit 25fd4d6)
+import socket  # OPTIMIZE: temporary fix to an infinite loading on some computer
+
 # Load current version in version file
 from .core import paths as _paths
 with open(_paths.VERSION) as version_file:

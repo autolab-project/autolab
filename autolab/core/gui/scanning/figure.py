@@ -14,8 +14,12 @@ import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from PyQt5 import QtWidgets
 
 # matplotlib.rcParams.update({'figure.autolayout': True})  # good but can raise LinAlgError. alternative is to emit signal when change windows
+
+from .display import DisplayValues
+from ... import utilities
 
 
 class FigureManager :
@@ -47,7 +51,6 @@ class FigureManager :
 
         self.toolbar = NavigationToolbar(self.canvas, self.gui)
         self.gui.graph.addWidget(self.toolbar)
-
         self.gui.graph.addWidget(self.canvas)
         self.fig.tight_layout()
         self.canvas.draw()
@@ -56,17 +59,8 @@ class FigureManager :
             getattr(self.gui,f'logScale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.logScaleChanged(axe))
             getattr(self.gui,f'autoscale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.autoscaleChanged(axe))
             getattr(self.gui,f'autoscale_{axe}_checkBox').setChecked(True)
-            getattr(self.gui,f'zoom_{axe}_pushButton').clicked.connect(lambda b,axe=axe:self.zoomButtonClicked('zoom',axe))
-            getattr(self.gui,f'unzoom_{axe}_pushButton').clicked.connect(lambda b,axe=axe:self.zoomButtonClicked('unzoom',axe))
-            getattr(self.gui,f'variable_{axe}_comboBox').currentIndexChanged.connect(self.variableChanged)
+            getattr(self.gui,f'variable_{axe}_comboBox').activated['QString'].connect(self.variableChanged)
 
-        self.gui.goUp_pushButton.clicked.connect(lambda:self.moveButtonClicked('up'))
-        self.gui.goDown_pushButton.clicked.connect(lambda:self.moveButtonClicked('down'))
-        self.gui.goLeft_pushButton.clicked.connect(lambda:self.moveButtonClicked('left'))
-        self.gui.goRight_pushButton.clicked.connect(lambda:self.moveButtonClicked('right'))
-
-
-        self.MOVESTEP = 0.05
 
         # Number of traces
         self.nbtraces = 5
@@ -75,10 +69,100 @@ class FigureManager :
         self.gui.nbTraces_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
         self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
 
+        # Window to show scan data
+        self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)
+        self.gui.displayScanData_pushButton.setEnabled(False)
+        self.displayScan = DisplayValues(self.gui, "Scan", size=(500,300))
+
+        # Figure form tab DataFrame
+        self.gui.tabWidget.currentChanged.connect(self.tabWidgetCurrentChanged)
+        self.gui.tabWidget.setTabEnabled(1, False)
+        self.gui.dataframe_comboBox.activated['QString'].connect(self.dataframe_comboBoxCurrentChanged)
+        self.gui.dataframe_comboBox.setEnabled(False)
+
+        self.gui.toolButton.setEnabled(False)
+        self.clearMenuID()
+
+        # Map plot
+        self.figMap = Figure()
+        matplotlib.rcParams.update({'font.size': 12})
+        self.axMap = self.figMap.add_subplot(111)
+        try :
+            self.canvasMap = FigureCanvas(self.figMap)
+        except :
+            self.canvasMap = FigureCanvas(self.figMap)
+
+        self.toolbarMap = NavigationToolbar(self.canvasMap, self.gui)
+        self.gui.graphMap.addWidget(self.toolbarMap)
+        self.gui.graphMap.addWidget(self.canvasMap)
 
 
+    def clearMenuID(self):
+        self.gui.toolButton.setText("Parameter")
+        self.gui.toolButton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        self.gui.toolButton.setMenu(QtWidgets.QMenu(self.gui.toolButton))
+
+        self.menuBoolList = list()  # TODO: when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
+        self.menuWidgetList = list()
+        self.menuActionList = list()
+        self.nbCheckBoxMenuID = 0
 
 
+    def addCheckBox2MenuID(self, name_ID):
+
+        self.menuBoolList.append(True)
+        checkBox = QtWidgets.QCheckBox(self.gui)
+        checkBox.stateChanged.connect(lambda state, checkBox=checkBox: self.checkBoxChanged(checkBox, state))
+        checkBox.setText(str(name_ID))
+        self.menuWidgetList.append(checkBox)
+        action = QtWidgets.QWidgetAction(self.gui.toolButton)
+        action.setDefaultWidget(checkBox)
+        self.gui.toolButton.menu().addAction(action)
+        self.menuActionList.append(action)
+        self.nbCheckBoxMenuID += 1
+        checkBox.setChecked(True)  # trigger stateChanged (need to reloadData when create checkBox)
+
+    def removeLastCheckBox2MenuID(self):
+        self.menuBoolList.pop(-1)
+        self.menuWidgetList.pop(-1)
+        self.gui.toolButton.menu().removeAction(self.menuActionList.pop(-1))
+        self.nbCheckBoxMenuID -= 1  # will cause "Error encountered for scan id 1: list index out of range" if do scan with n points and due a new scan with n-m points
+
+    def checkBoxChanged(self, checkBox, state):
+
+        index = self.menuWidgetList.index(checkBox)
+        self.menuBoolList[index] = bool(state)
+        if self.gui.dataframe_comboBox.currentText() != "Scan":
+            self.reloadData()
+
+
+    def dataframe_comboBoxCurrentChanged(self):
+        self.gui.dataManager.updateDisplayableResults()
+        self.reloadData()
+
+    def tabWidgetCurrentChanged(self):
+        """ See if use tab or not for Map plot """
+        print("currentIndex", self.gui.tabWidget.currentIndex())  # 0 is first
+        print("currentWidget", self.gui.tabWidget.currentWidget())  # tab is first
+        print("isTabEnabled 1", self.gui.tabWidget.isTabEnabled(1))  # if enable not visible
+        # print("setCurrentIndex 1", self.gui.tabWidget.setCurrentIndex(1))
+        # print("setCurrentWidget tab", self.gui.tabWidget.setCurrentWidget(self.gui.tab))
+
+        if self.gui.tabWidget.currentIndex() == 0:
+            print("in Curve plot")
+        elif self.gui.tabWidget.currentIndex() == 1:
+            print("in Map plot")
+            if len(self.gui.dataManager.datasets) != 0:
+                dataset = self.gui.dataManager.getLastSelectedDataset()
+
+                for dataName in dataset.dictListDataFrame:
+                    for i in range(len(dataset.dictListDataFrame[dataName])):
+                        data = dataset.dictListDataFrame[dataName][i]
+                        df = utilities.formatData(data)
+                        curve = self.axMap.plot(df["0"],df["1"],'x-')[0]
+                self.canvasMap.draw()
+        else:
+            print("not implemented")
 
 
     # AUTOSCALING
@@ -87,6 +171,7 @@ class FigureManager :
     def autoscaleChanged(self,axe):
 
         """ Set or unset the autoscale mode for the given axis """
+
         state = self.isAutoscaleEnabled(axe)
         getattr(self.ax,f'set_autoscale{axe}_on')(state)
         if state is True :
@@ -234,6 +319,7 @@ class FigureManager :
         self.clearData()
 
         # Get current displayed result
+        data_name = self.gui.dataframe_comboBox.currentText()
         variable_x = self.gui.variable_x_comboBox.currentText()
         variable_y = self.gui.variable_y_comboBox.currentText()
         data_id = int(self.gui.data_comboBox.currentIndex()) + 1
@@ -246,17 +332,18 @@ class FigureManager :
 
         # Load the last results data
         try :
-            data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y], selectedData=selectedData)
+            data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y], selectedData=selectedData, data_name=data_name)
         except :
             data = None
 
         # Plot them
         if data is not None :
+            true_nbtraces = max(self.nbtraces, len(data))  # OPTIMIZE: not good but avoid error
 
             for i in range(len(data)) :
-
                 # Data
                 subdata = data[i]
+
                 if subdata is None:
                     continue
 
@@ -264,13 +351,15 @@ class FigureManager :
                 x = subdata.loc[:,variable_x]
                 y = subdata.loc[:,variable_y]
 
-                # Apprearance:
+                # could look at https://stackoverflow.com/questions/12761806/matplotlib-2-different-legends-on-same-graph
+                # Appearance:  # TODO: change color and alpha for dataframe  should have color loop for id and alpha loop for dataset so for len(id) color ...
+                # can't do it now, need to change how dataset from getData because if change scan range, will have diff size and can't loop color equaly
                 if i == (len(data)-1) :
                     color = 'r'
                     alpha = 1
                 else:
                     color = 'k'
-                    alpha = (self.nbtraces-(len(data)-1-i))/self.nbtraces
+                    alpha = (true_nbtraces-(len(data)-1-i))/true_nbtraces
 
                 # Plot
                 curve = self.ax.plot(x,y,'x-',color=color,alpha=alpha)[0]
@@ -281,22 +370,25 @@ class FigureManager :
             if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
 
             self.redraw()
+            self.gui.dataframe_comboBox.setEnabled(True)
 
 
 
     def reloadLastData(self):
 
-        ''' This functions update the data of the last curve '''
+        ''' This functions update the data of the last curve
+        Only for scan plot '''
 
         # Get current displayed result
         variable_x = self.gui.variable_x_comboBox.currentText()
         variable_y = self.gui.variable_y_comboBox.currentText()
 
         data = self.gui.dataManager.getData(1,[variable_x,variable_y])[0]
-        data = data.astype(float)
 
         # Update plot data
         if data is not None:
+            data = data.astype(float)
+
             self.curves[-1].set_xdata(data.loc[:,variable_x])
             self.curves[-1].set_ydata(data.loc[:,variable_y])
 
@@ -306,6 +398,13 @@ class FigureManager :
 
         self.redraw()
 
+        self.gui.displayScanData_pushButton.setEnabled(True)
+        if self.displayScan.active:
+            self.displayScan.refresh(self.gui.dataManager.getLastSelectedDataset().data)
+
+        self.gui.dataframe_comboBox.setEnabled(True)
+
+
 
 
     def variableChanged(self,index):
@@ -313,10 +412,10 @@ class FigureManager :
         """ This function is called when the displayed result has been changed in
         the combo box. It proceeds to the change. """
 
-        self.clearData()
-
         if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1 :
             self.reloadData()
+        else:
+            self.clearData()
 
 
 
@@ -347,91 +446,23 @@ class FigureManager :
             self.reloadData()
 
 
-
-
-
-    # ZOOM UNZOOM BUTTONS
+    # Show data
     ###########################################################################
 
-    def zoomButtonClicked(self,action,axe):
+    def displayScanDataButtonClicked(self):
 
-        """ This function is called when a zoom/unzoom button of a given axis has been pressed.
-        It proceeds to the change to the figure range """
+        """ This function opens a window showing the scan data for the displayed scan id """
 
-        logState = self.isLogScaleEnabled(axe)
-        inf,sup = self.getRange(axe)
-
-        if logState is False :
-            if action == 'zoom' :
-                inf_new = inf + (sup-inf)*self.MOVESTEP
-                sup_new = sup - (sup-inf)*self.MOVESTEP
-            elif action == 'unzoom' :
-                inf_new = inf - (sup-inf)*self.MOVESTEP/(1-2*self.MOVESTEP)
-                sup_new = sup + (sup-inf)*self.MOVESTEP/(1-2*self.MOVESTEP)
-        else :
-            log_inf = m.log10(inf)
-            log_sup = m.log10(sup)
-            if action == 'zoom' :
-                inf_new = 10**(log_inf+(log_sup-log_inf)*self.MOVESTEP)
-                sup_new = 10**(log_sup-(log_sup-log_inf)*self.MOVESTEP)
-            elif action == 'unzoom' :
-                inf_new = 10**(log_inf-(log_sup-log_inf)*self.MOVESTEP/(1-2*self.MOVESTEP))
-                sup_new = 10**(log_sup+(log_sup-log_inf)*self.MOVESTEP/(1-2*self.MOVESTEP))
-
-        self.setRange(axe,(inf_new,sup_new))
-        self.redraw()
-
-
-
-
-    # MOVE BUTTONS
-    ###########################################################################
-
-    def moveButtonClicked(self,action):
-
-        """ This function is called when a move button of a given axis has been pressed.
-        It proceeds to the change to the figure range """
-
-        if action in ['up','down'] :
-            axe = 'y'
-            if action == 'up' : action = 'increase'
-            elif action == 'down' : action = 'decrease'
-        elif action in ['left','right'] :
-            axe = 'x'
-            if action == 'left' : action = 'decrease'
-            elif action == 'right' : action = 'increase'
-
-        logState = self.isLogScaleEnabled(axe)
-
-        inf,sup = self.getRange(axe)
-
-        if logState is False :
-            if action == 'increase' :
-                inf_new = inf + (sup - inf)*self.MOVESTEP
-                sup_new = sup + (sup - inf)*self.MOVESTEP
-            elif action == 'decrease' :
-                inf_new = inf - (sup - inf)*self.MOVESTEP
-                sup_new = sup - (sup - inf)*self.MOVESTEP
-        else :
-            log_inf = m.log10(inf)
-            log_sup = m.log10(sup)
-            if action == 'increase' :
-                inf_new = 10**(log_inf + (log_sup - log_inf)*self.MOVESTEP)
-                sup_new = 10**(log_sup + (log_sup - log_inf)*self.MOVESTEP)
-            elif action == 'decrease' :
-                inf_new = 10**(log_inf - (log_sup - log_inf)*self.MOVESTEP)
-                sup_new = 10**(log_sup - (log_sup - log_inf)*self.MOVESTEP)
-
-        self.setRange(axe,(inf_new,sup_new))
-        self.redraw()
-
-
+        if not self.displayScan.active:
+            self.displayScan.refresh(self.gui.dataManager.getLastSelectedDataset().data)
+        self.displayScan.show()
 
 
     # SAVE FIGURE
     ###########################################################################
 
     def save(self,filename):
+
         """ This function save the figure with the provided filename """
 
         raw_name, extension = os.path.splitext(filename)

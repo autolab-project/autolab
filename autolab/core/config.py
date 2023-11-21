@@ -141,12 +141,18 @@ def check_autolab_config():
     # Check scanner configuration
     scanner_dict = {'precision': 15,
                     'recipe_size': [0, 500, 0],
+                    'save_config': True,
+                    'save_figure': True,
                     }
     if 'scanner' in autolab_config.sections():
         if 'precision' in autolab_config['scanner'].keys() :
             scanner_dict['precision'] = autolab_config['scanner']['precision']
         if 'recipe_size' in autolab_config['scanner'].keys() :
             scanner_dict['recipe_size'] = autolab_config['scanner']['recipe_size']
+        if 'save_config' in autolab_config['scanner'].keys() :
+            scanner_dict['save_config'] = autolab_config['scanner']['save_config']
+        if 'save_figure' in autolab_config['scanner'].keys() :
+            scanner_dict['save_figure'] = autolab_config['scanner']['save_figure']
     autolab_config['scanner'] = scanner_dict
 
     # # Check plotter configuration

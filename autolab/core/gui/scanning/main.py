@@ -6,6 +6,7 @@ Created on Fri Sep 20 22:08:29 2019
 """
 import os
 import sys
+import ast
 
 from PyQt5 import QtWidgets, uic, QtGui
 
@@ -27,7 +28,6 @@ class Scanner(QtWidgets.QMainWindow):
 
         # Import Autolab config
         scanner_config = config.get_scanner_config()
-        import ast
         self.recipe_size = [int(i) for i in ast.literal_eval(scanner_config['recipe_size'])]
 
         # Configuration of the window
@@ -105,6 +105,8 @@ class Scanner(QtWidgets.QMainWindow):
 
         # Delete reference of this window in the control center
         self.mainGui.clearScanner()
+        self.rangeManager.displayParameter.close()
+        self.figureManager.displayScan.close()
 
     def setStatus(self,message, timeout=0, stdout=True):
 

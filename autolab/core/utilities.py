@@ -46,3 +46,39 @@ def two_columns(txt_list) :
 
     return '\n'.join([ txt[0] + ' '*(spacing-len(txt[0])) + txt[1]
             for txt in txt_list])
+
+
+def boolean(value):
+    """ Convert value from "True" or "False" or float, int, bool to bool """
+
+    if value == "True":
+        value = True
+    elif value == "False":
+        value = False
+    else:
+        value = bool(int(float(value)))
+    return value
+
+
+def formatData(data):
+    """ Format data to DataFrame """
+    import pandas as pd
+    try:
+        data = pd.DataFrame(data)
+    except ValueError:
+        data = pd.DataFrame([data])
+    data.columns = data.columns.astype(str)
+    data_type = data.values.dtype
+
+    try:
+        data[data.columns] = data[data.columns].apply(pd.to_numeric, errors="coerce")
+    except ValueError:
+        pass  # OPTIMIZE: This happens when their is identical column name
+    if len(data) != 0:
+        assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
+        if data.iloc[-1].isnull().values.all():  # if last line is full of nan, remove it
+            data = data[:-1]
+    if data.shape[1] == 1:
+        data.rename(columns = {'0':'1'}, inplace=True)
+        data.insert(0, "0", range(data.shape[0]))
+    return data
