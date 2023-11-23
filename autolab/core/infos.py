@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from . import config
-from . import stats
 from . import drivers
 from . import paths
 from . import utilities
@@ -153,23 +152,6 @@ def config_help(driver_name, _print=True, _parser=False):
         mess += f"   a = autolab.get_device('my_{params['driver']}')"
     else :
         mess += f"   autolab device -D my_{params['driver']} -e element -v value \n"
-
-    if _print is True : print(mess)
-    else : return mess
-
-
-
-
-# =============================================================================
-# STATS
-# =============================================================================
-
-def statistics(_print=True):
-
-    ''' Display short message about stats management from autolab and actual stats collection state '''
-
-    state_str = 'ENABLED' if stats.is_stats_enabled() else 'DISABLED'
-    mess = stats.startup_text + f'\n\nCurrent state: [{state_str}]'
 
     if _print is True : print(mess)
     else : return mess

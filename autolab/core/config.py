@@ -6,7 +6,7 @@ Created on Mon Nov 18 14:53:10 2019
 """
 
 import configparser
-from . import paths, stats
+from . import paths
 import os
 
 
@@ -20,29 +20,35 @@ def initialize_local_directory():
     """ This function creates the default autolab local directory """
 
     # LOCAL DIRECTORY
-    if os.path.exists(paths.USER_FOLDER) is False:
+    if not os.path.exists(paths.USER_FOLDER):
         os.mkdir(paths.USER_FOLDER)
         print(f'The local directory of AUTOLAB has been created: {paths.USER_FOLDER}')
 
     # DEVICES CONFIGURATION FILE
-    if os.path.exists(paths.DEVICES_CONFIG) is False :
+    if not os.path.exists(paths.DEVICES_CONFIG):
         devices_config = configparser.ConfigParser()
         devices_config['system'] = {'driver':'system','connection':'DEFAULT'}
         save_config('devices',devices_config)
         print(f'The devices configuration file devices_config.ini has been created: {paths.DEVICES_CONFIG}')
 
-    # lOCAL CUSTOM DRIVER FOLDER
-    if os.path.exists(paths.DRIVER_SOURCES['local']) is False :
+    # DRIVER FOLDERS
+    if not os.path.exists(paths.DRIVERS):
+        os.mkdir(paths.DRIVERS)
+        print(f"The drivers directory has been created: {paths.DRIVERS}")
+    if not os.path.exists(paths.DRIVER_SOURCES['official']):
+        os.mkdir(paths.DRIVER_SOURCES['official'])
+        print(f'The official driver directory has been created: {paths.DRIVER_SOURCES["official"]}')
+    if not os.path.exists(paths.DRIVER_SOURCES['local']):
         os.mkdir(paths.DRIVER_SOURCES['local'])
         print(f'The local driver directory has been created: {paths.DRIVER_SOURCES["local"]}')
 
     # AUTOLAB CONFIGURATION FILE
-    if os.path.exists(paths.AUTOLAB_CONFIG) is False :
+    if not os.path.exists(paths.AUTOLAB_CONFIG):
         save_config('autolab',configparser.ConfigParser())
         print(f'The configuration file autolab_config.ini has been created: {paths.AUTOLAB_CONFIG}')
 
     # PLOTTER CONFIGURATION FILE
-    if os.path.exists(paths.PLOTTER_CONFIG) is False :
+    if not os.path.exists(paths.PLOTTER_CONFIG):
         save_config('plotter',configparser.ConfigParser())
         print(f'The configuration file plotter_config.ini has been created: {paths.PLOTTER_CONFIG}')
 
@@ -96,17 +102,6 @@ def check_autolab_config():
     """ This function checks config file structures """
 
     autolab_config = load_config('autolab')
-
-    # Check stats configuration
-    if 'stats' not in autolab_config.sections() or 'enabled' not in autolab_config['stats'].keys() :
-
-        ans = input(f'{stats.startup_text} Do you agree? [default:yes] > ')
-        if ans.strip().lower() == 'no' :
-            print('This feature has been disabled.')
-            autolab_config['stats'] = {'enabled': '0'}
-        else :
-            print('Thank you !')
-            autolab_config['stats'] = {'enabled': '1'}
 
     # Check server configuration
     server_dict = {'port': 4001,
@@ -173,12 +168,6 @@ def get_config(section_name):
     assert section_name in config.sections(), f'Missing {section_name} stats in autolab_config.ini'
 
     return config[section_name]
-
-
-def get_stats_config():
-    ''' Returns section stats from autolab_config.ini '''
-
-    return get_config('stats')
 
 
 def get_server_config():

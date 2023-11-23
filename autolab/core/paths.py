@@ -15,5 +15,12 @@ DEVICES_CONFIG = os.path.join(USER_FOLDER,'devices_config.ini')
 AUTOLAB_CONFIG = os.path.join(USER_FOLDER,'autolab_config.ini')
 PLOTTER_CONFIG = os.path.join(USER_FOLDER,'plotter_config.ini')
 
-DRIVER_SOURCES = {'main':os.path.join(os.path.dirname(os.path.dirname(__file__)),'drivers'),
+# Drivers locations
+DRIVERS = os.path.join(USER_FOLDER,'drivers')
+DRIVER_LEGACY = {'official':os.path.join(os.path.dirname(os.path.dirname(__file__)),'drivers'),
                   'local':os.path.join(USER_FOLDER,'local_drivers')}
+DRIVER_SOURCES = {'official':os.path.join(DRIVERS,'official'),
+                  'local':os.path.join(DRIVERS,'local')}
+
+# Driver github repo
+DRIVER_GITHUB = {'official':'https://github.com/Python-simulation/autolab/tree/master/autolab/drivers'}

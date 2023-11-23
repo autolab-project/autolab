@@ -24,12 +24,8 @@ _config.initialize_local_directory()
 _config.check_autolab_config()
 _config.check_plotter_config()
 
-# Statistics
-from .core import stats as _stats
-_stats.startup()
-
 # infos
-from .core.infos import list_devices, list_drivers, infos, config_help, statistics
+from .core.infos import list_devices, list_drivers, infos, config_help
 
 # Devices
 from .core.devices import get_device, close
@@ -47,3 +43,11 @@ from .core.server import Server as server
 
 # GUI
 from .core.gui import start as gui
+
+# Repository
+from .core.repository import install_drivers
+from .core import repository as _repository
+_repository._check_empty_driver_folder()
+
+del numpy
+del socket
