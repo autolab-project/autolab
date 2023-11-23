@@ -99,9 +99,9 @@ def install_drivers():
             for i, driver_name in enumerate(list_driver):
                 ans = input(f'Download {driver_name}? [default:yes] > ')
                 if ans.strip().lower() != 'no':
-                    _download_driver(os.path.dirname(GITHUB_OFFICIAL), driver_name, OUTPUT_DIR)
+                    _download_driver(paths.DRIVER_GITHUB['official'], driver_name, OUTPUT_DIR)
         else:
-            _download_drivers(os.path.dirname(GITHUB_OFFICIAL), list_driver, OUTPUT_DIR)
+            _download_drivers(paths.DRIVER_GITHUB['official'], list_driver, OUTPUT_DIR)
     else:
 
         class DriverInstaller(QtWidgets.QMainWindow):
@@ -185,7 +185,7 @@ def install_drivers():
                 list_bool = [checkBox.isChecked() for checkBox in self.list_checkBox]
 
                 list_driver_to_download = [driver_name for (driver_name, driver_bool) in zip(self.list_driver, list_bool) if driver_bool]
-                _download_drivers(os.path.dirname(GITHUB_OFFICIAL), list_driver_to_download, OUTPUT_DIR)
+                _download_drivers(paths.DRIVER_GITHUB['official'], list_driver_to_download, OUTPUT_DIR)
 
 
         print("Open driver installer")
