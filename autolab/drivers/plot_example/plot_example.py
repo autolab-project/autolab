@@ -5,6 +5,9 @@ Created on Wed Dec 14 21:04:12 2022
 @author: jonathan
 """
 import sys
+import os
+
+sys.path.append(os.path.dirname(__file__))  # needed for custom_GUI import
 
 from custom_GUI import GUI
 import numpy as np

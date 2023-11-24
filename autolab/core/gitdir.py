@@ -89,15 +89,17 @@ def download(repo_url, proxies=None, output_dir="./", flatten=False, exts=None, 
             print("Got interrupted")
         sys.exit()
     except urllib.error.HTTPError as e:
-        if e.code == 403:                      ## Api response 403 error
-            print("API Rate limit exceeded!!!")
-            download(repo_url, proxies, dir_out, flatten, exts=exts, file_count=file_count)
-        else:
-            if _print:
-                print(e)
+        # if e.code == 403:                      ## Api response 403 error
+        #     if _print:
+        #         print("API Rate limit exceeded!!!")
+        #     download(repo_url, proxies, dir_out, flatten, exts=exts, file_count=file_count)  # BUG: infinit loop leads to crash if link doesn't exists
+        # else:
+        if _print:
+            print(e)
         sys.exit()
     except:
-        print("Failed")
+        if _print:
+            print("Failed")
         sys.exit()
 
     # make a directory with the name which is taken from
@@ -142,7 +144,8 @@ def download(repo_url, proxies=None, output_dir="./", flatten=False, exts=None, 
                         print("API Rate limit exceeded!!!")
                     download(data["html_url"], proxies, dir_out, flatten, exts=exts, file_count=file_count)
                 else:
-                    print(e)
+                    if _print:
+                        print(e)
                 sys.exit()
             except:
                 if _print:

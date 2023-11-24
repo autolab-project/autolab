@@ -1028,6 +1028,7 @@ class Driver():
         self.data = pd.DataFrame()
 
         sys.path.append(os.path.dirname(__file__))  # needed for ct400_lib import
+        sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # needed for plotter import
 
         self.detectors = Detectors(self, self.libpath)
 
@@ -1042,10 +1043,10 @@ class Driver():
         self.scan = Scan(self.detectors)
 
         try:
-            from autolab.drivers.plotter.plotter import Driver_DEFAULT
+            from plotter.plotter import Driver_DEFAULT
             self.interface = Driver_DEFAULT()
         except Exception as e:
-            print("Error", e, file=sys.stderr)
+            print(f"Warning: {e}. Will not use interface", file=sys.stderr)
             pass
 
 

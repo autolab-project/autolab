@@ -33,7 +33,7 @@ def _format_url(url):
 GITHUB_OFFICIAL = _format_url(paths.DRIVER_GITHUB['official'])
 
 
-def _get_drivers_list_from_github(url: str) -> list[str]:
+def _get_drivers_list_from_github(url):
     """ Returns a list of the available drivers on a github repo.
     url is the url of a file containing a list of the available drivers \
     It can also be the url of the folder containing the file and drivers.
@@ -55,6 +55,7 @@ def _download_drivers(url, driver_list, output_dir):
         print(f"Drivers will be downloaded to {output_dir}")
     for driver_name in driver_list:
         _download_driver(url, driver_name, output_dir)
+    print('Done!')
 
 
 def _download_driver(url, driver_name, output_dir):
@@ -62,9 +63,13 @@ def _download_driver(url, driver_name, output_dir):
     try :
         print(f"Downloading {driver_name}")
         driver_url = url + "/" + driver_name
-        download(driver_url, output_dir=output_dir)
-    except Exception as e:
-        print(f"Error with {driver_name}: {e}", file=sys.stderr)
+        # BUG: too slow to be used, need to find better solution
+        # BUG: got 'HTTP Error 403: rate limit exceeded' due to too much download
+        # -> must find another solution to download repo (without git if possible)
+        #
+        download(driver_url, output_dir=output_dir, _print=True)
+    except:  # OPTIMIZE: if use Exception, crash python when having error
+        print(f"Error with {driver_name}", file=sys.stderr)
 
 
 def _check_empty_driver_folder():

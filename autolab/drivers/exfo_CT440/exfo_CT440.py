@@ -5,11 +5,14 @@
 Supported instruments (identified): EXFO CT440.
 -
 """
+import os
+import sys
 
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # needed for yenista_CT400 import
 # This driver is a copy of the ct400 driver using the ct440 option, and serves as a proxy for the ct440 driver.
 
-from autolab.drivers.yenista_CT400.yenista_CT400 import Driver_DLL as Driver_DLL_ct400
-from autolab.drivers.yenista_CT400.yenista_CT400 import Driver  # just for config_help("exfo_CT440")
+from yenista_CT400.yenista_CT400 import Driver_DLL as Driver_DLL_ct400
+from yenista_CT400.yenista_CT400 import Driver  # just for config_help("exfo_CT440")
 
 #################################################################################
 ############################## Connections classes ##############################
