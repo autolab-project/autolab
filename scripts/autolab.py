@@ -19,6 +19,7 @@ def print_help():
     print()
     print('Commands:')
     print('  gui                   Start the Graphical User Interface')
+    print('  install_drivers       Start the driver installer')
     print('  driver                Driver interface')
     print('  device                Device interface')
     print('  doc                   Open the online documentation (readthedocs)')
@@ -51,8 +52,10 @@ def main() :
             autolab.report()
         elif command=='gui':           # GUI
             autolab.gui()
-        elif command=='infos':           # GUI
+        elif command=='infos':
             autolab.infos()
+        elif command=='install_drivers':
+            autolab.install_drivers()
         elif command=='driver':
             driver_parser(args)
         elif command=='device':

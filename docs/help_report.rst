@@ -33,12 +33,3 @@ You can also directly call the function ``report`` of the package, which will op
 	>>> autolab report
 
 Alternatively, you can send an email to the authors (see :ref:`about`).
-
-Statistics of use
-=================
-
-At startup, Autolab is configured to send only once a completely anonymous signal (sha256 hashed ID) over internet for statistics of use. This helps the authors to have a better understanding of how the package is used worldwide. No personal data is transmitted during this process. Also, this is done in background, with no impact on the performance of Autolab. You can manage the state of this feature in the local configuration file ``autolab_config.ini``. You can use the function ``statistics`` to know its current state.
-
-.. code-block:: python
-
-	>>> autolab.statistics()
