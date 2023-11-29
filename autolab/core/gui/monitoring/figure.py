@@ -6,13 +6,13 @@ Created on Sun Sep 29 18:22:35 2019
 """
 
 import os
+
 import numpy as np
-import matplotlib
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import pyqtgraph as pg
+import pyqtgraph.exporters
 
 from ... import config
+from ... import utilities
 
 
 class FigureManager:
@@ -24,104 +24,35 @@ class FigureManager:
         # Import Autolab config
         monitor_config = config.get_monitor_config()
         self.precision = int(monitor_config['precision'])
+        self.do_save_figure = utilities.boolean(monitor_config['save_figure'])
 
         # Configure and initialize the figure in the GUI
-        self.fig = Figure()
-        matplotlib.rcParams.update({'font.size': 12})
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlabel(self.gui.xlabel)
-        self.ax.set_ylabel(self.gui.ylabel)
-        self.ax.grid()
+        self.fig = pg.PlotWidget(background='w')
+        self.ax = self.fig.getPlotItem()
+        self.ax.setLabel('bottom', self.gui.xlabel, **{'color':0.4, 'font-size': '12pt'})
+        self.ax.setLabel('left', self.gui.ylabel, **{'color':0.4, 'font-size': '12pt'})
 
-        self.plot = self.ax.plot([],[],'x-',color='r')[0]
-        self.plot_mean = self.ax.plot([],[],'--',color='grey')[0]
-        self.plot_min = self.ax.plot([],[],'-',color='grey')[0]
-        self.plot_max = self.ax.plot([],[],'-',color='grey')[0]
+        self.ax.showGrid(x=True, y=True, alpha=0.7)
+
+        self.plot = self.ax.plot([],[], symbol='x', pen='r', symbolBrush='r', symbolSize=12)
+        self.plot_mean = self.ax.plot([],[], pen = pg.mkPen(color=0.4, style=pg.QtCore.Qt.DashLine))
+        self.plot_min = self.ax.plot([],[], pen =  pg.mkPen(color=0.4))
+        self.plot_max = self.ax.plot([],[], pen =  pg.mkPen(color=0.4))
         self.ymin = None
         self.ymax = None
-        # The first time we open a monitor it doesn't work, I don't know why..
-        # There is no current event loop in thread 'Thread-7'.
-        # More accurately, FigureCanvas doesn't find the event loop the first time it is called
-        # The second time it works..
-        # Seems to be only in Spyder..
-        try :
-            self.canvas = FigureCanvas(self.fig)
-        except :
-            self.canvas = FigureCanvas(self.fig)
 
-        self.toolbar = NavigationToolbar(self.canvas, self.gui)
-        self.gui.graph.addWidget(self.toolbar)
+        vb = self.ax.getViewBox()
+        vb.enableAutoRange(enable=True)
+        vb.setBorder(pg.mkPen(color=0.4))
 
-        self.gui.graph.addWidget(self.canvas)
-        self.fig.tight_layout()
-        self.canvas.draw()
+        ## Text label for the data coordinates of the mouse pointer
+        self.dataLabel = pg.LabelItem(color='k', parent=self.ax.getAxis('bottom'))
+        self.dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
 
-        for axe in ['x','y'] :
-            getattr(self.gui,f'autoscale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.autoscaleChanged(axe))
-            getattr(self.gui,f'autoscale_{axe}_checkBox').setChecked(True)
+        # data reader signal connection
+        self.ax.scene().sigMouseMoved.connect(self.mouseMoved)
 
-
-
-    # AUTOSCALING
-    ###########################################################################
-
-    def autoscaleChanged(self,axe):
-
-        """ Set or unset the autoscale mode for the given axis """
-        state = self.isAutoscaleEnabled(axe)
-        getattr(self.ax,f'set_autoscale{axe}_on')(state)
-        if state is True :
-            self.doAutoscale(axe)
-            self.redraw()
-
-
-
-    def isAutoscaleEnabled(self,axe):
-
-        """ This function returns True or False whether the autoscale for the given axis
-        is enabled """
-
-        return getattr(self.gui,f'autoscale_{axe}_checkBox').isChecked()
-
-
-
-    def doAutoscale(self,axe):
-
-        """ This function proceeds to an autoscale operation of the given axis """
-
-        data = getattr(self.plot,f'get_{axe}data')()
-        if len(data) > 0 :
-            minValue = min(data)
-            maxValue = max(data)
-            if (minValue,maxValue) != self.getRange(axe) :
-                self.setRange(axe,(minValue,maxValue))
-
-            self.toolbar.update()
-
-
-    # RANGE
-    ###########################################################################
-
-    def getRange(self,axe):
-
-        """ This function returns the current range of the given axis """
-
-        return getattr(self.ax,f'get_{axe}lim')()
-
-
-
-    def setRange(self,axe,r):
-
-        """ This function sets the current range of the given axis """
-
-        if r[0] != r[1]:
-            if axe == "x" and type(self.plot.get_xdata()) is list:
-                getattr(self.ax,f'set_{axe}lim')(r[0], r[1]+(r[1]-r[0])*0.1)
-            else:
-                getattr(self.ax,f'set_{axe}lim')(r[0]-(r[1]-r[0])*0.1, r[1]+(r[1]-r[0])*0.1)
-        else:
-            getattr(self.ax,f'set_{axe}lim')(r[0]-0.1, r[1]+0.1)
-
+        self.gui.graph.addWidget(self.fig)
 
 
     # PLOT DATA
@@ -132,25 +63,15 @@ class FigureManager:
         """ This function update the figure in the GUI """
 
         # Data retrieval
-        self.plot.set_xdata(xlist)
-        self.plot.set_ydata(ylist)
+        self.plot.setData(xlist, ylist)
 
-        # X axis update
-        xlist = self.plot.get_xdata()
+        xlist, ylist = self.plot.getData()
 
-        if not getattr(xlist, 'size', len(xlist)) or not getattr(ylist, 'size', len(ylist)):
-            self.redraw()
+        if len(xlist) == 0 or len(ylist) == 0:
             return
 
         xmin = min(xlist)
         xmax = max(xlist)
-
-        # Autoscale
-        if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
-        if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
-
-        # Y axis update
-        ylist = self.plot.get_ydata()
         ymin = min(ylist)
         ymax = max(ylist)
 
@@ -167,18 +88,16 @@ class FigureManager:
         # Mean update
         if self.gui.mean_checkBox.isChecked():
             ymean = np.mean(ylist)
-            self.plot_mean.set_xdata([xmin, xmax])
-            self.plot_mean.set_ydata([ymean, ymean])
+
+            self.plot_mean.setData([xmin, xmax], [ymean, ymean])
 
         # Min update
         if self.gui.min_checkBox.isChecked():
-            self.plot_min.set_xdata([xmin, xmax])
-            self.plot_min.set_ydata([self.ymin, self.ymin])
+            self.plot_min.setData([xmin, xmax], [self.ymin, self.ymin])
 
         # Max update
         if self.gui.max_checkBox.isChecked():
-            self.plot_max.set_xdata([xmin, xmax])
-            self.plot_max.set_ydata([self.ymax, self.ymax])
+            self.plot_max.setData([xmin, xmax], [self.ymax, self.ymax])
 
         # Figure finalization
         if len(ylist) >= 1:
@@ -194,17 +113,14 @@ class FigureManager:
             font.setPointSize(int(new_size))
             self.gui.dataDisplay.setFont(font)
 
-        self.redraw()
 
+    def mouseMoved(self, point):
+        """ This function marks the position of the cursor in data coordinates"""
 
-    def redraw(self):
-
-        """ This function finalize the figure update in the GUI """
-        try :
-            self.fig.tight_layout()
-        except :
-            pass
-        self.canvas.draw()
+        vb = self.ax.getViewBox()
+        mousePoint = vb.mapSceneToView(point)
+        l = f'x = {mousePoint.x():g},  y = {mousePoint.y():g}'
+        self.dataLabel.setText(l)
 
 
     def clear(self):
@@ -216,7 +132,8 @@ class FigureManager:
 
     def save(self,filename):
         """ This function save the figure with the provided filename """
-
-        raw_name, extension = os.path.splitext(filename)
-        new_filename = raw_name+".png"
-        self.fig.savefig(new_filename, dpi=300)
+        if self.do_save_figure:
+            raw_name, extension = os.path.splitext(filename)
+            new_filename = raw_name+".png"
+            exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+            exporter.export(new_filename)
