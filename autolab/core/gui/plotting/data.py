@@ -17,7 +17,7 @@ try:
 except:
     no_default = None
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from ... import paths
 from ... import config
@@ -113,7 +113,10 @@ class DataManager :
         self.overwriteData = True
 
         plotter_config = config.load_config("plotter")
-        self.deviceValue = str(plotter_config['device']['address'])
+        if 'device' in plotter_config.sections() and 'address' in plotter_config['device']:
+            self.deviceValue = str(plotter_config['device']['address'])
+        else:
+            self.deviceValue = ''
 
     def _clear(self):
         self.datasets = []

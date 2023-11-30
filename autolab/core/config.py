@@ -222,20 +222,24 @@ def check_plotter_config():
     plotter_config = load_config('plotter')
 
     # Check plugin configuration
-    plugin_dict = {'plotter': 'plotter'}
+    plugin_dict = {}#'plotter': 'plotter'}
     if 'plugin' in plotter_config.sections():
         plugin_dict = dict()
         for plugin_name in plotter_config['plugin'].keys():
             plugin_dict[plugin_name] = plotter_config['plugin'][plugin_name]
     plotter_config['plugin'] = plugin_dict
+    plotter_config.set('plugin', '# Usage: <PLUGIN_NAME> = <DEVICE_NAME>')
+    plotter_config.set('plugin', '# Example: plotter = plotter')
 
     # Check device configuration
-    device_dict = {'address': 'dummy.array_1D'}
+    device_dict = {}#'address': 'dummy.array_1D'}
     if 'device' in plotter_config.sections():
         if 'address' in plotter_config['device'].keys():
             device_dict['address'] = plotter_config['device']['address']
 
     plotter_config['device'] = device_dict
+    plotter_config.set('device', '# Usage: address = <DEVICE_VARIABLE>')
+    plotter_config.set('device', '# Example: address = dummy.array_1D')
 
     save_config('plotter',plotter_config)
 

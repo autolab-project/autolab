@@ -11,7 +11,7 @@ import os
 import pandas as pd
 import numpy as np
 import sip
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from ...devices import DEVICES
 from ... import paths, config
@@ -418,11 +418,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 # Signals can be emitted only from QObjects
 # These class provides convenient ways to use signals
 class ReadSignal(QtCore.QObject):
-    signal = QtCore.pyqtSignal(object)
+    signal = QtCore.Signal(object)
     def emit(self,value):
         self.signal.emit(value)
 
 class WriteSignal(QtCore.QObject):
-    signal = QtCore.pyqtSignal()
+    signal = QtCore.Signal()
     def emit(self):
         self.signal.emit()

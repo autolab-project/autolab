@@ -295,26 +295,6 @@
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <layout class="QGridLayout" name="gridLayout_3">
-              <item row="2" column="3">
-               <widget class="QCheckBox" name="autoscale_y_checkBox">
-                <property name="toolTip">
-                 <string>Enable (disable) autoscale on Y axis</string>
-                </property>
-                <property name="text">
-                 <string>Autoscale</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="3">
-               <widget class="QCheckBox" name="logScale_y_checkBox">
-                <property name="toolTip">
-                 <string>Enable (disable) log scale on Y axis</string>
-                </property>
-                <property name="text">
-                 <string>Log</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="3">
                <widget class="QComboBox" name="variable_y_comboBox">
                 <property name="sizeAdjustPolicy">
@@ -322,30 +302,10 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QCheckBox" name="autoscale_x_checkBox">
-                <property name="toolTip">
-                 <string>Enable (disable) autoscale on X axis</string>
-                </property>
-                <property name="text">
-                 <string>Autoscale</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="1">
                <widget class="QComboBox" name="variable_x_comboBox">
                 <property name="sizeAdjustPolicy">
                  <enum>QComboBox::AdjustToContents</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QCheckBox" name="logScale_x_checkBox">
-                <property name="toolTip">
-                 <string>Enable (disable) log scale on X axis</string>
-                </property>
-                <property name="text">
-                 <string>Log</string>
                 </property>
                </widget>
               </item>
@@ -433,7 +393,33 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
              </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>
@@ -469,12 +455,7 @@
   <tabstop>delay_lineEdit</tabstop>
   <tabstop>auto_plotDataButton</tabstop>
   <tabstop>variable_x_comboBox</tabstop>
-  <tabstop>logScale_x_checkBox</tabstop>
-  <tabstop>autoscale_x_checkBox</tabstop>
   <tabstop>variable_y_comboBox</tabstop>
-  <tabstop>logScale_y_checkBox</tabstop>
-  <tabstop>autoscale_y_checkBox</tabstop>
-  <tabstop>nbTraces_lineEdit</tabstop>
  </tabstops>
  <resources/>
  <connections/>
