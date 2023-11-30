@@ -7,7 +7,7 @@ Created on Oct 2022
 import os
 import sys
 
-from PyQt5 import QtCore, QtWidgets, uic, QtGui
+from qtpy import QtCore, QtWidgets, uic, QtGui
 
 from .figure import FigureManager
 from .data import DataManager
@@ -19,7 +19,7 @@ from ... import config
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
 
-    reorderSignal = QtCore.pyqtSignal(object)
+    reorderSignal = QtCore.Signal(object)
 
     def __init__(self,parent, plotter):
         self.plotter = plotter
@@ -96,10 +96,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.setLineEditBackground(self.nbTraces_lineEdit,'synced')
 
         for axe in ['x','y'] :
-            getattr(self,f'logScale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.logScaleChanged(axe))
             getattr(self,f'variable_{axe}_comboBox').currentIndexChanged.connect(self.variableChanged)
-            getattr(self,f'autoscale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.figureManager.autoscaleChanged(axe))
-            getattr(self,f'autoscale_{axe}_checkBox').setChecked(True)
 
         self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
         self.device_lineEdit.returnPressed.connect(self.deviceChanged)
@@ -355,13 +352,6 @@ class Plotter(QtWidgets.QMainWindow):
         value = self.dataManager.getDeviceValue()
         self.device_lineEdit.setText(f'{value}')
         self.setLineEditBackground(self.device_lineEdit,'synced')
-
-    def logScaleChanged(self,axe):
-        """ This function is called when the log scale state is changed in the GUI. """
-
-        state = getattr(self,f'logScale_{axe}_checkBox').isChecked()
-        self.figureManager.setLogScale(axe,state)
-        self.figureManager.redraw()
 
     def variableChanged(self,index):
         """ This function is called when the displayed result has been changed in

@@ -30,7 +30,7 @@ def start():
         os.environ['QT_API'] = str(GUI_config["QT_API"])
     try:
         from qtpy import QtWidgets
-        import pyqtgraph
+        import pyqtgraph as pg
     except ModuleNotFoundError:
         print("""Packages missing to use the GUI. You need to install qtpy, \
               pyqtgraph and one of PyQt5, PySide2, PyQt6 or PySide6.
@@ -52,6 +52,8 @@ def start():
               conda install -c conda-forge pyside6
               """) # TODO: check if need matplotlib once done with pyqtgraph conversion
     else:
+        pg.setConfigOptions(background='w', foreground="k")
+
         app = QtWidgets.QApplication.instance()
         if app is None:
             app = QtWidgets.QApplication([])

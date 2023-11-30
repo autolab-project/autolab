@@ -8,7 +8,7 @@ Created on Sun Sep 29 18:26:32 2019
 import inspect
 
 import sip
-from PyQt5 import QtCore
+from qtpy import QtCore
 
 from ... import devices
 from ... import drivers
@@ -104,7 +104,7 @@ class InteractionThread(QtCore.QThread):
 
     """ This class is dedicated to operation interaction with the devices, in a new thread """
 
-    endSignal = QtCore.pyqtSignal(object)
+    endSignal = QtCore.Signal(object)
 
 
     def __init__(self,item,intType,value):

@@ -10,6 +10,7 @@ import os
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
+from pyqtgraph.Qt import QtGui
 
 from ... import config
 from ... import utilities
@@ -27,14 +28,21 @@ class FigureManager:
         self.do_save_figure = utilities.boolean(monitor_config['save_figure'])
 
         # Configure and initialize the figure in the GUI
-        self.fig = pg.PlotWidget(background='w')
+        self.fig = pg.PlotWidget()
         self.ax = self.fig.getPlotItem()
         self.ax.setLabel('bottom', self.gui.xlabel, **{'color':0.4, 'font-size': '12pt'})
         self.ax.setLabel('left', self.gui.ylabel, **{'color':0.4, 'font-size': '12pt'})
 
-        self.ax.showGrid(x=True, y=True, alpha=0.7)
+        # Set your custom font for both axes
+        my_font = QtGui.QFont("Times", 12)
+        my_font_tick = QtGui.QFont("Times", 10)
+        self.ax.getAxis("bottom").label.setFont(my_font)
+        self.ax.getAxis("left").label.setFont(my_font)
+        self.ax.getAxis("bottom").setTickFont(my_font_tick)
+        self.ax.getAxis("left").setTickFont(my_font_tick)
+        self.ax.showGrid(x=True, y=True)
 
-        self.plot = self.ax.plot([],[], symbol='x', pen='r', symbolBrush='r', symbolSize=12)
+        self.plot = self.ax.plot([],[], symbol='x', pen='r', symbolPen='r', symbolSize=10)
         self.plot_mean = self.ax.plot([],[], pen = pg.mkPen(color=0.4, style=pg.QtCore.Qt.DashLine))
         self.plot_min = self.ax.plot([],[], pen =  pg.mkPen(color=0.4))
         self.plot_max = self.ax.plot([],[], pen =  pg.mkPen(color=0.4))
