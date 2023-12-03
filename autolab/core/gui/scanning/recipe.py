@@ -8,7 +8,7 @@ Created on Sun Sep 29 18:15:26 2019
 import numpy as np
 import pandas as pd
 
-from PyQt5 import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 
 from . import main
 from ... import config
@@ -16,7 +16,7 @@ from ... import config
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
 
-    reorderSignal = QtCore.pyqtSignal(object)
+    reorderSignal = QtCore.Signal(object)
 
     def __init__(self,parent, recipe_name):
         self.recipe_name = recipe_name
@@ -200,7 +200,7 @@ class RecipeManager :
         """ This function prompts the user for a new step name, and apply it to the selected step """
 
         newName,state = QtWidgets.QInputDialog.getText(self.gui, name, f"Set {name} new name",
-                                                 QtWidgets.QLineEdit.Normal, name)
+                                                       QtWidgets.QLineEdit.Normal, name)
 
         newName = main.cleanString(newName)
         if newName != '' :

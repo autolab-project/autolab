@@ -10,8 +10,8 @@ quentin.chateiller@c2n.upsaclay.fr
 import os
 import sys
 
-from PyQt5 import QtCore, QtWidgets, uic, QtGui
-from PyQt5.QtWidgets import QApplication
+from qtpy import QtCore, QtWidgets, uic, QtGui
+from qtpy.QtWidgets import QApplication
 
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
@@ -22,7 +22,7 @@ from ... import devices, web, paths, config, utilities
 
 class OutputWrapper(QtCore.QObject):
     """ https://stackoverflow.com/questions/19855288/duplicate-stdout-stderr-in-qtextedit-widget """
-    outputWritten = QtCore.pyqtSignal(object, object)
+    outputWritten = QtCore.Signal(object, object)
 
     def __init__(self, parent, stdout=True, logger_active=False, print_active=True):
         super().__init__(parent)

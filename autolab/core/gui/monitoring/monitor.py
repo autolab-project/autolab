@@ -7,7 +7,7 @@ Created on Sun Sep 29 18:21:49 2019
 import time
 import threading
 
-from PyQt5 import QtCore
+from qtpy import QtCore
 
 
 class MonitorManager :
@@ -96,7 +96,7 @@ class MonitorThread(QtCore.QThread):
 
     """ This thread class is dedicated to read the variable, and send its data to GUI through a queue """
 
-    errorSignal = QtCore.pyqtSignal(object)
+    errorSignal = QtCore.Signal(object)
 
     def __init__(self,variable,queue):
 

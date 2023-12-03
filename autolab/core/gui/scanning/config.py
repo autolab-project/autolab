@@ -11,8 +11,8 @@ import math as m
 
 import numpy as np
 import pandas as pd
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtGui import QIcon
+from qtpy import QtWidgets, QtCore
+from qtpy.QtGui import QIcon
 
 from ... import paths, devices, config
 from .... import __version__

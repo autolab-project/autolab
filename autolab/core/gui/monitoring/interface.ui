@@ -200,13 +200,6 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="2">
-         <widget class="QCheckBox" name="max_checkBox">
-          <property name="text">
-           <string>Max</string>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="0">
          <widget class="QCheckBox" name="min_checkBox">
           <property name="text">
@@ -229,23 +222,10 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QCheckBox" name="autoscale_x_checkBox">
-          <property name="toolTip">
-           <string>Enable (disable) autoscale on X axis</string>
-          </property>
+        <item row="1" column="2">
+         <widget class="QCheckBox" name="max_checkBox">
           <property name="text">
-           <string>Autoscale x</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QCheckBox" name="autoscale_y_checkBox">
-          <property name="toolTip">
-           <string>Enable (disable) autoscale on X axis</string>
-          </property>
-          <property name="text">
-           <string>Autoscale y</string>
+           <string>Max</string>
           </property>
          </widget>
         </item>
