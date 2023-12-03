@@ -10,7 +10,6 @@ import os
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from pyqtgraph.Qt import QtGui
 
 from ... import config
 from ... import utilities
@@ -28,19 +27,8 @@ class FigureManager:
         self.do_save_figure = utilities.boolean(monitor_config['save_figure'])
 
         # Configure and initialize the figure in the GUI
-        self.fig = pg.PlotWidget()
-        self.ax = self.fig.getPlotItem()
-        self.ax.setLabel('bottom', self.gui.xlabel, **{'color':0.4, 'font-size': '12pt'})
-        self.ax.setLabel('left', self.gui.ylabel, **{'color':0.4, 'font-size': '12pt'})
-
-        # Set your custom font for both axes
-        my_font = QtGui.QFont("Times", 12)
-        my_font_tick = QtGui.QFont("Times", 10)
-        self.ax.getAxis("bottom").label.setFont(my_font)
-        self.ax.getAxis("left").label.setFont(my_font)
-        self.ax.getAxis("bottom").setTickFont(my_font_tick)
-        self.ax.getAxis("left").setTickFont(my_font_tick)
-        self.ax.showGrid(x=True, y=True)
+        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.gui.graph.addWidget(self.fig)
 
         self.plot = self.ax.plot([],[], symbol='x', pen='r', symbolPen='r', symbolSize=10)
         self.plot_mean = self.ax.plot([],[], pen = pg.mkPen(color=0.4, style=pg.QtCore.Qt.DashLine))
@@ -49,18 +37,6 @@ class FigureManager:
         self.ymin = None
         self.ymax = None
 
-        vb = self.ax.getViewBox()
-        vb.enableAutoRange(enable=True)
-        vb.setBorder(pg.mkPen(color=0.4))
-
-        ## Text label for the data coordinates of the mouse pointer
-        self.dataLabel = pg.LabelItem(color='k', parent=self.ax.getAxis('bottom'))
-        self.dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
-
-        # data reader signal connection
-        self.ax.scene().sigMouseMoved.connect(self.mouseMoved)
-
-        self.gui.graph.addWidget(self.fig)
 
 
     # PLOT DATA
@@ -120,15 +96,6 @@ class FigureManager:
             font = self.gui.dataDisplay.font()
             font.setPointSize(int(new_size))
             self.gui.dataDisplay.setFont(font)
-
-
-    def mouseMoved(self, point):
-        """ This function marks the position of the cursor in data coordinates"""
-
-        vb = self.ax.getViewBox()
-        mousePoint = vb.mapSceneToView(point)
-        l = f'x = {mousePoint.x():g},  y = {mousePoint.y():g}'
-        self.dataLabel.setText(l)
 
 
     def clear(self):

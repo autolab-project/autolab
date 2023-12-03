@@ -13,7 +13,7 @@ import tempfile
 import sys
 
 import pandas as pd
-from PyQt5 import QtCore,QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from ... import paths
 from ... import config

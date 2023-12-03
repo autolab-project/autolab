@@ -7,16 +7,10 @@ Created on Sun Sep 29 18:12:24 2019
 
 
 import os
-import math as m
 
-import numpy as np
-import matplotlib
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from PyQt5 import QtWidgets
-
-# matplotlib.rcParams.update({'figure.autolayout': True})  # good but can raise LinAlgError. alternative is to emit signal when change windows
+import pyqtgraph as pg
+import pyqtgraph.exporters
+from pyqtgraph.Qt import QtWidgets
 
 from .display import DisplayValues
 from ... import utilities
@@ -31,36 +25,11 @@ class FigureManager :
         self.curves = []
 
         # Configure and initialize the figure in the GUI
-        self.fig = Figure()
-        matplotlib.rcParams.update({'font.size': 12})
-        self.ax = self.fig.add_subplot(111)
-
-        self.add_grid(True)
-
-        self.ax.set_xlim((0,10))
-        self.ax.autoscale(enable=False)
-        # The first time we open a monitor it doesn't work, I don't know why..
-        # There is no current event loop in thread 'Thread-7'.
-        # More accurately, FigureCanvas doesn't find the event loop the first time it is called
-        # The second time it works..
-        # Seems to be only in Spyder..
-        try :
-            self.canvas = FigureCanvas(self.fig)
-        except :
-            self.canvas = FigureCanvas(self.fig)
-
-        self.toolbar = NavigationToolbar(self.canvas, self.gui)
-        self.gui.graph.addWidget(self.toolbar)
-        self.gui.graph.addWidget(self.canvas)
-        self.fig.tight_layout()
-        self.canvas.draw()
+        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.gui.graph.addWidget(self.fig)
 
         for axe in ['x','y'] :
-            getattr(self.gui,f'logScale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.logScaleChanged(axe))
-            getattr(self.gui,f'autoscale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.autoscaleChanged(axe))
-            getattr(self.gui,f'autoscale_{axe}_checkBox').setChecked(True)
             getattr(self.gui,f'variable_{axe}_comboBox').activated['QString'].connect(self.variableChanged)
-
 
         # Number of traces
         self.nbtraces = 5
@@ -76,7 +45,7 @@ class FigureManager :
 
         # Figure form tab DataFrame
         self.gui.tabWidget.currentChanged.connect(self.tabWidgetCurrentChanged)
-        self.gui.tabWidget.setTabEnabled(1, False)
+        self.gui.tabWidget.setTabEnabled(1, False)  # disable 2D map tab until it is ready
         self.gui.dataframe_comboBox.activated['QString'].connect(self.dataframe_comboBoxCurrentChanged)
         self.gui.dataframe_comboBox.setEnabled(False)
 
@@ -84,17 +53,8 @@ class FigureManager :
         self.clearMenuID()
 
         # Map plot
-        self.figMap = Figure()
-        matplotlib.rcParams.update({'font.size': 12})
-        self.axMap = self.figMap.add_subplot(111)
-        try :
-            self.canvasMap = FigureCanvas(self.figMap)
-        except :
-            self.canvasMap = FigureCanvas(self.figMap)
-
-        self.toolbarMap = NavigationToolbar(self.canvasMap, self.gui)
-        self.gui.graphMap.addWidget(self.toolbarMap)
-        self.gui.graphMap.addWidget(self.canvasMap)
+        self.figMap, self.axMap = utilities.pyqtgraph_fig_ax()
+        self.gui.graphMap.addWidget(self.figMap)
 
 
     def clearMenuID(self):
@@ -156,127 +116,14 @@ class FigureManager :
                 dataset = self.gui.dataManager.getLastSelectedDataset()
 
                 for dataName in dataset.dictListDataFrame:
+                    colors = ('#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf')
                     for i in range(len(dataset.dictListDataFrame[dataName])):
+                        color = colors[i % len(colors)]
                         data = dataset.dictListDataFrame[dataName][i]
                         df = utilities.formatData(data)
-                        curve = self.axMap.plot(df["0"],df["1"],'x-')[0]
-                self.canvasMap.draw()
+                        curve = self.axMap.plot(df["0"], df["1"], symbol='x', symbolPen=color, symbolSize=10, pen=color)
         else:
             print("not implemented")
-
-
-    # AUTOSCALING
-    ###########################################################################
-
-    def autoscaleChanged(self,axe):
-
-        """ Set or unset the autoscale mode for the given axis """
-
-        state = self.isAutoscaleEnabled(axe)
-        getattr(self.ax,f'set_autoscale{axe}_on')(state)
-        if state is True :
-            self.doAutoscale(axe)
-            self.redraw()
-
-
-
-    def isAutoscaleEnabled(self,axe):
-
-        """ This function returns True or False whether the autoscale for the given axis
-        is enabled """
-
-        return getattr(self.gui,f'autoscale_{axe}_checkBox').isChecked()
-
-
-
-    def doAutoscale(self,axe):
-
-        """ This function proceeds to an autoscale operation of the given axis """
-
-        datas = [getattr(curve,f'get_{axe}data')() for curve in self.curves]
-        if len(datas) > 0 :
-            min_list = [np.nanmin(data) for data in datas if ~np.isnan(data).all()]
-            max_list = [np.nanmax(data) for data in datas if ~np.isnan(data).all()]
-            minValue = np.nanmin(min_list) if ~np.isnan(min_list).all() else 0
-            maxValue = np.nanmax(max_list) if ~np.isnan(max_list).all() else 0
-
-            if (minValue,maxValue) != self.getRange(axe):
-                self.setRange(axe,(minValue,maxValue))
-
-            self.toolbar.update()
-
-
-    def add_grid(self, state):
-        if state:
-            self.ax.minorticks_on()
-        else:
-            self.ax.minorticks_off()
-
-        self.ax.grid(state, which='major')
-        self.ax.grid(state, which='minor', alpha=0.4)
-
-
-
-    # LOGSCALING
-    ###########################################################################
-
-    def logScaleChanged(self,axe):
-
-        """ This function is called when the log scale state is changed in the GUI. """
-
-        state = getattr(self.gui,f'logScale_{axe}_checkBox').isChecked()
-        self.setLogScale(axe,state)
-        self.redraw()
-
-
-
-    def isLogScaleEnabled(self,axe):
-
-        """ This function returns True or False whether the log scale is enabled
-        in the given axis """
-
-        return getattr(self.ax,f'get_{axe}scale')() == 'log'
-
-
-
-    def setLogScale(self,axe,state):
-
-        """ This functions sets or not the log scale for the given axis """
-
-        if state is True :
-            scaleType = 'log'
-        else :
-            scaleType = 'linear'
-
-        self.checkLimPositive(axe)
-        getattr(self.ax,f'set_{axe}scale')(scaleType)  # BUG: crash python if ct400 is openned -> issue between matplotlib and ctypes from ct400 dll lib
-        self.add_grid(True)
-        # update for bug -> np.log crash python if a dll lib is openned: https://stackoverflow.com/questions/52497031/python-kernel-crashes-if-i-use-np-log10-after-loading-a-dll
-        # could change log in matplotlib but not a good solution
-        # I added this:
-            # if 0 in a: # OPTIMIZE: used to fix the python crash with dll lib openned
-            #     a[a == 0] += 1e-200
-        # in matplotlib.scale.transform_non_affine at line 210 to fixe the crash
-
-    def checkLimPositive(self,axe):
-
-        """ This function updates the current range of the given axis to be positive,
-        in case we enter in a log scale mode """
-
-        axeRange = list(self.getRange(axe))
-
-        change = False
-        if axeRange[1] <= 0 :
-            axeRange[1] = 1
-            change = True
-        if axeRange[0] <= 0 :
-            axeRange[0] = 10**(m.log10(axeRange[1])-1)
-            change = True
-
-        if change is True :
-            self.setRange(axe,tuple(axeRange))
-
-
 
 
 
@@ -288,7 +135,8 @@ class FigureManager :
 
         """ This function changes the label of the given axis """
 
-        getattr(self.ax,f'set_{axe}label')(value)
+        axes = {'x':'bottom', 'y':'left'}
+        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
 
 
 
@@ -304,10 +152,8 @@ class FigureManager :
         """ This function removes any plotted curves """
 
         for curve in self.curves :
-            curve.remove()
+            self.ax.removeItem(curve)
         self.curves = []
-        self.redraw()
-
 
 
     def reloadData(self):
@@ -362,14 +208,10 @@ class FigureManager :
                     alpha = (true_nbtraces-(len(data)-1-i))/true_nbtraces
 
                 # Plot
-                curve = self.ax.plot(x,y,'x-',color=color,alpha=alpha)[0]
+                curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color)
+                curve.setAlpha(alpha, False)
                 self.curves.append(curve)
 
-            # Autoscale
-            if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
-            if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
-
-            self.redraw()
             self.gui.dataframe_comboBox.setEnabled(True)
 
 
@@ -389,14 +231,7 @@ class FigureManager :
         if data is not None:
             data = data.astype(float)
 
-            self.curves[-1].set_xdata(data.loc[:,variable_x])
-            self.curves[-1].set_ydata(data.loc[:,variable_y])
-
-        # Autoscale
-        if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
-        if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
-
-        self.redraw()
+            self.curves[-1].setData(data.loc[:,variable_x], data.loc[:,variable_y])
 
         self.gui.displayScanData_pushButton.setEnabled(True)
         if self.displayScan.active:
@@ -467,44 +302,5 @@ class FigureManager :
 
         raw_name, extension = os.path.splitext(filename)
         new_filename = raw_name+".png"
-        self.fig.savefig(new_filename, dpi=300)
-
-
-    # redraw
-    ###########################################################################
-
-    def redraw(self):
-
-        """ This function make the previous changes appears in the GUI """
-
-        try :
-            self.fig.tight_layout()
-        except :
-            pass
-        self.canvas.draw()
-
-
-
-
-    # RANGE
-    ###########################################################################
-
-    def getRange(self,axe):
-
-        """ This function returns the current range of the given axis """
-
-        return getattr(self.ax,f'get_{axe}lim')()
-
-
-
-    def setRange(self,axe,r):
-
-        """ This function sets the current range of the given axis """
-
-        if r[0] != r[1]:
-            getattr(self.ax,f'set_{axe}lim')(r)
-        else:
-            if r[0] != 0:
-                getattr(self.ax,f'set_{axe}lim')(r[0]-r[0]*5e-3, r[1]+r[1]*5e-3)
-            else:
-                getattr(self.ax,f'set_{axe}lim')(-5e-3, 5e-3)
+        exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+        exporter.export(new_filename)

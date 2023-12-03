@@ -10,7 +10,8 @@ import os
 
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from pyqtgraph.Qt import QtGui
+
+from ... import utilities
 
 
 class FigureManager :
@@ -22,31 +23,7 @@ class FigureManager :
         self.curves = []
 
         # Configure and initialize the figure in the GUI
-        self.fig = pg.PlotWidget()
-        self.ax = self.fig.getPlotItem()
-        self.setLabel('x', '')
-        self.setLabel('y', '')
-
-        # Set your custom font for both axes
-        my_font = QtGui.QFont("Times", 12)
-        my_font_tick = QtGui.QFont("Times", 10)
-        self.ax.getAxis("bottom").label.setFont(my_font)
-        self.ax.getAxis("left").label.setFont(my_font)
-        self.ax.getAxis("bottom").setTickFont(my_font_tick)
-        self.ax.getAxis("left").setTickFont(my_font_tick)
-        self.ax.showGrid(x=True, y=True)
-
-        vb = self.ax.getViewBox()
-        vb.enableAutoRange(enable=True)
-        vb.setBorder(pg.mkPen(color=0.4))
-
-        ## Text label for the data coordinates of the mouse pointer
-        self.dataLabel = pg.LabelItem(color='k', parent=self.ax.getAxis('bottom'))
-        self.dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
-
-        # data reader signal connection
-        self.ax.scene().sigMouseMoved.connect(self.mouseMoved)
-
+        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
 
         # Number of traces
@@ -256,12 +233,3 @@ class FigureManager :
         new_filename = raw_name+".png"
         exporter = pg.exporters.ImageExporter(self.fig.plotItem)
         exporter.export(new_filename)
-
-
-    def mouseMoved(self, point):
-        """ This function marks the position of the cursor in data coordinates"""
-
-        vb = self.ax.getViewBox()
-        mousePoint = vb.mapSceneToView(point)
-        l = f'x = {mousePoint.x():g},  y = {mousePoint.y():g}'
-        self.dataLabel.setText(l)

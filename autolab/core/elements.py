@@ -9,7 +9,7 @@ import os
 
 import inspect
 from .utilities import emphasize, clean_string
-import autolab
+
 
 class Element() :
 
@@ -463,7 +463,7 @@ class Action(Element):
                 self.function(value)
             elif self.unit == "filename":
                     import sys
-                    from PyQt5 import QtWidgets
+                    from qtpy import QtWidgets
                     app = QtWidgets.QApplication(sys.argv)
                     filename = QtWidgets.QFileDialog.getOpenFileName(caption="Filename", filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
                     if filename != '':
