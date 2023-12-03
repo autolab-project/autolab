@@ -516,13 +516,13 @@
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>70</height>
+                     <height>50</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>70</height>
+                     <height>50</height>
                     </size>
                    </property>
                    <property name="frameShape">
@@ -560,30 +560,6 @@
                           </item>
                          </layout>
                         </item>
-                        <item>
-                         <layout class="QHBoxLayout" name="horizontalLayout_8">
-                          <item>
-                           <widget class="QCheckBox" name="logScale_x_checkBox">
-                            <property name="toolTip">
-                             <string>Enable (disable) log scale on X axis</string>
-                            </property>
-                            <property name="text">
-                             <string>Log</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QCheckBox" name="autoscale_x_checkBox">
-                            <property name="toolTip">
-                             <string>Enable (disable) autoscale on X axis</string>
-                            </property>
-                            <property name="text">
-                             <string>Autoscale</string>
-                            </property>
-                           </widget>
-                          </item>
-                         </layout>
-                        </item>
                        </layout>
                       </item>
                       <item>
@@ -602,10 +578,7 @@
                       <item>
                        <layout class="QVBoxLayout" name="verticalLayout_13">
                         <item>
-                         <layout class="QHBoxLayout" name="horizontalLayout"/>
-                        </item>
-                        <item>
-                         <layout class="QHBoxLayout" name="horizontalLayout_9">
+                         <layout class="QHBoxLayout" name="horizontalLayout">
                           <item>
                            <widget class="QLabel" name="graph_nbTracesLabel">
                             <property name="sizePolicy">
@@ -699,30 +672,6 @@
                           </item>
                          </layout>
                         </item>
-                        <item>
-                         <layout class="QHBoxLayout" name="horizontalLayout_11">
-                          <item>
-                           <widget class="QCheckBox" name="logScale_y_checkBox">
-                            <property name="toolTip">
-                             <string>Enable (disable) log scale on Y axis</string>
-                            </property>
-                            <property name="text">
-                             <string>Log</string>
-                            </property>
-                           </widget>
-                          </item>
-                          <item>
-                           <widget class="QCheckBox" name="autoscale_y_checkBox">
-                            <property name="toolTip">
-                             <string>Enable (disable) autoscale on Y axis</string>
-                            </property>
-                            <property name="text">
-                             <string>Autoscale</string>
-                            </property>
-                           </widget>
-                          </item>
-                         </layout>
-                        </item>
                        </layout>
                       </item>
                      </layout>
@@ -746,13 +695,13 @@
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
-                    <height>70</height>
+                    <height>50</height>
                    </size>
                   </property>
                   <property name="maximumSize">
                    <size>
                     <width>16777215</width>
-                    <height>70</height>
+                    <height>50</height>
                    </size>
                   </property>
                   <property name="frameShape">
@@ -790,30 +739,6 @@
                          </item>
                         </layout>
                        </item>
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_17">
-                         <item>
-                          <widget class="QCheckBox" name="logScale_x_checkBox_2">
-                           <property name="toolTip">
-                            <string>Enable (disable) log scale on X axis</string>
-                           </property>
-                           <property name="text">
-                            <string>Log</string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QCheckBox" name="autoscale_x_checkBox_2">
-                           <property name="toolTip">
-                            <string>Enable (disable) autoscale on X axis</string>
-                           </property>
-                           <property name="text">
-                            <string>Autoscale</string>
-                           </property>
-                          </widget>
-                         </item>
-                        </layout>
-                       </item>
                       </layout>
                      </item>
                      <item>
@@ -831,20 +756,6 @@
                      </item>
                      <item>
                       <layout class="QVBoxLayout" name="verticalLayout_21">
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_18">
-                         <item>
-                          <widget class="QPushButton" name="displayScanData_pushButton_2">
-                           <property name="toolTip">
-                            <string>Take start and end value, and type of scale, from figure. </string>
-                           </property>
-                           <property name="text">
-                            <string>Display data</string>
-                           </property>
-                          </widget>
-                         </item>
-                        </layout>
-                       </item>
                        <item>
                         <layout class="QHBoxLayout" name="horizontalLayout_19">
                          <item>
@@ -935,30 +846,6 @@
                              <width>150</width>
                              <height>0</height>
                             </size>
-                           </property>
-                          </widget>
-                         </item>
-                        </layout>
-                       </item>
-                       <item>
-                        <layout class="QHBoxLayout" name="horizontalLayout_21">
-                         <item>
-                          <widget class="QCheckBox" name="logScale_y_checkBox_2">
-                           <property name="toolTip">
-                            <string>Enable (disable) log scale on Y axis</string>
-                           </property>
-                           <property name="text">
-                            <string>Log</string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item>
-                          <widget class="QCheckBox" name="autoscale_y_checkBox_2">
-                           <property name="toolTip">
-                            <string>Enable (disable) autoscale on Y axis</string>
-                           </property>
-                           <property name="text">
-                            <string>Autoscale</string>
                            </property>
                           </widget>
                          </item>

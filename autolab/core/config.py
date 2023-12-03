@@ -64,7 +64,7 @@ def load_config(config_name):
 
     """ This function loads the autolab configuration file in a config parser """
 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
     config.read(getattr(paths,f'{config_name.upper()}_CONFIG'))
     return config
@@ -111,6 +111,15 @@ def check_autolab_config():
             server_dict['port'] = autolab_config['server']['port']
     autolab_config['server'] = server_dict
 
+    # Check GUI configuration
+    GUI_dict = {'QT_API': "default",
+                }
+    if 'GUI' in autolab_config.sections() :
+        if 'QT_API' in autolab_config['GUI'].keys() :
+            GUI_dict['QT_API'] = autolab_config['GUI']['QT_API']
+    autolab_config['GUI'] = GUI_dict
+    autolab_config.set('GUI', '# QT_API -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
+
     # Check control center configuration
     control_center_dict = {'precision': 7,
                            'print': True,
@@ -127,10 +136,13 @@ def check_autolab_config():
 
     # Check monitor configuration
     monitor_dict = {'precision': 4,
+                    'save_figure': True,
                     }
     if 'monitor' in autolab_config.sections():
         if 'precision' in autolab_config['monitor'].keys() :
             monitor_dict['precision'] = autolab_config['monitor']['precision']
+        if 'save_figure' in autolab_config['monitor'].keys() :
+            monitor_dict['save_figure'] = autolab_config['monitor']['save_figure']
     autolab_config['monitor'] = monitor_dict
 
     # Check scanner configuration
@@ -176,6 +188,11 @@ def get_server_config():
     return get_config('server')
 
 
+def get_GUI_config():
+    ''' Returns section QT_API from autolab_config.ini '''
+
+    return get_config('GUI')
+
 def get_control_center_config():
     ''' Returns section control_center from autolab_config.ini '''
 
@@ -205,20 +222,24 @@ def check_plotter_config():
     plotter_config = load_config('plotter')
 
     # Check plugin configuration
-    plugin_dict = {'plotter': 'plotter'}
+    plugin_dict = {}#'plotter': 'plotter'}
     if 'plugin' in plotter_config.sections():
         plugin_dict = dict()
         for plugin_name in plotter_config['plugin'].keys():
             plugin_dict[plugin_name] = plotter_config['plugin'][plugin_name]
     plotter_config['plugin'] = plugin_dict
+    plotter_config.set('plugin', '# Usage: <PLUGIN_NAME> = <DEVICE_NAME>')
+    plotter_config.set('plugin', '# Example: plotter = plotter')
 
     # Check device configuration
-    device_dict = {'address': 'dummy.array_1D'}
+    device_dict = {}#'address': 'dummy.array_1D'}
     if 'device' in plotter_config.sections():
         if 'address' in plotter_config['device'].keys():
             device_dict['address'] = plotter_config['device']['address']
 
     plotter_config['device'] = device_dict
+    plotter_config.set('device', '# Usage: address = <DEVICE_VARIABLE>')
+    plotter_config.set('device', '# Example: address = dummy.array_1D')
 
     save_config('plotter',plotter_config)
 

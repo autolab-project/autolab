@@ -5,9 +5,9 @@ Created on Sun Sep 29 18:26:32 2019
 @author: qchat
 """
 
-import sip
-from PyQt5 import QtCore
+from qtpy import QtCore
 from ... import devices
+from ...utilities import qt_object_exists
 
 
 class ThreadManager :
@@ -74,13 +74,13 @@ class ThreadManager :
         item.setDisabled(False)
 
         if hasattr(item, "execButton"):
-            if not sip.isdeleted(item.execButton):
+            if qt_object_exists(item.execButton):
                 item.execButton.setEnabled(True)
         if hasattr(item, "readButton"):
-            if not sip.isdeleted(item.readButton):
+            if qt_object_exists(item.readButton):
                 item.readButton.setEnabled(True)
         if hasattr(item, "valueWidget"):
-            if not sip.isdeleted(item.valueWidget):
+            if qt_object_exists(item.valueWidget):
                 item.valueWidget.setEnabled(True)
 
 
@@ -100,7 +100,7 @@ class InteractionThread(QtCore.QThread):
 
     """ This class is dedicated to operation interaction with the devices, in a new thread """
 
-    endSignal = QtCore.pyqtSignal(object)
+    endSignal = QtCore.Signal(object)
 
     def __init__(self,item,intType,value):
         QtCore.QThread.__init__(self)

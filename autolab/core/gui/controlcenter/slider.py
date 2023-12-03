@@ -6,7 +6,7 @@ Created on Mon Apr 17 23:23:51 2023
 """
 
 import numpy as np
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from ... import config
 

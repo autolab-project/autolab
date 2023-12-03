@@ -10,11 +10,12 @@ import os
 
 import pandas as pd
 import numpy as np
-import sip
-from PyQt5 import QtCore, QtWidgets
+
+from qtpy import QtCore, QtWidgets
 
 from ...devices import DEVICES
 from ... import paths, config
+from ...utilities import qt_object_exists
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -141,7 +142,6 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         value = self.valueWidget.text()
         if value == '' :
             if self.action.unit == "filename":
-                from PyQt5 import QtWidgets
                 value = QtWidgets.QFileDialog.getOpenFileName(self.gui, caption="Filename", filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
                 if value != '':
                     return value
@@ -292,7 +292,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def writeGui(self,value):
 
         """ This function displays a new value in the GUI """
-        if not sip.isdeleted(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finihsed)
+        if qt_object_exists(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finihsed)
             # Update value
             if self.variable.numerical :
                 self.valueWidget.setText(f'{value:.{self.precision}g}') # default is .6g
@@ -418,11 +418,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 # Signals can be emitted only from QObjects
 # These class provides convenient ways to use signals
 class ReadSignal(QtCore.QObject):
-    signal = QtCore.pyqtSignal(object)
+    signal = QtCore.Signal(object)
     def emit(self,value):
         self.signal.emit(value)
 
 class WriteSignal(QtCore.QObject):
-    signal = QtCore.pyqtSignal()
+    signal = QtCore.Signal()
     def emit(self):
         self.signal.emit()

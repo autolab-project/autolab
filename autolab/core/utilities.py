@@ -29,7 +29,7 @@ def clean_string(txt):
 
     """ Returns txt without special characters """
 
-    for character in '*."/\[]:;|, ' :
+    for character in r'*."/\[]:;|, ' :
         txt = txt.replace(character,'')
 
     return txt
@@ -82,3 +82,78 @@ def formatData(data):
         data.rename(columns = {'0':'1'}, inplace=True)
         data.insert(0, "0", range(data.shape[0]))
     return data
+
+
+def pyqtgraph_fig_ax():
+    """ Return a formated fig and ax pyqtgraph for a basic plot """
+
+    import pyqtgraph as pg
+    from pyqtgraph import QtGui
+
+    # Configure and initialize the figure in the GUI
+    fig = pg.PlotWidget()
+    ax = fig.getPlotItem()
+
+    ax.setLabel("bottom", '', **{'color':0.4, 'font-size': '12pt'})
+    ax.setLabel("left", '', **{'color':0.4, 'font-size': '12pt'})
+
+    # Set your custom font for both axes
+    my_font = QtGui.QFont("Times", 12)
+    my_font_tick = QtGui.QFont("Times", 10)
+    ax.getAxis("bottom").label.setFont(my_font)
+    ax.getAxis("left").label.setFont(my_font)
+    ax.getAxis("bottom").setTickFont(my_font_tick)
+    ax.getAxis("left").setTickFont(my_font_tick)
+    ax.showGrid(x=True, y=True)
+
+    vb = ax.getViewBox()
+    vb.enableAutoRange(enable=True)
+    vb.setBorder(pg.mkPen(color=0.4))
+
+    ## Text label for the data coordinates of the mouse pointer
+    dataLabel = pg.LabelItem(color='k', parent=ax.getAxis('bottom'))
+    dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
+
+    def mouseMoved(point):
+        """ This function marks the position of the cursor in data coordinates"""
+
+        vb = ax.getViewBox()
+        mousePoint = vb.mapSceneToView(point)
+        l = f'x = {mousePoint.x():g},  y = {mousePoint.y():g}'
+        dataLabel.setText(l)
+
+    # data reader signal connection
+    ax.scene().sigMouseMoved.connect(mouseMoved)
+
+    return fig, ax
+
+
+CHECK_ONCE = True
+
+def qt_object_exists(QtObject):
+    """ Return True if object exists (not deleted).
+    Check if use pyqt5, pyqt6, pyside2 or pyside6 to use correct implementation
+    """
+
+    global CHECK_ONCE
+    import os
+    QT_API = os.environ.get("QT_API")
+
+    try:
+        if QT_API in ("pyqt5", "pyqt6"):
+            import sip
+            return not sip.isdeleted(QtObject)
+        elif QT_API == "pyside2":
+            import shiboken2
+            return shiboken2.isValid(QtObject)
+        elif QT_API =="pyside6":
+            import shiboken6
+            return shiboken6.isValid(QtObject)
+        else:
+            raise ModuleNotFoundError(f"QT_API '{QT_API}' unknown")
+
+    except ModuleNotFoundError as e:
+        if CHECK_ONCE:
+            print(f"Warning: {e}. Skip check if Qt Object not deleted.")
+            CHECK_ONCE = False
+        return True
