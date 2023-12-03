@@ -29,28 +29,28 @@ def start():
     if GUI_config["QT_API"] != "default":
         os.environ['QT_API'] = str(GUI_config["QT_API"])
     try:
-        from qtpy import QtWidgets
         import pyqtgraph as pg
-    except ModuleNotFoundError:
-        print("""Packages missing to use the GUI. You need to install qtpy, \
-              pyqtgraph and one of PyQt5, PySide2, PyQt6 or PySide6.
+        from qtpy import QtWidgets
+    except ModuleNotFoundError as e:
+        print(f"""Can't use GUI, package(s) missing: {e}
+Need to install pyqtgraph, qtpy, and one of PyQt5, PySide2, PyQt6 or PySide6.
 
-              Using pip:
-              pip install qtpy
-              pip install pyqtgraph
-              pip install PyQt5
-              pip install PySide2
-              pip install PyQt6
-              pip install PySide6
+Using pip:
+pip install pyqtgraph
+pip install qtpy
+pip install PyQt5
+pip install PySide2
+pip install PyQt6
+pip install PySide6
 
-              Using anaconda:
-              conda install qtpy
-              conda install pyqtgraph
-              conda install pyqt
-              conda install -c conda-forge pyside2
-              no PyQt6 anaconda version available
-              conda install -c conda-forge pyside6
-              """) # TODO: check if need matplotlib once done with pyqtgraph conversion
+Using anaconda:
+conda install pyqtgraph
+conda install qtpy
+conda install pyqt
+conda install -c conda-forge pyside2
+no PyQt6 anaconda version available
+conda install -c conda-forge pyside6
+""")
     else:
         pg.setConfigOptions(background='w', foreground="k")
 

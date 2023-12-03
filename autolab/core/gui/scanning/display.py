@@ -5,7 +5,7 @@ Created on Thu Nov  9 10:58:47 2023
 @author: Jonathan
 """
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 # import pyqtgraph as pg
 # TODO: need to choose between fast (QTableView+TableModel) or fancy (pg.TableWidget)
 

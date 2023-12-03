@@ -8,7 +8,7 @@ import os
 import sys
 import ast
 
-from PyQt5 import QtWidgets, uic, QtGui
+from qtpy import QtWidgets, uic, QtGui
 
 from .config import ConfigManager
 from .figure import FigureManager

@@ -18,15 +18,16 @@ def rename_old_devices_config_file() :
     from .paths import USER_FOLDER
     if os.path.exists(os.path.join(USER_FOLDER,'local_config.ini')) :
         os.rename(os.path.join(USER_FOLDER,'local_config.ini'),
-                        os.path.join(USER_FOLDER,'devices_config.ini'))
+                  os.path.join(USER_FOLDER,'devices_config.ini'))
 
 def move_driver():
 
     """ Move old driver directory to new one """
 
-    from .paths import DRIVERS, DRIVER_LEGACY, DRIVER_SOURCES
+    from .paths import USER_FOLDER, DRIVERS, DRIVER_LEGACY, DRIVER_SOURCES
+    from .repository import install_drivers
 
-    if not os.path.exists(DRIVERS):
+    if os.path.exists(os.path.join(USER_FOLDER)) and not os.path.exists(DRIVERS):
         os.mkdir(DRIVERS)
         print(f"The new driver directory has been created: {DRIVERS}")
 
@@ -36,6 +37,7 @@ def move_driver():
             os.rename(os.path.join(DRIVERS, os.path.basename(DRIVER_LEGACY['official'])),
                       DRIVER_SOURCES['official'])
             print(f"Old official drivers directory has been moved from: {DRIVER_LEGACY['official']} to: {DRIVER_SOURCES['official']}")
+            install_drivers()  # Ask if want to download official drivers
 
         if os.path.exists(DRIVER_LEGACY["local"]):
             shutil.move(DRIVER_LEGACY['local'], DRIVERS)

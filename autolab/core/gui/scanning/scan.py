@@ -12,7 +12,7 @@ import collections
 
 import numpy as np
 import pandas as pd
-from PyQt5 import QtCore
+from qtpy import QtCore
 
 from ...devices import DEVICES
 
@@ -262,12 +262,12 @@ class ScanThread(QtCore.QThread):
     """ This thread class is dedicated to read the variable, and send its data to GUI through a queue """
 
     # Signals
-    errorSignal = QtCore.pyqtSignal(object)
-    startParameterSignal = QtCore.pyqtSignal()
-    finishParameterSignal = QtCore.pyqtSignal()
-    startStepSignal = QtCore.pyqtSignal(object, object)
-    finishStepSignal = QtCore.pyqtSignal(object, object)
-    recipeCompletedSignal = QtCore.pyqtSignal(object)
+    errorSignal = QtCore.Signal(object)
+    startParameterSignal = QtCore.Signal()
+    finishParameterSignal = QtCore.Signal()
+    startStepSignal = QtCore.Signal(object, object)
+    finishStepSignal = QtCore.Signal(object, object)
+    recipeCompletedSignal = QtCore.Signal(object)
 
 
 

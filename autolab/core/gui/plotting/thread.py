@@ -7,11 +7,11 @@ Created on Sun Sep 29 18:26:32 2019
 
 import inspect
 
-import sip
 from qtpy import QtCore
 
 from ... import devices
 from ... import drivers
+from ...utilities import qt_object_exists
 
 
 class ThreadManager :
@@ -78,13 +78,13 @@ class ThreadManager :
         item.setDisabled(False)
 
         if hasattr(item, "execButton"):
-            if not sip.isdeleted(item.execButton):
+            if qt_object_exists(item.execButton):
                 item.execButton.setEnabled(True)
         if hasattr(item, "readButton"):
-            if not sip.isdeleted(item.readButton):
+            if qt_object_exists(item.readButton):
                 item.readButton.setEnabled(True)
         if hasattr(item, "valueWidget"):
-            if not sip.isdeleted(item.valueWidget):
+            if qt_object_exists(item.valueWidget):
                 item.valueWidget.setEnabled(True)
 
 
@@ -140,7 +140,8 @@ class InteractionThread(QtCore.QThread):
                 driver_kwargs = { k:v for k,v in device_config.items() if k not in ['driver','connection']}
                 driver_lib = drivers.load_driver_lib(device_config['driver'])
 
-                if hasattr(driver_lib, 'Driver') and 'gui' in inspect.getargspec(driver_lib.Driver.__init__).args:
+                if hasattr(driver_lib, 'Driver') and 'gui' in [param.name for param in inspect.signature(driver_lib.Driver.__init__).parameters.values()]:
+
                         driver_kwargs['gui'] = self.item.gui
 
                 instance = drivers.get_driver(device_config['driver'],
