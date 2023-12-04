@@ -168,14 +168,14 @@ class FigureManager :
                             curve = self.ax.plot(x, y, pen=color)
                             curve.setAlpha(alpha, False)
                         else:
-                            curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color)
+                            curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
                             curve.setAlpha(alpha, False)
                     elif i > (data_id-1):
                         if len(x) > 300:
                             curve = self.ax.plot(x, y, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine))
                             curve.setAlpha(alpha, False)
                         else:
-                            curve = self.ax.plot(x, y, symbol='+', symbolPen=color, symbolSize=10, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine))
+                            curve = self.ax.plot(x, y, symbol='+', symbolPen=color, symbolSize=10, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine), symbolBrush=color)
                             curve.setAlpha(alpha, False)
                     self.curves.append(curve)
 
@@ -197,7 +197,7 @@ class FigureManager :
                     curve = self.ax.plot(x, y, pen=color, clear=True)
                     curve.setAlpha(alpha, False)
                 else:
-                    curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color)
+                    curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
                     curve.setAlpha(alpha, False)
                 self.curves.append(curve)
 

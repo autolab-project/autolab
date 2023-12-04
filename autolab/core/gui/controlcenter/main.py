@@ -319,16 +319,15 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def openAutolabConfig(self):
         """ Open the Autolab configuration file """
-        os.startfile(paths.AUTOLAB_CONFIG)
-
+        utilities.openFile(paths.AUTOLAB_CONFIG)
 
     def openDevicesConfig(self):
         """ Open the devices configuration file """
-        os.startfile(paths.DEVICES_CONFIG)
+        utilities.openFile(paths.DEVICES_CONFIG)
 
     def openPlotterConfig(self):
         """ Open the plotter configuration file """
-        os.startfile(paths.PLOTTER_CONFIG)
+        utilities.openFile(paths.PLOTTER_CONFIG)
 
 
     def setScanParameter(self,variable):

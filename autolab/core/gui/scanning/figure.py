@@ -121,7 +121,7 @@ class FigureManager :
                         color = colors[i % len(colors)]
                         data = dataset.dictListDataFrame[dataName][i]
                         df = utilities.formatData(data)
-                        curve = self.axMap.plot(df["0"], df["1"], symbol='x', symbolPen=color, symbolSize=10, pen=color)
+                        curve = self.axMap.plot(df["0"], df["1"], symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
         else:
             print("not implemented")
 
@@ -208,7 +208,7 @@ class FigureManager :
                     alpha = (true_nbtraces-(len(data)-1-i))/true_nbtraces
 
                 # Plot
-                curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color)
+                curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
                 curve.setAlpha(alpha, False)
                 self.curves.append(curve)
 
