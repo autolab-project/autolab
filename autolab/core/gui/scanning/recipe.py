@@ -15,14 +15,66 @@ from ... import config
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
+    customMimeType = "autolab/MyQTreeWidget-selectedItems"
 
     reorderSignal = QtCore.Signal(object)
 
     def __init__(self,parent, recipe_name):
         self.recipe_name = recipe_name
-
+        self.scanner = parent
         QtWidgets.QTreeWidget.__init__(self,parent)
         self.setAcceptDrops(True)
+
+    def mimeTypes(self):
+        """Based on https://gist.github.com/eyllanesc/42bcda52a14244445153153a33e7c0dd"""
+        mimetypes = QtWidgets.QTreeWidget.mimeTypes(self)
+        mimetypes.append(MyQTreeWidget.customMimeType)
+        return mimetypes
+
+    def startDrag(self, supportedActions):
+        drag = QtGui.QDrag(self)
+        mimedata = self.model().mimeData(self.selectedIndexes())
+
+        encoded = QtCore.QByteArray()
+        stream = QtCore.QDataStream(encoded, QtCore.QIODevice.WriteOnly)
+        self.encodeData(self.selectedItems(), stream)
+        mimedata.setData(MyQTreeWidget.customMimeType, encoded)
+
+        drag.setMimeData(mimedata)
+        drag.exec_(supportedActions)
+
+    def encodeData(self, items, stream):
+        stream.writeInt32(len(items))
+        for item in items:
+            p = item
+            rows = []
+            while p is not None:
+                rows.append(self.indexFromItem(p).row())
+                p = p.parent()
+            stream.writeInt32(len(rows))
+            for row in reversed(rows):
+                stream.writeInt32(row)
+        return stream
+
+    def decodeData(self, encoded, tree):
+        items = []
+        rows = []
+        stream = QtCore.QDataStream(encoded, QtCore.QIODevice.ReadOnly)
+        while not stream.atEnd():
+            nItems = stream.readInt32()
+            for i in range(nItems):
+                path = stream.readInt32()
+                row = []
+                for j in range(path):
+                    row.append(stream.readInt32())
+                rows.append(row)
+
+        for row in rows:
+            it = tree.topLevelItem(row[0])
+            for ix in row[1:]:
+                it = it.child(ix)
+            items.append(it)
+        return items
 
     def dropEvent(self, event):
 
@@ -35,6 +87,18 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             QtWidgets.QTreeWidget.dropEvent(self, event)
             self.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
             self.reorderSignal.emit(event)
+        elif isinstance(event.source(), MyQTreeWidget):  # if event comes from another recipe -> remove from incoming recipe and add to outgoing recipe
+            if event.mimeData().hasFormat(MyQTreeWidget.customMimeType):
+                encoded = event.mimeData().data(MyQTreeWidget.customMimeType)
+                items = self.decodeData(encoded, event.source())
+                recipe_name_output = event.source().recipe_name
+                for it in items:
+                    name = it.text(0)
+                    stepType = self.scanner.configManager.getRecipeStepType(name, recipe_name_output)
+                    stepElement = self.scanner.configManager.getRecipeStepElement(name, recipe_name_output)
+                    stepValue = self.scanner.configManager.getRecipeStepValue(name, recipe_name_output)
+                    self.scanner.configManager.delRecipeStep(name, recipe_name_output)
+                    self.scanner.configManager.addRecipeStep(stepType, stepElement, name, stepValue, self.recipe_name)
         else: # event comes from controlcenter -> check type to add step
             gui = event.source().gui
             variable = event.source().last_drag
@@ -50,13 +114,18 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     gui.addStepToScanRecipe('action',variable, self.recipe_name)
 
     def dragEnterEvent(self, event):
-
+        # Could use mimeData instead of last_drag but overkill
         if (event.source() is self) or (
                 hasattr(event.source(), "last_drag") and hasattr(event.source().last_drag, "_element_type") and event.source().last_drag._element_type != "module"):
             event.accept()
-
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             self.setGraphicsEffect(shadow)
+
+        elif type(event.source()) == type(self):
+            shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
+            event.source().setGraphicsEffect(None)
+            self.setGraphicsEffect(shadow)
+            event.accept()
         else:
             event.ignore()
 
