@@ -60,6 +60,18 @@ def boolean(value):
     return value
 
 
+def openFile(filename):
+    import platform
+    import os
+    system = platform.system()
+    if system == 'Windows':
+        os.startfile(filename)
+    elif system == 'Linux':
+        os.system(f'gedit "{filename}"')
+    elif system == 'Darwin':
+        os.system(f'open "{filename}"')
+
+
 def formatData(data):
     """ Format data to DataFrame """
     import pandas as pd
@@ -98,8 +110,8 @@ def pyqtgraph_fig_ax():
     ax.setLabel("left", '', **{'color':0.4, 'font-size': '12pt'})
 
     # Set your custom font for both axes
-    my_font = QtGui.QFont("Times", 12)
-    my_font_tick = QtGui.QFont("Times", 10)
+    my_font = QtGui.QFont('Arial', 12)
+    my_font_tick = QtGui.QFont('Arial', 10)
     ax.getAxis("bottom").label.setFont(my_font)
     ax.getAxis("left").label.setFont(my_font)
     ax.getAxis("bottom").setTickFont(my_font_tick)

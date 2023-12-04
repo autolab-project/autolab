@@ -30,7 +30,10 @@ class FigureManager:
         self.fig, self.ax = utilities.pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
 
-        self.plot = self.ax.plot([],[], symbol='x', pen='r', symbolPen='r', symbolSize=10)
+        self.setLabel('x',self.gui.xlabel)
+        self.setLabel('y',self.gui.ylabel)
+
+        self.plot = self.ax.plot([],[], symbol='x', pen='r', symbolPen='r', symbolSize=10, symbolBrush='r')
         self.plot_mean = self.ax.plot([],[], pen = pg.mkPen(color=0.4, style=pg.QtCore.Qt.DashLine))
         self.plot_min = self.ax.plot([],[], pen =  pg.mkPen(color=0.4))
         self.plot_max = self.ax.plot([],[], pen =  pg.mkPen(color=0.4))
@@ -97,6 +100,13 @@ class FigureManager:
             font.setPointSize(int(new_size))
             self.gui.dataDisplay.setFont(font)
 
+
+    def setLabel(self,axe,value):
+
+        """ This function changes the label of the given axis """
+
+        axes = {'x':'bottom', 'y':'left'}
+        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
 
     def clear(self):
         self.ymin = None
