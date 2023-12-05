@@ -29,6 +29,9 @@ class FigureManager:
         # Configure and initialize the figure in the GUI
         self.fig, self.ax = utilities.pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
+        self.figMap = pg.ImageView()
+        self.gui.graph.addWidget(self.figMap)
+        self.figMap.hide()
 
         self.setLabel('x',self.gui.xlabel)
         self.setLabel('y',self.gui.ylabel)
@@ -48,6 +51,15 @@ class FigureManager:
     def update(self,xlist,ylist):
 
         """ This function update the figure in the GUI """
+
+        if xlist is None: # image
+            self.fig.hide()
+            self.gui.min_checkBox.hide()
+            self.gui.mean_checkBox.hide()
+            self.gui.max_checkBox.hide()
+            self.figMap.show()
+            self.figMap.setImage(ylist)
+            return
 
         # Data retrieval
         self.plot.setData(xlist, ylist)
@@ -120,5 +132,9 @@ class FigureManager:
         if self.do_save_figure:
             raw_name, extension = os.path.splitext(filename)
             new_filename = raw_name+".png"
-            exporter = pg.exporters.ImageExporter(self.fig.plotItem)
-            exporter.export(new_filename)
+
+            if not self.fig.isHidden():
+                exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+                exporter.export(new_filename)
+            else:
+                self.figMap.export(new_filename)
