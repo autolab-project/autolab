@@ -53,6 +53,7 @@ conda install -c conda-forge pyside6
 """)
     else:
         pg.setConfigOptions(background='w', foreground="k")
+        pg.setConfigOption('imageAxisOrder', 'row-major')
 
         app = QtWidgets.QApplication.instance()
         if app is None:

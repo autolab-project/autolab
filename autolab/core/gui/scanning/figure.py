@@ -8,6 +8,7 @@ Created on Sun Sep 29 18:12:24 2019
 
 import os
 
+import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
 from pyqtgraph.Qt import QtWidgets
@@ -27,6 +28,9 @@ class FigureManager :
         # Configure and initialize the figure in the GUI
         self.fig, self.ax = utilities.pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
+        self.figMap = pg.ImageView()
+        self.gui.graph.addWidget(self.figMap)
+        self.figMap.hide()
 
         for axe in ['x','y'] :
             getattr(self.gui,f'variable_{axe}_comboBox').activated['QString'].connect(self.variableChanged)
@@ -43,18 +47,15 @@ class FigureManager :
         self.gui.displayScanData_pushButton.setEnabled(False)
         self.displayScan = DisplayValues(self.gui, "Scan", size=(500,300))
 
-        # Figure form tab DataFrame
-        self.gui.tabWidget.currentChanged.connect(self.tabWidgetCurrentChanged)
-        self.gui.tabWidget.setTabEnabled(1, False)  # disable 2D map tab until it is ready
+        # Combobox to select data to plot
         self.gui.dataframe_comboBox.activated['QString'].connect(self.dataframe_comboBoxCurrentChanged)
         self.gui.dataframe_comboBox.setEnabled(False)
+        self.gui.dataframe_comboBox.clear()
+        self.gui.dataframe_comboBox.addItems(["Scan"])
 
-        self.gui.toolButton.setEnabled(False)
+        self.gui.toolButton.hide()
         self.clearMenuID()
 
-        # Map plot
-        self.figMap, self.axMap = utilities.pyqtgraph_fig_ax()
-        self.gui.graphMap.addWidget(self.figMap)
 
 
     def clearMenuID(self):
@@ -62,7 +63,7 @@ class FigureManager :
         self.gui.toolButton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
         self.gui.toolButton.setMenu(QtWidgets.QMenu(self.gui.toolButton))
 
-        self.menuBoolList = list()  # TODO: when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
+        self.menuBoolList = list()  # OPTIMIZE: when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
         self.menuWidgetList = list()
         self.menuActionList = list()
         self.nbCheckBoxMenuID = 0
@@ -97,34 +98,16 @@ class FigureManager :
 
 
     def dataframe_comboBoxCurrentChanged(self):
+
         self.gui.dataManager.updateDisplayableResults()
         self.reloadData()
 
-    def tabWidgetCurrentChanged(self):
-        """ See if use tab or not for Map plot """
-        print("currentIndex", self.gui.tabWidget.currentIndex())  # 0 is first
-        print("currentWidget", self.gui.tabWidget.currentWidget())  # tab is first
-        print("isTabEnabled 1", self.gui.tabWidget.isTabEnabled(1))  # if enable not visible
-        # print("setCurrentIndex 1", self.gui.tabWidget.setCurrentIndex(1))
-        # print("setCurrentWidget tab", self.gui.tabWidget.setCurrentWidget(self.gui.tab))
+        data_name = self.gui.dataframe_comboBox.currentText()
 
-        if self.gui.tabWidget.currentIndex() == 0:
-            print("in Curve plot")
-        elif self.gui.tabWidget.currentIndex() == 1:
-            print("in Map plot")
-            if len(self.gui.dataManager.datasets) != 0:
-                dataset = self.gui.dataManager.getLastSelectedDataset()
-
-                for dataName in dataset.dictListDataFrame:
-                    colors = ('#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf')
-                    for i in range(len(dataset.dictListDataFrame[dataName])):
-                        color = colors[i % len(colors)]
-                        data = dataset.dictListDataFrame[dataName][i]
-                        df = utilities.formatData(data)
-                        curve = self.axMap.plot(df["0"], df["1"], symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+        if data_name == "Scan" or self.fig.isHidden():
+            self.gui.toolButton.hide()
         else:
-            print("not implemented")
-
+           self.gui.toolButton.show()
 
 
 
@@ -176,16 +159,29 @@ class FigureManager :
         self.setLabel('x',variable_x)
         self.setLabel('y',variable_y)
 
+        self.gui.frame_axis.show()
+        if data_name == "Scan":
+            nbtraces_temp  = self.nbtraces
+            self.gui.nbTraces_lineEdit.show()
+            self.gui.graph_nbTracesLabel.show()
+        else:
+            nbtraces_temp = 1  # decided to only show the last scan data for dataframes
+            self.gui.nbTraces_lineEdit.hide()
+            self.gui.graph_nbTracesLabel.hide()
         # Load the last results data
         try :
-            data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y], selectedData=selectedData, data_name=data_name)
+            data = self.gui.dataManager.getData(nbtraces_temp,[variable_x,variable_y], selectedData=selectedData, data_name=data_name)
         except :
             data = None
 
         # Plot them
         if data is not None :
-            true_nbtraces = max(self.nbtraces, len(data))  # OPTIMIZE: not good but avoid error
-
+            true_nbtraces = max(nbtraces_temp, len(data))  # not good but avoid error
+            if len(data) != 0:
+                for temp_data in data:
+                    if temp_data is not None:
+                        break
+                image_data = np.empty((len(data), *temp_data.shape))
             for i in range(len(data)) :
                 # Data
                 subdata = data[i]
@@ -194,23 +190,38 @@ class FigureManager :
                     continue
 
                 subdata = subdata.astype(float)
-                x = subdata.loc[:,variable_x]
-                y = subdata.loc[:,variable_y]
 
-                # could look at https://stackoverflow.com/questions/12761806/matplotlib-2-different-legends-on-same-graph
-                # Appearance:  # TODO: change color and alpha for dataframe  should have color loop for id and alpha loop for dataset so for len(id) color ...
-                # can't do it now, need to change how dataset from getData because if change scan range, will have diff size and can't loop color equaly
-                if i == (len(data)-1) :
-                    color = 'r'
-                    alpha = 1
-                else:
-                    color = 'k'
-                    alpha = (true_nbtraces-(len(data)-1-i))/true_nbtraces
+                if type(subdata) is np.ndarray:  # is image
+                    self.fig.hide()
+                    self.figMap.show()
+                    self.gui.frame_axis.hide()
+                    image_data[i] = subdata
+                    if i == len(data)-1:
+                        if image_data.ndim == 3:
+                            x,y = (0, 1) if self.figMap.imageItem.axisOrder == 'col-major' else (1, 0)
+                            axes = {'t': 0, 'x': x+1, 'y': y+1, 'c': None}  # to avoid a special case in pg that incorrectly assumes the axis
+                        else:
+                            axes = None
+                        self.figMap.setImage(image_data, axes=axes)# xvals=() # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+                        self.figMap.setCurrentIndex(len(self.figMap.tVals))
 
-                # Plot
-                curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
-                curve.setAlpha(alpha, False)
-                self.curves.append(curve)
+                else: # not an image (is pd.DataFrame)
+                    self.figMap.hide()
+                    self.fig.show()
+                    x = subdata.loc[:,variable_x]
+                    y = subdata.loc[:,variable_y]
+
+                    if i == (len(data)-1) :
+                        color = 'r'
+                        alpha = 1
+                    else:
+                        color = 'k'
+                        alpha = (true_nbtraces-(len(data)-1-i))/true_nbtraces
+
+                    # Plot
+                    curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+                    curve.setAlpha(alpha, False)
+                    self.curves.append(curve)
 
             self.gui.dataframe_comboBox.setEnabled(True)
 

@@ -12,6 +12,7 @@ import shutil
 import tempfile
 import sys
 
+import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
 
@@ -42,19 +43,6 @@ class DataManager :
         # Clear button configuration
         self.gui.clear_pushButton.clicked.connect(self.clear)
 
-        self.gui.dataframe_comboBox.clear()
-        self.gui.dataframe_comboBox.addItems(["Scan"])
-
-        self.gui.dataframe_comboBox.activated['QString'].connect(self.dataframe_comboBoxClicked)
-
-
-    def dataframe_comboBoxClicked(self):
-        data_name = self.gui.dataframe_comboBox.currentText()
-
-        if data_name == "Scan":
-            self.gui.toolButton.setEnabled(False)
-        else:
-            self.gui.toolButton.setEnabled(True)
 
 
     def getData(self,nbDataset,varList, selectedData=0, data_name="Scan"):
@@ -134,6 +122,14 @@ class DataManager :
         self.initialized = False
         self.gui.figureManager.clearData()
         self.gui.figureManager.clearMenuID()
+        self.gui.figureManager.figMap.hide()
+        self.gui.figureManager.fig.show()
+        self.gui.figureManager.setLabel("x","")
+        self.gui.figureManager.setLabel("y","")
+        self.gui.nbTraces_lineEdit.show()
+        self.gui.graph_nbTracesLabel.show()
+        self.gui.frame_axis.show()
+        self.gui.toolButton.hide()
         self.gui.variable_x_comboBox.clear()
         self.gui.variable_y_comboBox.clear()
         self.gui.data_comboBox.clear()
@@ -143,7 +139,6 @@ class DataManager :
         self.gui.dataframe_comboBox.clear()
         self.gui.dataframe_comboBox.addItems(["Scan"])
         self.gui.dataframe_comboBox.setEnabled(False)
-        self.gui.toolButton.setEnabled(False)
 
 
     def getLastDataset(self):
@@ -288,6 +283,11 @@ class DataManager :
                         break
             else:
                 return
+            if not (len(data.T.shape) == 1 or data.T.shape[0] == 2):
+                self.gui.variable_x_comboBox.clear()
+                self.gui.variable_y_comboBox.clear()
+                return
+
             data = utilities.formatData(data)
 
         resultNamesList = []
@@ -344,7 +344,12 @@ class Dataset():
             data = self.data
         else:
             data = self.dictListDataFrame[data_name][dataID]
-            data = utilities.formatData(data)
+
+            if (data is not None) and (len(data.T.shape) == 1 or data.T.shape[0] == 2):
+                data = utilities.formatData(data)
+            else:  # Image
+                return data
+
 
         if any(map(lambda v: v in varList, list(data.columns))):
             if varList[0] == varList[1] : return data.loc[:,[varList[0]]]
@@ -410,7 +415,7 @@ class Dataset():
                 folderPath = os.path.join(self.tempFolderPath,resultName)
                 if not os.path.exists(folderPath) : os.mkdir(folderPath)
                 filePath = os.path.join(folderPath,f'{ID}.txt')
-                element.save(filePath,value=result)
+                element.save(filePath,value=result)  # OPTIMIZE: very slow if save large data like high resolution image, which block the GUI until completion. First solution: save in diff thread than GUI. Second solution: don't save during scan but risk of loosing data if crash :/. Third option (too heavy for the user) allow to tick if want to save or not a recipe element.
                 if folderPath not in self.list_array:
                     self.list_array.append(folderPath)
 
