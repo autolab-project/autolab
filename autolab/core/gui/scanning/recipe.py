@@ -19,10 +19,10 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
     reorderSignal = QtCore.Signal(object)
 
-    def __init__(self,parent, recipe_name):
+    def __init__(self, parent, gui, recipe_name):
         self.recipe_name = recipe_name
-        self.scanner = parent
-        QtWidgets.QTreeWidget.__init__(self,parent)
+        self.scanner = gui
+        QtWidgets.QTreeWidget.__init__(self, parent)
         self.setAcceptDrops(True)
 
     def mimeTypes(self):
@@ -77,9 +77,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         return items
 
     def dropEvent(self, event):
-
         """ This function is used to reorder the recipe or to add a step from a controlcenter drop """
-
         self.setGraphicsEffect(None)
 
         if event.source() is self:  # if event comes frop recipe -> reorder
@@ -94,11 +92,11 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                 recipe_name_output = event.source().recipe_name
                 for it in items:
                     name = it.text(0)
-                    stepType = self.scanner.configManager.getRecipeStepType(name, recipe_name_output)
-                    stepElement = self.scanner.configManager.getRecipeStepElement(name, recipe_name_output)
-                    stepValue = self.scanner.configManager.getRecipeStepValue(name, recipe_name_output)
-                    self.scanner.configManager.delRecipeStep(name, recipe_name_output)
-                    self.scanner.configManager.addRecipeStep(stepType, stepElement, name, stepValue, self.recipe_name)
+                    stepType = self.scanner.configManager.getRecipeStepType(recipe_name_output, name)
+                    stepElement = self.scanner.configManager.getRecipeStepElement(recipe_name_output, name)
+                    stepValue = self.scanner.configManager.getRecipeStepValue(recipe_name_output, name)
+                    self.scanner.configManager.delRecipeStep(recipe_name_output, name)
+                    self.scanner.configManager.addRecipeStep(self.recipe_name, stepType, stepElement, name, stepValue)
         else: # event comes from controlcenter -> check type to add step
             gui = event.source().gui
             variable = event.source().last_drag
@@ -107,11 +105,11 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     if variable.readable and variable.writable:
                         self.menu(gui, variable, event.pos())
                     elif variable.readable:
-                        gui.addStepToScanRecipe('measure',variable, self.recipe_name)
+                        gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
                     elif variable.writable:
-                        gui.addStepToScanRecipe('set',variable, self.recipe_name)
+                        gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
                 elif variable._element_type == "action":
-                    gui.addStepToScanRecipe('action',variable, self.recipe_name)
+                    gui.addStepToScanRecipe(self.recipe_name, 'action', variable)
 
     def dragEnterEvent(self, event):
         # Could use mimeData instead of last_drag but overkill
@@ -132,10 +130,8 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
     def dragLeaveEvent(self, event):
         self.setGraphicsEffect(None)
 
-    def menu(self, gui, variable, position):
-
+    def menu(self, gui, variable, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
-
         menu = QtWidgets.QMenu()
         scanMeasureStepAction = menu.addAction("Measure in scan recipe")
         scanSetStepAction = menu.addAction("Set value in scan recipe")
@@ -143,14 +139,48 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         scanSetStepAction.setEnabled(variable.writable)
         choice = menu.exec_(self.viewport().mapToGlobal(position))
         if choice == scanMeasureStepAction :
-            gui.addStepToScanRecipe('measure',variable, self.recipe_name)
+            gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
         elif choice == scanSetStepAction :
-            gui.addStepToScanRecipe('set',variable, self.recipe_name)
+            gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
 
 
-class RecipeManager :
+class parameterQFrame(QtWidgets.QFrame):
+    # customMimeType = "autolab/MyQTreeWidget-selectedItems"
 
-    def __init__(self,gui, recipe_name):
+    def __init__(self, parent, recipe_name: str):
+        self.recipe_name = recipe_name
+        QtWidgets.QFrame.__init__(self, parent)
+        self.setAcceptDrops(True)
+
+    def dropEvent(self, event):
+        """ Set parameter if drop compatible variable onto scanner (excluding recipe area) """
+        if hasattr(event.source(), "last_drag"):
+            gui = event.source().gui
+            variable = event.source().last_drag
+            if variable and variable.parameter_allowed:
+                gui.setScanParameter(self.recipe_name, variable)
+
+        self.setGraphicsEffect(None)
+
+    def dragEnterEvent(self, event):
+        """ Only accept config file (url) and parameter from controlcenter """
+        # OPTIMIZE: create mimedata like for recipe if want to drag/drop parameter to recipe or parap to param
+        if (hasattr(event.source(), "last_drag") and (hasattr(event.source().last_drag, "parameter_allowed") and event.source().last_drag.parameter_allowed)):
+            event.accept()
+
+            shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
+            self.setGraphicsEffect(shadow)
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event):
+        self.setGraphicsEffect(None)
+
+
+class RecipeManager:
+    """ Manage a recipe from a scan """
+
+    def __init__(self, gui, recipe_name: str):
 
         self.gui = gui
         self.recipe_name = recipe_name
@@ -159,168 +189,351 @@ class RecipeManager :
         scanner_config = config.get_scanner_config()
         self.precision = scanner_config['precision']
 
+        self._addTree()
+
+        self.defaultItemBackground = None
+
+    def __del__(self):
+        self._removeTree()
+
+    def _addTree(self):
+
+        # OPTIMIZE: should be in diff file so diff manager can access it without using recipemanager
+
+        # Create recipe widget (parameter, scanrange, recipe)
+        fontBold = QtGui.QFont()
+        fontBold.setBold(True)
+
+        # Close button frame
+        frameClose = QtWidgets.QFrame()
+        # frameClose.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        frameClose.setMinimumSize(0, 20)
+        frameClose.setMaximumSize(16777215, 20)
+
+        closeButton = QtWidgets.QPushButton(frameClose)
+        closeButton.setText('X')
+        closeButton.setFont(fontBold)
+        closeButton.setStyleSheet('''QPushButton:hover {background-color: #f44336; color: white;}''')
+        closeButton.setMinimumSize(40, 20)
+        closeButton.setMaximumSize(40, 20)
+        closeButton.clicked.connect(lambda : self.gui.configManager.removeRecipe(self.recipe_name))
+
+        layoutClose = QtWidgets.QHBoxLayout(frameClose)
+        layoutClose.setContentsMargins(0,0,0,0)
+        layoutClose.setSpacing(0)
+        layoutClose.addStretch()
+        layoutClose.addWidget(closeButton)
+        layoutClose.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignTop)
+
+        # Parameter frame
+        frameParameter = parameterQFrame(self.gui, self.recipe_name)
+        # frameParameter.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        frameParameter.setMinimumSize(0, 32)
+        frameParameter.setMaximumSize(16777215, 32)
+        frameParameter.setToolTip(f"Drag and drop a variable or use the right click option of a variable from the control panel to add a recipe to the tree: {self.recipe_name}")
+
+        parameterName_lineEdit = QtWidgets.QLineEdit('', frameParameter)
+        parameterName_lineEdit.setMinimumSize(0, 20)
+        parameterName_lineEdit.setMaximumSize(16777215, 20)
+        parameterName_lineEdit.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+        parameterName_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        parameterName_lineEdit.setToolTip('Name of the parameter, as it will displayed in the data')
+        self.parameterName_lineEdit = parameterName_lineEdit
+
+        parameterAddressIndicator_label = QtWidgets.QLabel("Address:", frameParameter)
+        parameterAddressIndicator_label.setMinimumSize(0, 20)
+        parameterAddressIndicator_label.setMaximumSize(16777215, 20)
+        parameterAddressIndicator_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        parameterAddress_label = QtWidgets.QLabel("<variable>", frameParameter)
+        parameterAddress_label.setMinimumSize(0, 20)
+        parameterAddress_label.setMaximumSize(16777215, 20)
+        parameterAddress_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        parameterAddress_label.setToolTip('Address of the parameter')
+        self.parameterAddress_label = parameterAddress_label
+
+        unit_label = QtWidgets.QLabel("uA", frameParameter)
+        unit_label.setMinimumSize(0, 20)
+        unit_label.setMaximumSize(16777215, 20)
+        unit_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.unit_label = unit_label
+
+        displayParameter_pushButton = QtWidgets.QPushButton("Parameter")
+        displayParameter_pushButton.setMinimumSize(0, 23)
+        displayParameter_pushButton.setMaximumSize(16777215, 23)
+        self.displayParameter_pushButton = displayParameter_pushButton
+
+        layoutParameter = QtWidgets.QHBoxLayout(frameParameter)
+        layoutParameter.addWidget(parameterName_lineEdit)
+        layoutParameter.addWidget(unit_label)
+        layoutParameter.addWidget(parameterAddressIndicator_label)
+        layoutParameter.addWidget(parameterAddress_label)
+        layoutParameter.addWidget(displayParameter_pushButton)
+
+
+        # Scanrange frame
+        frameScanRange = QtWidgets.QFrame()
+        # frameScanRange.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        frameScanRange.setMinimumSize(0, 60)
+        frameScanRange.setMaximumSize(16777215, 60)
+
+        # first grid
+        labelStart = QtWidgets.QLabel("Start", frameScanRange)
+        start_lineEdit = QtWidgets.QLineEdit('0', frameScanRange)
+        start_lineEdit.setToolTip('Start value of the scan')
+        start_lineEdit.setMinimumSize(0, 20)
+        start_lineEdit.setMaximumSize(16777215, 20)
+        start_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.start_lineEdit = start_lineEdit
+
+        labelEnd = QtWidgets.QLabel("End", frameScanRange)
+        end_lineEdit = QtWidgets.QLineEdit('10', frameScanRange)
+        end_lineEdit.setMinimumSize(0, 20)
+        end_lineEdit.setMaximumSize(16777215, 20)
+        end_lineEdit.setToolTip('End value of the scan')
+        end_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.end_lineEdit = end_lineEdit
+
+        startEndGridLayout = QtWidgets.QGridLayout(frameScanRange)
+        startEndGridWidget = QtWidgets.QWidget(frameScanRange)
+        startEndGridWidget.setLayout(startEndGridLayout)
+        startEndGridLayout.addWidget(labelStart, 0, 0)
+        startEndGridLayout.addWidget(start_lineEdit, 0, 1)
+        startEndGridLayout.addWidget(labelEnd, 1, 0)
+        startEndGridLayout.addWidget(end_lineEdit, 1, 1)
+
+        # second grid
+        labelMean = QtWidgets.QLabel("Mean", frameScanRange)
+        mean_lineEdit = QtWidgets.QLineEdit('5', frameScanRange)
+        mean_lineEdit.setMinimumSize(0, 20)
+        mean_lineEdit.setMaximumSize(16777215, 20)
+        mean_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.mean_lineEdit = mean_lineEdit
+
+        labelWidth = QtWidgets.QLabel("Width", frameScanRange)
+        width_lineEdit = QtWidgets.QLineEdit('10', frameScanRange)
+        width_lineEdit.setMinimumSize(0, 20)
+        width_lineEdit.setMaximumSize(16777215, 20)
+        width_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.width_lineEdit = width_lineEdit
+
+        meanWidthGridLayout = QtWidgets.QGridLayout(frameScanRange)
+        meanWidthGridWidget = QtWidgets.QWidget(frameScanRange)
+        meanWidthGridWidget.setLayout(meanWidthGridLayout)
+        meanWidthGridLayout.addWidget(labelMean, 0, 0)
+        meanWidthGridLayout.addWidget(mean_lineEdit, 0, 1)
+        meanWidthGridLayout.addWidget(labelWidth, 1, 0)
+        meanWidthGridLayout.addWidget(width_lineEdit, 1, 1)
+
+        # third grid
+        labelNbpts = QtWidgets.QLabel("Nb points", frameScanRange)
+        nbpts_lineEdit = QtWidgets.QLineEdit('11', frameScanRange)
+        nbpts_lineEdit.setMinimumSize(0, 20)
+        nbpts_lineEdit.setMaximumSize(16777215, 20)
+        nbpts_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.nbpts_lineEdit = nbpts_lineEdit
+
+        labelStep = QtWidgets.QLabel("Step", frameScanRange)
+        step_lineEdit = QtWidgets.QLineEdit('1', frameScanRange)
+        step_lineEdit.setMinimumSize(0, 20)
+        step_lineEdit.setMaximumSize(16777215, 20)
+        step_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.step_lineEdit = step_lineEdit
+        scanLog_checkBox = QtWidgets.QCheckBox("Log")
+        self.scanLog_checkBox = scanLog_checkBox
+
+        nptsStepGridLayout = QtWidgets.QGridLayout(frameScanRange)
+        nptsStepGridWidget = QtWidgets.QWidget(frameScanRange)
+        nptsStepGridWidget.setLayout(nptsStepGridLayout)
+        nptsStepGridLayout.addWidget(labelNbpts, 0, 0)
+        nptsStepGridLayout.addWidget(nbpts_lineEdit, 0, 1)
+        nptsStepGridLayout.addWidget(labelStep, 1, 0)
+        nptsStepGridLayout.addWidget(step_lineEdit, 1, 1)
+        nptsStepGridLayout.addWidget(scanLog_checkBox, 1, 2)
+
+        layoutScanRange = QtWidgets.QHBoxLayout(frameScanRange)
+        layoutScanRange.setContentsMargins(0,0,0,0)
+        layoutScanRange.setSpacing(0)
+        layoutScanRange.addWidget(startEndGridWidget)
+        layoutScanRange.addStretch()
+        layoutScanRange.addWidget(meanWidthGridWidget)
+        layoutScanRange.addStretch()
+        layoutScanRange.addWidget(nptsStepGridWidget)
+
+        # Recipe frame
+        frameRecipe = QtWidgets.QFrame()
+        # frameRecipe.setFrameShape(QtWidgets.QFrame.StyledPanel)
+
         # Tree configuration
-        self.tree = MyQTreeWidget(self.gui, self.recipe_name)
+        self.tree = MyQTreeWidget(frameRecipe, self.gui, self.recipe_name)
         self.tree.setHeaderLabels(['Step name','Type','Element address','Value'])
-        self.tree.header().resizeSection(3, 50)
+        self.tree.header().resizeSection(0, 100)
+        self.tree.header().resizeSection(1, 60)
+        self.tree.header().resizeSection(2, 150)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
         self.tree.reorderSignal.connect(self.orderChanged)
         self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
         self.tree.setDropIndicatorShown(True)
         self.tree.setAlternatingRowColors(True)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        # self.tree.setMinimumSize(450,500)
         self.tree.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.tree.customContextMenuRequested.connect(self.rightClick)
+        self.tree.setMinimumSize(0, 200)
+        self.tree.setMaximumSize(16777215, 16777215)
 
-        if self.recipe_name == 'initrecipe':
-            self.gui.tree_layout_begin.addWidget(self.tree)
-        elif self.recipe_name == 'recipe':
-            self.gui.tree_layout.addWidget(self.tree)
-        elif self.recipe_name == 'endrecipe':
-            self.gui.tree_layout_end.addWidget(self.tree)
+        layoutRecipe = QtWidgets.QVBoxLayout(frameRecipe)
+        layoutRecipe.addWidget(self.tree)
 
-        self.defaultItemBackground = None
+        # Qframe and QTab for close+parameter+scanrange+recipe
+        frameAll = QtWidgets.QFrame()
+        # frameAll.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        layoutAll = QtWidgets.QVBoxLayout(frameAll)
+        layoutAll.setContentsMargins(0,0,0,0)
+        layoutAll.setSpacing(0)
+        layoutAll.addWidget(frameClose)
+        layoutAll.addWidget(frameParameter)
+        layoutAll.addWidget(frameScanRange)
+        layoutAll.addWidget(frameRecipe)
 
+        frameAll2 = QtWidgets.QTabWidget()
+        frameAll2.addTab(frameAll, self.recipe_name)
+        stylesheet = """
+            QTabWidget>QWidget>QWidget{background: rgb(240, 240, 240);}
+            """
+        frameAll2.setStyleSheet(stylesheet)
+        self._frame = frameAll2
+        self.gui.verticalLayout_recipe.addWidget(self._frame)
 
-    def orderChanged(self,event):
+    def _removeTree(self):
+        if hasattr(self, '_frame'):
+            self._frame.hide()
+            self._frame.deleteLater()
+            del self._frame
+
+    def orderChanged(self, event):
         newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
-        self.gui.configManager.setRecipeOrder(newOrder, self.recipe_name)
-
+        self.gui.configManager.setRecipeOrder(self.recipe_name, newOrder)
 
     def refresh(self):
-
         """ Refresh the whole scan recipe displayed from the configuration center """
-
         self.tree.clear()
-
         recipe = self.gui.configManager.getRecipe(self.recipe_name)
 
-        for i in range(len(recipe)):
+        for step in recipe:
 
             # Loading step informations
-            step = recipe[i]
             item = QtWidgets.QTreeWidgetItem()
-            item.setFlags(item.flags() ^ QtCore.Qt.ItemIsDropEnabled )
+            item.setFlags(item.flags() ^ QtCore.Qt.ItemIsDropEnabled)
 
             # Column 1 : Step name
-            item.setText(0,step['name'])
+            item.setText(0, step['name'])
 
             # Column 2 : Step type
-            if step['stepType'] == 'measure' :
-                item.setText(1,'Measure variable')
-            elif step['stepType']  == 'set' :
-                item.setText(1,'Set variable')
-            elif step['stepType']  == 'action' :
-                item.setText(1,'Do action')
+            if step['stepType'] == 'measure':
+                item.setText(1, 'Measure')
+            elif step['stepType']  == 'set':
+                item.setText(1, 'Set')
+            elif step['stepType']  == 'action':
+                item.setText(1, 'Do')
 
             # Column 3 : Element address
-            item.setText(2,step['element'].address())
+            item.setText(2, step['element'].address())
 
             # Column 4 : Value if stepType is 'set'
             value = step['value']
-            if value is not None :
+            if value is not None:
                 try:
-                    if step['element'].type in [bool,str] :
-                       item.setText(3,f'{value}')
-                    else :
-                       item.setText(3,f'{value:.{self.precision}g}')
+                    if step['element'].type in [bool, str]:
+                       item.setText(3, f'{value}')
+                    else:
+                       item.setText(3, f'{value:.{self.precision}g}')
                 except ValueError:
-                    item.setText(3,f'{value}')
+                    item.setText(3, f'{value}')
+
             # Add item to the tree
             self.tree.addTopLevelItem(item)
             self.defaultItemBackground = item.background(0)
 
-
-
-    def rightClick(self,position):
-
+    def rightClick(self, position: QtCore.QPoint):
         """ This functions provide a menu where the user right clicked """
-
         item = self.tree.itemAt(position)
 
-        if item is not None and self.gui.scanManager.isStarted() is False :
-
+        if not self.gui.scanManager.isStarted() and item is not None:
             name = item.text(0)
-            stepType = self.gui.configManager.getRecipeStepType(name, self.recipe_name)
-            element = self.gui.configManager.getRecipeStepElement(name, self.recipe_name)
+            stepType = self.gui.configManager.getRecipeStepType(
+                self.recipe_name, name)
+            element = self.gui.configManager.getRecipeStepElement(
+                self.recipe_name, name)
 
             menuActions = {}
 
             menu = QtWidgets.QMenu()
             menuActions['rename'] = menu.addAction("Rename")
-            if stepType == 'set' or (stepType == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
+            if stepType == 'set' or (stepType == 'action' and element.type in [
+                    int,float,str,pd.DataFrame,np.ndarray]) :
                 menuActions['setvalue'] = menu.addAction("Set value")
             menuActions['remove'] = menu.addAction("Remove")
 
             choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 
-            if 'rename' in menuActions.keys() and choice == menuActions['rename'] :
+            if 'rename' in menuActions.keys() and choice == menuActions['rename']:
                 self.renameStep(name)
-            elif 'remove' in menuActions.keys() and choice == menuActions['remove'] :
-                self.gui.configManager.delRecipeStep(name, self.recipe_name)
-            elif 'setvalue' in menuActions.keys() and choice == menuActions['setvalue'] :
+            elif 'remove' in menuActions.keys() and choice == menuActions['remove']:
+                self.gui.configManager.delRecipeStep(self.recipe_name, name)
+            elif 'setvalue' in menuActions.keys() and choice == menuActions['setvalue']:
                 self.setStepValue(name)
 
-
-
-    def renameStep(self,name):
-
-        """ This function prompts the user for a new step name, and apply it to the selected step """
-
-        newName,state = QtWidgets.QInputDialog.getText(self.gui, name, f"Set {name} new name",
-                                                       QtWidgets.QLineEdit.Normal, name)
+    def renameStep(self, name: str):
+        """ This function prompts the user for a new step name,
+        and apply it to the selected step """
+        newName, state = QtWidgets.QInputDialog.getText(
+            self.gui, name, f"Set {name} new name",
+            QtWidgets.QLineEdit.Normal, name)
 
         newName = main.cleanString(newName)
-        if newName != '' :
-            self.gui.configManager.renameRecipeStep(name,newName, self.recipe_name)
+        if newName != '':
+            self.gui.configManager.renameRecipeStep(
+                self.recipe_name, name, newName)
 
-
-
-    def setStepValue(self,name):
-
-        """ This function prompts the user for a new step value, and apply it to the selected step """
-
-        element = self.gui.configManager.getRecipeStepElement(name, self.recipe_name)
-        value = self.gui.configManager.getRecipeStepValue(name, self.recipe_name)
+    def setStepValue(self, name: str):
+        """ This function prompts the user for a new step value,
+        and apply it to the selected step """
+        element = self.gui.configManager.getRecipeStepElement(
+            self.recipe_name, name)
+        value = self.gui.configManager.getRecipeStepValue(
+            self.recipe_name, name)
 
         # Default value displayed in the QInputDialog
         try:
             defaultValue = f'{value:.{self.precision}g}'
         except ValueError:
             defaultValue = f'{value}'
-        value,state = QtWidgets.QInputDialog.getText(self.gui,
-                                                     name,
-                                                     f"Set {name} value",
-                                                     QtWidgets.QLineEdit.Normal, defaultValue)
+        value,state = QtWidgets.QInputDialog.getText(
+            self.gui, name, f"Set {name} value",
+            QtWidgets.QLineEdit.Normal, defaultValue)
 
-        if value != '' :
-
-            try :
-
+        if value != '':
+            try:
                 try:
-                    assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
-
-                except :
+                    assert self.checkVariable(value), "Need $eval: to evaluate the given string"
+                except:
                     # Type conversions
                     if element.type in [int]:
                         value = int(value)
-                    elif element.type in [float] :
+                    elif element.type in [float]:
                         value = float(value)
-                    elif element.type in [str] :
+                    elif element.type in [str]:
                         value = str(value)
                     elif element.type in [bool]:
                         if value == "False": value = False
                         elif value == "True": value = True
                         value = int(value)
-                        assert value in [0,1]
+                        assert value in [0, 1]
                         value = bool(value)
                     else:
-                        assert self.checkVariable(value) == 0, "Need $eval: to evaluate the given string"
-
+                        assert self.checkVariable(value), "Need $eval: to evaluate the given string"
                 # Apply modification
-                self.gui.configManager.setRecipeStepValue(name,value, self.recipe_name)
-
+                self.gui.configManager.setRecipeStepValue(
+                    self.recipe_name, name, value)
             except Exception as er:
                 self.gui.setStatus(f"Can't set step: {er}", 10000, False)
                 pass
@@ -337,53 +550,38 @@ class RecipeManager :
     #         module = module.get_module(submodule_name)
     #     module.get_variable(variable_name)
 
-    def checkVariable(self, value):
-
+    def checkVariable(self, value) -> bool:
         """ Check if value start with '$eval:'. Will not try to check if variables exists"""
+        return True if str(value).startswith("$eval:") else False
 
-        if str(value).startswith("$eval:"):
-            return 0
-        else:
-            return -1
-
-
-    def itemDoubleClicked(self,item,column):
-
+    def itemDoubleClicked(self, item, column: int):
         """ This function executes an action depending where the user double clicked """
-
         name = item.text(0)
-        stepType = self.gui.configManager.getRecipeStepType(name, self.recipe_name)
-        element = self.gui.configManager.getRecipeStepElement(name, self.recipe_name)
+        stepType = self.gui.configManager.getRecipeStepType(self.recipe_name, name)
+        element = self.gui.configManager.getRecipeStepElement(self.recipe_name, name)
 
-        if column == 0 :
+        if column == 0:
             self.renameStep(name)
-        if column == 3 :
-            if stepType == 'set' or (stepType == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
+        elif column == 3:
+            if stepType == 'set' or (stepType == 'action' and element.type in [
+                    int,float,str,pd.DataFrame,np.ndarray]):
                 self.setStepValue(name)
 
-
-
-    def setStepProcessingState(self,name,state):
-
+    def setStepProcessingState(self, name: str, state: str):
         """ This function set the background color of a recipe step during the scan """
-
         item = self.tree.findItems(name, QtCore.Qt.MatchExactly, 0)[0]
 
-        if state is None :
-            item.setBackground(0,self.defaultItemBackground)
-        if state == 'started' :
+        if state is None:
+            item.setBackground(0, self.defaultItemBackground)
+        elif state == 'started':
             item.setBackground(0, QtGui.QColor('#ff8c1a'))
-        elif state == 'finished' :
+        elif state == 'finished':
             item.setBackground(0, QtGui.QColor('#70db70'))
 
-
-
     def resetStepsProcessingState(self):
-
         """ This function reset the background color of a recipe once the scan is finished """
-
-        for name in self.gui.configManager.getNames(option='recipe', recipe_name=self.recipe_name):
-            self.setStepProcessingState(name,None)
+        for name in self.gui.configManager.getNames(self.recipe_name, option='recipe'):
+            self.setStepProcessingState(name, None)
 
 
 #

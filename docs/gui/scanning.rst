@@ -69,9 +69,12 @@ Figure
 
 The user can interact with the figure at any time (during a scan or not).
 
-To zoom/unzoom the current view of the figure, use the buttons **Zoom** and **Unzoom** of each axis, or use the navigation bar above the figure.
-To move the current view of the figure, use the buttons **Left**, **Right**, **Up** and **Down**, or use the navigation bar above the figure.
+After a first loop of the scan has been processed, the user can select the **Variable** displayed in x and y axis of the figure.
 
-After a first loop of the scan has been processed, the user can select the **Variable** displayed in x and y axis of the figure. If the *Variable* of the x axis is the parameter, the user can use the button **From figure** to set the current x axis range of the figure, as the new parameter range.
+The user can display the previous scan results using the combobox above the scanner figure containing the scan name.
 
-Finally, the user can display the previous curves of a scan by setting the **Traces** number.
+If the user has created several recipes in a scan, it is possible to display its results using the combobox above the scanner figure contaning the recipe name.
+
+It is possible to display arrays and images using the combobox above the scanner figure containing the dataframe name or 'Scan' for the main scan result.
+
+.. image:: multiple_recipes.png
