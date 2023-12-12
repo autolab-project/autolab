@@ -7,7 +7,7 @@ Created on Fri Sep 20 22:08:29 2019
 import os
 import sys
 
-from PyQt5 import QtWidgets, uic, QtGui
+from qtpy import QtWidgets, uic, QtGui
 
 from .config import ConfigManager
 from .figure import FigureManager
@@ -17,7 +17,6 @@ from .scan import ScanManager
 from .data import DataManager
 from .scanrange import RangeManager
 
-from ... import config
 
 class Scanner(QtWidgets.QMainWindow):
 
@@ -25,45 +24,64 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.mainGui = mainGui
 
-        # Import Autolab config
-        scanner_config = config.get_scanner_config()
-        import ast
-        self.recipe_size = [int(i) for i in ast.literal_eval(scanner_config['recipe_size'])]
-
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
-        ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
-        uic.loadUi(ui_path,self)
+        ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
+        uic.loadUi(ui_path, self)
         self.setWindowTitle("AUTOLAB Scanner")
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
-        self.splitter_recipe.setChildrenCollapsible(True)
-        self.splitter_recipe.setSizes(self.recipe_size)
+        self.setAcceptDrops(True)
+        self.recipeDict = {}
 
         # Loading of the different centers
-        self.configManager = ConfigManager(self)
         self.figureManager = FigureManager(self)
-        self.parameterManager = ParameterManager(self)
-        self.recipeManager_begin = RecipeManager(self, 'initrecipe')
-        # self.recipeManager_begin.tree.setDragDropMode(QtWidgets.QAbstractItemView.NoDragDrop)
-        self.recipeManager = RecipeManager(self, 'recipe')
-        self.recipeManager_end = RecipeManager(self, 'endrecipe')
-        # self.recipeManager_end.tree.setDragDropMode(QtWidgets.QAbstractItemView.NoDragDrop)
         self.scanManager = ScanManager(self)
         self.dataManager = DataManager(self)
-        self.rangeManager = RangeManager(self)
+        self.configManager = ConfigManager(self)
 
-        self.setAcceptDrops(True)
+        self.configManager.addRecipe()  # add one recipe by default
+
+        self.addRecipe_pushButton.clicked.connect(self.configManager.addRecipe)
+
+    def _addRecipe(self, recipe_name: str):
+        self.scan_recipe_comboBox.addItem(recipe_name)
+        self.selectRecipe_comboBox.addItem(recipe_name)
+        self._show_recipe_combobox()
+
+        self.recipeDict[recipe_name] = {}  # order of creation matter
+        self.recipeDict[recipe_name]['recipeManager'] = RecipeManager(self, recipe_name)
+        self.recipeDict[recipe_name]['rangeManager'] = RangeManager(self, recipe_name)
+        self.recipeDict[recipe_name]['parameterManager'] = ParameterManager(self, recipe_name)
+
+    def _removeRecipe(self, recipe_name: str):  # order of creation matter
+        test = self.recipeDict.pop(recipe_name)
+        test['recipeManager']._removeTree()
+
+        index = self.scan_recipe_comboBox.findText(recipe_name)  # assert no duplicate name
+        self.scan_recipe_comboBox.removeItem(index)
+        self.selectRecipe_comboBox.removeItem(index)
+        self._show_recipe_combobox()
+
+    def _show_recipe_combobox(self):
+        dataSet_id = len(self.configManager.config.keys())
+        if dataSet_id > 1:
+            self.scan_recipe_comboBox.show()
+            self.selectRecipe_comboBox.show()
+        else:
+            self.scan_recipe_comboBox.hide()
+            self.selectRecipe_comboBox.hide()
+
+    def _clearRecipe(self):
+        for recipe_name in list(self.recipeDict.keys()):
+            self._removeRecipe(recipe_name)
+
+        self.recipeDict.clear()  # remove recipe from gui with __del__ in recipeManager
+        self.scan_recipe_comboBox.clear()
 
     def dropEvent(self, event):
         """ Set parameter if drop compatible variable onto scanner (excluding recipe area) """
-        if hasattr(event.source(), "last_drag"):
-            gui = event.source().gui
-            variable = event.source().last_drag
-            if variable and variable.parameter_allowed:
-                gui.setScanParameter(variable)
-        else:
-            filename = event.mimeData().urls()[0].toLocalFile()
-            self.configManager.import_configPars(filename)
+        filename = event.mimeData().urls()[0].toLocalFile()
+        self.configManager.import_configPars(filename)
 
         qwidget_children = self.findChildren(QtWidgets.QWidget)
         for widget in qwidget_children:
@@ -80,11 +98,6 @@ class Scanner(QtWidgets.QMainWindow):
                 shadow.setColor(QtGui.QColor(20,20,20))
                 shadow.setStrength(1)
                 widget.setGraphicsEffect(shadow)
-        elif (hasattr(event.source(), "last_drag") and (hasattr(event.source().last_drag, "parameter_allowed") and event.source().last_drag.parameter_allowed)):
-            event.accept()
-
-            shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
-            self.frame_2.setGraphicsEffect(shadow)  # OPTIMIZE: should only accept if drop on frame_2 but can't found how to do it
         else:
             event.ignore()
 
@@ -93,8 +106,7 @@ class Scanner(QtWidgets.QMainWindow):
         for widget in qwidget_children:
             widget.setGraphicsEffect(None)
 
-    def closeEvent(self,event):
-
+    def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
         # Stop ongoing scan
         if self.scanManager.isStarted() :
@@ -105,35 +117,34 @@ class Scanner(QtWidgets.QMainWindow):
 
         # Delete reference of this window in the control center
         self.mainGui.clearScanner()
+        for recipe in self.recipeDict.values():
+            recipe['rangeManager'].displayParameter.close()
+        self.figureManager.displayScan.close()
 
-    def setStatus(self,message, timeout=0, stdout=True):
-
+    def setStatus(self, message, timeout=0, stdout=True):
         """ Modify the message displayed in the status bar and add error message to logger """
-
         self.statusBar.showMessage(message, msecs=timeout)
         if not stdout: print(message, file=sys.stderr)
 
 
-    def setLineEditBackground(self,obj,state):
-
+    def setLineEditBackground(self, obj, state):
         """ Function used to set the background color of a QLineEdit widget,
         based on its editing state """
 
-        if state == 'synced' :
+        if state == 'synced':
             color='#D2FFD2' # vert
-        if state == 'edited' :
+        if state == 'edited':
             color='#FFE5AE' # orange
 
-        obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}"%color)
+        obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}" % color)
 
 
 
 
 
-def cleanString(name):
-
+def cleanString(name: str) -> str:
     """ This function clears the given name from special characters """
+    for character in '*."/\[]:;|, ':
+        name = name.replace(character, '')
 
-    for character in '*."/\[]:;|, ' :
-        name = name.replace(character,'')
     return name

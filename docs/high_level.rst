@@ -54,7 +54,7 @@ The procedure to load a **Device** is almost the same as for the **Driver**, but
 
 	.. code-block:: python
 
-		>>> laserSource = autolab.get_device('my_tunics',address='GPIB::9::INSTR')
+		>>> laserSource = autolab.get_device('my_tunics', address='GPIB::9::INSTR')
 
 To close properly the connection to the instrument, simply call its the function ``close`` of the **Device**. This object will not be usable anymore.
 
@@ -165,7 +165,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	    power = myPowerMeter.line1.power()
 
 	    # Store the values in a list
-		df = df.append({'wl_measured':wl_measured, 'power':power},ignore_index=True)
+		df = df.append({'wl_measured': wl_measured, 'power': power}, ignore_index=True)
 
 	# Turn off the light source
 	myTunics.output(False)

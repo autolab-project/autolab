@@ -7,7 +7,7 @@ The goal of this tutorial is to present the general structure of the drivers of 
 
 .. note::
 
-    To help you with writting your own drivers a few templates are provided on the `GitHub page of the project <https://github.com/qcha41/autolab/tree/master/autolab/drivers/More/Templates>`_.
+    To help you with writting your own drivers a few templates are provided on the `Drivers GitHub page <https://github.com/Python-simulation/autolab-drivers/tree/master/More/Templates>`_.
 
 We will first discuss the generalities to create a new driver or modify an existing one and share it with the community in **getting started: create a new driver**, that will particularly describe the required convention (location, files and namings) as well as the actual way to share it with the community (addition to the main package), and finally we will detail the typical **driver structure** as well as the required homogeneities. Those last will ensure that all the features of the drivers you would add are best used by autolab's utilities (helps, gui, parser, etc.).
 
@@ -15,14 +15,14 @@ We will first discuss the generalities to create a new driver or modify an exist
 Getting started: create a new driver
 ------------------------------------
 
-**To develop your own drivers**, autolab provide you with a directory named local_drivers (located at ~/autolab/local_drivers, where ~ represents the user root) created when the package is installed. This directory is inspected by autolab to search for locally defined drivers. This way you may modify existing drivers (addition of new functions, etc.) or create new drivers to drive new instruments not yet supported by autolab.
+**To develop your own drivers**, autolab provide you with a directory named local (located at ~/autolab/drivers/local, where ~ represents the user root) created when the package is installed. This directory is inspected by autolab to search for locally defined drivers. This way you may modify existing drivers (addition of new functions, etc.) or create new drivers to drive new instruments not yet supported by autolab.
 
 .. note::
 
     Each driver name should be unique: do not define new drivers (in your local folders) with a name that already exists in the main package.
 
 
-In the local_drivers directory, as in the main package, each instrument has/should have its own directory organized and named as follow. The name of this folder take the form *\<manufacturer\>_\<MODEL\>*. The driver associated to this instrument is a python script taking the same name as the folder: *\<manufacturer\>_\<MODEL\>.py*. A second python script, allowing the parser to work properly, should be named *\<manufacturer\>_\<MODEL\>_utilities.py* (`find a minimal template here <https://github.com/qcha41/autolab/tree/master/autolab/drivers/More/Templates>`_). Additional python scripts may be present in this folder (devices's modules, etc.). Please see the existing drivers of the autolab package for extensive examples.
+In the local_drivers directory, as in the main package, each instrument has/should have its own directory organized and named as follow. The name of this folder take the form *\<manufacturer\>_\<MODEL\>*. The driver associated to this instrument is a python script taking the same name as the folder: *\<manufacturer\>_\<MODEL\>.py*. A second python script, allowing the parser to work properly, should be named *\<manufacturer\>_\<MODEL\>_utilities.py* (`find a minimal template here <https://github.com/Python-simulation/autolab-drivers/tree/master/More/Templates>`_). Additional python scripts may be present in this folder (devices's modules, etc.). Please see the existing drivers of the autolab package for extensive examples.
 
 **For addition to the main package**: Once you tested your driver and it is ready to be used by others, you can send the appropriate directory to the contacts (:ref:`about`).
 

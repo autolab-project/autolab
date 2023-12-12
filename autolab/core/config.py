@@ -6,7 +6,7 @@ Created on Mon Nov 18 14:53:10 2019
 """
 
 import configparser
-from . import paths, stats
+from . import paths
 import os
 
 
@@ -20,29 +20,35 @@ def initialize_local_directory():
     """ This function creates the default autolab local directory """
 
     # LOCAL DIRECTORY
-    if os.path.exists(paths.USER_FOLDER) is False:
+    if not os.path.exists(paths.USER_FOLDER):
         os.mkdir(paths.USER_FOLDER)
         print(f'The local directory of AUTOLAB has been created: {paths.USER_FOLDER}')
 
     # DEVICES CONFIGURATION FILE
-    if os.path.exists(paths.DEVICES_CONFIG) is False :
+    if not os.path.exists(paths.DEVICES_CONFIG):
         devices_config = configparser.ConfigParser()
         devices_config['system'] = {'driver':'system','connection':'DEFAULT'}
         save_config('devices',devices_config)
         print(f'The devices configuration file devices_config.ini has been created: {paths.DEVICES_CONFIG}')
 
-    # lOCAL CUSTOM DRIVER FOLDER
-    if os.path.exists(paths.DRIVER_SOURCES['local']) is False :
+    # DRIVER FOLDERS
+    if not os.path.exists(paths.DRIVERS):
+        os.mkdir(paths.DRIVERS)
+        print(f"The drivers directory has been created: {paths.DRIVERS}")
+    if not os.path.exists(paths.DRIVER_SOURCES['official']):
+        os.mkdir(paths.DRIVER_SOURCES['official'])
+        print(f'The official driver directory has been created: {paths.DRIVER_SOURCES["official"]}')
+    if not os.path.exists(paths.DRIVER_SOURCES['local']):
         os.mkdir(paths.DRIVER_SOURCES['local'])
         print(f'The local driver directory has been created: {paths.DRIVER_SOURCES["local"]}')
 
     # AUTOLAB CONFIGURATION FILE
-    if os.path.exists(paths.AUTOLAB_CONFIG) is False :
+    if not os.path.exists(paths.AUTOLAB_CONFIG):
         save_config('autolab',configparser.ConfigParser())
         print(f'The configuration file autolab_config.ini has been created: {paths.AUTOLAB_CONFIG}')
 
     # PLOTTER CONFIGURATION FILE
-    if os.path.exists(paths.PLOTTER_CONFIG) is False :
+    if not os.path.exists(paths.PLOTTER_CONFIG):
         save_config('plotter',configparser.ConfigParser())
         print(f'The configuration file plotter_config.ini has been created: {paths.PLOTTER_CONFIG}')
 
@@ -58,7 +64,7 @@ def load_config(config_name):
 
     """ This function loads the autolab configuration file in a config parser """
 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
     config.read(getattr(paths,f'{config_name.upper()}_CONFIG'))
     return config
@@ -97,17 +103,6 @@ def check_autolab_config():
 
     autolab_config = load_config('autolab')
 
-    # Check stats configuration
-    if 'stats' not in autolab_config.sections() or 'enabled' not in autolab_config['stats'].keys() :
-
-        ans = input(f'{stats.startup_text} Do you agree? [default:yes] > ')
-        if ans.strip().lower() == 'no' :
-            print('This feature has been disabled.')
-            autolab_config['stats'] = {'enabled': '0'}
-        else :
-            print('Thank you !')
-            autolab_config['stats'] = {'enabled': '1'}
-
     # Check server configuration
     server_dict = {'port': 4001,
                    }
@@ -115,6 +110,15 @@ def check_autolab_config():
         if 'port' in autolab_config['server'].keys() :
             server_dict['port'] = autolab_config['server']['port']
     autolab_config['server'] = server_dict
+
+    # Check GUI configuration
+    GUI_dict = {'QT_API': "default",
+                }
+    if 'GUI' in autolab_config.sections() :
+        if 'QT_API' in autolab_config['GUI'].keys() :
+            GUI_dict['QT_API'] = autolab_config['GUI']['QT_API']
+    autolab_config['GUI'] = GUI_dict
+    autolab_config.set('GUI', '# QT_API -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
 
     # Check control center configuration
     control_center_dict = {'precision': 7,
@@ -132,21 +136,27 @@ def check_autolab_config():
 
     # Check monitor configuration
     monitor_dict = {'precision': 4,
+                    'save_figure': True,
                     }
     if 'monitor' in autolab_config.sections():
         if 'precision' in autolab_config['monitor'].keys() :
             monitor_dict['precision'] = autolab_config['monitor']['precision']
+        if 'save_figure' in autolab_config['monitor'].keys() :
+            monitor_dict['save_figure'] = autolab_config['monitor']['save_figure']
     autolab_config['monitor'] = monitor_dict
 
     # Check scanner configuration
     scanner_dict = {'precision': 15,
-                    'recipe_size': [0, 500, 0],
+                    'save_config': True,
+                    'save_figure': True,
                     }
     if 'scanner' in autolab_config.sections():
         if 'precision' in autolab_config['scanner'].keys() :
             scanner_dict['precision'] = autolab_config['scanner']['precision']
-        if 'recipe_size' in autolab_config['scanner'].keys() :
-            scanner_dict['recipe_size'] = autolab_config['scanner']['recipe_size']
+        if 'save_config' in autolab_config['scanner'].keys() :
+            scanner_dict['save_config'] = autolab_config['scanner']['save_config']
+        if 'save_figure' in autolab_config['scanner'].keys() :
+            scanner_dict['save_figure'] = autolab_config['scanner']['save_figure']
     autolab_config['scanner'] = scanner_dict
 
     # # Check plotter configuration
@@ -169,17 +179,16 @@ def get_config(section_name):
     return config[section_name]
 
 
-def get_stats_config():
-    ''' Returns section stats from autolab_config.ini '''
-
-    return get_config('stats')
-
-
 def get_server_config():
     ''' Returns section server from autolab_config.ini '''
 
     return get_config('server')
 
+
+def get_GUI_config():
+    ''' Returns section QT_API from autolab_config.ini '''
+
+    return get_config('GUI')
 
 def get_control_center_config():
     ''' Returns section control_center from autolab_config.ini '''
@@ -210,20 +219,24 @@ def check_plotter_config():
     plotter_config = load_config('plotter')
 
     # Check plugin configuration
-    plugin_dict = {'plotter': 'plotter'}
+    plugin_dict = {}#'plotter': 'plotter'}
     if 'plugin' in plotter_config.sections():
         plugin_dict = dict()
         for plugin_name in plotter_config['plugin'].keys():
             plugin_dict[plugin_name] = plotter_config['plugin'][plugin_name]
     plotter_config['plugin'] = plugin_dict
+    plotter_config.set('plugin', '# Usage: <PLUGIN_NAME> = <DEVICE_NAME>')
+    plotter_config.set('plugin', '# Example: plotter = plotter')
 
     # Check device configuration
-    device_dict = {'address': 'dummy.array_1D'}
+    device_dict = {}#'address': 'dummy.array_1D'}
     if 'device' in plotter_config.sections():
         if 'address' in plotter_config['device'].keys():
             device_dict['address'] = plotter_config['device']['address']
 
     plotter_config['device'] = device_dict
+    plotter_config.set('device', '# Usage: address = <DEVICE_VARIABLE>')
+    plotter_config.set('device', '# Example: address = dummy.array_1D')
 
     save_config('plotter',plotter_config)
 

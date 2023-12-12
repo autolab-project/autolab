@@ -8,7 +8,7 @@ import os
 import sys
 import queue
 
-from PyQt5 import QtCore, QtWidgets, uic
+from qtpy import QtCore, QtWidgets, uic
 
 from .data import DataManager
 from .figure import FigureManager
@@ -164,8 +164,8 @@ class Monitor(QtWidgets.QMainWindow):
                 self.dataManager.save(filename)
                 self.figureManager.save(filename)
                 self.setStatus(f'Data successfully saved in {filename}.',5000)
-            except :
-                self.setStatus('An error occured while saving data !',10000, False)
+            except Exception as e:
+                self.setStatus(f'Error while saving data: {e}',10000, False)
 
 
     def clearButtonClicked(self):
@@ -178,8 +178,7 @@ class Monitor(QtWidgets.QMainWindow):
     def mean_checkBoxClicked(self):
         """ This function clear the mean plot """
         if not self.mean_checkBox.isChecked():
-            self.figureManager.plot_mean.set_xdata([])
-            self.figureManager.plot_mean.set_ydata([])
+            self.figureManager.plot_mean.setData([], [])
 
         xlist,ylist = self.dataManager.getData()
 
@@ -190,8 +189,7 @@ class Monitor(QtWidgets.QMainWindow):
     def min_checkBoxClicked(self):
         """ This function clear the min plot """
         if not self.min_checkBox.isChecked():
-            self.figureManager.plot_min.set_xdata([])
-            self.figureManager.plot_min.set_ydata([])
+            self.figureManager.plot_min.setData([], [])
 
         xlist,ylist = self.dataManager.getData()
 
@@ -201,8 +199,7 @@ class Monitor(QtWidgets.QMainWindow):
     def max_checkBoxClicked(self):
         """ This function clear the max plot """
         if not self.max_checkBox.isChecked():
-            self.figureManager.plot_max.set_xdata([])
-            self.figureManager.plot_max.set_ydata([])
+            self.figureManager.plot_max.setData([], [])
 
         xlist,ylist = self.dataManager.getData()
 

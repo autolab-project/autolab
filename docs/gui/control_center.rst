@@ -47,7 +47,7 @@ The colored displayed at the end of a line corresponds to the state of the displ
 Monitoring
 ----------
 
-A readable and numerical *Variable* can be monitored in time (single point, 1D and 2D array versus time).
+A readable and numerical *Variable* can be monitored in time (single point, 1D and 2D array versus time, 3D array represented as an image versus time).
 To start the monitoring of this *Variable*, right click on it and select **Start monitoring**.
 Please visit the section :ref:`monitoring`.
 

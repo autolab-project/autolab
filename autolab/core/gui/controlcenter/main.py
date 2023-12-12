@@ -10,19 +10,19 @@ quentin.chateiller@c2n.upsaclay.fr
 import os
 import sys
 
-from PyQt5 import QtCore, QtWidgets, uic, QtGui
-from PyQt5.QtWidgets import QApplication
+from qtpy import QtCore, QtWidgets, uic, QtGui
+from qtpy.QtWidgets import QApplication
 
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
-from ... import devices, web, paths, config
+from ... import devices, web, paths, config, utilities
 
 
 class OutputWrapper(QtCore.QObject):
     """ https://stackoverflow.com/questions/19855288/duplicate-stdout-stderr-in-qtextedit-widget """
-    outputWritten = QtCore.pyqtSignal(object, object)
+    outputWritten = QtCore.Signal(object, object)
 
     def __init__(self, parent, stdout=True, logger_active=False, print_active=True):
         super().__init__(parent)
@@ -64,20 +64,8 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         # Import Autolab config
         control_center_config = config.get_control_center_config()
-        logger_active = control_center_config['logger']
-        if logger_active == "True":
-            logger_active = True
-        elif logger_active == "False":
-            logger_active = False
-        else:
-            logger_active = bool(int(float(logger_active)))
-        print_active = control_center_config['print']
-        if print_active == "True":
-            print_active = True
-        elif print_active == "False":
-            print_active = False
-        else:
-            print_active = bool(int(float(print_active)))
+        logger_active = utilities.boolean(control_center_config['logger'])
+        print_active = utilities.boolean(control_center_config['print'])
 
         # Set logger
         self.stdout = OutputWrapper(self, True, logger_active, print_active)
@@ -99,7 +87,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         # Tree widget configuration
         self.tree.last_drag = None
         self.tree.gui = self
-        self.tree.setHeaderLabels(['Objects','Type','Actions','Values',''])
+        self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])
         self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
         self.tree.header().resizeSection(0, 200)
         self.tree.header().resizeSection(4, 15)
@@ -169,14 +157,12 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.logger.setTextColor(self.loggerDefaultColor)
 
     def timerAction(self):
-
-        """ This function checks if a module has been loaded and put to the queue. If so, associate item and module """
-
+        """ This function checks if a module has been loaded and put to the queue.
+        If it has been, associate item and module """
         threadItemDictTemp = self.threadItemDict.copy()
         threadModuleDictTemp = self.threadModuleDict.copy()
 
         for item_id in threadModuleDictTemp.keys():
-
             item = threadItemDictTemp[item_id]
             module = threadModuleDictTemp[item_id]
 
@@ -190,17 +176,15 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.timerDevice.stop()
 
     def initialize(self):
-
         """ This function will create the first items in the tree, but will
         associate only the ones already loaded in autolab """
+        for devName in devices.list_devices():
+            item = TreeWidgetItemModule(self.tree, devName, self)
 
-        for devName in devices.list_devices() :
-            item = TreeWidgetItemModule(self.tree,devName,self)
-            for i in range(5) :
+            for i in range(5):
                 item.setBackground(i, QtGui.QColor('#9EB7F5'))  # blue
-            if devName in devices.list_loaded_devices() :
-                self.itemClicked(item)
 
+            if devName in devices.list_loaded_devices(): self.itemClicked(item)
 
     def setStatus(self,message, timeout=0, stdout=True):
 
@@ -209,60 +193,37 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.statusBar.showMessage(message, msecs=timeout)
         if not stdout: print(message, file=sys.stderr)
 
-
     def clearStatus(self):
 
         """ Erase the message displayed in the status bar """
 
         self.setStatus('')
 
-
-
-    def rightClick(self,position):
-
+    def rightClick(self, position: QtCore.QPoint):
         """ Function called when a right click has been detected in the tree """
-
         item = self.tree.itemAt(position)
-        if hasattr(item,'menu') :
-            item.menu(position)
+        if hasattr(item, 'menu'): item.menu(position)
 
-
-
-
-
-
-    def itemClicked(self,item):
-
+    def itemClicked(self, item):
         """ Function called when a normal click has been detected in the tree.
             Check the association if it is a main item """
-
-        if item.parent() is None and item.loaded is False and id(item) not in self.threadItemDict.keys():
+        if item.parent() is None and not item.loaded and id(item) not in self.threadItemDict.keys():
             self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
-            self.threadManager.start(item,'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
+            self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerDevice.start()
 
-    def itemPressed(self,item):
-
+    def itemPressed(self, item):
         """ Function called when a click (not released) has been detected in the tree.
             Store last dragged variable in tree so scanner can know it when it is dropped there """
-
         if hasattr(item, "module"):
-            if item.is_not_submodule:
-                self.tree.last_drag = item.name
-            else:
-                self.tree.last_drag = None
-        elif hasattr(item, "variable"):
-            self.tree.last_drag = item.variable
-        elif hasattr(item, "action"):
-            self.tree.last_drag = item.action
-        else:
-            self.tree.last_drag = None
+            if item.is_not_submodule: self.tree.last_drag = item.name
+            else: self.tree.last_drag = None
+        elif hasattr(item, "variable"): self.tree.last_drag = item.variable
+        elif hasattr(item, "action"): self.tree.last_drag = item.action
+        else: self.tree.last_drag = None
 
-
-    def associate(self,item, module):
-
+    def associate(self, item, module):
         """ Function called to associate a main module to one item in the tree """
-
         # If the driver has an openGUI method, a button will be added to the Autolab menu to access it.
         if hasattr(module.instance, "openGUI"):
             if hasattr(module.instance, "gui_name"):
@@ -291,30 +252,22 @@ class ControlCenter(QtWidgets.QMainWindow):
             except:
                 self.setStatus(f"Can't read variable {variable.address()} on instantiation", 10000, False)
 
-
     def openScanner(self):
-
         """ This function open the scanner associated to this variable. """
-
         # If the scanner is not already running, create one
-        if self.scanner is None :
+        if self.scanner is None:
             self.scanner = Scanner(self)
             self.scanner.show()
             self.scanner.activateWindow()
             self.activateWindow() # Put main window back to the front
-
-
         # If the scanner is already running, just make as the front window
         else :
             self.scanner.setWindowState(self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.scanner.activateWindow()
 
-
     def openPlotter(self):
-
         """ This function open the plotter associated to this variable. """
-
-        # If the scanner is not already running, create one
+        # If the plotter is not already running, create one
         if self.plotter is None:
             self.plotter = Plotter(self)
         # If the plotter is not active open it (keep data if closed)
@@ -322,59 +275,56 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.plotter.show()
             self.plotter.activateWindow()
             self.plotter.active = True
-        # If the scanner is already running, just make as the front window
+        # If the plotter is already running, just make as the front window
         else :
             self.plotter.setWindowState(self.plotter.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.plotter.activateWindow()
 
-
     def openAutolabConfig(self):
         """ Open the Autolab configuration file """
-        os.startfile(paths.AUTOLAB_CONFIG)
-
+        utilities.openFile(paths.AUTOLAB_CONFIG)
 
     def openDevicesConfig(self):
         """ Open the devices configuration file """
-        os.startfile(paths.DEVICES_CONFIG)
+        utilities.openFile(paths.DEVICES_CONFIG)
 
     def openPlotterConfig(self):
         """ Open the plotter configuration file """
-        os.startfile(paths.PLOTTER_CONFIG)
+        utilities.openFile(paths.PLOTTER_CONFIG)
 
-
-    def setScanParameter(self,variable):
-
-        if self.scanner is None :
+    def setScanParameter(self, recipe_name: str, variable):
+        """ Set the selected variable has parameter for the recipe with recipe_name name"""
+        if self.scanner is None:
             self.openScanner()
 
-        self.scanner.configManager.setParameter(variable)
+        self.scanner.configManager.setParameter(recipe_name, variable)
 
-
-    def addStepToScanRecipe(self,stepType,element, recipe_name='recipe'):
-
-        if self.scanner is None :
+    def addStepToScanRecipe(self, recipe_name, stepType, element):
+        """ Add the selected variable has a step for the recipe with recipe_name name"""
+        if self.scanner is None:
             self.openScanner()
 
-        self.scanner.configManager.addRecipeStep(stepType,element, recipe_name=recipe_name)
+        self.scanner.configManager.addRecipeStep(recipe_name, stepType, element)
 
+    def getRecipeName(self):
+        """ Returns the name of the recipe which will receive the variables
+        from the control center """
+        if self.scanner is None:
+            self.openScanner()
+
+        return self.scanner.selectRecipe_comboBox.currentText()
 
     def clearScanner(self):
-
-        """ This clear the gui instance reference when quitted """
-
+        """ This clear the scanner instance reference when quitted """
         self.scanner = None
 
     def clearPlotter(self):
-
         """ This deactivate the plotter when quitted but keep the instance in memory """
         if self.plotter is not None:
             self.plotter.active = False  # don't want to close plotter because want to keep data
 
-
-    def closeEvent(self,event):
-
+    def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
-
         if self.scanner is not None :
             self.scanner.close()
 

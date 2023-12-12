@@ -49,8 +49,11 @@ class DataManager :
     def save(self,filename):
 
         """ This function save the data in a file with the provided filename"""
-        df = pd.DataFrame({self.gui.xlabel:self.xlist,self.gui.ylabel:self.ylist})
-        df.to_csv(filename, index=False)
+        if self.xlist is not None:
+            df = pd.DataFrame({self.gui.xlabel:self.xlist,self.gui.ylabel:self.ylist})
+            df.to_csv(filename, index=False)
+        else: # Image
+            np.savetxt(filename, self.ylist, sep=",")
 
 
     def addPoint(self,point):
@@ -62,12 +65,18 @@ class DataManager :
             float(y)
         except TypeError:
             if type(y) is np.ndarray:
-                self._addArray(y.T)
+                if len(y.T.shape) == 1 or y.T.shape[0] == 2:
+                    self._addArray(y.T)
+                else:
+                    self._addImage(y)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
             elif type(y) is pd.DataFrame:
                 self._addArray(y.values.T)
         else:
             self._addPoint(point)
 
+    def _addImage(self, image):
+        self.xlist = None
+        self.ylist = image
 
     def _addArray(self,array):
 

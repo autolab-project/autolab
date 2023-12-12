@@ -17,10 +17,11 @@ try:
 except:
     no_default = None
 
-from PyQt5 import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from ... import paths
 from ... import config
+from ... import utilities
 
 
 def find_delimiter(filename):
@@ -81,28 +82,6 @@ def find_header(filename, sep=no_default, skiprows=None):
     return ("infer", skiprows, no_default) if tuple(df.dtypes) != tuple(df_header.dtypes) else (None, skiprows, no_default)
 
 
-def formatData(data):
-    """ Format data """
-    try:
-        data = pd.DataFrame(data)
-    except ValueError:
-        data = pd.DataFrame([data])
-    data.columns = data.columns.astype(str)
-    data_type = data.values.dtype
-
-    try:
-        data[data.columns] = data[data.columns].apply(pd.to_numeric, errors="coerce")
-    except ValueError:
-        pass  # OPTIMIZE: This happens when their is identical column name
-    if len(data) != 0:
-        assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
-        if data.iloc[-1].isnull().values.all():  # if last line is full of nan, remove it
-            data = data[:-1]
-    if data.shape[1] == 1:
-        data.rename(columns = {'0':'1'}, inplace=True)
-        data.insert(0, "0", range(data.shape[0]))
-    return data
-
 
 def importData(filename):
     """ This function open the data with the provided filename """
@@ -118,7 +97,7 @@ def importData(filename):
         data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows, names=columns)
 
     assert len(data) != 0, "Can't import empty DataFrame"
-    data = formatData(data)
+    data = utilities.formatData(data)
     return data
 
 
@@ -134,7 +113,10 @@ class DataManager :
         self.overwriteData = True
 
         plotter_config = config.load_config("plotter")
-        self.deviceValue = str(plotter_config['device']['address'])
+        if 'device' in plotter_config.sections() and 'address' in plotter_config['device']:
+            self.deviceValue = str(plotter_config['device']['address'])
+        else:
+            self.deviceValue = ''
 
     def _clear(self):
         self.datasets = []
@@ -250,7 +232,7 @@ class DataManager :
 
         data = deviceVariable()
 
-        data = formatData(data)
+        data = utilities.formatData(data)
 
         if self.overwriteData:
             data_name = self.deviceValue
