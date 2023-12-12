@@ -16,6 +16,7 @@ Just execute the command ``autolab`` or ``autolab -h`` or ``autolab --help`` in 
 The subcommands are :
 
 * ``autolab gui`` : a shortcut of the python function autolab.gui() to start the graphical interface of Autolab.
+* ``autolab install_drivers`` : a shortcut of the python function autolab.install_drivers() to install drivers from GitHub
 * ``autolab driver`` : a shortcut of the python interface Driver (see :ref:`os_driver`)
 * ``autolab device`` : a shortcut of the python interface Device (see :ref:`os_device`)
 * ``autolab doc`` : a shortcut of the python function autolab.doc() to open the present online documentation.

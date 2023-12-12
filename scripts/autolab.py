@@ -19,7 +19,7 @@ def print_help():
     print()
     print('Commands:')
     print('  gui                   Start the Graphical User Interface')
-    print('  install_drivers       Start the driver installer')
+    print('  install_drivers       Install drivers from GitHub')
     print('  driver                Driver interface')
     print('  device                Device interface')
     print('  doc                   Open the online documentation (readthedocs)')

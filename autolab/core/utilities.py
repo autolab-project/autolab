@@ -117,6 +117,7 @@ def pyqtgraph_fig_ax():
     ax.getAxis("bottom").setTickFont(my_font_tick)
     ax.getAxis("left").setTickFont(my_font_tick)
     ax.showGrid(x=True, y=True)
+    ax.setContentsMargins(10., 10., 10., 10.)
 
     vb = ax.getViewBox()
     vb.enableAutoRange(enable=True)

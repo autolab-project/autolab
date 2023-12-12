@@ -7,7 +7,7 @@ Plotting
 
 .. caution::
 
-    The plotter still need some work, feed-back are more than welcome (october 2023).
+    The plotter still need some work, feed-back are more than welcome (December 2023).
 
 Import data
 -----------
