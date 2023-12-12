@@ -35,20 +35,15 @@ It is also useful in a scan to set the frequency of a signal analyzer relative t
 .. image:: recipe_eval_example.png
 
 
-Executing init and end recipes
-##############################
+Adding extra recipes
+####################
 
-This feature allows to add and execute a recipe before and/or after the scan.
-It is only accessible, for now, by dragging and dropping a variable form the control panel to the corresponding init or end tree of the scanner.
-With this feature, it is possible within one config file to start instruments, set all the constant variables before the scan, do a scan, and turn off the instruments.
+This feature allows to add multiple recipes to a scan.
+Click on 'Add recipe' at the bottom of the scanner to add a new recipe.
+It is possible to add elements to a recipe by dragging and dropping a variable form the control panel to the corresponding recipe in the scanner.
+A variable from one recipe can be drag and drop to another recipe.
+With this feature, it is possible within one config file to have init and end recipe to start instruments, set all the constant variables before the scan, do a scan, and turn off the instruments.
+It is also possible to sweep one parameter with a specific recipe and another parameter with a different recipe in a single scan.
+It may be possible in the future to execute a recipe inside a recipe to do 2D scan.
 
-.. image:: recipe_init_end.png
-
-By default, the init and end recipe trees are hidden.
-Use the layout slider to unhide them or, change the default tree size using the ``recipe_size`` option available in the ``autolab_config.ini`` file.
-
-.. code-block:: none
-
-    [scanner]
-    recipe_size = [<init tree size>, <recipe tree size>, <end tree size>]
-    recipe_size = [150, 500, 150]
+.. image:: multiple_recipes.png

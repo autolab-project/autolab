@@ -76,7 +76,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	import pandas as pd
 
 	# Open the Devices
-	myTunics = autolab.get_driver('yenista_TUNICS',connection='VISA',address='GPIB0::12::INSTR')
+	myTunics = autolab.get_driver('yenista_TUNICS',connection='VISA', address='GPIB0::12::INSTR')
 	myPowerMeter = autolab.get_driver('powermeter_driver', connection='DLL')
 
 	# Turn on the light source
@@ -98,7 +98,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	    power = myPowerMeter.line1.set_power()
 
 	    # Store the values in a list
-	    df = df.append({'wl_measured':wl_measured, 'power':power},ignore_index=True)
+	    df = df.append({'wl_measured': wl_measured, 'power': power}, ignore_index=True)
 
 	# Turn off the light source
 	myTunics.set_output(False)

@@ -68,9 +68,9 @@ All the Autolab's features are also available through an :ref:`shell_scripts`. i
 	**Useful links**:
 
 	* `Slides of our Autolab seminar (March 2020) <https://docs.google.com/presentation/d/1Uc6f0dEn6C18_0fr1pFuYSLmQ2AhIkVi9B5xTKfUIqw/edit?usp=sharing>`_
-	* Github project: `github.com/qcha41/autolab <https://github.com/qcha41/autolab>`_
+	* Github project: `github.com/Python-simulation/autolab <https://github.com/Python-simulation/autolab>`_
 	* PyPi project: `pypi.org/project/autolab/ <https://pypi.org/project/autolab/>`_
-	* Online documentation: `autolab.readthedocs.io/ <https://autolab.readthedocs.io/en/latest/>`_
+	* Online documentation: `autolab.readthedocs.io/ <https://autolab.readthedocs.io/en/latest/>`_ (not up-to-date with latest version)
 
 
 Table of contents:
