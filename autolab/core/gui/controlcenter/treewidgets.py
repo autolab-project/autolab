@@ -174,9 +174,8 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             scanRecipe = menu.addAction("Do in scan recipe")
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
-            recipe_name = self.gui.getRecipeName()
             if choice == scanRecipe:
-                self.gui.addStepToScanRecipe(recipe_name, 'action', self.action)
+                self.gui.addStepToScanRecipe('action', self.action)
 
 
 class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
@@ -369,19 +368,15 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             scanSetStepAction.setEnabled(self.variable.writable)
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
-            recipe_name = self.gui.getRecipeName()
-            if choice == monitoringAction:
-                self.openMonitor()
-            elif choice == sliderAction:
-                self.openSlider()
+            if choice == monitoringAction: self.openMonitor()
+            elif choice == sliderAction: self.openSlider()
             elif choice == scanParameterAction:
-                self.gui.setScanParameter(recipe_name, self.variable)
+                self.gui.setScanParameter(self.variable)
             elif choice == scanMeasureStepAction:
-                self.gui.addStepToScanRecipe(recipe_name, 'measure', self.variable)
+                self.gui.addStepToScanRecipe('measure', self.variable)
             elif choice == scanSetStepAction:
-                self.gui.addStepToScanRecipe(recipe_name, 'set', self.variable)
-            elif choice == saveAction:
-                self.saveValue()
+                self.gui.addStepToScanRecipe('set', self.variable)
+            elif choice == saveAction: self.saveValue()
 
     def saveValue(self):
         """ Prompt user for filename to save data of the variable """
