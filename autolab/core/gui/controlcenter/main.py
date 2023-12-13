@@ -292,18 +292,20 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Open the plotter configuration file """
         utilities.openFile(paths.PLOTTER_CONFIG)
 
-    def setScanParameter(self, recipe_name: str, variable):
+    def setScanParameter(self, variable):
         """ Set the selected variable has parameter for the recipe with recipe_name name"""
         if self.scanner is None:
             self.openScanner()
 
+        recipe_name = self.getRecipeName()
         self.scanner.configManager.setParameter(recipe_name, variable)
 
-    def addStepToScanRecipe(self, recipe_name, stepType, element):
+    def addStepToScanRecipe(self, stepType: str, element):
         """ Add the selected variable has a step for the recipe with recipe_name name"""
         if self.scanner is None:
             self.openScanner()
 
+        recipe_name = self.getRecipeName()
         self.scanner.configManager.addRecipeStep(recipe_name, stepType, element)
 
     def getRecipeName(self):

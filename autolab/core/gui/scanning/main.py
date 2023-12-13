@@ -46,6 +46,7 @@ class Scanner(QtWidgets.QMainWindow):
     def _addRecipe(self, recipe_name: str):
         self.scan_recipe_comboBox.addItem(recipe_name)
         self.selectRecipe_comboBox.addItem(recipe_name)
+        self.selectRecipe_comboBox.setCurrentIndex(self.selectRecipe_comboBox.count()-1)
         self._show_recipe_combobox()
 
         self.recipeDict[recipe_name] = {}  # order of creation matter
