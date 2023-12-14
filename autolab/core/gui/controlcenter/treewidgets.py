@@ -31,7 +31,6 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         self.module = None
         self.loaded = False
         self.gui = gui
-
         self.is_not_submodule = type(gui.tree) is type(itemParent)
 
     def load(self, module):
@@ -54,16 +53,14 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         # Actions
         actNames = self.module.list_actions()
         for actName in actNames:
-            action = getattr(self.module,actName)
+            action = getattr(self.module, actName)
             TreeWidgetItemAction(self, action, self.gui)
 
         # Change loaded status
         self.loaded = True
 
     def menu(self, position: QtCore.QPoint):
-
         """ This function provides the menu when the user right click on an item """
-
         if self.is_not_submodule and self.loaded:
             menu = QtWidgets.QMenu()
             disconnectDevice = menu.addAction(f"Disconnect {self.name}")
@@ -75,13 +72,14 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
                 for i in range(self.childCount()):
                     self.removeChild(self.child(0))
+
                 self.loaded = False
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
     """ This class represents an action in an item of the tree """
 
-    def __init__(self,itemParent, action, gui):
+    def __init__(self, itemParent, action, gui):
 
         displayName = f'{action.name}'
         if action.unit is not None:
@@ -97,10 +95,10 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             if self.action.type in [int, float, str, pd.DataFrame, np.ndarray]:
                 self.executable = True
                 self.has_value = True
-            else :
+            else:
                 self.executable = False
                 self.has_value = False
-        else :
+        else:
             self.executable = True
             self.has_value = False
 
@@ -141,7 +139,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 value = self.checkVariable(value)
                 value = self.action.type(value)
                 return value
-            except :
+            except:
                 self.gui.setStatus(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000, False)
 
     def checkVariable(self, value):
@@ -165,8 +163,6 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             else:
                 self.gui.threadManager.start(self, 'execute')
 
-
-
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if not self.isDisabled():
@@ -184,7 +180,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def __init__(self, itemParent, variable ,gui):
 
         self.displayName = f'{variable.name}'
-        if variable.unit is not None :
+        if variable.unit is not None:
             self.displayName += f' ({variable.unit})'
 
         QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [self.displayName, 'Variable'])
@@ -271,7 +267,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         # Tooltip
         if self.variable._help is None: tooltip = 'No help available for this variable'
-        else : tooltip = self.variable._help
+        else: tooltip = self.variable._help
         if hasattr(self.variable, "type"):
             variable_type = str(self.variable.type).split("'")[1]
             tooltip += f" ({variable_type})"
@@ -348,8 +344,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if not self.isDisabled():
-            menu = QtWidgets.QMenu()
 
+            menu = QtWidgets.QMenu()
             monitoringAction = menu.addAction("Start monitoring")
             menu.addSeparator()
             sliderAction = menu.addAction("Create a slider")
@@ -380,14 +376,15 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
     def saveValue(self):
         """ Prompt user for filename to save data of the variable """
-        filename = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value",
-                                        os.path.join(paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'),
-                                        filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+        filename = QtWidgets.QFileDialog.getSaveFileName(
+            self.gui, f"Save {self.variable.name} value",
+            os.path.join(paths.USER_LAST_CUSTOM_FOLDER, f'{self.variable.address()}.txt'),
+            filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
 
         path = os.path.dirname(filename)
-        if path != '' :
+        if path != '':
             paths.USER_LAST_CUSTOM_FOLDER = path
-            try :
+            try:
                 self.gui.setStatus(f"Saving value of {self.variable.name}...", 5000)
                 self.variable.save(filename)
                 self.gui.setStatus(f"Value of {self.variable.name} successfully read and save at {filename}", 5000)
@@ -401,7 +398,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.gui.monitors[id(self)] = Monitor(self)
             self.gui.monitors[id(self)].show()
         # If the monitor is already running, just make as the front window
-        else :
+        else:
             monitor = self.gui.monitors[id(self)]
             monitor.setWindowState(monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             monitor.activateWindow()
@@ -413,7 +410,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.gui.sliders[id(self)] = Slider(self)
             self.gui.sliders[id(self)].show()
         # If the slider is already running, just make as the front window
-        else :
+        else:
             slider = self.gui.sliders[id(self)]
             slider.setWindowState(slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             slider.activateWindow()
@@ -422,8 +419,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         """ This clear monitor instances reference when quitted """
         if id(self) in self.gui.monitors.keys():
             self.gui.monitors.pop(id(self))
-
-
 
     def clearSlider(self):
         """ This clear the slider instances reference when quitted """

@@ -101,15 +101,15 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             gui = event.source().gui
             variable = event.source().last_drag
             if variable:
-                if variable._element_type == "variable" :
+                if variable._element_type == "variable":
                     if variable.readable and variable.writable:
                         self.menu(gui, variable, event.pos())
                     elif variable.readable:
-                        gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
+                        gui.addStepToScanRecipe('measure', variable)
                     elif variable.writable:
-                        gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+                        gui.addStepToScanRecipe('set', variable)
                 elif variable._element_type == "action":
-                    gui.addStepToScanRecipe(self.recipe_name, 'action', variable)
+                    gui.addStepToScanRecipe('action', variable)
 
     def dragEnterEvent(self, event):
         # Could use mimeData instead of last_drag but overkill
@@ -138,10 +138,10 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         scanMeasureStepAction.setEnabled(variable.readable)
         scanSetStepAction.setEnabled(variable.writable)
         choice = menu.exec_(self.viewport().mapToGlobal(position))
-        if choice == scanMeasureStepAction :
-            gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
-        elif choice == scanSetStepAction :
-            gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+        if choice == scanMeasureStepAction:
+            gui.addStepToScanRecipe('measure', variable)
+        elif choice == scanSetStepAction:
+            gui.addStepToScanRecipe('set', variable)
 
 
 class parameterQFrame(QtWidgets.QFrame):
@@ -365,7 +365,7 @@ class RecipeManager:
 
         # Tree configuration
         self.tree = MyQTreeWidget(frameRecipe, self.gui, self.recipe_name)
-        self.tree.setHeaderLabels(['Step name','Type','Element address','Value'])
+        self.tree.setHeaderLabels(['Step name', 'Type', 'Element address', 'Value'])
         self.tree.header().resizeSection(0, 100)
         self.tree.header().resizeSection(1, 60)
         self.tree.header().resizeSection(2, 150)
