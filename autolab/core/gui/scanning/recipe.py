@@ -105,11 +105,11 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     if variable.readable and variable.writable:
                         self.menu(gui, variable, event.pos())
                     elif variable.readable:
-                        gui.addStepToScanRecipe('measure', variable)
+                        gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
                     elif variable.writable:
-                        gui.addStepToScanRecipe('set', variable)
+                        gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
                 elif variable._element_type == "action":
-                    gui.addStepToScanRecipe('action', variable)
+                    gui.addStepToScanRecipe(self.recipe_name, 'action', variable)
 
     def dragEnterEvent(self, event):
         # Could use mimeData instead of last_drag but overkill
@@ -139,9 +139,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         scanSetStepAction.setEnabled(variable.writable)
         choice = menu.exec_(self.viewport().mapToGlobal(position))
         if choice == scanMeasureStepAction:
-            gui.addStepToScanRecipe('measure', variable)
+            gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
         elif choice == scanSetStepAction:
-            gui.addStepToScanRecipe('set', variable)
+            gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
 
 
 class parameterQFrame(QtWidgets.QFrame):
