@@ -371,7 +371,7 @@ class Variable(Element):
         if value is None:
             assert self.readable, f"The variable {self.name} is not readable"
             answer = self.read_function()
-            if self._read_signal is not None : self._read_signal.emit(answer)
+            if self._read_signal is not None : self._read_signal.emit_read(answer)
             return answer
 
         # SET FUNCTION
@@ -379,7 +379,7 @@ class Variable(Element):
             assert self.writable, f"The variable {self.name} is not writable"
             value = self.type(value)
             self.write_function(value)
-            if self._write_signal is not None : self._write_signal.emit()
+            if self._write_signal is not None : self._write_signal.emit_write()
 
 
 
