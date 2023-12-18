@@ -211,10 +211,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         # Signal creation and associations in autolab devices instances
         self.readSignal = ReadSignal()
-        self.readSignal.signal.connect(self.writeGui)
+        self.readSignal.read.connect(self.writeGui)
         self.variable._read_signal = self.readSignal
         self.writeSignal = WriteSignal()
-        self.writeSignal.signal.connect(self.valueEdited)
+        self.writeSignal.writed.connect(self.valueEdited)
         self.variable._write_signal = self.writeSignal
 
         # Main - Column 2 : Creation of a READ button if the variable is readable
@@ -253,7 +253,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
                 def __init__(self, parent):
                     self.parent = parent
-                    QtWidgets.QTreeWidget.__init__(self)
+                    QtWidgets.QCheckBox.__init__(self)
 
                 def mouseReleaseEvent(self, event):
                     super(MyQCheckBox, self).mouseReleaseEvent(event)
@@ -418,11 +418,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 # Signals can be emitted only from QObjects
 # These class provides convenient ways to use signals
 class ReadSignal(QtCore.QObject):
-    signal = QtCore.Signal(object)
-    def emit(self,value):
-        self.signal.emit(value)
+    read = QtCore.Signal(object)
+    def emit_read(self, value):
+        self.read.emit(value)
 
 class WriteSignal(QtCore.QObject):
-    signal = QtCore.Signal()
-    def emit(self):
-        self.signal.emit()
+    writed = QtCore.Signal()
+    def emit_write(self):
+        self.writed.emit()
