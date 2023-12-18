@@ -145,7 +145,7 @@ class Scanner(QtWidgets.QMainWindow):
 
 def cleanString(name: str) -> str:
     """ This function clears the given name from special characters """
-    for character in '*."/\[]:;|, ':
+    for character in r'*."/\[]:;|, ':
         name = name.replace(character, '')
 
     return name

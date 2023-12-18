@@ -87,7 +87,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.openButton.clicked.connect(self.dataManager.importActionClicked)
 
         # comboBox with data id
-        self.data_comboBox.activated['QString'].connect(self.dataManager.data_comboBoxClicked)
+        self.data_comboBox.activated.connect(self.dataManager.data_comboBoxClicked)
 
         # Number of traces
         self.nbTraces_lineEdit.setText(f'{self.figureManager.nbtraces:g}')
@@ -455,6 +455,6 @@ def cleanString(name):
 
     """ This function clears the given name from special characters """
 
-    for character in '*."/\[]:;|, ' :
+    for character in r'*."/\[]:;|, ' :
         name = name.replace(character,'')
     return name

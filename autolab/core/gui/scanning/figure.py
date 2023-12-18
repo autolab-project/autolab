@@ -33,7 +33,7 @@ class FigureManager :
         self.figMap.hide()
 
         for axe in ['x','y'] :
-            getattr(self.gui,f'variable_{axe}_comboBox').activated['QString'].connect(self.variableChanged)
+            getattr(self.gui,f'variable_{axe}_comboBox').activated.connect(self.variableChanged)
 
         # Number of traces
         self.nbtraces = 5
@@ -48,13 +48,13 @@ class FigureManager :
         self.displayScan = DisplayValues(self.gui, "Scan", size=(500,300))
 
         # comboBox with scan id
-        self.gui.data_comboBox.activated['QString'].connect(self.data_comboBoxClicked)
+        self.gui.data_comboBox.activated.connect(self.data_comboBoxClicked)
 
         # Combobo to select the recipe to plot
-        self.gui.scan_recipe_comboBox.activated['QString'].connect(self.scan_recipe_comboBoxCurrentChanged)
+        self.gui.scan_recipe_comboBox.activated.connect(self.scan_recipe_comboBoxCurrentChanged)
 
         # Combobox to select datafram to plot
-        self.gui.dataframe_comboBox.activated['QString'].connect(self.dataframe_comboBoxCurrentChanged)
+        self.gui.dataframe_comboBox.activated.connect(self.dataframe_comboBoxCurrentChanged)
         self.gui.dataframe_comboBox.setEnabled(False)
         self.gui.dataframe_comboBox.clear()
         self.gui.dataframe_comboBox.addItems(["Scan"])
