@@ -68,7 +68,7 @@ class FigureManager :
                 self.gui.data_comboBox.addItem(str(new_dataset.name))
                 # dataset = self.gui.dataManager.getLastDataset()
 
-            self.gui.data_comboBox.setCurrentIndex(dataSet_id-1)  # trigger the currentIndexChanged event but don't trigger activated['QString']
+            self.gui.data_comboBox.setCurrentIndex(dataSet_id-1)  # trigger the currentIndexChanged event but don't trigger activated
 
             # dataset.update(new_dataset)
 

@@ -72,7 +72,7 @@ class ScanManager:
             # put dataset id onto the combobox and associate data to it
             dataSet_id = len(self.gui.dataManager.datasets)
             self.gui.data_comboBox.addItem(f'Scan{dataSet_id}')
-            self.gui.data_comboBox.setCurrentIndex(int(dataSet_id)-1)  # trigger the currentIndexChanged event but don't trigger activated['QString']
+            self.gui.data_comboBox.setCurrentIndex(int(dataSet_id)-1)  # trigger the currentIndexChanged event but don't trigger activated
 
             # Start a new thread
             ## Opening

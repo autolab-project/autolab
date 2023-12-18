@@ -13,6 +13,7 @@ import argparse
 
 
 def print_help():
+    print(f'Autolab {autolab.__version__}')
     print()
     print('Usage:')
     print('  autolab [-h] <command> ...')

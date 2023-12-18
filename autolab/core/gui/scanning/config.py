@@ -9,6 +9,7 @@ import json
 import datetime
 import os
 import math as m
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -310,7 +311,7 @@ class ConfigManager:
 
         self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
 
-    def setRange(self, recipe_name: str, lim: tuple[float, float]):
+    def setRange(self, recipe_name: str, lim: Tuple[float, float]):
 
         """ This function set the range (start and end value) of the scan """
 
@@ -382,7 +383,7 @@ class ConfigManager:
         """ This function returns the value of the step between points of the scan """
         return self.config[recipe_name]['step']
 
-    def getRange(self, recipe_name: str) -> tuple[float, float]:
+    def getRange(self, recipe_name: str) -> Tuple[float, float]:
         """ This function returns the range (start and end value) of the scan """
         return self.config[recipe_name]['range']
 
