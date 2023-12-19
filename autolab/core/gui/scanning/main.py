@@ -39,9 +39,8 @@ class Scanner(QtWidgets.QMainWindow):
         self.dataManager = DataManager(self)
         self.configManager = ConfigManager(self)
 
-        self.configManager.addRecipe()  # add one recipe by default
-
-        self.addRecipe_pushButton.clicked.connect(self.configManager.addRecipe)
+        self.configManager.addRecipe("recipe")  # add one recipe by default
+        self.addRecipe_pushButton.clicked.connect(lambda: self.configManager.addRecipe("recipe"))
 
     def _addRecipe(self, recipe_name: str):
         self.scan_recipe_comboBox.addItem(recipe_name)
@@ -122,13 +121,13 @@ class Scanner(QtWidgets.QMainWindow):
             recipe['rangeManager'].displayParameter.close()
         self.figureManager.displayScan.close()
 
-    def setStatus(self, message, timeout=0, stdout=True):
+    def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
         self.statusBar.showMessage(message, msecs=timeout)
         if not stdout: print(message, file=sys.stderr)
 
 
-    def setLineEditBackground(self, obj, state):
+    def setLineEditBackground(self, obj, state: str):
         """ Function used to set the background color of a QLineEdit widget,
         based on its editing state """
 

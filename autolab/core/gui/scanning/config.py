@@ -96,6 +96,8 @@ class ConfigManager:
         self.configHistory = ConfigHistory()
         self.configHistory.active = True
 
+        self._append = False  # option for import config
+
 
     # NAMES
     ###########################################################################
@@ -110,7 +112,7 @@ class ConfigManager:
         return names
 
 
-    def getUniqueName(self, basename: str, element: str = 'item') -> str:
+    def getUniqueName(self, basename: str, element: str = 'item') -> str:  # TODO: allow same name between recipes -> need to change name when moving from one recipe to another
         """ This function adds a number next to basename in case this basename is already taken """
         name = basename
         names = []
@@ -145,10 +147,10 @@ class ConfigManager:
             self.undo.setEnabled(True)
             self.redo.setEnabled(False)
 
-    def addRecipe(self):  # TODO: add name and set_name() like for param or step
+    def addRecipe(self, recipe_name: str):  # TODO: add rename (delete and redo config with new new)
         """ Add new recipe to config """
         if not self.gui.scanManager.isStarted():
-            recipe_name = self.getUniqueName('recipe', element='recipe')
+            recipe_name = self.getUniqueName(recipe_name, element='recipe')
             parameter_name = self.getUniqueName('parameter')
 
             self.config[recipe_name] = {}
@@ -172,6 +174,8 @@ class ConfigManager:
             self.gui.dataManager.clear()
             self.addNewConfig()
 
+    def lastRecipeName(self) -> str:
+        return list(self.config.keys())[-1] if len(self.config.keys()) != 0 else ""
 
     def _defaultParameterPars(self) -> dict:
         return {'name': 'parameter',
@@ -206,6 +210,10 @@ class ConfigManager:
     def addRecipeStep(self, recipe_name: str, stepType: str, element,
                       name: str = None, value = None):
         """ This function add a step to the scan recipe """
+        if recipe_name == "":
+            self.addRecipe("recipe")
+            recipe_name = self.lastRecipeName()
+
         if not self.gui.scanManager.isStarted():
             assert recipe_name in self.config.keys(), f'{recipe_name} not in {list(self.config.keys())}'
 
@@ -482,14 +490,36 @@ class ConfigManager:
     def importActionClicked(self):
         """ This function prompts the user for a configuration filename,
         and import the current scan configuration from it """
-        filename = QtWidgets.QFileDialog.getOpenFileName(
-            self.gui, "Import AUTOLAB configuration file",
-            paths.USER_LAST_CUSTOM_FOLDER,
-            "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
+        main_dialog = QtWidgets.QDialog(self.gui)
+        main_dialog.setWindowTitle("Import AUTOLAB configuration file")
+        layout = QtWidgets.QVBoxLayout(main_dialog)
 
-        if filename != '': self.import_configPars(filename)
+        file_dialog = QtWidgets.QFileDialog(main_dialog, QtCore.Qt.Widget)
+        file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+        file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
+        file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
+        file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "All Files (*)"])
+        layout.addWidget(file_dialog)
 
-    def import_configPars(self, filename: str):
+        appendCheck = QtWidgets.QCheckBox('Append', main_dialog)
+        appendCheck.setChecked(self._append)
+        layout.addWidget(appendCheck)
+
+        main_dialog.show()
+
+        once_or_append = True
+        while once_or_append:
+            filenames = file_dialog.selectedFiles() if file_dialog.exec_() else []
+
+            self._append = appendCheck.isChecked()
+            once_or_append = self._append and len(filenames) != 0
+
+            for filename in filenames:
+                if filename != '': self.import_configPars(filename, append=self._append)
+
+        main_dialog.close()
+
+    def import_configPars(self, filename: str, append: bool = False):
 
         try:
             legacy_configPars = configparser.ConfigParser()
@@ -508,13 +538,13 @@ class ConfigManager:
         path = os.path.dirname(filename)
         paths.USER_LAST_CUSTOM_FOLDER = path
 
-        self.load_configPars(configPars)
+        self.load_configPars(configPars, append=append)
 
         if not self._got_error:
             self.addNewConfig()
 
 
-    def load_configPars(self, configPars: dict):
+    def load_configPars(self, configPars: dict, append: bool = False):
 
         self._got_error = False
         self.configHistory.active = False
@@ -526,30 +556,27 @@ class ConfigManager:
             if 'parameter' in configPars:
                 new_configPars = {}
                 new_configPars["autolab"] = configPars["autolab"]
-                i = 1
 
                 if 'initrecipe' in configPars:
-                    new_configPars[f"recipe{i}"] = {}
-                    new_configPars[f"recipe{i}"]['parameter'] = self._defaultParameterPars()
-                    new_configPars[f"recipe{i}"]['parameter']['name'] = 'init'
-                    new_configPars[f"recipe{i}"]['recipe'] = configPars['initrecipe']
-                    i += 1
+                    new_configPars["init"] = {}  # BUG: doesn't add step to recipe in gui, was already a bug before changes
+                    new_configPars["init"]['parameter'] = self._defaultParameterPars()
+                    new_configPars["init"]['parameter']['name'] = 'init'
+                    new_configPars["init"]['recipe'] = configPars['initrecipe']
 
-                new_configPars[f"recipe{i}"] = {}
-                new_configPars[f"recipe{i}"]['parameter'] = configPars['parameter']
-                new_configPars[f"recipe{i}"]['recipe'] = configPars['recipe']
-                i += 1
+                new_configPars["recipe"] = {}
+                new_configPars["recipe"]['parameter'] = configPars['parameter']
+                new_configPars["recipe"]['recipe'] = configPars['recipe']
 
                 if 'endrecipe' in configPars:
-                    new_configPars[f"recipe{i}"] = {}
-                    new_configPars[f"recipe{i}"]['parameter'] = self._defaultParameterPars()
-                    new_configPars[f"recipe{i}"]['parameter']['name'] = 'end'
-                    new_configPars[f"recipe{i}"]['recipe'] = configPars['endrecipe']
+                    new_configPars["end"] = {}
+                    new_configPars["end"]['parameter'] = self._defaultParameterPars()
+                    new_configPars["end"]['parameter']['name'] = 'end'
+                    new_configPars["end"]['recipe'] = configPars['endrecipe']
                 configPars = new_configPars
 
             # Config
             config = {}
-            recipeNameList = [i for i in list(configPars.keys()) if 'recipe' in i]  # need to check if recipe in name to remove 'autolab' version
+            recipeNameList = [i for i in list(configPars.keys()) if i != 'autolab']  # to remove 'autolab' from recipe list
 
             for recipe_name in recipeNameList:
                 config[recipe_name] = {}
@@ -633,22 +660,24 @@ class ConfigManager:
                     else:
                         break
 
-            self.config = config
+            if append:
+                for recipe_name in config.keys():
+
+                    if recipe_name in self.config.keys():
+                        new_recipe_name = self.getUniqueName('recipe', element='recipe')
+                    else:
+                        new_recipe_name = recipe_name
+
+                    self.config[new_recipe_name] = config[recipe_name]
+            else:
+                self.config = config
 
         except Exception as error:
             self._got_error = True
             self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
             self.config = previous_config
         else:
-            self.gui._clearRecipe()  # before everything to have access to recipe and del it
-            self.gui.dataManager.clear()
-
-            for recipe_name in self.config.keys():
-                self.gui._addRecipe(recipe_name)
-                self.gui.recipeDict[recipe_name]['parameterManager'].refresh()
-                self.refreshRecipe(recipe_name)
-                self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
-
+            self.resetRecipe()
             self.gui.setStatus("Configuration file loaded successfully", 5000)
 
             for device in (set(devices.list_loaded_devices()) - set(already_loaded_devices)):
@@ -659,6 +688,32 @@ class ConfigManager:
                     self.gui.mainGui.itemClicked(item)
 
         self.configHistory.active = True
+
+    def resetRecipe(self):
+        self.gui._clearRecipe()  # before everything to have access to recipe and del it
+        self.gui.dataManager.clear()
+
+        for recipe_name in self.config.keys():
+            self.gui._addRecipe(recipe_name)
+            self.gui.recipeDict[recipe_name]['parameterManager'].refresh()
+            self.refreshRecipe(recipe_name)
+            self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
+
+    def renameRecipe(self, existing_recipe_name, new_recipe_name):
+        if existing_recipe_name not in self.config.keys():
+            raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.config.keys()}')
+
+        old_config = self.config
+        new_config = {}
+
+        for recipe_name in old_config.keys():  # TODO: change dict to orderdict
+            if recipe_name == existing_recipe_name:
+                new_config[new_recipe_name] = old_config[recipe_name]
+            else:
+                new_config[recipe_name] = old_config[recipe_name]
+
+        self.config = new_config
+        self.resetRecipe()
 
     def checkVariable(self, value) -> bool:
         """ Check if value start with '$eval:'. \

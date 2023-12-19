@@ -233,6 +233,14 @@ class Plotter(QtWidgets.QMainWindow):
         item.load(module)
         self.active_plugin_dict[item.nickname] = module
 
+        read_init_list = module._read_init_list
+        for mod in module._mod.values():
+            read_init_list.extend(mod._read_init_list)
+        for variable in read_init_list:
+            try:
+                variable()
+            except:
+                self.setStatus(f"Can't read variable {variable.address()} on instantiation", 10000, False)
         try:
             data = self.dataManager.getLastSelectedDataset().data
             data = data[[self.figureManager.getLabel("x"),self.figureManager.getLabel("y")]].copy()

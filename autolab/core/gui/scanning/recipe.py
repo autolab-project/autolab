@@ -86,10 +86,12 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             self.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
             self.reorderSignal.emit(event)
         elif isinstance(event.source(), MyQTreeWidget):  # if event comes from another recipe -> remove from incoming recipe and add to outgoing recipe
+
             if event.mimeData().hasFormat(MyQTreeWidget.customMimeType):
                 encoded = event.mimeData().data(MyQTreeWidget.customMimeType)
                 items = self.decodeData(encoded, event.source())
                 recipe_name_output = event.source().recipe_name
+
                 for it in items:
                     name = it.text(0)
                     stepType = self.scanner.configManager.getRecipeStepType(recipe_name_output, name)
@@ -97,9 +99,11 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     stepValue = self.scanner.configManager.getRecipeStepValue(recipe_name_output, name)
                     self.scanner.configManager.delRecipeStep(recipe_name_output, name)
                     self.scanner.configManager.addRecipeStep(self.recipe_name, stepType, stepElement, name, stepValue)
+
         else: # event comes from controlcenter -> check type to add step
             gui = event.source().gui
             variable = event.source().last_drag
+
             if variable:
                 if variable._element_type == "variable":
                     if variable.readable and variable.writable:
@@ -405,9 +409,11 @@ class RecipeManager:
 
     def _removeTree(self):
         if hasattr(self, '_frame'):
-            self._frame.hide()
-            self._frame.deleteLater()
-            del self._frame
+            try:
+                self._frame.hide()
+                self._frame.deleteLater()
+                del self._frame
+            except: pass
 
     def orderChanged(self, event):
         newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
