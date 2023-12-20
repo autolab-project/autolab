@@ -113,11 +113,11 @@ class FigureManager:
             self.gui.dataDisplay.setFont(font)
 
 
-    def setLabel(self,axe,value):
+    def setLabel(self, axe: str, value: str):
 
         """ This function changes the label of the given axis """
-
         axes = {'x':'bottom', 'y':'left'}
+        if value == '': value = ' '
         self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
 
     def clear(self):

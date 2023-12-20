@@ -12,6 +12,7 @@ import tempfile
 import shutil
 
 from . import paths
+from . import config
 
 # Removed the possibility to download drivers individually due to the restriction of Github requests
 # Removed the small driver installer GUI made to select which driver to install
@@ -102,7 +103,8 @@ def _check_empty_driver_folder():
 def install_drivers():
     """ Ask if want to install all the official drivers. """
 
-    temp_repo_folder = tempfile.mkdtemp()
+    temp_folder = config.get_temp_folder()
+    temp_repo_folder = tempfile.mkdtemp(dir=temp_folder)
 
     for github_repo_url in paths.DRIVER_GITHUB.values():
         github_repo_zip_url = _format_url(github_repo_url)

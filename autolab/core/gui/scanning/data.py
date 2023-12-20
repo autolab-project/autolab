@@ -16,7 +16,7 @@ import pandas as pd
 from qtpy import QtCore, QtWidgets
 
 from ... import paths
-from ... import config
+from ... import config as autolab_config
 from ... import utilities
 
 
@@ -106,7 +106,7 @@ class DataManager :
                     filename_recipe = f'{dataset_folder}_{sub_dataset_name}{extension}'
                 sub_dataset.save(filename_recipe)
 
-            scanner_config = config.get_scanner_config()
+            scanner_config = autolab_config.get_scanner_config()
             save_config = utilities.boolean(scanner_config["save_config"])
 
             if save_config:
@@ -159,7 +159,9 @@ class DataManager :
         """ This function creates and returns a new empty dataset """
         maximum = 0
         dataset_recipes = {}
-        tempFolderPath = tempfile.mkdtemp() # Creates a temporary directory for this dataset
+
+        temp_folder = autolab_config.get_temp_folder()
+        tempFolderPath = tempfile.mkdtemp(dir=temp_folder) # Creates a temporary directory for this dataset
         self.gui.configManager.export(os.path.join(tempFolderPath,'config.conf'))
 
         for recipe_name in list(config.keys()):
