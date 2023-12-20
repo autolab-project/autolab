@@ -205,30 +205,6 @@ class RecipeManager:
         # OPTIMIZE: should be in diff file so diff manager can access it without using recipemanager
 
         # Create recipe widget (parameter, scanrange, recipe)
-        fontBold = QtGui.QFont()
-        fontBold.setBold(True)
-
-        # Close button frame
-        frameClose = QtWidgets.QFrame()
-        # frameClose.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        frameClose.setMinimumSize(0, 20)
-        frameClose.setMaximumSize(16777215, 20)
-
-        closeButton = QtWidgets.QPushButton(frameClose)
-        closeButton.setText('X')
-        closeButton.setFont(fontBold)
-        closeButton.setStyleSheet('''QPushButton:hover {background-color: #f44336; color: white;}''')
-        closeButton.setMinimumSize(40, 20)
-        closeButton.setMaximumSize(40, 20)
-        closeButton.clicked.connect(lambda : self.gui.configManager.removeRecipe(self.recipe_name))
-
-        layoutClose = QtWidgets.QHBoxLayout(frameClose)
-        layoutClose.setContentsMargins(0,0,0,0)
-        layoutClose.setSpacing(0)
-        layoutClose.addStretch()
-        layoutClose.addWidget(closeButton)
-        layoutClose.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignTop)
-
         # Parameter frame
         frameParameter = parameterQFrame(self.gui, self.recipe_name)
         # frameParameter.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -393,17 +369,52 @@ class RecipeManager:
         layoutAll = QtWidgets.QVBoxLayout(frameAll)
         layoutAll.setContentsMargins(0,0,0,0)
         layoutAll.setSpacing(0)
-        layoutAll.addWidget(frameClose)
         layoutAll.addWidget(frameParameter)
         layoutAll.addWidget(frameScanRange)
         layoutAll.addWidget(frameRecipe)
 
-        frameAll2 = QtWidgets.QTabWidget()
-        frameAll2.addTab(frameAll, self.recipe_name)
-        stylesheet = """
-            QTabWidget>QWidget>QWidget{background: rgb(240, 240, 240);}
-            """
-        frameAll2.setStyleSheet(stylesheet)
+        class MyQTabWidget(QtWidgets.QTabWidget):
+
+            def __init__(self, frame, gui, recipe_name):
+                self.recipe_name = recipe_name
+                self.gui = gui
+                QtWidgets.QTabWidget.__init__(self)
+
+                self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                self.customContextMenuRequested.connect(self.menu)
+                self.tabBarDoubleClicked.connect(self.renameRecipe)
+
+                self.addTab(frame, self.recipe_name)
+                stylesheet = """
+                    QTabWidget>QWidget>QWidget{background: rgb(240, 240, 240);}
+                    """
+                self.setStyleSheet(stylesheet)
+
+            def menu(self, position: QtCore.QPoint):
+                """ This function provides the menu when the user right click on an item """
+                menu = QtWidgets.QMenu()
+                renameRecipeAction = menu.addAction("Rename")
+                removeRecipeAction = menu.addAction("Remove")
+                choice = menu.exec_(self.mapToGlobal(QtCore.QPoint(0, 20)))  # don't use position to avoid confusion with tree element when very closed
+
+                if choice == renameRecipeAction:
+                    self.renameRecipe()
+                if choice == removeRecipeAction:
+                    self.gui.configManager.removeRecipe(self.recipe_name)
+
+            def renameRecipe(self):
+                """ This function prompts the user for a new step name,
+                and apply it to the selected step """
+                newName, state = QtWidgets.QInputDialog.getText(
+                    self.gui, self.recipe_name, f"Set {self.recipe_name} new name",
+                    QtWidgets.QLineEdit.Normal, self.recipe_name)
+
+                newName = main.cleanString(newName)
+                if newName != '':
+                    self.gui.configManager.renameRecipe(
+                        self.recipe_name, newName)
+
+        frameAll2 = MyQTabWidget(frameAll, self.gui, self.recipe_name)
         self._frame = frameAll2
         self.gui.verticalLayout_recipe.addWidget(self._frame)
 

@@ -9,7 +9,8 @@ import json
 import datetime
 import os
 import math as m
-from typing import Tuple
+from typing import Tuple, Any
+import collections
 
 import numpy as np
 import pandas as pd
@@ -91,7 +92,7 @@ class ConfigManager:
         self.redo.setEnabled(False)
 
         # Initializing configuration values
-        self.config = {}
+        self.config = collections.OrderedDict()
 
         self.configHistory = ConfigHistory()
         self.configHistory.active = True
@@ -111,20 +112,14 @@ class ConfigManager:
 
         return names
 
-
-    def getUniqueName(self, basename: str, element: str = 'item') -> str:  # TODO: allow same name between recipes -> need to change name when moving from one recipe to another
-        """ This function adds a number next to basename in case this basename is already taken """
+    def getUniqueName(self, recipe_name: str, basename: str) -> str:
+        """ This function adds a number next to basename in case this basename
+        is already taken for the given recipe with recipe_name name """
         name = basename
         names = []
 
-        if element == 'item':
-            for recipe_name in self.config.keys():
-                    names += self.getNames(recipe_name)
-        elif element == 'recipe':
-            names.append('recipe')  # don't want 'recipe' as name but only 'recipe_i'
-            names +=  self.config.keys()
-        else:
-            raise NotImplementedError(f"element arg is either 'item' or 'recipe'. Given {element}")
+        if recipe_name in self.config.keys():
+            names += self.getNames(recipe_name)
 
         compt = 0
         while True:
@@ -136,6 +131,24 @@ class ConfigManager:
 
         return name
 
+    def getUniqueNameRecipe(self, basename: str) -> str:
+        """ This function adds a number next to basename in case this basename
+        is already taken by a recipe """
+        name = basename
+        names = []
+
+        names.append('recipe')  # don't want 'recipe' as name but only 'recipe_i'
+        names += self.config.keys()
+
+        compt = 0
+        while True:
+            if name in names:
+                compt += 1
+                name = basename+'_'+str(compt)
+            else:
+                break
+
+        return name
 
     # CONFIG MODIFICATIONS
     ###########################################################################
@@ -147,11 +160,11 @@ class ConfigManager:
             self.undo.setEnabled(True)
             self.redo.setEnabled(False)
 
-    def addRecipe(self, recipe_name: str):  # TODO: add rename (delete and redo config with new new)
+    def addRecipe(self, recipe_name: str):
         """ Add new recipe to config """
         if not self.gui.scanManager.isStarted():
-            recipe_name = self.getUniqueName(recipe_name, element='recipe')
-            parameter_name = self.getUniqueName('parameter')
+            recipe_name = self.getUniqueNameRecipe(recipe_name)
+            parameter_name = self.getUniqueName(recipe_name, 'parameter')
 
             self.config[recipe_name] = {}
             self.config[recipe_name]['parameter'] = {'element':None,
@@ -185,22 +198,22 @@ class ConfigManager:
                 'end_value': 0,
                 'log': False}
 
-    def setParameter(self, recipe_name: str, element, name: str = None):
+    def setParameter(self, recipe_name: str, element: devices.Device,
+                     name: str = None):
         """ This function set the element provided as the new parameter of the scan """
         if not self.gui.scanManager.isStarted():
             self.config[recipe_name]['parameter']['element'] = element
-            if name is None: name = self.getUniqueName(element.name)
+            if name is None: name = self.getUniqueName(recipe_name, element.name)
             self.config[recipe_name]['parameter']['name'] = name
             self.gui.recipeDict[recipe_name]['parameterManager'].refresh()
             self.gui.dataManager.clear()
             self.addNewConfig()
 
     def setParameterName(self, recipe_name: str, name: str):
-
         """ This function set the name of the current parameter of the scan """
         if not self.gui.scanManager.isStarted():
             if name != self.config[recipe_name]['parameter']['name']:
-                name = self.getUniqueName(name)
+                name = self.getUniqueName(recipe_name, name)
                 self.config[recipe_name]['parameter']['name'] = name
                 self.gui.dataManager.clear()
                 self.addNewConfig()
@@ -217,19 +230,23 @@ class ConfigManager:
         if not self.gui.scanManager.isStarted():
             assert recipe_name in self.config.keys(), f'{recipe_name} not in {list(self.config.keys())}'
 
-            if name is None: name = self.getUniqueName(element.name)
+            if name is None:
+                name = self.getUniqueName(recipe_name, element.name)
+            else:
+                name = self.getUniqueName(recipe_name, name)
+
             step = {'stepType': stepType, 'element': element,
                     'name': name,'value': None}
 
             # Value
             if stepType == 'set': setValue = True
             elif stepType == 'action' and element.type in [
-                    int,float,str,pd.DataFrame,np.ndarray]: setValue = True
+                    int, float, str, pd.DataFrame,np.ndarray]: setValue = True
             else: setValue = False
 
             if setValue:
                 if value is None:
-                    if element.type in [int,float]: value = 0
+                    if element.type in [int, float]: value = 0
                     elif element.type in [
                             str, pd.DataFrame, np.ndarray]: value = ''
                     elif element.type in [bool]: value = False
@@ -257,13 +274,13 @@ class ConfigManager:
         if not self.gui.scanManager.isStarted():
             if newName != name :
                 pos = self.getRecipeStepPosition(recipe_name, name)
-                newName = self.getUniqueName(newName)
+                newName = self.getUniqueName(recipe_name, newName)
                 self.config[recipe_name]['recipe'][pos]['name'] = newName
                 self.refreshRecipe(recipe_name)
                 self.gui.dataManager.clear()
                 self.addNewConfig()
 
-    def setRecipeStepValue(self, recipe_name: str, name: str, value):
+    def setRecipeStepValue(self, recipe_name: str, name: str, value: Any):
         """ This function set the value of a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
             pos = self.getRecipeStepPosition(recipe_name, name)
@@ -352,7 +369,7 @@ class ConfigManager:
     # CONFIG READING
     ###########################################################################
 
-    def getParameter(self, recipe_name: str):
+    def getParameter(self, recipe_name: str) -> devices.Device:
         """ This function returns the element of the current parameter of the scan """
         return self.config[recipe_name]['parameter']['element']
 
@@ -360,7 +377,7 @@ class ConfigManager:
         """ This function returns the name of the current parameter of the scan """
         return self.config[recipe_name]['parameter']['name']
 
-    def getRecipeStepElement(self, recipe_name: str, name: str):
+    def getRecipeStepElement(self, recipe_name: str, name: str) -> devices.Device:
         """ This function returns the element of a recipe step """
         pos = self.getRecipeStepPosition(recipe_name, name)
         return self.config[recipe_name]['recipe'][pos]['element']
@@ -370,7 +387,7 @@ class ConfigManager:
         pos = self.getRecipeStepPosition(recipe_name, name)
         return self.config[recipe_name]['recipe'][pos]['stepType']
 
-    def getRecipeStepValue(self, recipe_name: str, name: str):
+    def getRecipeStepValue(self, recipe_name: str, name: str) -> Any:
         """ This function returns the value of a recipe step """
         pos = self.getRecipeStepPosition(recipe_name, name)
         return self.config[recipe_name]['recipe'][pos]['value']
@@ -404,7 +421,8 @@ class ConfigManager:
         parameterName = self.getParameterName(recipe_name)
 
         if logScale:
-            paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+            paramValues = np.logspace(m.log10(startValue), m.log10(endValue),
+                                      nbpts, endpoint=True)
         else:
             paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
 
@@ -554,11 +572,11 @@ class ConfigManager:
         try :
             # Legacy config
             if 'parameter' in configPars:
-                new_configPars = {}
+                new_configPars = collections.OrderedDict()
                 new_configPars["autolab"] = configPars["autolab"]
 
                 if 'initrecipe' in configPars:
-                    new_configPars["init"] = {}  # BUG: doesn't add step to recipe in gui, was already a bug before changes
+                    new_configPars["init"] = {}
                     new_configPars["init"]['parameter'] = self._defaultParameterPars()
                     new_configPars["init"]['parameter']['name'] = 'init'
                     new_configPars["init"]['recipe'] = configPars['initrecipe']
@@ -575,11 +593,11 @@ class ConfigManager:
                 configPars = new_configPars
 
             # Config
-            config = {}
+            config = collections.OrderedDict()
             recipeNameList = [i for i in list(configPars.keys()) if i != 'autolab']  # to remove 'autolab' from recipe list
 
             for recipe_name in recipeNameList:
-                config[recipe_name] = {}
+                config[recipe_name] = collections.OrderedDict()
                 recipe_i = config[recipe_name]
                 pars_recipe_i = configPars[recipe_name]
                 assert 'parameter' in pars_recipe_i, f'Missing parameter in {recipe_name}:{pars_recipe_i}'
@@ -611,7 +629,7 @@ class ConfigManager:
 
                 while True:
                     step = {}
-                    i = len(recipe)+1
+                    i = len(recipe) + 1
 
                     if f'{i}_name' in pars_recipe:
                         step['name'] = pars_recipe[f'{i}_name']
@@ -626,7 +644,9 @@ class ConfigManager:
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
 
-                        if step['stepType']=='set' or (step['stepType'] == 'action' and element.type in [int,float,str,pd.DataFrame,np.ndarray]) :
+                        if (step['stepType'] == 'set')  or (
+                                step['stepType'] == 'action' and element.type in [
+                                    int, float, str, pd.DataFrame, np.ndarray]):
                             assert f'{i}_value' in pars_recipe, f"Missing value in step {i} ({name})."
                             value = pars_recipe[f'{i}_value']
 
@@ -664,7 +684,7 @@ class ConfigManager:
                 for recipe_name in config.keys():
 
                     if recipe_name in self.config.keys():
-                        new_recipe_name = self.getUniqueName('recipe', element='recipe')
+                        new_recipe_name = self.getUniqueNameRecipe('recipe')
                     else:
                         new_recipe_name = recipe_name
 
@@ -699,14 +719,14 @@ class ConfigManager:
             self.refreshRecipe(recipe_name)
             self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
 
-    def renameRecipe(self, existing_recipe_name, new_recipe_name):
+    def renameRecipe(self, existing_recipe_name: str, new_recipe_name: str):
         if existing_recipe_name not in self.config.keys():
             raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.config.keys()}')
 
         old_config = self.config
         new_config = {}
 
-        for recipe_name in old_config.keys():  # TODO: change dict to orderdict
+        for recipe_name in old_config.keys():
             if recipe_name == existing_recipe_name:
                 new_config[new_recipe_name] = old_config[recipe_name]
             else:

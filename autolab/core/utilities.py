@@ -106,8 +106,8 @@ def pyqtgraph_fig_ax():
     fig = pg.PlotWidget()
     ax = fig.getPlotItem()
 
-    ax.setLabel("bottom", '', **{'color':0.4, 'font-size': '12pt'})
-    ax.setLabel("left", '', **{'color':0.4, 'font-size': '12pt'})
+    ax.setLabel("bottom", ' ', **{'color':0.4, 'font-size': '12pt'})
+    ax.setLabel("left", ' ', **{'color':0.4, 'font-size': '12pt'})
 
     # Set your custom font for both axes
     my_font = QtGui.QFont('Arial', 12)

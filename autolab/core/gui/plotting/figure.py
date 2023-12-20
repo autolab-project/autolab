@@ -4,8 +4,6 @@ Created on Oct 2022
 
 @author: jonathan based on qchat
 """
-
-
 import os
 
 import pyqtgraph as pg
@@ -19,7 +17,6 @@ class FigureManager :
     def __init__(self,gui):
 
         self.gui = gui
-
         self.curves = []
 
         # Configure and initialize the figure in the GUI
@@ -30,9 +27,7 @@ class FigureManager :
         self.nbtraces = 10
 
     def start(self, new_dataset) :
-
         """ This function display data and ajust buttons """
-
         try :
             names = self.gui.dataManager.getDatasetsNames()
 
@@ -89,36 +84,29 @@ class FigureManager :
     # AXE LABEL
     ###########################################################################
 
-    def getLabel(self, axe):
+    def getLabel(self, axe: str):
         """ This function get the label of the given axis """
-
         return getattr(self.gui, f"variable_{axe}_comboBox").currentText()
 
-    def setLabel(self,axe,value):
+    def setLabel(self, axe: str, value: str):
         """ This function changes the label of the given axis """
-
         axes = {'x':'bottom', 'y':'left'}
+        if value == '': value = ' '
         self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
-
 
 
     # PLOT DATA
     ###########################################################################
 
-
     def clearData(self):
         """ This function removes any plotted curves """
-
         for curve in self.curves :
             self.ax.removeItem(curve)
         self.curves = []
 
-
-
     def reloadData(self):
         ''' This function removes any plotted curves and reload all required curves from
         data available in the data manager'''
-
         # Remove all curves
         self.clearData()
 
@@ -203,8 +191,6 @@ class FigureManager :
 
             self.gui.plugin_refresh()
 
-
-
     def reloadLastData(self):
 
         ''' This functions update the data of the last curve '''
@@ -219,9 +205,6 @@ class FigureManager :
         # Update plot data
         if data is not None:
             self.curves[-1].setData(data.loc[:,variable_x], data.loc[:,variable_y])
-
-
-
 
     # SAVE FIGURE
     ###########################################################################
