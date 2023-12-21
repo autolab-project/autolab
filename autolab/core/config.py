@@ -8,6 +8,7 @@ Created on Mon Nov 18 14:53:10 2019
 import os
 import configparser
 from . import paths
+from . import utilities
 
 
 # ==============================================================================
@@ -55,7 +56,7 @@ def save_config(config_name,config):
         config.write(file)
 
 
-def load_config(config_name):
+def load_config(config_name) -> configparser.ConfigParser:
     """ This function loads the autolab configuration file in a config parser """
     config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
@@ -140,6 +141,7 @@ def check_autolab_config():
     scanner_dict = {'precision': 15,
                     'save_config': True,
                     'save_figure': True,
+                    'save_temp': True,
                     }
     if 'scanner' in autolab_config.sections():
         if 'precision' in autolab_config['scanner'].keys():
@@ -148,7 +150,16 @@ def check_autolab_config():
             scanner_dict['save_config'] = autolab_config['scanner']['save_config']
         if 'save_figure' in autolab_config['scanner'].keys():
             scanner_dict['save_figure'] = autolab_config['scanner']['save_figure']
+        if 'save_temp' in autolab_config['scanner'].keys():
+            scanner_dict['save_temp'] = autolab_config['scanner']['save_temp']
     autolab_config['scanner'] = scanner_dict
+    autolab_config.set('scanner', '# Think twice before using save_temp = False')
+    if not utilities.boolean(autolab_config['scanner']["save_temp"]):
+        print('Warning: save_temp in "autolab_config.ini" is disable, ' \
+              'be aware that data will not be saved during the scan. ' \
+              'If a crash occurs during a scan, you will loose its data. ' \
+              'Disabling this option is only useful if you want to do fast ' \
+              'scan when plotting large dataframe (images for examples)')
 
     # Check directories configuration
     directories_dict = {'temp_folder': 'default',
@@ -169,7 +180,7 @@ def check_autolab_config():
     save_config('autolab', autolab_config)
 
 
-def get_config(section_name):
+def get_config(section_name) -> configparser.SectionProxy:
     ''' Returns section with section_name from autolab_config.ini '''
     config = load_config('autolab')
     assert section_name in config.sections(), f'Missing {section_name} stats in autolab_config.ini'
@@ -177,42 +188,47 @@ def get_config(section_name):
     return config[section_name]
 
 
-def get_server_config():
+def get_server_config() -> configparser.SectionProxy:
     ''' Returns section server from autolab_config.ini '''
     return get_config('server')
 
 
-def get_GUI_config():
+def get_GUI_config() -> configparser.SectionProxy:
     ''' Returns section QT_API from autolab_config.ini '''
     return get_config('GUI')
 
-def get_control_center_config():
+def get_control_center_config() -> configparser.SectionProxy:
     ''' Returns section control_center from autolab_config.ini '''
     return get_config('control_center')
 
 
-def get_monitor_config():
+def get_monitor_config() -> configparser.SectionProxy:
     ''' Returns section monitor from autolab_config.ini '''
     return get_config('monitor')
 
 
-def get_scanner_config():
+def get_scanner_config() -> configparser.SectionProxy:
     ''' Returns section scanner from autolab_config.ini '''
     return get_config('scanner')
 
 
-def get_directories_config():
+def get_directories_config() -> configparser.SectionProxy:
     ''' Returns section directories from autolab_config.ini '''
     return get_config('directories')
 
 
-def get_temp_folder():
-    ''' Returns temporary folder name from autolab_config.ini '''
+def set_temp_folder() -> str:
+    ''' Set temporary folder using given path in autolab_config.ini
+    Write it in os.environ['TEMP'] to be used in autolab and drivers '''
     temp_folder = get_directories_config()["temp_folder"]
 
     if temp_folder == 'default':
         import tempfile
-        temp_folder = tempfile.gettempdir()
+        # Try to get TEMP, if not get tempfile
+        temp_folder = os.environ.get('TEMP', tempfile.gettempdir())
+
+    # Always write temp to allow drivers to get and change it
+    os.environ['TEMP'] = temp_folder
 
     return temp_folder
 
@@ -245,14 +261,14 @@ def check_plotter_config():
     plotter_config.set('device', '# Usage: address = <DEVICE_VARIABLE>')
     plotter_config.set('device', '# Example: address = dummy.array_1D')
 
-    save_config('plotter',plotter_config)
+    save_config('plotter', plotter_config)
 
 
 # =============================================================================
 # DEVICES CONFIG
 # =============================================================================
 
-def get_all_devices_configs():
+def get_all_devices_configs() -> configparser.ConfigParser:
     ''' Returns current devices configuration '''
     config = load_config('devices')
     assert len(set(config.sections())) == len(config.sections()), "Each device must have a unique name."
@@ -260,14 +276,14 @@ def get_all_devices_configs():
     return config
 
 
-def list_all_devices_configs():
+def list_all_devices_configs() -> list:
     ''' Returns the list of available configuration names '''
     devices_configs = get_all_devices_configs()
 
     return sorted(list(devices_configs.sections()))
 
 
-def get_device_config(config_name):
+def get_device_config(config_name) -> configparser.SectionProxy:
     ''' Returns the config associated with config_name '''
     assert config_name in list_all_devices_configs(), f"Device configuration {config_name} not found"
     devices_configs = get_all_devices_configs()

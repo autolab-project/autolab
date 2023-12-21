@@ -103,7 +103,7 @@ def _check_empty_driver_folder():
 def install_drivers():
     """ Ask if want to install all the official drivers. """
 
-    temp_folder = config.get_temp_folder()
+    temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
     temp_repo_folder = tempfile.mkdtemp(dir=temp_folder)
 
     for github_repo_url in paths.DRIVER_GITHUB.values():

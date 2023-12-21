@@ -723,6 +723,7 @@ class ConfigManager:
         if existing_recipe_name not in self.config.keys():
             raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.config.keys()}')
 
+        new_recipe_name = self.getUniqueNameRecipe(new_recipe_name)
         old_config = self.config
         new_config = {}
 

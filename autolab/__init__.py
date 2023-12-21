@@ -30,6 +30,7 @@ from .core import config as _config
 _config.initialize_local_directory()
 _config.check_autolab_config()
 _config.check_plotter_config()
+_config.set_temp_folder()
 
 # infos
 from .core.infos import list_devices, list_drivers, infos, config_help
