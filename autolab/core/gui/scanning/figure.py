@@ -142,14 +142,14 @@ class FigureManager :
             self.reloadData()
 
         index = self.gui.dataframe_comboBox.currentIndex()
-        key_list = []
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        dataset = self.gui.dataManager.getLastSelectedDataset()  # before was loop over all datasets but obsolete seen remove possibility to see previous scan dataframe
+        dataset = self.gui.dataManager.getLastSelectedDataset()
         sub_dataset = dataset[recipe_name]
-        list_dataframe_key = list(sub_dataset.dictListDataFrame.keys())
-        if len(key_list) < len(list_dataframe_key):
-            key_list = list_dataframe_key
-        resultNamesList = ["Scan"] + key_list
+
+        # resultNamesList = ["Scan"] + list(sub_dataset.dictListDataFrame.keys())
+        resultNamesList = ["Scan"] + [
+            i for i in sub_dataset.dictListDataFrame.keys() if type(
+                sub_dataset.dictListDataFrame[i][0]) != str]  # OPTIMIZE: remove this condition if want to plot string
 
         if len(resultNamesList) == 1:
             self.gui.dataframe_comboBox.hide()
@@ -191,12 +191,12 @@ class FigureManager :
 
     def clearData(self):
         """ This function removes any plotted curves """
-        for curve in self.curves :
+        for curve in self.curves:
             self.ax.removeItem(curve)
         self.curves = []
 
 
-    def reloadData(self):
+    def reloadData(self) -> None:
         ''' This function removes any plotted curves and reload all required curves from
         data available in the data manager'''
         # Remove all curves
@@ -225,7 +225,9 @@ class FigureManager :
             self.gui.graph_nbTracesLabel.hide()
         # Load the last results data
         try:
-            data = self.gui.dataManager.getData(nbtraces_temp,[variable_x,variable_y], selectedData=selectedData, data_name=data_name)
+            data = self.gui.dataManager.getData(
+                nbtraces_temp, [variable_x, variable_y],
+                selectedData=selectedData, data_name=data_name)
         except:
             data = None
 
@@ -296,13 +298,13 @@ class FigureManager :
         variable_x = self.gui.variable_x_comboBox.currentText()
         variable_y = self.gui.variable_y_comboBox.currentText()
 
-        data = self.gui.dataManager.getData(1,[variable_x,variable_y])[0]
+        data = self.gui.dataManager.getData(1, [variable_x, variable_y])[0]
 
         # Update plot data
         if data is not None:
             data = data.astype(float)
 
-            self.curves[-1].setData(data.loc[:,variable_x], data.loc[:,variable_y])
+            self.curves[-1].setData(data.loc[:, variable_x], data.loc[:, variable_y])
 
         self.gui.displayScanData_pushButton.setEnabled(True)
         if self.displayScan.active:
@@ -331,12 +333,12 @@ class FigureManager :
         in the GUI. It proceeds to the change and update the plot. """
         value = self.gui.nbTraces_lineEdit.text()
         check = False
-        try :
+        try:
             value = int(float(value))
             assert value > 0
             self.nbtraces = value
             check = True
-        except :
+        except:
             pass
 
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')

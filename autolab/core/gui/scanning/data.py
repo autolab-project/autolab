@@ -12,6 +12,7 @@ import shutil
 import tempfile
 import sys
 
+import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
 
@@ -20,7 +21,7 @@ from ... import config as autolab_config
 from ... import utilities
 
 
-class DataManager :
+class DataManager:
     """ Manage data from a scan """
 
     def __init__(self, gui):
@@ -29,6 +30,9 @@ class DataManager :
         self.datasets = []
         self.queue = Queue()
         self.initialized = False
+
+        scanner_config = autolab_config.get_scanner_config()
+        self.save_temp = utilities.boolean(scanner_config["save_temp"])
 
         # Timer
         self.timer = QtCore.QTimer(self.gui)
@@ -113,7 +117,11 @@ class DataManager :
                 dataset_folder, extension = os.path.splitext(filename)
                 new_configname = dataset_folder+".conf"
                 config_name = os.path.join(os.path.dirname(sub_dataset.tempFolderPath), 'config.conf')
-                shutil.copy(config_name, new_configname)
+
+                if os.path.exists(config_name):
+                    shutil.copy(config_name, new_configname)
+                else:
+                    self.gui.configManager.export(new_configname)
 
             if utilities.boolean(scanner_config["save_figure"]):
                 self.gui.figureManager.save(filename)
@@ -128,8 +136,8 @@ class DataManager :
         self.gui.figureManager.clearMenuID()
         self.gui.figureManager.figMap.hide()
         self.gui.figureManager.fig.show()
-        self.gui.figureManager.setLabel("x", "")
-        self.gui.figureManager.setLabel("y", "")
+        self.gui.figureManager.setLabel("x", " ")
+        self.gui.figureManager.setLabel("y", " ")
         self.gui.nbTraces_lineEdit.show()
         self.gui.graph_nbTracesLabel.show()
         self.gui.frame_axis.show()
@@ -160,15 +168,20 @@ class DataManager :
         maximum = 0
         dataset_recipes = {}
 
-        temp_folder = autolab_config.get_temp_folder()
-        tempFolderPath = tempfile.mkdtemp(dir=temp_folder) # Creates a temporary directory for this dataset
-        self.gui.configManager.export(os.path.join(tempFolderPath,'config.conf'))
+        if self.save_temp:
+            temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
+            tempFolderPath = tempfile.mkdtemp(dir=temp_folder) # Creates a temporary directory for this dataset
+            self.gui.configManager.export(os.path.join(tempFolderPath,'config.conf'))
+        else:
+            import random
+            tempFolderPath = str(random.random())
 
         for recipe_name in list(config.keys()):
             sub_config = config[recipe_name]
             sub_folder = os.path.join(tempFolderPath, recipe_name)
-            os.mkdir(sub_folder)
-            dataset = Dataset(sub_folder, recipe_name, sub_config)
+            if self.save_temp: os.mkdir(sub_folder)
+            dataset = Dataset(sub_folder, recipe_name,
+                              sub_config, save_temp=self.save_temp)
             dataset_recipes[recipe_name] = dataset
             maximum += sub_config['nbpts']
 
@@ -191,11 +204,22 @@ class DataManager :
             sub_dataset = dataset[recipe_name]
             sub_dataset.addPoint(point)
             count += 1
-            # Useless TODO if decide to change how scan is done (recipe class from v2) and how data is stored
-            # OPTIMIZE: redo dataframe plot with a better logic: create dict with dataframe name as key \
-            # and the values is a dict with all information needed to create checkbox \
-            # with it can have unique checkbox list and bool for each dataframe and over multiple scan id
-            # Maybe create a class instead of dict that regroup everything related to a dataframe of a recipe
+
+        # Upload the plot if new data available
+        if count > 0:
+            # Update progress bar
+            progress = 0
+
+            for sub_dataset_name in dataset.keys():
+                if recipe_name == sub_dataset_name:
+                    progress += len(dataset[sub_dataset_name])
+                    break
+                else:
+                    progress += dataset[sub_dataset_name].config["nbpts"]
+
+            self.gui.progressBar.setValue(progress)
+
+            # Update dataframe combobox and checkbox
             listDataFrame = list(sub_dataset.dictListDataFrame.values())
             if len(listDataFrame) != 0:
                 nb_id = 0
@@ -222,19 +246,6 @@ class DataManager :
                 if self.gui.dataframe_comboBox.currentText() != "Scan":
                     self.gui.figureManager.reloadData()
 
-        # Upload the plot if new data available
-        if count > 0:
-            progress = 0 # Update progress bar
-
-            for sub_dataset_name in dataset.keys():
-                if recipe_name == sub_dataset_name:
-                    progress += len(dataset[sub_dataset_name])
-                    break
-                else:
-                    progress += dataset[sub_dataset_name].config["nbpts"]
-
-            self.gui.progressBar.setValue(progress)
-
             # Executed after the first start of a new config scan
             if not self.initialized:
                 self.gui.scan_recipe_comboBox.setCurrentText(recipe_name)
@@ -249,7 +260,7 @@ class DataManager :
 
             self.gui.figureManager.updateDataframe_comboBox()
 
-    def updateDisplayableResults(self) :
+    def updateDisplayableResults(self):
         """ This function update the combobox in the GUI that displays the names of
         the results that can be plotted """
         data_name = self.gui.dataframe_comboBox.currentText()
@@ -266,8 +277,8 @@ class DataManager :
                         break
             else:
                 return None
-            # if text or if image return
-            if type(data) is str or not (len(data.T.shape) == 1 or data.T.shape[0] == 2):
+            # if text or if image of type ndarray return
+            if type(data) is str or (type(data) is np.ndarray and not (len(data.T.shape) == 1 or data.T.shape[0] == 2)):
                 self.gui.variable_x_comboBox.clear()
                 self.gui.variable_y_comboBox.clear()
                 return None
@@ -298,7 +309,8 @@ class DataManager :
 class Dataset():
     """ Collection of data from a scan """
 
-    def __init__(self, tempFolderPath: str, recipe_name: str, config: dict):
+    def __init__(self, tempFolderPath: str, recipe_name: str, config: dict,
+                 save_temp: bool = True):
         self.all_data_temp = list()
         self.recipe_name = recipe_name
         self.config = config
@@ -309,8 +321,9 @@ class Dataset():
         self.dictListDataFrame = dict()
         self.tempFolderPath = tempFolderPath
         self.new = True
+        self.save_temp = save_temp
 
-    def getData(self, varList: list, data_name : str = "Scan", dataID: int = 0):
+    def getData(self, varList: list, data_name: str = "Scan", dataID: int = 0):
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
         if data_name == "Scan":
@@ -335,14 +348,38 @@ class Dataset():
         """ This function saved the dataset in the provided path """
         dataset_folder, extension = os.path.splitext(filename)
         data_name = os.path.join(self.tempFolderPath, 'data.txt')
-        shutil.copy(data_name, filename)
+
+        if os.path.exists(data_name):
+            shutil.copy(data_name, filename)
+        else:
+            self.data.to_csv(filename, index=False, header=self.header)
 
         if self.list_array:
             if not os.path.exists(dataset_folder): os.mkdir(dataset_folder)
             for tmp_folder in self.list_array:
                 array_name = os.path.basename(tmp_folder)
                 dest_folder = os.path.join(dataset_folder, array_name)
-                shutil.copytree(tmp_folder, dest_folder, dirs_exist_ok=True)
+
+                if os.path.exists(tmp_folder):
+                    shutil.copytree(tmp_folder, dest_folder, dirs_exist_ok=True)
+                else:
+                    if not os.path.exists(dest_folder): os.mkdir(dest_folder)
+
+                    if array_name in self.dictListDataFrame.keys():
+                        list_data = self.dictListDataFrame[array_name]  # data is list representing id 1,2
+
+                        for i, value in enumerate(list_data):
+                            path = os.path.join(dest_folder, f"{i+1}.txt")
+
+                            if type(value) in [int, float, bool, str]:
+                                with open(path, 'w') as f: f.write(str(value))
+                            elif type(value) == bytes:
+                                with open(path, 'wb') as f: f.write(value)
+                            elif type(value) == np.ndarray:
+                                np.savetxt(path, value)
+                            elif type(value) == pd.DataFrame:
+                                value.to_csv(path, index=False)
+
 
     def addPoint(self, dataPoint: collections.OrderedDict):
         """ This function add a data point (parameter value, and results) in the dataset """
@@ -365,31 +402,33 @@ class Dataset():
                 simpledata[resultName] = result
             else : # Else write it on a file, in a temp directory
                 folderPath = os.path.join(self.tempFolderPath, resultName)
-                if not os.path.exists(folderPath): os.mkdir(folderPath)
-                filePath = os.path.join(folderPath, f'{ID}.txt')
 
-                if element is not None:
-                    element.save(filePath, value=result)  # OPTIMIZE: very slow if save large data like high resolution image, which block the GUI until completion. First solution: save in diff thread than GUI. Second solution: don't save during scan but risk of loosing data if crash :/. Third option (too heavy for the user) allow to tick if want to save or not a recipe element.
+                if self.save_temp:
+                    if not os.path.exists(folderPath): os.mkdir(folderPath)
+                    filePath = os.path.join(folderPath, f'{ID}.txt')
+
+                    if element is not None:
+                        element.save(filePath, value=result)
 
                 if folderPath not in self.list_array:
                     self.list_array.append(folderPath)
 
-                if element.type is not str:  # OPTIMIZE: remove text because can't display it. If in future decide to plot text, remove this condition
-                    resultNameKey = self.dictListDataFrame.get(resultName)
+                resultNameKey = self.dictListDataFrame.get(resultName)
 
-                    if resultNameKey is None:
-                         if ID == 1:
-                             self.dictListDataFrame[resultName] = []
+                if resultNameKey is None:
+                     if ID == 1:
+                         self.dictListDataFrame[resultName] = []
 
-                    self.dictListDataFrame[resultName].append(result)
+                self.dictListDataFrame[resultName].append(result)
 
         self.all_data_temp.append(simpledata)
         self.data = pd.DataFrame(self.all_data_temp, columns=self.header)
 
-        if ID == 1:
-            self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,'data.txt'), index=False, mode='a', header=self.header)
-        else :
-            self.data.tail(1).to_csv(os.path.join(self.tempFolderPath,'data.txt'), index=False, mode='a', header=False)
+        if self.save_temp:
+            if ID == 1:
+                self.data.tail(1).to_csv(os.path.join(self.tempFolderPath, 'data.txt'), index=False, mode='a', header=self.header)
+            else :
+                self.data.tail(1).to_csv(os.path.join(self.tempFolderPath, 'data.txt'), index=False, mode='a', header=False)
 
     def __len__(self):
         """ Returns the number of data point of this dataset """

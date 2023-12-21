@@ -66,7 +66,7 @@ class FigureManager:
 
         xlist, ylist = self.plot.getData()
 
-        if len(xlist) == 0 or len(ylist) == 0:
+        if xlist is None or ylist is None or len(xlist) == 0 or len(ylist) == 0:
             return
 
         xmin = min(xlist)
