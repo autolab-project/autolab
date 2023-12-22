@@ -23,4 +23,4 @@ DRIVER_SOURCES = {'official':os.path.join(DRIVERS,'official'),
                   'local':os.path.join(DRIVERS,'local')}
 
 # Driver github repo
-DRIVER_GITHUB = {'official':'https://github.com/Python-simulation/autolab-drivers'}
+DRIVER_GITHUB = {'official':'https://github.com/autolab-project/autolab-drivers'}

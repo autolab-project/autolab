@@ -22,7 +22,7 @@ setup(
     description = 'Python package for scientific experiments interfacing and automation',
     long_description = long_description,
     long_description_content_type="text/markdown",
-    url = 'https://github.com/qcha41/autolab',
+    url = 'https://github.com/autolab-project/autolab',
     packages=find_packages(),
     classifiers=["Programming Language :: Python :: 3",
                  "Programming Language :: Python :: 3 :: Only",
