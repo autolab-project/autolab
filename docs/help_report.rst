@@ -20,7 +20,7 @@ Bugs & suggestions reports
 ==========================
 
 If you encounter some problems or bugs, or if you have any suggestion to improve this package, or one of its driver, please open an Issue on the GitHub page of this project
-https://github.com/qcha41/autolab/issues/new
+https://github.com/autolab-project/autolab/issues/new
 
 You can also directly call the function ``report`` of the package, which will open this page in your web browser:
 

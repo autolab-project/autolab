@@ -71,4 +71,4 @@ You can install the latest development version (at your own risk) directly form 
 
 .. code-block:: none
 
-	pip install https://github.com/Python-simulation/autolab/archive/master.zip
+	pip install https://github.com/autolab-project/autolab/archive/master.zip

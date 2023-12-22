@@ -12,8 +12,8 @@ import inspect
 
 
 def report():
-    """ Open the github link to open an issue: https://github.com/qcha41/autolab/issues """
-    webbrowser.open('https://github.com/qcha41/autolab/issues')
+    """ Open the github link to open an issue: https://github.com/autolab-project/autolab/issues """
+    webbrowser.open('https://github.com/autolab-project/autolab/issues')
 
 def doc(online="default"):
     """ By default try to open the online doc and if no internet connection, open the local pdf documentation.

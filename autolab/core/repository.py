@@ -16,7 +16,7 @@ from . import config
 
 # Removed the possibility to download drivers individually due to the restriction of Github requests
 # Removed the small driver installer GUI made to select which driver to install
-# This implementation can be found in commit https://github.com/Python-simulation/autolab/tree/98b29fb43c8026f40967e5751ce90ff62132a711
+# This implementation can be found in commit https://github.com/autolab-project/autolab/tree/98b29fb43c8026f40967e5751ce90ff62132a711
 
 
 def _format_url(url):
