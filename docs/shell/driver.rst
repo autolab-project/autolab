@@ -1,7 +1,7 @@
 .. _os_driver:
 
 Command driver
-===============
+==============
 
 
 See :ref:`name_shell_connection` for more informations about the connection. Once your driver is instantiated you will be able to perform **pre-configured operations** (see :ref:`name_driver_utilities.py` for how to configure operations) as well as **raw operations** (-m option). We will discuss both of them here as well as a quick (bash) **scripting example**.

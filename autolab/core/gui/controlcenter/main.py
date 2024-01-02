@@ -325,10 +325,11 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
-        if self.scanner is not None :
+        if self.scanner is not None:
             self.scanner.close()
 
-        if self.plotter is not None :
+        if self.plotter is not None:
+            self.plotter.figureManager.fig.close()
             self.plotter.close()
 
         monitors = list(self.monitors.values())
