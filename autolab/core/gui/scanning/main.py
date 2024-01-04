@@ -120,7 +120,7 @@ class Scanner(QtWidgets.QMainWindow):
         for recipe in self.recipeDict.values():
             recipe['rangeManager'].displayParameter.close()
         self.figureManager.displayScan.close()
-        self.figureManager.fig.close()
+        self.figureManager.fig.close()  # prevent crash without traceback when reopenning scanner multiple times
         self.figureManager.figMap.close()
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):

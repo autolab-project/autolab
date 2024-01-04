@@ -138,6 +138,7 @@ class ConfigManager:
         names = []
 
         names.append('recipe')  # don't want 'recipe' as name but only 'recipe_i'
+        names.append('autolab')  # don't want 'autolab' as name
         names += self.config.keys()
 
         compt = 0

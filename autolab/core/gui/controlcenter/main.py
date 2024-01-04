@@ -347,3 +347,12 @@ class ControlCenter(QtWidgets.QMainWindow):
         if hasattr(self, 'stdout'):
             sys.stdout = self.stdout._stream
             sys.stderr = self.stderr._stream
+
+        try:
+            import pyqtgraph as pg
+            # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
+            for view in pg.ViewBox.AllViews.copy().keys():
+                pg.ViewBox.forgetView(id(view), view)
+
+            pg.ViewBox.quit()
+        except: pass
