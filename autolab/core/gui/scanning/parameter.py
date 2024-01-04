@@ -20,6 +20,7 @@ class ParameterManager :
         self.parameterName_lineEdit = self.gui.recipeDict[self.recipe_name]['recipeManager'].parameterName_lineEdit
         self.parameterAddress_label = self.gui.recipeDict[self.recipe_name]['recipeManager'].parameterAddress_label
 
+        self.displayParameter = self.gui.recipeDict[self.recipe_name]['rangeManager'].displayParameter  # TODO: move displayParameter to main (should do it when moving tree creation from recipe to main)
         self.parameterName_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.parameterName_lineEdit,'edited'))
         self.parameterName_lineEdit.returnPressed.connect(self.nameChanged)
         self.parameterName_lineEdit.setEnabled(False)
@@ -48,6 +49,10 @@ class ParameterManager :
             self.unit_label.setText('')
         else:
             self.unit_label.setText(f'({unit})')
+
+        if self.displayParameter.active:
+            self.displayParameter.refresh(
+                self.gui.configManager.getParamDataFrame(self.recipe_name))
 
     def nameChanged(self):
         """ This function changes the name of the scan parameter """

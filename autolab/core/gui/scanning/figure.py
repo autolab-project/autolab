@@ -151,13 +151,15 @@ class FigureManager :
             i for i in sub_dataset.dictListDataFrame.keys() if type(
                 sub_dataset.dictListDataFrame[i][0]) != str]  # OPTIMIZE: remove this condition if want to plot string
 
+        self.gui.dataframe_comboBox.clear()
+        self.gui.dataframe_comboBox.addItems(resultNamesList)
+        if (index + 1) > len(resultNamesList): index = 0
+        self.gui.dataframe_comboBox.setCurrentIndex(index)
+
         if len(resultNamesList) == 1:
             self.gui.dataframe_comboBox.hide()
         else:
             self.gui.dataframe_comboBox.show()
-            self.gui.dataframe_comboBox.clear()
-            self.gui.dataframe_comboBox.addItems(resultNamesList)
-            self.gui.dataframe_comboBox.setCurrentIndex(index)
 
     def resetCheckBoxMenuID(self):
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
