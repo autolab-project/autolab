@@ -17,6 +17,7 @@ import pandas as pd
 from qtpy import QtWidgets, QtCore
 from qtpy.QtGui import QIcon
 
+from ... import utilities
 from ... import paths, devices, config
 from .... import __version__
 
@@ -175,6 +176,7 @@ class ConfigManager:
             self.config[recipe_name]['step'] = 1
             self.config[recipe_name]['log'] = False
             self.config[recipe_name]['recipe'] = []
+            self.config[recipe_name]['active'] = True
 
             self.gui._addRecipe(recipe_name)
             self.gui.dataManager.clear()
@@ -187,6 +189,47 @@ class ConfigManager:
             self.gui._removeRecipe(recipe_name)
             self.gui.dataManager.clear()
             self.addNewConfig()
+
+    def toggleRecipe(self, recipe_name: str):
+        """ Toggle recipe with recipe_name name """
+        self.config[recipe_name]['active'] = bool(1 - self.config[recipe_name]['active'])
+
+        self.gui._toggleRecipe(recipe_name)
+        self.gui.dataManager.clear()
+        self.addNewConfig()
+
+    def checkConfig(self):
+        """ Check validity of a config. Used before a scan start. """
+        recipe_name_list = list(self.config.keys())
+        assert len(recipe_name_list) != 0, 'Need a recipe to start a scan!'
+
+        one_recipe_active = False
+        for recipe_name in recipe_name_list:
+            recipe = self.config[recipe_name]
+            if recipe['active']:
+                one_recipe_active = True
+                assert len(recipe['recipe']) > 0, f"Recipe {recipe_name} is empty!"
+
+            list_recipe_new = [recipe]
+            has_sub_recipe = True
+
+            while has_sub_recipe:
+                has_sub_recipe = False
+                recipe_list = list_recipe_new
+
+                for recipe_i in recipe_list:
+
+                    for step in recipe_i['recipe']:
+                        if step['stepType'] == 'recipe':
+                            has_sub_recipe = True
+                            assert step['element'] in self.config, f"Recipe {step['element']} doesn't exist in {recipe_name}!"
+                            other_recipe = self.config[step['element']]
+                            assert len(other_recipe['recipe']) > 0, f"Recipe {step['element']} is empty!"
+                            list_recipe_new.append(other_recipe)
+
+                    list_recipe_new.remove(recipe_i)
+
+        assert one_recipe_active, "Need at least one active recipe!"
 
     def lastRecipeName(self) -> str:
         return list(self.config.keys())[-1] if len(self.config.keys()) != 0 else ""
@@ -237,7 +280,7 @@ class ConfigManager:
                 name = self.getUniqueName(recipe_name, name)
 
             step = {'stepType': stepType, 'element': element,
-                    'name': name,'value': None}
+                    'name': name, 'value': None}
 
             # Value
             if stepType == 'set': setValue = True
@@ -369,6 +412,13 @@ class ConfigManager:
 
     # CONFIG READING
     ###########################################################################
+    def getActive(self, recipe_name: str) -> bool:
+        """ Returns whether the recipe with recipe_name name is active """
+        return self.config[recipe_name]['active']
+
+    def getRecipeActive(self) -> list[str]:
+        """ Returns list of active recipes """
+        return [i for i in self.config.keys() if self.getActive(i)]
 
     def getParameter(self, recipe_name: str) -> devices.Device:
         """ This function returns the element of the current parameter of the scan """
@@ -414,8 +464,8 @@ class ConfigManager:
         return self.config[recipe_name]['range']
 
     def getParamDataFrame(self, recipe_name: str) -> pd.DataFrame:
-        """ This function returns a DataFrame with 'id' and '<parameterName>' columns \
-            containing the parameter array """
+        """ This function returns a DataFrame with 'id' and '<parameterName>'
+        columns containing the parameter array """
         startValue, endValue = self.getRange(recipe_name)
         nbpts = self.getNbPts(recipe_name)
         logScale: bool = self.getLog(recipe_name)
@@ -446,7 +496,7 @@ class ConfigManager:
         and export the current scan configuration in it """
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self.gui, "Export AUTOLAB configuration file",
-            os.path.join(paths.USER_LAST_CUSTOM_FOLDER,'config.conf'),
+            os.path.join(paths.USER_LAST_CUSTOM_FOLDER, 'config.conf'),
             "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
 
         if filename != '':
@@ -467,44 +517,56 @@ class ConfigManager:
             json.dump(configPars, configfile, indent=4)
 
     def create_configPars(self) -> dict:
-
         """ This function create the current scan configuration parser """
         configPars = {}
-        configPars['autolab'] = {'version':__version__,
-                                 'timestamp':str(datetime.datetime.now())}
+        configPars['autolab'] = {'version': __version__,
+                                 'timestamp': str(datetime.datetime.now())}
 
         for recipe_name, recipe_i in zip(self.config.keys(), self.config.values()):
             pars_recipe_i = {}
             pars_recipe_i['parameter'] = {}
             pars_recipe_i['parameter']['name'] = recipe_i['parameter']['name']
+
             if recipe_i['parameter']['element'] is not None:
                 pars_recipe_i['parameter']['address'] = recipe_i['parameter']['element'].address()
             else:
                 pars_recipe_i['parameter']['address'] = "None"
+
             pars_recipe_i['parameter']['nbpts'] = str(recipe_i['nbpts'])
             pars_recipe_i['parameter']['start_value'] = str(recipe_i['range'][0])
             pars_recipe_i['parameter']['end_value'] = str(recipe_i['range'][1])
             pars_recipe_i['parameter']['log'] = str(int(recipe_i['log']))
 
             pars_recipe_i['recipe'] = {}
+
             for i, config_step in enumerate(recipe_i['recipe']):
                 pars_recipe_i['recipe'][f'{i+1}_name'] = config_step['name']
                 pars_recipe_i['recipe'][f'{i+1}_steptype'] = config_step['stepType']
-                pars_recipe_i['recipe'][f'{i+1}_address'] = config_step['element'].address()
+
+                if config_step['stepType'] == 'recipe':
+                    pars_recipe_i['recipe'][f'{i+1}_address'] = config_step['element']
+                else:
+                    pars_recipe_i['recipe'][f'{i+1}_address'] = config_step['element'].address()
+
                 stepType = config_step['stepType']
+
                 if stepType == 'set' or (stepType == 'action'
                                          and config_step['element'].type in [
-                                             int,float,str,
-                                             pd.DataFrame,np.ndarray]):
+                                             int, float, str,
+                                             pd.DataFrame, np.ndarray]):
                     value = config_step['value']
+
                     try:
                         valueStr = f'{value:.{self.precision}g}'
                     except:
                         valueStr = f'{value}'
-                    pars_recipe_i['recipe'][f'{i+1}_value'] = valueStr
-            configPars[recipe_name] = pars_recipe_i
-        return configPars
 
+                    pars_recipe_i['recipe'][f'{i+1}_value'] = valueStr
+
+            pars_recipe_i['active'] = str(bool(recipe_i['active']))
+            configPars[recipe_name] = pars_recipe_i
+
+        return configPars
 
     def importActionClicked(self):
         """ This function prompts the user for a configuration filename,
@@ -610,17 +672,17 @@ class ConfigManager:
                     assert element is not None, f"Parameter {pars_recipe_i['parameter']['address']} not found."
 
                 assert 'name' in pars_recipe_i['parameter'], "Missing name to {pars_recipe_i['parameter']}"
-                recipe_i['parameter'] = {'element':element,'name':pars_recipe_i['parameter']['name']}
+                recipe_i['parameter'] = {'element':element, 'name':pars_recipe_i['parameter']['name']}
 
                 for key in ['nbpts', 'start_value', 'end_value', 'log'] :
                     assert key in pars_recipe_i['parameter'], "Missing parameter key {key}."
                     recipe_i['nbpts'] = int(pars_recipe_i['parameter']['nbpts'])
                     start = float(pars_recipe_i['parameter']['start_value'])
                     end = float(pars_recipe_i['parameter']['end_value'])
-                    recipe_i['range'] = (start,end)
+                    recipe_i['range'] = (start, end)
                     recipe_i['log'] = bool(int(pars_recipe_i['parameter']['log']))
                     if recipe_i['nbpts'] > 1:
-                        recipe_i['step'] = abs(end-start)/(recipe_i['nbpts']-1)
+                        recipe_i['step'] = abs(end - start) / (recipe_i['nbpts'] - 1)
                     else:
                         recipe_i['step'] = 0
 
@@ -641,7 +703,12 @@ class ConfigManager:
 
                         assert f'{i}_address' in pars_recipe, f"Missing address in step {i} ({name})."
                         address = pars_recipe[f'{i}_address']
-                        element = devices.get_element_by_address(address)
+
+                        if step['stepType'] == 'recipe':
+                            element = address
+                        else:
+                            element = devices.get_element_by_address(address)
+
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
 
@@ -663,11 +730,7 @@ class ConfigManager:
                                     elif element.type in [str]:
                                         value = str(value)
                                     elif element.type in [bool]:
-                                        if value == "False": value = False
-                                        elif value == "True": value = True
-                                        value = int(value)
-                                        assert value in [0, 1]
-                                        value = bool(value)
+                                        value = utilities.boolean(value)
                                     else:
                                         assert self.checkVariable(value), "Need $eval: to evaluate the given string"
                             except:
@@ -680,6 +743,11 @@ class ConfigManager:
                         recipe.append(step)
                     else:
                         break
+
+                if 'active' in pars_recipe_i:
+                    recipe_i['active'] = utilities.boolean(pars_recipe_i['active'])
+                else:
+                    recipe_i['active'] = True  # for legacy config
 
             if append:
                 for recipe_name in config.keys():

@@ -43,7 +43,8 @@ class Scanner(QtWidgets.QMainWindow):
         self.addRecipe_pushButton.clicked.connect(lambda: self.configManager.addRecipe("recipe"))
 
     def _addRecipe(self, recipe_name: str):
-        self.scan_recipe_comboBox.addItem(recipe_name)
+        if self.configManager.config[recipe_name]['active']:
+            self.scan_recipe_comboBox.addItem(recipe_name)
         self.selectRecipe_comboBox.addItem(recipe_name)
         self.selectRecipe_comboBox.setCurrentIndex(self.selectRecipe_comboBox.count()-1)
         self._show_recipe_combobox()
@@ -61,6 +62,19 @@ class Scanner(QtWidgets.QMainWindow):
         self.scan_recipe_comboBox.removeItem(index)
         self.selectRecipe_comboBox.removeItem(index)
         self._show_recipe_combobox()
+
+    def _toggleRecipe(self, recipe_name: str):
+        """ Toggle an existing recipe """
+        active = self.configManager.getActive(recipe_name)
+        index = self.scan_recipe_comboBox.findText(recipe_name)
+
+        if active:
+            if index == -1:
+                self.scan_recipe_comboBox.addItem(recipe_name)
+        else:
+            self.scan_recipe_comboBox.removeItem(index)
+
+        self.recipeDict[recipe_name]['recipeManager']._toggleTree(active)
 
     def _show_recipe_combobox(self):
         dataSet_id = len(self.configManager.config.keys())
@@ -139,9 +153,6 @@ class Scanner(QtWidgets.QMainWindow):
             color='#FFE5AE' # orange
 
         obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}" % color)
-
-
-
 
 
 def cleanString(name: str) -> str:

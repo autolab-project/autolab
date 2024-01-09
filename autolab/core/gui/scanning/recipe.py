@@ -395,12 +395,16 @@ class RecipeManager:
                 menu = QtWidgets.QMenu()
                 renameRecipeAction = menu.addAction("Rename")
                 removeRecipeAction = menu.addAction("Remove")
+                toggleRecipeAction = menu.addAction("Toggle") # TODO: see if checkbox is better for toggle or button from right click is ok
+
                 choice = menu.exec_(self.mapToGlobal(QtCore.QPoint(0, 20)))  # don't use position to avoid confusion with tree element when very closed
 
                 if choice == renameRecipeAction:
                     self.renameRecipe()
-                if choice == removeRecipeAction:
+                elif choice == removeRecipeAction:
                     self.gui.configManager.removeRecipe(self.recipe_name)
+                elif choice == toggleRecipeAction:
+                    self.gui.configManager.toggleRecipe(self.recipe_name)
 
             def renameRecipe(self):
                 """ This function prompts the user for a new step name,
@@ -410,6 +414,7 @@ class RecipeManager:
                     QtWidgets.QLineEdit.Normal, self.recipe_name)
 
                 newName = main.cleanString(newName)
+
                 if newName != '':
                     self.gui.configManager.renameRecipe(
                         self.recipe_name, newName)
@@ -425,6 +430,9 @@ class RecipeManager:
                 self._frame.deleteLater()
                 del self._frame
             except: pass
+
+    def _toggleTree(self, active: bool):
+        self._frame.setTabEnabled(0, active)
 
     def orderChanged(self, event):
         newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
@@ -451,9 +459,14 @@ class RecipeManager:
                 item.setText(1, 'Set')
             elif step['stepType']  == 'action':
                 item.setText(1, 'Do')
+            elif step['stepType']  == 'recipe':
+                item.setText(1, 'Recipe')
 
             # Column 3 : Element address
-            item.setText(2, step['element'].address())
+            if step['stepType'] == 'recipe':
+                item.setText(2, step['element'])
+            else:
+                item.setText(2, step['element'].address())
 
             # Column 4 : Value if stepType is 'set'
             value = step['value']
@@ -470,34 +483,70 @@ class RecipeManager:
             self.tree.addTopLevelItem(item)
             self.defaultItemBackground = item.background(0)
 
+        # toggle recipe
+        self.gui._toggleRecipe(self.recipe_name)
+
     def rightClick(self, position: QtCore.QPoint):
         """ This functions provide a menu where the user right clicked """
         item = self.tree.itemAt(position)
 
-        if not self.gui.scanManager.isStarted() and item is not None:
-            name = item.text(0)
-            stepType = self.gui.configManager.getRecipeStepType(
-                self.recipe_name, name)
-            element = self.gui.configManager.getRecipeStepElement(
-                self.recipe_name, name)
+        if not self.gui.scanManager.isStarted():
+            if item is not None:
+                name = item.text(0)
+                stepType = self.gui.configManager.getRecipeStepType(
+                    self.recipe_name, name)
+                element = self.gui.configManager.getRecipeStepElement(
+                    self.recipe_name, name)
 
-            menuActions = {}
+                menuActions = {}
+                menu = QtWidgets.QMenu()
+                menuActions['rename'] = menu.addAction("Rename")
 
-            menu = QtWidgets.QMenu()
-            menuActions['rename'] = menu.addAction("Rename")
-            if stepType == 'set' or (stepType == 'action' and element.type in [
-                    int,float,str,pd.DataFrame,np.ndarray]) :
-                menuActions['setvalue'] = menu.addAction("Set value")
-            menuActions['remove'] = menu.addAction("Remove")
+                if stepType == 'set' or (stepType == 'action' and element.type in [
+                        int, float, str, pd.DataFrame, np.ndarray]):
+                    menuActions['setvalue'] = menu.addAction("Set value")
 
-            choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
+                menuActions['remove'] = menu.addAction("Remove")
 
-            if 'rename' in menuActions.keys() and choice == menuActions['rename']:
-                self.renameStep(name)
-            elif 'remove' in menuActions.keys() and choice == menuActions['remove']:
-                self.gui.configManager.delRecipeStep(self.recipe_name, name)
-            elif 'setvalue' in menuActions.keys() and choice == menuActions['setvalue']:
-                self.setStepValue(name)
+                choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
+
+                if 'rename' in menuActions.keys() and choice == menuActions['rename']:
+                    self.renameStep(name)
+                elif 'remove' in menuActions.keys() and choice == menuActions['remove']:
+                    self.gui.configManager.delRecipeStep(self.recipe_name, name)
+                elif 'setvalue' in menuActions.keys() and choice == menuActions['setvalue']:
+                    self.setStepValue(name)
+            else:
+                config = self.gui.configManager.config
+                if len(config) > 1:
+                    recipe_name_list = list(config.keys())
+                    recipe_name_list.remove(self.recipe_name)
+
+                    menuActions = {}
+                    menu = QtWidgets.QMenu()
+                    for recipe_name in recipe_name_list:
+                        menuActions[recipe_name] = menu.addAction(f'Add {recipe_name}')
+                    choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
+
+                    for recipe_name in recipe_name_list:
+                        if choice == menuActions[recipe_name]:
+
+                            if self.gui.configManager.getActive(recipe_name):
+                                self.gui.configManager.toggleRecipe(recipe_name)  # disable
+
+                            parameterName = self.gui.configManager.getParameterName(recipe_name)
+                            newName = self.gui.configManager.getUniqueName(self.recipe_name, parameterName)
+                            self.gui.configManager.setParameterName(
+                                recipe_name, newName)
+
+                            for step in config[recipe_name]['recipe']:
+                                newName = self.gui.configManager.getUniqueName(self.recipe_name, step['name'])
+                                self.gui.configManager.renameRecipeStep(
+                                    recipe_name, step['name'], newName)
+                            # TODO: rename restriction not enought because can change name after. Solution 1: reimplement only one name for any step of any recipe, don't want to; Solution 2: check if name exists in linked recipes, todo
+                            self.gui.configManager.addRecipeStep(
+                                self.recipe_name, 'recipe',
+                                recipe_name,  f'do_{recipe_name}')
 
     def renameStep(self, name: str):
         """ This function prompts the user for a new step name,
