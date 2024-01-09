@@ -191,20 +191,6 @@ class FigureManager :
 
             self.gui.plugin_refresh()
 
-    def reloadLastData(self):
-
-        ''' This functions update the data of the last curve '''
-
-        # Get current displayed result
-        variable_x = self.gui.variable_x_comboBox.currentText()
-        variable_y = self.gui.variable_y_comboBox.currentText()
-
-        data = self.gui.dataManager.getData(1,[variable_x,variable_y])[0]
-        data = data.astype(float)
-
-        # Update plot data
-        if data is not None:
-            self.curves[-1].setData(data.loc[:,variable_x], data.loc[:,variable_y])
 
     # SAVE FIGURE
     ###########################################################################

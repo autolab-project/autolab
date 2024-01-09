@@ -54,16 +54,11 @@ class ScanManager:
         """ This function start a scan """
         self.gui.data_comboBox.setEnabled(False)
 
-        try :
+        try:
+            self.gui.configManager.checkConfig()  #  raise error if config not valid
             config = self.gui.configManager.config
-            recipe_name_list = list(config.keys())
-            assert len(recipe_name_list) != 0, 'Need a recipe to start a scan!'
-
-            for recipe_name in recipe_name_list:
-                recipe = config[recipe_name]
-                assert len(recipe['recipe']) > 0, f"{recipe_name} is empty"
-        except Exception as e :
-            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration : {str(e)}',10000, False)
+        except Exception as e:
+            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration : {str(e)}', 10000, False)
         # Only if current config is valid to start a scan
         else:
             # Prepare a new dataset in the datacenter
@@ -138,6 +133,7 @@ class ScanManager:
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
         self.gui.data_comboBox.setEnabled(True)
+        self.gui.displayScanData_pushButton.setEnabled(True)
         self.gui.configManager.importAction.setEnabled(True)
         self.gui.configManager.updateUndoRedoButtons()
         self.gui.dataManager.timer.stop()
@@ -194,7 +190,7 @@ class ScanManager:
 
 
 class ScanThread(QtCore.QThread):
-    """ This thread class is dedicated to read the variable, \
+    """ This thread class is dedicated to read the variable,
         and send its data to GUI through a queue """
     # Signals
     errorSignal = QtCore.Signal(object)
@@ -207,7 +203,6 @@ class ScanThread(QtCore.QThread):
     finishStepSignal = QtCore.Signal(object, object)
     recipeCompletedSignal = QtCore.Signal(object)
 
-
     def __init__(self, queue, config: dict):
         QtCore.QThread.__init__(self)
         self.config = config
@@ -219,68 +214,84 @@ class ScanThread(QtCore.QThread):
     def run(self):
         # Start the scan
         for recipe_name in self.config.keys():
-            # Load scan configuration
-            parameter = self.config[recipe_name]['parameter']['element']
-            name = self.config[recipe_name]['parameter']['name']
-            startValue,endValue = self.config[recipe_name]['range']
-            nbpts = self.config[recipe_name]['nbpts']
-            logScale = self.config[recipe_name]['log']
+            if self.config[recipe_name]['active']: self.execRecipe(recipe_name)
 
-            # Creates the array of values for the parameter
-            if logScale:
-                paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
-            else:
-                paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
+    def execRecipe(self, recipe_name, initPoint: collections.OrderedDict = None):
+        """ Execute the recipe with recipe_name name.
+        initPoint is used to add parameter value and master-recipe name to a sub-recipe """
+        # Load scan configuration
+        # OPTIMIZE: could implement a list of parameter to do 2D scan of a single recipe to avoid having recipe in recipe, but is limited to one recipe so can't be the general solution
+        parameter = self.config[recipe_name]['parameter']['element']
+        name = self.config[recipe_name]['parameter']['name']
+        startValue, endValue = self.config[recipe_name]['range']
+        nbpts = self.config[recipe_name]['nbpts']
+        logScale = self.config[recipe_name]['log']
 
-            for i, paramValue in enumerate(paramValues):
+        # Creates the array of values for the parameter
+        if logScale:
+            paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+        else:
+            paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
 
-                if not self.stopFlag.is_set():
-                    try:
-                        # Set the parameter value
-                        self.startParameterSignal.emit(recipe_name)
-                        if parameter is not None:
-                            parameter(paramValue)
-                        self.finishParameterSignal.emit(recipe_name)
+        if initPoint is None:
+            initPoint = collections.OrderedDict()
+            initPoint[0] = recipe_name
 
-                        # Start the recipe
-                        dataPoint = collections.OrderedDict()
-                        dataPoint[recipe_name] = recipe_name
-                        dataPoint[name] = paramValue
-                        dataPoint = self.processRecipe(recipe_name, dataPoint)
+        for i, paramValue in enumerate(paramValues):
 
-                        # Send the whole data in the queue
-                        if self.stopFlag.is_set() is False: self.queue.put(dataPoint)
+            if not self.stopFlag.is_set():
+                try:
+                    # Set the parameter value
+                    self.startParameterSignal.emit(recipe_name)
+                    if parameter is not None:
+                        parameter(paramValue)
+                    self.finishParameterSignal.emit(recipe_name)
 
-                    except Exception as e:
-                        # If an error occurs, stop the scan and send an error signal
-                        self.errorSignal.emit(e)
-                        self.stopFlag.set()
+                    initPointRecipe = initPoint.copy()
+                    initPointRecipe[name] = paramValue
+                    dataPoint = initPointRecipe.copy()
+                    # Start the recipe
+                    dataPoint = self.processRecipe(
+                        recipe_name, dataPoint, initPointRecipe)
+                    # Send the whole data in the queue
+                    if not self.stopFlag.is_set(): self.queue.put(dataPoint)
 
-                    # Wait until the scan is no more in pause
-                    while self.pauseFlag.is_set():
-                        time.sleep(0.1)
-                else:
-                    break
-            self.parameterCompletedSignal.emit(recipe_name)
+                except Exception as e:
+                    # If an error occurs, stop the scan and send an error signal
+                    self.errorSignal.emit(e)
+                    self.stopFlag.set()
 
-    def processRecipe(self, recipe_name: str, dataPoint: collections.OrderedDict):
-        """ This function executes the scan recipe """
-        for stepInfos in self.config[recipe_name]['recipe']:
-            if self.stopFlag.is_set() is False:
-                # Process the recipe step
-                result = self.processElement(recipe_name, stepInfos)
-                if result is not None:
-                    dataPoint[stepInfos['name']] = result
                 # Wait until the scan is no more in pause
                 while self.pauseFlag.is_set():
                     time.sleep(0.1)
-            else :
+            else:
+                break
+
+        self.parameterCompletedSignal.emit(recipe_name)
+
+    def processRecipe(self, recipe_name: str,
+                      dataPoint: collections.OrderedDict,
+                      initPoint: collections.OrderedDict):
+        """ This function executes the scan recipe """
+        for stepInfos in self.config[recipe_name]['recipe']:
+            if not self.stopFlag.is_set():
+                # Process the recipe step
+                result = self.processElement(recipe_name, stepInfos, initPoint)
+
+                if result is not None:
+                    dataPoint[stepInfos['name']] = result
+
+                # Wait until the scan is no more in pause
+                while self.pauseFlag.is_set():
+                    time.sleep(0.1)
+            else:
                 break
 
         self.recipeCompletedSignal.emit(recipe_name)
         return dataPoint
 
-    def processElement(self, recipe_name: str, stepInfos: dict):
+    def processElement(self, recipe_name: str, stepInfos: dict,
+                       initPoint: collections.OrderedDict):
         """ This function processes the recipe step """
         element = stepInfos['element']
         stepType = stepInfos['stepType']
@@ -296,8 +307,10 @@ class ScanThread(QtCore.QThread):
             if stepInfos['value'] is not None:
                 value = self.checkVariable(stepInfos['value'])
                 element(value)
-            else :
+            else:
                 element()
+        elif stepType == 'recipe':
+            self.execRecipe(element, initPoint=initPoint)  # Execute a recipe in the recipe
 
         self.finishStepSignal.emit(recipe_name, stepInfos['name'])
         return result
@@ -311,7 +324,6 @@ class ScanThread(QtCore.QThread):
                 allowed_dict ={"np": np, "pd": pd}
                 allowed_dict.update(DEVICES)
                 value = eval(str(value), {}, allowed_dict)
-            except:
-                pass
+            except: pass
 
         return value
