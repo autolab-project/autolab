@@ -120,7 +120,9 @@ class DataManager:
                 if os.path.exists(config_name):
                     shutil.copy(config_name, new_configname)
                 else:
-                    self.gui.configManager.export(new_configname)
+                    if datasets is not self.getLastDataset():
+                        print("WARNING: Can't find config for this dataset, save lastest config instead", file=sys.stderr)
+                    self.gui.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
 
             if utilities.boolean(scanner_config["save_figure"]):
                 self.gui.figureManager.save(filename)
