@@ -9,7 +9,7 @@ import json
 import datetime
 import os
 import math as m
-from typing import Tuple, Any
+from typing import Tuple, Any, List
 import collections
 
 import numpy as np
@@ -190,13 +190,50 @@ class ConfigManager:
             self.gui.dataManager.clear()
             self.addNewConfig()
 
-    def toggleRecipe(self, recipe_name: str):
-        """ Toggle recipe with recipe_name name """
-        self.config[recipe_name]['active'] = bool(1 - self.config[recipe_name]['active'])
+    def activateRecipe(self, recipe_name: str, state: bool):
+        """ Activate/Deactivate a recipe with recipe_name name """
+        if not self.gui.scanManager.isStarted():
+            self.config[recipe_name]['active'] = bool(state)
 
-        self.gui._toggleRecipe(recipe_name)
+            self.gui._activateRecipe(recipe_name, self.config[recipe_name]['active'])
+            self.gui.dataManager.clear()
+            self.addNewConfig()
+
+    def setRecipeOrder(self, keys: List[str]):
+        """ This function reorder recipes with the list of recipe names provided """
+        if not self.gui.scanManager.isStarted():
+            self.config = collections.OrderedDict((key, self.config[key]) for key in keys)
+            self.gui.dataManager.clear()
+            self.resetRecipe()
+            self.addNewConfig()
+
+    def resetRecipe(self):
+        self.gui._clearRecipe()  # before everything to have access to recipe and del it
         self.gui.dataManager.clear()
-        self.addNewConfig()
+
+        for recipe_name in self.config.keys():
+            self.gui._addRecipe(recipe_name)
+            self.gui.recipeDict[recipe_name]['parameterManager'].refresh()
+            self.refreshRecipe(recipe_name)
+            self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
+
+    def renameRecipe(self, existing_recipe_name: str, new_recipe_name: str):
+        if not self.gui.scanManager.isStarted():
+            if existing_recipe_name not in self.config.keys():
+                raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.config.keys()}')
+
+            new_recipe_name = self.getUniqueNameRecipe(new_recipe_name)
+            old_config = self.config
+            new_config = {}
+
+            for recipe_name in old_config.keys():
+                if recipe_name == existing_recipe_name:
+                    new_config[new_recipe_name] = old_config[recipe_name]
+                else:
+                    new_config[recipe_name] = old_config[recipe_name]
+
+            self.config = new_config
+            self.resetRecipe()
 
     def checkConfig(self):
         """ Check validity of a config. Used before a scan start. """
@@ -335,7 +372,7 @@ class ConfigManager:
                 self.gui.dataManager.clear()
                 self.addNewConfig()
 
-    def setRecipeOrder(self, recipe_name: str, stepOrder: list):
+    def setRecipeStepOrder(self, recipe_name: str, stepOrder: list):
         """ This function reorder the recipe as a function of the list of step names provided """
         if not self.gui.scanManager.isStarted():
             newOrder = [self.getRecipeStepPosition(recipe_name, name) for name in stepOrder]
@@ -778,32 +815,6 @@ class ConfigManager:
 
         self.configHistory.active = True
 
-    def resetRecipe(self):
-        self.gui._clearRecipe()  # before everything to have access to recipe and del it
-        self.gui.dataManager.clear()
-
-        for recipe_name in self.config.keys():
-            self.gui._addRecipe(recipe_name)
-            self.gui.recipeDict[recipe_name]['parameterManager'].refresh()
-            self.refreshRecipe(recipe_name)
-            self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
-
-    def renameRecipe(self, existing_recipe_name: str, new_recipe_name: str):
-        if existing_recipe_name not in self.config.keys():
-            raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.config.keys()}')
-
-        new_recipe_name = self.getUniqueNameRecipe(new_recipe_name)
-        old_config = self.config
-        new_config = {}
-
-        for recipe_name in old_config.keys():
-            if recipe_name == existing_recipe_name:
-                new_config[new_recipe_name] = old_config[recipe_name]
-            else:
-                new_config[recipe_name] = old_config[recipe_name]
-
-        self.config = new_config
-        self.resetRecipe()
 
     def checkVariable(self, value) -> bool:
         """ Check if value start with '$eval:'. \

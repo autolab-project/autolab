@@ -63,9 +63,9 @@ class Scanner(QtWidgets.QMainWindow):
         self.selectRecipe_comboBox.removeItem(index)
         self._show_recipe_combobox()
 
-    def _toggleRecipe(self, recipe_name: str):
-        """ Toggle an existing recipe """
-        active = self.configManager.getActive(recipe_name)
+    def _activateRecipe(self, recipe_name: str, state: bool):
+        """ Activate/Deactivate an existing recipe """
+        active = bool(state)
         index = self.scan_recipe_comboBox.findText(recipe_name)
 
         if active:
@@ -74,7 +74,7 @@ class Scanner(QtWidgets.QMainWindow):
         else:
             self.scan_recipe_comboBox.removeItem(index)
 
-        self.recipeDict[recipe_name]['recipeManager']._toggleTree(active)
+        self.recipeDict[recipe_name]['recipeManager']._activateTree(active)
 
     def _show_recipe_combobox(self):
         dataSet_id = len(self.configManager.config.keys())
