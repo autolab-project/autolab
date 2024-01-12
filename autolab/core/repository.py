@@ -12,14 +12,13 @@ import tempfile
 import shutil
 
 from . import paths
-from . import config
 
 # Removed the possibility to download drivers individually due to the restriction of Github requests
 # Removed the small driver installer GUI made to select which driver to install
 # This implementation can be found in commit https://github.com/autolab-project/autolab/tree/98b29fb43c8026f40967e5751ce90ff62132a711
 
 
-def _format_url(url):
+def _format_url(url: str):
     """ Change github repo name to download link """
 
     if url.endswith(".zip"):
@@ -31,13 +30,13 @@ def _format_url(url):
     return format_url
 
 
-def _download_repo(url, output_dir):
+def _download_repo(url: str, output_dir: str):
     with urllib.request.urlopen(url) as github_repo_zip:
         with open(output_dir, 'wb') as repo_zip:
             repo_zip.write(github_repo_zip.read())
 
 
-def _unzip_repo(repo_zip, output_dir):
+def _unzip_repo(repo_zip: str, output_dir: str):
     """ Unzip repo_zip to output_dir using a temporary folder"""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -100,16 +99,21 @@ def _check_empty_driver_folder():
         install_drivers()
 
 
-def install_drivers():
-    """ Ask if want to install all the official drivers. """
-
+def install_drivers(*github_url: str):
+    """ Ask if want to install drivers from all the given github_url.
+    If no argument passed, use the official drivers url. """
     temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
     temp_repo_folder = tempfile.mkdtemp(dir=temp_folder)
 
-    for github_repo_url in paths.DRIVER_GITHUB.values():
+    if len(github_url) != 0:
+        list_github_url = list(github_url)
+    else:
+        list_github_url = paths.DRIVER_GITHUB.values()
+
+    for github_repo_url in list_github_url:
         github_repo_zip_url = _format_url(github_repo_url)
-        zip_name = "-".join((os.path.basename(github_repo_url),
-                             os.path.basename(github_repo_zip_url)))
+        repo_name = github_repo_url.split(r"github.com/")[1].split("/")[1]
+        zip_name = "-".join((repo_name, os.path.basename(github_repo_zip_url)))
         temp_repo_zip = os.path.join(temp_repo_folder, zip_name)
 
         ans = input_wrap(f'Do you want to install all the drivers from {github_repo_url}? [default:yes] > ')

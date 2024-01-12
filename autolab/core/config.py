@@ -7,6 +7,7 @@ Created on Mon Nov 18 14:53:10 2019
 
 import os
 import configparser
+from typing import List
 from . import paths
 from . import utilities
 
@@ -25,8 +26,8 @@ def initialize_local_directory():
     # DEVICES CONFIGURATION FILE
     if not os.path.exists(paths.DEVICES_CONFIG):
         devices_config = configparser.ConfigParser()
-        devices_config['system'] = {'driver':'system','connection':'DEFAULT'}
-        save_config('devices',devices_config)
+        devices_config['system'] = {'driver': 'system', 'connection': 'DEFAULT'}
+        save_config('devices', devices_config)
         print(f'The devices configuration file devices_config.ini has been created: {paths.DEVICES_CONFIG}')
 
     # DRIVER FOLDERS
@@ -42,17 +43,17 @@ def initialize_local_directory():
 
     # AUTOLAB CONFIGURATION FILE
     if not os.path.exists(paths.AUTOLAB_CONFIG):
-        save_config('autolab',configparser.ConfigParser())
+        save_config('autolab', configparser.ConfigParser())
         print(f'The configuration file autolab_config.ini has been created: {paths.AUTOLAB_CONFIG}')
 
     # PLOTTER CONFIGURATION FILE
     if not os.path.exists(paths.PLOTTER_CONFIG):
-        save_config('plotter',configparser.ConfigParser())
+        save_config('plotter', configparser.ConfigParser())
         print(f'The configuration file plotter_config.ini has been created: {paths.PLOTTER_CONFIG}')
 
-def save_config(config_name,config):
+def save_config(config_name, config):
     """ This function saves the given config parser in the autolab configuration file """
-    with open(getattr(paths,f'{config_name.upper()}_CONFIG'), 'w') as file:
+    with open(getattr(paths, f'{config_name.upper()}_CONFIG'), 'w') as file:
         config.write(file)
 
 
@@ -60,7 +61,7 @@ def load_config(config_name) -> configparser.ConfigParser:
     """ This function loads the autolab configuration file in a config parser """
     config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
-    config.read(getattr(paths,f'{config_name.upper()}_CONFIG'))
+    config.read(getattr(paths, f'{config_name.upper()}_CONFIG'))
     return config
 
 
@@ -106,7 +107,7 @@ def check_autolab_config():
     # Check GUI configuration
     GUI_dict = {'QT_API': "default",
                 }
-    if 'GUI' in autolab_config.sections() :
+    if 'GUI' in autolab_config.sections():
         if 'QT_API' in autolab_config['GUI'].keys():
             GUI_dict['QT_API'] = autolab_config['GUI']['QT_API']
     autolab_config['GUI'] = GUI_dict
@@ -276,7 +277,7 @@ def get_all_devices_configs() -> configparser.ConfigParser:
     return config
 
 
-def list_all_devices_configs() -> list:
+def list_all_devices_configs() -> List[str]:
     ''' Returns the list of available configuration names '''
     devices_configs = get_all_devices_configs()
 

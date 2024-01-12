@@ -6,13 +6,15 @@ Created on Sun Sep 29 18:14:28 2019
 """
 import math as m
 
+from qtpy import QtWidgets
+
 from .display import DisplayValues
 
 
 class RangeManager:
     """ Manage the range of a parameter """
 
-    def __init__(self, gui, recipe_name: str):
+    def __init__(self, gui: QtWidgets.QMainWindow, recipe_name: str):
 
         self.gui = gui
         self.recipe_name = recipe_name
@@ -111,7 +113,7 @@ class RangeManager:
             self.displayParameter.refresh(
                 self.gui.configManager.getParamDataFrame(self.recipe_name))
 
-    def nbptsChanged(self) :
+    def nbptsChanged(self):
         """ This function changes the number of point of the scan """
         value = self.nbpts_lineEdit.text()
 
@@ -122,7 +124,6 @@ class RangeManager:
             self.point_or_step = "point"
         except:
             self.refresh()
-
 
     def stepChanged(self):
         """ This function changes the step size of the scan """
@@ -143,7 +144,6 @@ class RangeManager:
         except:
             self.refresh()
 
-
     def startChanged(self):
         """ This function changes the start value of the scan """
         value = self.start_lineEdit.text()
@@ -159,8 +159,7 @@ class RangeManager:
         except:
             self.refresh()
 
-
-    def endChanged(self) :
+    def endChanged(self):
         """ This function changes the end value of the scan """
         value = self.end_lineEdit.text()
 
@@ -173,7 +172,6 @@ class RangeManager:
             self.gui.configManager.setRange(self.recipe_name, xrange)
         except :
             self.refresh()
-
 
     def meanChanged(self):
         """ This function changes the mean value of the scan """
@@ -193,13 +191,12 @@ class RangeManager:
         except:
             self.refresh()
 
-
-    def widthChanged(self) :
+    def widthChanged(self):
         """ This function changes the width of the scan """
         value = self.width_lineEdit.text()
 
         try:
-            value=float(value)
+            value = float(value)
             log: bool = self.gui.configManager.getLog(self.recipe_name)
             if log: assert value > 0
             xrange = list(self.gui.configManager.getRange(self.recipe_name))
@@ -211,7 +208,6 @@ class RangeManager:
             self.gui.configManager.setRange(self.recipe_name, xrange_new)
         except:
             self.refresh()
-
 
     def scanLogChanged(self):
         """ This function changes the log state of the scan """

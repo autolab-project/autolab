@@ -9,10 +9,12 @@ import time
 import math as m
 import threading
 import collections
+from queue import Queue
+from typing import Any
 
 import numpy as np
 import pandas as pd
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 
 from ...devices import DEVICES
 
@@ -20,7 +22,7 @@ from ...devices import DEVICES
 class ScanManager:
     """ Manage a scan using a dedicated thread """
 
-    def __init__(self, gui):
+    def __init__(self, gui: QtWidgets.QMainWindow):
         self.gui = gui
 
         # Start / Stop button configuration
@@ -36,7 +38,6 @@ class ScanManager:
 
         # Thread
         self.thread = None
-
 
     # START AND STOP
     #############################################################################
@@ -99,7 +100,7 @@ class ScanManager:
             self.gui.configManager.importAction.setEnabled(False)
             self.gui.configManager.undo.setEnabled(False)
             self.gui.configManager.redo.setEnabled(False)
-            self.gui.setStatus('Scan started !',5000)
+            self.gui.setStatus('Scan started !', 5000)
 
     def setStepProcessingState(self, recipe_name: str, stepName: str, state: str):
         self.gui.recipeDict[recipe_name]['recipeManager'].setStepProcessingState(stepName, state)
@@ -120,7 +121,6 @@ class ScanManager:
         self.thread.stopFlag.set()
         self.resume()
         self.thread.wait()
-
 
     # SIGNALS
     #############################################################################
@@ -143,7 +143,7 @@ class ScanManager:
         if self.isContinuousModeEnabled():
             self.start()
 
-    def error(self, error):
+    def error(self, error: Exception):
         """ This function is called if an error occured during the scan.
         It displays it in the status bar """
         self.gui.setStatus(f'Scan Error : {error} ', 10000, False)
@@ -152,7 +152,7 @@ class ScanManager:
     # CONTINUOUS MODE
     #############################################################################
 
-    def isContinuousModeEnabled(self):
+    def isContinuousModeEnabled(self) -> bool:
         """ Returns True or False whether the continuous scan mode is enabled
         or not """
         return self.gui.continuous_checkBox.isChecked()
@@ -161,14 +161,13 @@ class ScanManager:
         """ This function disables the continuous scan mode """
         self.gui.continuous_checkBox.setChecked(False)
 
-
     # PAUSE
     #############################################################################
 
     def pauseButtonClicked(self):
         """ This function is called when the Pause / Resume button is clicked.
         It does the required action """
-        if self.isStarted() :
+        if self.isStarted():
             self.resume() if self.isPaused() else self.pause()
 
     def isPaused(self):
@@ -188,7 +187,6 @@ class ScanManager:
         self.gui.pause_pushButton.setText('Pause')
 
 
-
 class ScanThread(QtCore.QThread):
     """ This thread class is dedicated to read the variable,
         and send its data to GUI through a queue """
@@ -203,7 +201,7 @@ class ScanThread(QtCore.QThread):
     finishStepSignal = QtCore.Signal(object, object)
     recipeCompletedSignal = QtCore.Signal(object)
 
-    def __init__(self, queue, config: dict):
+    def __init__(self, queue: Queue, config: dict):
         QtCore.QThread.__init__(self)
         self.config = config
         self.queue = queue
@@ -216,7 +214,8 @@ class ScanThread(QtCore.QThread):
         for recipe_name in self.config.keys():
             if self.config[recipe_name]['active']: self.execRecipe(recipe_name)
 
-    def execRecipe(self, recipe_name, initPoint: collections.OrderedDict = None):
+    def execRecipe(self, recipe_name: str,
+                   initPoint: collections.OrderedDict = None):
         """ Execute the recipe with recipe_name name.
         initPoint is used to add parameter value and master-recipe name to a sub-recipe """
         # Load scan configuration
@@ -315,7 +314,7 @@ class ScanThread(QtCore.QThread):
         self.finishStepSignal.emit(recipe_name, stepInfos['name'])
         return result
 
-    def checkVariable(self, value):
+    def checkVariable(self, value: Any):
         """ Check if value is a device variable address and if is it, return its value """
         if str(value).startswith("$eval:"):
             value = str(value)[len("$eval:"): ]

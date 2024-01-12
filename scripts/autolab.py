@@ -6,10 +6,10 @@ Created on Fri May 17 15:04:04 2019
 @author: quentin.chateiller
 """
 
-
 import sys
 import autolab
 import argparse
+from typing import List, Type
 
 
 def print_help():
@@ -32,15 +32,15 @@ def print_help():
     print()
 
 
-def main() :
+def main():
 
     args = sys.argv
 
     # No command provided or -h/--help option : print help
-    if len(args)==1 or args[1]=='-h' or args[1]=='--help':
+    if (len(args) == 1) or (args[1] == '-h') or (args[1] == '--help'):
         print_help()
 
-    else :
+    else:
         command = args[1]   # first is 'autolab'
 
         # Update the sys.argv for parsers
@@ -61,16 +61,15 @@ def main() :
             driver_parser(args)
         elif command=='device':
             device_parser(args)
-        else :
+        else:
             print(f"Command {command} not known. Autolab doesn't have Super Cow Power... yet ^^")
-
 
     sys.exit()
 
 
 ####################################################################################
 ######################### autolab driver/device utilities ##########################
-def process_config(args_list):
+def process_config(args_list: List[str]):
 
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-D", "--driver", type=str, dest="driver", help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_config.ini OR(if it is not) 2) Set the driver name to use." )
@@ -81,16 +80,19 @@ def process_config(args_list):
     args, unknown = parser.parse_known_args(args_list)
 
     config = {}
-    if args.connection is not None : config['connection'] = args.connection
-    if args.address is not None : config['address'] = args.address
-    if args.other is not None :
-        for part in args.other :
+    if args.connection is not None: config['connection'] = args.connection
+    if args.address is not None: config['address'] = args.address
+    if args.other is not None:
+        for part in args.other:
             part = part.replace(' ','')
             config[part.split('=')[0]] = part.split('=')[1]
 
     # Help for autolab driver/device -h/--help and autolab driver/device -h/--help -D driver_name
-    if not args.driver or (not args.driver and args_list[1]=='-h' or args_list[1]=='--help'): print_help_parser(parser,args_list); sys.exit()
-    if args.driver and (args_list[1]=='-h' or args_list[1]=='--help'):
+    if not args.driver or (
+            (not args.driver
+             and args_list[1] == '-h') or args_list[1] == '--help'):
+        print_help_parser(parser,args_list); sys.exit()
+    if args.driver and (args_list[1] == '-h' or args_list[1] == '--help'):
         if args.driver in autolab._devices.list_devices():
             try:
                 args.driver = autolab._devices.get_final_device_config(args.driver)["driver"]
@@ -102,7 +104,8 @@ def process_config(args_list):
 
     return args.driver, config, parser
 
-def print_help_parser(parser,args_list):
+
+def print_help_parser(parser, args_list):
     parser.usage = f"""
 
 ----------------  General informations:  ----------------
@@ -145,7 +148,7 @@ To display the full list of available drivers and local configurations, use:
 
 #####################################################################################
 ################################## autolab driver ###################################
-def driver_parser(args_list):
+def driver_parser(args_list: List[str]):
 
     # autolab driver -D mydummy -C CONN -A GPIB0::5::INSTR -m set_verbose(1)
     # autolab driver -D mydummy -C CONN -A GPIB0::5::INSTR -verb 1
@@ -160,7 +163,7 @@ def driver_parser(args_list):
     # Instantiation of driver.py and driver_utilities.py
     global driver_instance
     assert 'connection' in config.keys(), f"Must provide a connection for the driver using -C connection with connection being for this driver among {autolab._drivers.get_connection_names(autolab._drivers.load_driver_lib(driver_name))}"
-    driver_instance           = autolab.get_driver(driver_name,**config)
+    driver_instance = autolab.get_driver(driver_name,**config)
 
     if driver_name in autolab._config.list_all_devices_configs():
         # Load config object
@@ -169,7 +172,7 @@ def driver_parser(args_list):
         assert 'driver' in config.keys(), f"Driver name not found in driver config '{driver_name}'"
         driver_name = config['driver']
 
-    driver_utilities          = autolab._drivers.load_driver_utilities_lib(driver_name+'_utilities')
+    driver_utilities = autolab._drivers.load_driver_utilities_lib(driver_name+'_utilities')
     driver_utilities_instance = driver_utilities.Driver_parser(driver_instance,driver_name)
 
     # Add arguments to the existing parser (driver dependant)
@@ -205,7 +208,7 @@ def driver_parser(args_list):
     # Driver closing
     driver_utilities_instance.exit()
 
-def build_driver_infos_for_usage(driver_name,driver_instance):
+def build_driver_infos_for_usage(driver_name: str, driver_instance: Type):
     driver_lib = autolab._drivers.load_driver_lib(driver_name)
 
     # build necessary list
@@ -237,7 +240,7 @@ def build_driver_infos_for_usage(driver_name,driver_instance):
 
 #####################################################################################
 ################################## autolab device ###################################
-def device_parser(args_list):
+def device_parser(args_list: List[str]):
 
     # autolab device -D mydummy -e amplitude -p C:\Users\               GET AND SAVE VARIABLE VALUE
     # autolab device -D mydummy -e something                            EXECUTE ACTION
@@ -264,8 +267,8 @@ def device_parser(args_list):
     element = instance
 
     # Open element
-    if args.element is not None :
-        for name in args.element.split('.') :
+    if args.element is not None:
+        for name in args.element.split('.'):
             element = getattr(element,name)
 
     # Execute order
@@ -276,13 +279,13 @@ def device_parser(args_list):
         value = element()
         element.save(args.path,value=value)
 
-    elif args.value is not None :
+    elif args.value is not None:
         assert element._element_type in ('variable', 'action'), "Please provide a Variable or Action element using -e <element>"
-        if element._element_type == 'variable' : element(args.value)
-        elif element._element_type == 'action' : element(args.value)
+        if element._element_type == 'variable': element(args.value)
+        elif element._element_type == 'action': element(args.value)
     else:
-        if element._element_type == 'variable' : print(element())
-        elif element._element_type == 'action' : element()
+        if element._element_type == 'variable': print(element())
+        elif element._element_type == 'action': element()
 
     args = parser.parse_args()  # return error if give bad arg
 
@@ -291,5 +294,5 @@ def device_parser(args_list):
 #####################################################################################
 
 
-if __name__ == '__main__' :
+if __name__ == '__main__':
     main()
