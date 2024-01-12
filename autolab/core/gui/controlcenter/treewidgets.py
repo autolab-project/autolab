@@ -10,7 +10,6 @@ import os
 
 import pandas as pd
 import numpy as np
-
 from qtpy import QtCore, QtWidgets
 
 from .slider import Slider

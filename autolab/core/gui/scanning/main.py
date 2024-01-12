@@ -20,7 +20,7 @@ from .scanrange import RangeManager
 
 class Scanner(QtWidgets.QMainWindow):
 
-    def __init__(self,mainGui):
+    def __init__(self, mainGui: QtWidgets.QMainWindow):
 
         self.mainGui = mainGui
 
@@ -123,7 +123,7 @@ class Scanner(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
         # Stop ongoing scan
-        if self.scanManager.isStarted() :
+        if self.scanManager.isStarted():
             self.scanManager.stop()
 
         # Stop datamanager timer
@@ -141,7 +141,6 @@ class Scanner(QtWidgets.QMainWindow):
         """ Modify the message displayed in the status bar and add error message to logger """
         self.statusBar.showMessage(message, msecs=timeout)
         if not stdout: print(message, file=sys.stderr)
-
 
     def setLineEditBackground(self, obj, state: str):
         """ Function used to set the background color of a QLineEdit widget,

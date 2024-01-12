@@ -9,7 +9,7 @@ import json
 import datetime
 import os
 import math as m
-from typing import Tuple, Any, List
+from typing import Any, Tuple, List
 import collections
 
 import numpy as np
@@ -32,13 +32,13 @@ class ConfigHistory:
         # Note: it's normal to have the first data unchangeable by append method
         # use pop if need to remove first data
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return object.__repr__(self) + "\n\t" + self.list.__repr__() + f"\n\tCurrent data: {self.get_data()}"
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.list)
 
-    def append(self, data):
+    def append(self, data: dict):
 
         if data is not None:
             # if in middle remove right indexes
@@ -57,14 +57,14 @@ class ConfigHistory:
     def go_down(self):
         if (self.index-1 >= 0): self.index -= 1
 
-    def get_data(self):
+    def get_data(self) -> dict:
         return self.list[self.index] if self.index >= 0 else None
 
 
 class ConfigManager:
     """ Manage a config, storing recipes of a scan """
 
-    def __init__(self, gui):
+    def __init__(self, gui: QtWidgets.QMainWindow):
 
         self.gui = gui
 
@@ -100,11 +100,10 @@ class ConfigManager:
 
         self._append = False  # option for import config
 
-
     # NAMES
     ###########################################################################
 
-    def getNames(self, recipe_name: str, option: str = None) -> list:
+    def getNames(self, recipe_name: str, option: str = None) -> List[str]:
         """ This function returns a list of the names of the recipe step and of the parameter """
         names = [step['name'] for step in self.config[recipe_name]['recipe']]
 
@@ -418,9 +417,7 @@ class ConfigManager:
         self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
 
     def setRange(self, recipe_name: str, lim: Tuple[float, float]):
-
         """ This function set the range (start and end value) of the scan """
-
         if not self.gui.scanManager.isStarted():
             if lim != self.config[recipe_name]['range']:
                 self.config[recipe_name]['range'] = tuple(lim)
@@ -446,14 +443,13 @@ class ConfigManager:
 
         self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
 
-
     # CONFIG READING
     ###########################################################################
     def getActive(self, recipe_name: str) -> bool:
         """ Returns whether the recipe with recipe_name name is active """
         return self.config[recipe_name]['active']
 
-    def getRecipeActive(self) -> list[str]:
+    def getRecipeActive(self) -> List[str]:
         """ Returns list of active recipes """
         return [i for i in self.config.keys() if self.getActive(i)]
 
@@ -520,10 +516,9 @@ class ConfigManager:
 
         return data
 
-    def getRecipe(self, recipe_name: str) -> list:
+    def getRecipe(self, recipe_name: str) -> List[dict]:
         """ This function returns the whole recipe of the scan """
         return self.config[recipe_name]['recipe']
-
 
     # EXPORT IMPORT ACTIONS
     ###########################################################################
@@ -540,7 +535,7 @@ class ConfigManager:
             path = os.path.dirname(filename)
             paths.USER_LAST_CUSTOM_FOLDER = path
 
-            try :
+            try:
                 self.export(filename)
                 self.gui.setStatus(f"Current configuration successfully saved at {filename}", 5000)
             except Exception as e:
@@ -661,7 +656,6 @@ class ConfigManager:
         if not self._got_error:
             self.addNewConfig()
 
-
     def load_configPars(self, configPars: dict, append: bool = False):
 
         self._got_error = False
@@ -669,7 +663,7 @@ class ConfigManager:
         previous_config = self.config.copy()  # used to recover old config if error in loading new one
         already_loaded_devices = devices.list_loaded_devices()
 
-        try :
+        try:
             # Legacy config
             if 'parameter' in configPars:
                 new_configPars = collections.OrderedDict()
@@ -815,12 +809,10 @@ class ConfigManager:
 
         self.configHistory.active = True
 
-
-    def checkVariable(self, value) -> bool:
+    def checkVariable(self, value: Any) -> bool:
         """ Check if value start with '$eval:'. \
             Will not try to check if variables exists """
         return True if str(value).startswith("$eval:") else False
-
 
     # UNDO REDO ACTIONS
     ###########################################################################
@@ -830,12 +822,10 @@ class ConfigManager:
         self.configHistory.go_down()
         self.changeConfig()
 
-
     def redoClicked(self):
         """ Redo an action from parameter, recipe or range """
         self.configHistory.go_up()
         self.changeConfig()
-
 
     def changeConfig(self):
         """ Get config from history and enable/disable undo/redo button accordingly """
@@ -845,7 +835,6 @@ class ConfigManager:
             self.load_configPars(configPars)
 
         self.updateUndoRedoButtons()
-
 
     def updateUndoRedoButtons(self):
         """ enable/disable undo/redo button depending on history """

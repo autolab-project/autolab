@@ -9,6 +9,7 @@ quentin.chateiller@c2n.upsaclay.fr
 
 import os
 import sys
+from typing import Any
 
 from qtpy import QtCore, QtWidgets, uic, QtGui
 from qtpy.QtWidgets import QApplication
@@ -24,23 +25,26 @@ class OutputWrapper(QtCore.QObject):
     """ https://stackoverflow.com/questions/19855288/duplicate-stdout-stderr-in-qtextedit-widget """
     outputWritten = QtCore.Signal(object, object)
 
-    def __init__(self, parent, stdout=True, logger_active=False, print_active=True):
+    def __init__(self, parent, stdout: bool = True,
+                 logger_active: bool = False, print_active: bool = True):
         super().__init__(parent)
+
         if stdout:
             self._stream = sys.stdout
             sys.stdout = self
         else:
             self._stream = sys.stderr
             sys.stderr = self
+
         self._stdout = stdout
         self.logger_active = logger_active
         self.print_active = print_active
 
-    def write(self, text):
+    def write(self, text: str):
         if self.print_active: self._stream.write(text)
         if self.logger_active: self.outputWritten.emit(text, self._stdout)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._stream, name)
 
     def __del__(self):
@@ -54,13 +58,14 @@ class OutputWrapper(QtCore.QObject):
 
 
 class ControlCenter(QtWidgets.QMainWindow):
+    """ Main Qt window, Used to control devices, open scanner... """
 
     def __init__(self):
 
         # Set up the user interface from Designer.
         QtWidgets.QMainWindow.__init__(self)
-        ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
-        uic.loadUi(ui_path,self)
+        ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
+        uic.loadUi(ui_path, self)
 
         # Import Autolab config
         control_center_config = config.get_control_center_config()
@@ -75,7 +80,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.loggerDefaultColor = self.logger.textColor()
             # self.verticalLayout.addWidget(self.logger)
             self.splitter.insertWidget(1, self.logger)
-            self.splitter.setSizes([500,100])
+            self.splitter.setSizes([500, 100])
             self.stdout.outputWritten.connect(self.handleOutput)
             self.stderr.outputWritten.connect(self.handleOutput)
 
@@ -142,15 +147,21 @@ class ControlCenter(QtWidgets.QMainWindow):
         reportAction.triggered.connect(web.report)
         reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
 
+        helpMenu.addSeparator()
+
         helpAction = helpMenu.addAction('Documentation')
         helpAction.triggered.connect(lambda : web.doc('default'))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
+
+        helpActionOffline = helpMenu.addAction('Documentation (Offline)')
+        helpActionOffline.triggered.connect(lambda : web.doc(False))
+        helpActionOffline.setStatusTip('Open the pdf documentation form local file')
 
         self.timerDevice = QtCore.QTimer(self)
         self.timerDevice.setInterval(50) # ms
         self.timerDevice.timeout.connect(self.timerAction)
 
-    def handleOutput(self, text, stdout):
+    def handleOutput(self, text: str, stdout: bool):
         if not stdout: self.logger.setTextColor(QtCore.Qt.red)
         self.logger.insertPlainText(text)
         self.logger.moveCursor(QtGui.QTextCursor.End)
@@ -170,7 +181,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             item.setExpanded(True)
 
             self.threadItemDict.pop(item_id)
-            self.threadModuleDict.pop(item_id)
+            self.threadModuleDict.pop(item_id)  # TODO: rename all module to Device for clarity
 
         if len(threadItemDictTemp) == 0:
             self.timerDevice.stop()
@@ -186,17 +197,13 @@ class ControlCenter(QtWidgets.QMainWindow):
 
             if devName in devices.list_loaded_devices(): self.itemClicked(item)
 
-    def setStatus(self,message, timeout=0, stdout=True):
-
+    def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
-
         self.statusBar.showMessage(message, msecs=timeout)
         if not stdout: print(message, file=sys.stderr)
 
     def clearStatus(self):
-
         """ Erase the message displayed in the status bar """
-
         self.setStatus('')
 
     def rightClick(self, position: QtCore.QPoint):
@@ -204,7 +211,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         item = self.tree.itemAt(position)
         if hasattr(item, 'menu'): item.menu(position)
 
-    def itemClicked(self, item):
+    def itemClicked(self, item: QtWidgets.QTreeWidgetItem):
         """ Function called when a normal click has been detected in the tree.
             Check the association if it is a main item """
         if item.parent() is None and not item.loaded and id(item) not in self.threadItemDict.keys():
@@ -212,7 +219,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerDevice.start()
 
-    def itemPressed(self, item):
+    def itemPressed(self, item: QtWidgets.QTreeWidgetItem):
         """ Function called when a click (not released) has been detected in the tree.
             Store last dragged variable in tree so scanner can know it when it is dropped there """
         if hasattr(item, "module"):
@@ -222,10 +229,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         elif hasattr(item, "action"): self.tree.last_drag = item.action
         else: self.tree.last_drag = None
 
-    def associate(self, item, module):
+    def associate(self, item: QtWidgets.QTreeWidgetItem, module: devices.Device):
         """ Function called to associate a main module to one item in the tree """
         # If the driver has an openGUI method, a button will be added to the Autolab menu to access it.
-        if hasattr(module.instance, "openGUI"):
+        if hasattr(module.instance, "openGUI"):  # OPTIMIZE: redo it or remove it
             if hasattr(module.instance, "gui_name"):
                 gui_name = str(module.instance.gui_name)
             else:
@@ -261,7 +268,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.scanner.activateWindow()
             self.activateWindow() # Put main window back to the front
         # If the scanner is already running, just make as the front window
-        else :
+        else:
             self.scanner.setWindowState(self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.scanner.activateWindow()
 
@@ -276,7 +283,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.plotter.activateWindow()
             self.plotter.active = True
         # If the plotter is already running, just make as the front window
-        else :
+        else:
             self.plotter.setWindowState(self.plotter.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.plotter.activateWindow()
 
@@ -292,21 +299,21 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Open the plotter configuration file """
         utilities.openFile(paths.PLOTTER_CONFIG)
 
-    def setScanParameter(self, recipe_name:str, variable):
+    def setScanParameter(self, recipe_name:str, variable: devices.Device):
         """ Set the selected variable has parameter for the recipe with recipe_name name"""
         if self.scanner is None:
             self.openScanner()
 
         self.scanner.configManager.setParameter(recipe_name, variable)
 
-    def addStepToScanRecipe(self, recipe_name:str, stepType: str, element):
+    def addStepToScanRecipe(self, recipe_name:str, stepType: str, element: devices.Device):
         """ Add the selected variable has a step for the recipe with recipe_name name"""
         if self.scanner is None:
             self.openScanner()
 
         self.scanner.configManager.addRecipeStep(recipe_name, stepType, element)
 
-    def getRecipeName(self):
+    def getRecipeName(self) -> str:
         """ Returns the name of the recipe which will receive the variables
         from the control center """
         if self.scanner is None:

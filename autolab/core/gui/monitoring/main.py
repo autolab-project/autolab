@@ -18,7 +18,7 @@ from ... import paths
 
 class Monitor(QtWidgets.QMainWindow):
 
-    def __init__(self, item):
+    def __init__(self, item: QtWidgets.QTreeWidgetItem):
 
         self.item = item
         self.variable = item.variable
@@ -150,7 +150,6 @@ class Monitor(QtWidgets.QMainWindow):
 
     def clearButtonClicked(self):
         """ This function clear the displayed data """
-
         self.dataManager.clear()
         self.figureManager.clear()
 
@@ -159,7 +158,7 @@ class Monitor(QtWidgets.QMainWindow):
         if not self.mean_checkBox.isChecked():
             self.figureManager.plot_mean.setData([], [])
 
-        xlist,ylist = self.dataManager.getData()
+        xlist, ylist = self.dataManager.getData()
 
         if len(xlist) > 0: self.figureManager.update(xlist,ylist)
 
@@ -168,7 +167,7 @@ class Monitor(QtWidgets.QMainWindow):
         if not self.min_checkBox.isChecked():
             self.figureManager.plot_min.setData([], [])
 
-        xlist,ylist = self.dataManager.getData()
+        xlist, ylist = self.dataManager.getData()
 
         if len(xlist) > 0: self.figureManager.update(xlist, ylist)
 
@@ -177,7 +176,7 @@ class Monitor(QtWidgets.QMainWindow):
         if not self.max_checkBox.isChecked():
             self.figureManager.plot_max.setData([], [])
 
-        xlist,ylist = self.dataManager.getData()
+        xlist, ylist = self.dataManager.getData()
 
         if len(xlist) > 0: self.figureManager.update(xlist, ylist)
 
@@ -220,16 +219,16 @@ class Monitor(QtWidgets.QMainWindow):
         manager, and then update the GUI """
         value = self.dataManager.getWindowLength()
         self.windowLength_lineEdit.setText(f'{value:g}')
-        self.setLineEditBackground(self.windowLength_lineEdit,'synced')
+        self.setLineEditBackground(self.windowLength_lineEdit, 'synced')
 
     def updateDelayGui(self):
         """ This function ask the current value of the delay in the data
         manager, and then update the GUI """
         value = self.monitorManager.getDelay()
         self.delay_lineEdit.setText(f'{value:g}')
-        self.setLineEditBackground(self.delay_lineEdit,'synced')
+        self.setLineEditBackground(self.delay_lineEdit, 'synced')
 
-    def setStatus(self,message, timeout=0, stdout=True):
+    def setStatus(self, message: str, timeout: int  = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
         self.statusBar.showMessage(message, msecs=timeout)
         if not stdout: print(message, file=sys.stderr)

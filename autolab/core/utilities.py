@@ -35,7 +35,6 @@ def two_columns(txt_list: List[str]):
     ''' Returns a string of the form:
         txt[0]                         txt[1]
         with a minimal spacing between the first character of txt1 and txt2 '''
-
     spacing = max([len(txt[0]) for txt in txt_list]) + 5
 
     return '\n'.join([txt[0] + ' '*(spacing-len(txt[0])) + txt[1]
@@ -91,7 +90,6 @@ def formatData(data: Any) -> Any: # actually -> pd.DataFrame but don't want to i
 
 def pyqtgraph_fig_ax() -> Tuple[Any, Any]: # actually -> Tuple[pyqtgraph.widgets.PlotWidget.PlotWidget, pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem] but don't want to import it in file
     """ Return a formated fig and ax pyqtgraph for a basic plot """
-
     import pyqtgraph as pg
     from pyqtgraph import QtGui
 

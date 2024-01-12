@@ -5,13 +5,15 @@ Created on Sun Sep 29 18:13:45 2019
 @author: qchat
 """
 
+from qtpy import QtWidgets
+
 from . import main
 
 
-class ParameterManager :
+class ParameterManager:
     """ Manage the parameter from a recipe in a scan """
 
-    def __init__(self, gui, recipe_name: str):
+    def __init__(self, gui: QtWidgets.QMainWindow, recipe_name: str):
 
         self.gui = gui
         self.recipe_name = recipe_name
@@ -34,10 +36,10 @@ class ParameterManager :
         parameter = self.gui.configManager.getParameter(self.recipe_name)
         name = self.gui.configManager.getParameterName(self.recipe_name)
 
-        if parameter is not None :
+        if parameter is not None:
             address = parameter.address()
             unit = parameter.unit
-        else :
+        else:
             address = 'None'
             unit = ''
 
@@ -59,18 +61,17 @@ class ParameterManager :
         newName = self.parameterName_lineEdit.text()
         newName = main.cleanString(newName)
 
-        if newName != '' :
+        if newName != '':
             self.gui.configManager.setParameterName(self.recipe_name, newName)
-
 
     # PROCESSING STATE BACKGROUND
     ###########################################################################
 
     def setProcessingState(self, state: str):
         """ This function set the background color of the parameter address during the scan """
-        if state == 'idle' :
+        if state == 'idle':
             self.parameterAddress_label.setStyleSheet("font-size: 9pt;")
         else :
-            if state == 'started' : color = '#ff8c1a'
-            if state == 'finished' : color = '#70db70'
+            if state == 'started': color = '#ff8c1a'
+            if state == 'finished': color = '#70db70'
             self.parameterAddress_label.setStyleSheet(f"background-color: {color}; font-size: 9pt;")

@@ -5,13 +5,15 @@ Created on Sun Sep 29 18:15:26 2019
 @author: qchat
 """
 
+from typing import List
+
 import numpy as np
 import pandas as pd
-
 from qtpy import QtCore, QtWidgets, QtGui
 
 from . import main
 from ... import config
+from ...devices import Device
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
@@ -19,13 +21,15 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
     reorderSignal = QtCore.Signal(object)
 
-    def __init__(self, parent, gui, recipe_name):
+    def __init__(self, parent: QtWidgets.QFrame,
+                 gui: QtWidgets.QMainWindow, recipe_name: str):
+
         self.recipe_name = recipe_name
         self.scanner = gui
         QtWidgets.QTreeWidget.__init__(self, parent)
         self.setAcceptDrops(True)
 
-    def mimeTypes(self):
+    def mimeTypes(self) -> QtWidgets.QTreeWidget.mimeTypes:
         """Based on https://gist.github.com/eyllanesc/42bcda52a14244445153153a33e7c0dd"""
         mimetypes = QtWidgets.QTreeWidget.mimeTypes(self)
         mimetypes.append(MyQTreeWidget.customMimeType)
@@ -43,7 +47,8 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         drag.setMimeData(mimedata)
         drag.exec_(supportedActions)
 
-    def encodeData(self, items, stream):
+    def encodeData(self, items: List[QtWidgets.QTreeWidgetItem],
+                   stream: QtCore.QDataStream):
         stream.writeInt32(len(items))
         for item in items:
             p = item
@@ -56,7 +61,8 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                 stream.writeInt32(row)
         return stream
 
-    def decodeData(self, encoded, tree):
+    def decodeData(self, encoded: QtCore.QByteArray,
+                   tree: QtWidgets.QTreeWidget) -> List[QtWidgets.QTreeWidgetItem]:
         items = []
         rows = []
         stream = QtCore.QDataStream(encoded, QtCore.QIODevice.ReadOnly)
@@ -136,7 +142,8 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
     def dragLeaveEvent(self, event):
         self.setGraphicsEffect(None)
 
-    def menu(self, gui, variable, position: QtCore.QPoint):
+    def menu(self, gui: QtWidgets.QMainWindow,
+             variable: Device, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         menu = QtWidgets.QMenu()
         scanMeasureStepAction = menu.addAction("Measure in scan recipe")
@@ -153,7 +160,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 class parameterQFrame(QtWidgets.QFrame):
     # customMimeType = "autolab/MyQTreeWidget-selectedItems"
 
-    def __init__(self, parent, recipe_name: str):
+    def __init__(self, parent: QtWidgets.QMainWindow, recipe_name: str):
         self.recipe_name = recipe_name
         QtWidgets.QFrame.__init__(self, parent)
         self.setAcceptDrops(True)
@@ -186,7 +193,7 @@ class parameterQFrame(QtWidgets.QFrame):
 class RecipeManager:
     """ Manage a recipe from a scan """
 
-    def __init__(self, gui, recipe_name: str):
+    def __init__(self, gui: QtWidgets.QMainWindow, recipe_name: str):
 
         self.gui = gui
         self.recipe_name = recipe_name
@@ -377,7 +384,9 @@ class RecipeManager:
 
         class MyQTabWidget(QtWidgets.QTabWidget):
 
-            def __init__(self, frame, gui, recipe_name):
+            def __init__(self, frame:  QtWidgets.QFrame,
+                         gui: QtWidgets.QMainWindow, recipe_name: str):
+
                 self.recipe_name = recipe_name
                 self.gui = gui
                 QtWidgets.QTabWidget.__init__(self)
@@ -657,7 +666,7 @@ class RecipeManager:
         """ Check if value start with '$eval:'. Will not try to check if variables exists"""
         return True if str(value).startswith("$eval:") else False
 
-    def itemDoubleClicked(self, item, column: int):
+    def itemDoubleClicked(self, item: QtWidgets.QTreeWidgetItem, column: int):
         """ This function executes an action depending where the user double clicked """
         if not self.gui.scanManager.isStarted():
             name = item.text(0)

@@ -4,7 +4,7 @@ Created on Thu Nov  9 10:58:47 2023
 
 @author: Jonathan
 """
-
+import pandas as pd
 from qtpy import QtCore, QtWidgets
 # import pyqtgraph as pg
 # TODO: need to choose between fast (QTableView+TableModel) or fancy (pg.TableWidget)
@@ -12,7 +12,8 @@ from qtpy import QtCore, QtWidgets
 
 class DisplayValues(QtWidgets.QWidget):
 
-    def __init__(self, gui, name, size=(250,400)):
+    def __init__(self, gui: QtWidgets.QMainWindow,
+                 name: str, size: QtCore.QSize = (250, 400)):
         """ Create a QWidget displaying the dataFrame input to the refresh method.
         size is of type QtCore.QSize or tuple of int """
 
@@ -33,9 +34,8 @@ class DisplayValues(QtWidgets.QWidget):
         layoutWindow.addWidget(self.tableView)
         self.setLayout(layoutWindow)
 
-    def refresh(self, data):
+    def refresh(self, data: pd.DataFrame):
         """ data is pd.DataFrame """
-
         tableModel = TableModel(data)
         self.tableView.setModel(tableModel)
         # self.tableView.setData(data.to_dict('records'))
@@ -54,7 +54,7 @@ class DisplayValues(QtWidgets.QWidget):
 
 class TableModel(QtCore.QAbstractTableModel):
     "From https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/"
-    def __init__(self, data):
+    def __init__(self, data: pd.DataFrame):
         super(TableModel, self).__init__()
         self._data = data
 

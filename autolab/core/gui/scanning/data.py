@@ -11,6 +11,7 @@ import os
 import shutil
 import tempfile
 import sys
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -24,10 +25,10 @@ from ... import utilities
 class DataManager:
     """ Manage data from a scan """
 
-    def __init__(self, gui):
+    def __init__(self, gui: QtWidgets.QMainWindow):
 
         self.gui = gui
-        self.datasets = []
+        self.datasets = list()
         self.queue = Queue()
         self.initialized = False
 
@@ -114,14 +115,14 @@ class DataManager:
 
             if save_config:
                 dataset_folder, extension = os.path.splitext(filename)
-                new_configname = dataset_folder+".conf"
+                new_configname = dataset_folder + ".conf"
                 config_name = os.path.join(os.path.dirname(dataset.tempFolderPath), 'config.conf')
 
                 if os.path.exists(config_name):
                     shutil.copy(config_name, new_configname)
                 else:
                     if datasets is not self.getLastDataset():
-                        print("WARNING: Can't find config for this dataset, save lastest config instead", file=sys.stderr)
+                        print("Warning: Can't find config for this dataset, save lastest config instead", file=sys.stderr)
                     self.gui.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
 
             if utilities.boolean(scanner_config["save_figure"]):
@@ -131,7 +132,7 @@ class DataManager:
 
     def clear(self):
         """ This reset any recorded data, and the GUI accordingly """
-        self.datasets = []
+        self.datasets = list()
         self.initialized = False
         self.gui.figureManager.clearData()
         self.gui.figureManager.clearMenuID()
@@ -156,12 +157,12 @@ class DataManager:
         self.gui.scan_recipe_comboBox.setCurrentIndex(0)
         self.gui.scan_recipe_comboBox.setEnabled(False)
 
-    def getLastDataset(self):
-        """ This return the current (last created) dataset """
+    def getLastDataset(self) -> dict:
+        """ This return the last created dataset """
         return self.datasets[-1] if len(self.datasets) > 0 else None
 
-    def getLastSelectedDataset(self) -> list:
-        """ This return the current (last selected) dataset """
+    def getLastSelectedDataset(self) -> List[dict]:
+        """ This return the last selected dataset """
         return self.datasets[self.gui.data_comboBox.currentIndex()]
 
     def newDataset(self, config: dict):
@@ -274,11 +275,11 @@ class DataManager:
                 self.initialized = True
 
             # Executed after any dataset newly created and fed
-            if dataset.new:
-                self.gui.figureManager.reloadData()
+            if dataset.new:  # OBSOLETE: was used to add only new point to plot instead of resending everything. Removed it with the introdution of dataframe plot
+                # self.gui.figureManager.reloadData()
                 dataset.new = False
 
-            self.gui.figureManager.updateDataframe_comboBox()
+            self.gui.figureManager.data_comboBoxClicked()
 
     def updateDisplayableResults(self):
         """ This function update the combobox in the GUI that displays the names of
