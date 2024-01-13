@@ -9,7 +9,7 @@ import json
 import datetime
 import os
 import math as m
-from typing import Any, Tuple, List
+from typing import Any, Tuple, List, Dict
 import collections
 
 import numpy as np
@@ -118,14 +118,15 @@ class ConfigManager:
         name = basename
         names = []
 
-        if recipe_name in self.config.keys():
-            names += self.getNames(recipe_name)
+        for recipe_name in self.getRecipeLink(recipe_name):
+            if recipe_name in self.config.keys():
+                names += self.getNames(recipe_name)
 
         compt = 0
         while True:
             if name in names:
                 compt += 1
-                name = basename+'_'+str(compt)
+                name = basename + '_' + str(compt)
             else:
                 break
 
@@ -145,7 +146,7 @@ class ConfigManager:
         while True:
             if name in names:
                 compt += 1
-                name = basename+'_'+str(compt)
+                name = basename + '_' + str(compt)
             else:
                 break
 
@@ -168,8 +169,8 @@ class ConfigManager:
             parameter_name = self.getUniqueName(recipe_name, 'parameter')
 
             self.config[recipe_name] = {}
-            self.config[recipe_name]['parameter'] = {'element':None,
-                                                     'name':parameter_name}
+            self.config[recipe_name]['parameter'] = {'element': None,
+                                                     'name': parameter_name}
             self.config[recipe_name]['nbpts'] = 11
             self.config[recipe_name]['range'] = (0, 10)
             self.config[recipe_name]['step'] = 1
@@ -445,6 +446,47 @@ class ConfigManager:
 
     # CONFIG READING
     ###########################################################################
+    def getLinkedRecipe(self) -> Dict[str, list]:
+        """ Returns a dict with recipe_name key and list of recipes linked to recipe_name recipe.
+        Example: {'recipe_1': ['recipe_1', 'recipe_2', 'recipe_3', 'recipe_2'], 'recipe_3': ['recipe_3', 'recipe_2'], 'recipe_2': ['recipe_2']}"""
+        linkedRecipe = dict()
+        for recipe_name in list(self.config.keys()):
+            recipe = self.config[recipe_name]
+            recipe_name_link = [recipe_name]
+            list_recipe_new = [recipe]
+            has_sub_recipe = True
+
+            while has_sub_recipe:
+                has_sub_recipe = False
+                recipe_list = list_recipe_new
+                for recipe_i in recipe_list:
+
+                    for step in recipe_i['recipe']:
+                        if step['stepType'] == 'recipe':
+                            has_sub_recipe = True
+                            if step['element'] in self.config:
+                                other_recipe = self.config[step['element']]
+                                list_recipe_new.append(other_recipe)
+                                recipe_name_link.append(step['element'])
+
+                    list_recipe_new.remove(recipe_i)
+
+            linkedRecipe[recipe_name] = recipe_name_link
+
+        return linkedRecipe
+
+    def getRecipeLink(self, recipe_name: str) -> List[str]:
+        """ Returns a list of unique recipe names for which recipes are linked to recipe_name
+        Example: for 'recipe_1': ['recipe_1', 'recipe_2', 'recipe_3'] """
+        linkedRecipe = self.getLinkedRecipe()
+        uniqueLinkedRecipe = list()
+
+        for key in linkedRecipe.keys():
+            if recipe_name in linkedRecipe[key]:
+                uniqueLinkedRecipe.append(linkedRecipe[key])
+
+        return list(set(sum(uniqueLinkedRecipe, [])))
+
     def getActive(self, recipe_name: str) -> bool:
         """ Returns whether the recipe with recipe_name name is active """
         return self.config[recipe_name]['active']

@@ -409,6 +409,12 @@ class RecipeManager:
                     removeRecipeAction = menu.addAction("Remove")
                     menu.addSeparator()
 
+                    recipeLink = self.gui.configManager.getRecipeLink(self.recipe_name)
+                    if len(recipeLink) == 1:  # A bit too restrictive but do the work
+                        renameRecipeAction.setEnabled(True)
+                    else:
+                        renameRecipeAction.setEnabled(False)
+
                     IS_ACTIVE = self.gui.configManager.getActive(self.recipe_name)
 
                     if IS_ACTIVE:
@@ -584,7 +590,6 @@ class RecipeManager:
                                 newName = self.gui.configManager.getUniqueName(self.recipe_name, step['name'])
                                 self.gui.configManager.renameRecipeStep(
                                     recipe_name, step['name'], newName)
-                            # TODO: rename restriction not enought because can change name after. Solution 1: reimplement only one name for any step of any recipe, don't want to; Solution 2: check if name exists in linked recipes, todo
 
                             self.gui.configManager.configHistory.active = True
 
