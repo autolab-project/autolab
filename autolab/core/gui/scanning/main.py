@@ -91,6 +91,7 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.recipeDict.clear()  # remove recipe from gui with __del__ in recipeManager
         self.scan_recipe_comboBox.clear()
+        self.selectRecipe_comboBox.clear()
 
     def dropEvent(self, event):
         """ Set parameter if drop compatible variable onto scanner (excluding recipe area) """
