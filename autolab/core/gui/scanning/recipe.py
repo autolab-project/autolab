@@ -484,9 +484,8 @@ class RecipeManager:
     def refresh(self):
         """ Refresh the whole scan recipe displayed from the configuration center """
         self.tree.clear()
-        recipe = self.gui.configManager.getRecipe(self.recipe_name)
 
-        for step in recipe:
+        for step in self.gui.configManager.stepList(self.recipe_name):
 
             # Loading step informations
             item = QtWidgets.QTreeWidgetItem()
@@ -581,12 +580,12 @@ class RecipeManager:
                             if active: self.gui.configManager.activateRecipe(
                                     recipe_name, not active)  # disable
 
-                            parameterName = self.gui.configManager.getParameterName(recipe_name)
-                            newName = self.gui.configManager.getUniqueName(self.recipe_name, parameterName)
-                            self.gui.configManager.setParameterName(
-                                recipe_name, newName)
+                            for param in self.gui.configManager.parameterList(recipe_name):
+                                newName = self.gui.configManager.getUniqueName(self.recipe_name, param['name'])
+                                self.gui.configManager.renameParameter(
+                                    recipe_name, param['name'], newName)
 
-                            for step in config[recipe_name]['recipe']:
+                            for step in self.gui.configManager.stepList(recipe_name):
                                 newName = self.gui.configManager.getUniqueName(self.recipe_name, step['name'])
                                 self.gui.configManager.renameRecipeStep(
                                     recipe_name, step['name'], newName)

@@ -40,6 +40,8 @@ class Scanner(QtWidgets.QMainWindow):
         self.configManager = ConfigManager(self)
 
         self.configManager.addRecipe("recipe")  # add one recipe by default
+        self.configManager.undoClicked() # avoid false history
+        self.setStatus("")
         self.addRecipe_pushButton.clicked.connect(lambda: self.configManager.addRecipe("recipe"))
 
     def _addRecipe(self, recipe_name: str):
@@ -60,6 +62,7 @@ class Scanner(QtWidgets.QMainWindow):
 
         index = self.scan_recipe_comboBox.findText(recipe_name)  # assert no duplicate name
         self.scan_recipe_comboBox.removeItem(index)
+        index = self.selectRecipe_comboBox.findText(recipe_name)  # assert no duplicate name
         self.selectRecipe_comboBox.removeItem(index)
         self._show_recipe_combobox()
 

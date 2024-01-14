@@ -189,9 +189,13 @@ class DataManager:
                                   config, save_temp=self.save_temp)
                 datasets[recipe_name] = dataset
 
-                maximum += recipe['nbpts']
+                # bellow just to know maximum point
+                nbpts = 1
+                for nbpts_i in [parameter['nbpts'] for parameter in recipe['parameter']]: nbpts *= nbpts_i
 
-                list_recipe_nbpts_new = [[recipe, recipe['nbpts']]]
+                maximum += nbpts
+
+                list_recipe_nbpts_new = [[recipe, nbpts]]
                 has_sub_recipe = True
 
                 while has_sub_recipe:
@@ -205,7 +209,9 @@ class DataManager:
                             if step['stepType'] == "recipe":
                                 has_sub_recipe = True
                                 other_recipe = config[step['element']]
-                                sub_nbpts = nbpts * other_recipe['nbpts']
+                                other_nbpts = 1
+                                for other_nbpts_i in [parameter['nbpts'] for parameter in other_recipe['parameter']]: other_nbpts *= other_nbpts_i
+                                sub_nbpts = nbpts * other_nbpts
                                 maximum += sub_nbpts
                                 list_recipe_nbpts_new.append([other_recipe, sub_nbpts])
 
@@ -249,7 +255,8 @@ class DataManager:
                         nb_id = len(dataframe)
 
                 # not-oPTIMIZE: edit: not necessary if show only one scan <- values will not correspond to previous scan if start a new scan with a different range parameter
-                nb_total = self.gui.configManager.getNbPts(recipe_name)
+                param_name = self.gui.configManager.TEMPgetParameterName(recipe_name)
+                nb_total = self.gui.configManager.getNbPts(recipe_name, param_name)
 
                 while self.gui.figureManager.nbCheckBoxMenuID > nb_total:
                     self.gui.figureManager.removeLastCheckBox2MenuID()
@@ -362,7 +369,8 @@ class Dataset():
 
                 list_recipe_new.remove(recipe_i)
 
-        self.list_param = [recipe['parameter'] for recipe in list_recipe]
+        list_param = [recipe['parameter'] for recipe in list_recipe]
+        self.list_param = sum(list_param, [])
 
         list_step = [recipe['recipe'] for recipe in list_recipe]
         self.list_step = sum(list_step, [])

@@ -303,8 +303,8 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Set the selected variable has parameter for the recipe with recipe_name name"""
         if self.scanner is None:
             self.openScanner()
-
-        self.scanner.configManager.setParameter(recipe_name, variable)
+        param_name = self.scanner.configManager.TEMPgetParameterName(recipe_name)
+        self.scanner.configManager.setParameter(recipe_name, param_name, variable)
 
     def addStepToScanRecipe(self, recipe_name:str, stepType: str, element: devices.Device):
         """ Add the selected variable has a step for the recipe with recipe_name name"""
