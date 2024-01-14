@@ -10,6 +10,7 @@ import math as m
 import threading
 import collections
 from queue import Queue
+from itertools import product
 from typing import Any
 
 import numpy as np
@@ -218,37 +219,48 @@ class ScanThread(QtCore.QThread):
                    initPoint: collections.OrderedDict = None):
         """ Execute the recipe with recipe_name name.
         initPoint is used to add parameter value and master-recipe name to a sub-recipe """
-        # Load scan configuration
-        # OPTIMIZE: could implement a list of parameter to do 2D scan of a single recipe to avoid having recipe in recipe, but is limited to one recipe so can't be the general solution
-        parameter = self.config[recipe_name]['parameter']['element']
-        name = self.config[recipe_name]['parameter']['name']
-        startValue, endValue = self.config[recipe_name]['range']
-        nbpts = self.config[recipe_name]['nbpts']
-        logScale = self.config[recipe_name]['log']
 
-        # Creates the array of values for the parameter
-        if logScale:
-            paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
-        else:
-            paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
+        paramValues_list = []
 
-        if initPoint is None:
-            initPoint = collections.OrderedDict()
-            initPoint[0] = recipe_name
+        for parameter in self.config[recipe_name]['parameter']:
+            startValue, endValue = parameter['range']
+            nbpts = parameter['nbpts']
+            logScale = parameter['log']
 
-        for i, paramValue in enumerate(paramValues):
+            # Creates the array of values for the parameter
+            if logScale:
+                paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+            else:
+                paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
+
+            paramValues_list.append(paramValues)
+
+        # iter over each parameter
+        for i, paramValueList in enumerate(product(*paramValues_list)):
 
             if not self.stopFlag.is_set():
-                try:
-                    # Set the parameter value
-                    self.startParameterSignal.emit(recipe_name)
-                    if parameter is not None:
-                        parameter(paramValue)
-                    self.finishParameterSignal.emit(recipe_name)
 
-                    initPointRecipe = initPoint.copy()
-                    initPointRecipe[name] = paramValue
+                if initPoint is None:
+                    initPoint = collections.OrderedDict()
+                    initPoint[0] = recipe_name
+
+                initPointRecipe = initPoint.copy()
+
+                try:
+                    for parameter, paramValue in zip(
+                            self.config[recipe_name]['parameter'], paramValueList):
+                        element = parameter['element']
+                        name = parameter['name']
+
+                        # Set the parameter value
+                        self.startParameterSignal.emit(recipe_name)
+                        if element is not None: element(paramValue)
+                        self.finishParameterSignal.emit(recipe_name)
+
+                        initPointRecipe[name] = paramValue
+
                     dataPoint = initPointRecipe.copy()
+
                     # Start the recipe
                     dataPoint = self.processRecipe(
                         recipe_name, dataPoint, initPointRecipe)

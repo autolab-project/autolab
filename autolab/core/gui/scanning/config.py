@@ -108,7 +108,8 @@ class ConfigManager:
         names = [step['name'] for step in self.config[recipe_name]['recipe']]
 
         if option != 'recipe':
-            names.append(self.config[recipe_name]['parameter']['name'])
+            for parameter in self.config[recipe_name]['parameter']:
+                names.append(parameter['name'])
 
         return names
 
@@ -166,17 +167,12 @@ class ConfigManager:
         """ Add new recipe to config """
         if not self.gui.scanManager.isStarted():
             recipe_name = self.getUniqueNameRecipe(recipe_name)
-            parameter_name = self.getUniqueName(recipe_name, 'parameter')
 
             self.config[recipe_name] = {}
-            self.config[recipe_name]['parameter'] = {'element': None,
-                                                     'name': parameter_name}
-            self.config[recipe_name]['nbpts'] = 11
-            self.config[recipe_name]['range'] = (0, 10)
-            self.config[recipe_name]['step'] = 1
-            self.config[recipe_name]['log'] = False
+            self.config[recipe_name]['parameter'] = []
             self.config[recipe_name]['recipe'] = []
             self.config[recipe_name]['active'] = True
+            self.addParameter(recipe_name)
 
             self.gui._addRecipe(recipe_name)
             self.gui.dataManager.clear()
@@ -278,29 +274,119 @@ class ConfigManager:
                 'start_value': 0,
                 'end_value': 0,
                 'log': False}
+    # set Param
+    def addParameter(self, recipe_name: str):
+        """ Add a new parameter to the recipe with recipe_name name """
+        parameter_name = self.getUniqueName(recipe_name, 'parameter')
 
-    def setParameter(self, recipe_name: str, element: devices.Device,
+        parameter = {'name': parameter_name,
+                     'element': None,
+                     'nbpts': 11,
+                     'range': (0, 10),
+                     'step': 1,
+                     'log': False,
+                     }
+
+        self.config[recipe_name]['parameter'].append(parameter)
+
+    def setParameter(self, recipe_name: str, param_name: str, element: devices.Device,
                      name: str = None):
         """ This function set the element provided as the new parameter of the scan """
         if not self.gui.scanManager.isStarted():
-            self.config[recipe_name]['parameter']['element'] = element
+            pos = self.getParameterPosition(recipe_name, param_name)
+            param = self.config[recipe_name]['parameter'][pos]
+
+            param['element'] = element
             if name is None: name = self.getUniqueName(recipe_name, element.name)
-            self.config[recipe_name]['parameter']['name'] = name
+            param['name'] = name
             self.gui.recipeDict[recipe_name]['parameterManager'].refresh()
             self.gui.dataManager.clear()
             self.addNewConfig()
 
-    def setParameterName(self, recipe_name: str, name: str):
-        """ This function set the name of the current parameter of the scan """
+    def renameParameter(self, recipe_name: str, param_name: str, newName: str):
+        """ This function rename a parameter of a recipe """
         if not self.gui.scanManager.isStarted():
-            if name != self.config[recipe_name]['parameter']['name']:
-                name = self.getUniqueName(recipe_name, name)
-                self.config[recipe_name]['parameter']['name'] = name
+            if newName != param_name:
+                pos = self.getParameterPosition(recipe_name, param_name)
+                param = self.config[recipe_name]['parameter'][pos]
+
+                newName = self.getUniqueName(recipe_name, newName)
+                param['name'] = newName
                 self.gui.dataManager.clear()
                 self.addNewConfig()
 
         self.gui.recipeDict[recipe_name]['parameterManager'].refresh()
 
+    def setNbPts(self, recipe_name: str, param_name: str, value: int):
+        """ This function set the value of the number of points of the scan """
+        if not self.gui.scanManager.isStarted():
+            pos = self.getParameterPosition(recipe_name, param_name)
+            param = self.config[recipe_name]['parameter'][pos]
+
+            param['nbpts'] = value
+
+            if value == 1:
+                param['step'] = 0
+            else:
+                xrange = tuple(self.getRange(recipe_name, param_name))
+                width = abs(xrange[1] - xrange[0])
+                param['step'] = width / (value - 1)
+            self.addNewConfig()
+
+        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
+
+    def setStep(self, recipe_name: str, param_name: str, value: float):
+        """ This function set the value of the step between points of the scan """
+        if not self.gui.scanManager.isStarted():
+            pos = self.getParameterPosition(recipe_name, param_name)
+            param = self.config[recipe_name]['parameter'][pos]
+
+            if value == 0:
+                param['nbpts'] = 1
+                param['step'] = 0
+            else:
+                param['step'] = value
+                xrange = tuple(self.getRange(recipe_name, param_name))
+                width = abs(xrange[1] - xrange[0])
+                param['nbpts'] = int(round(width / value) + 1)
+                if width != 0:
+                    param['step'] = width / (param['nbpts'] - 1)
+            self.addNewConfig()
+
+        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
+
+    def setRange(self, recipe_name: str, param_name: str, lim: Tuple[float, float]):
+        """ This function set the range (start and end value) of the scan """
+        if not self.gui.scanManager.isStarted():
+            pos = self.getParameterPosition(recipe_name, param_name)
+            param = self.config[recipe_name]['parameter'][pos]
+
+            if lim != param['range']: param['range'] = tuple(lim)
+
+            width = abs(lim[1] - lim[0])
+
+            if self.gui.recipeDict[recipe_name]['rangeManager'].point_or_step == "point":
+                param['step'] = width / (self.getNbPts(recipe_name, param_name) - 1)
+
+            elif self.gui.recipeDict[recipe_name]['rangeManager'].point_or_step == "step":
+                param['nbpts'] = int(round(width / self.getStep(recipe_name, param_name)) + 1)
+                param['step'] = width / (self.getNbPts(recipe_name, param_name) - 1)
+            self.addNewConfig()
+
+        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
+
+    def setLog(self, recipe_name: str, param_name: str, state: bool):
+        """ This function set the log state of the scan """
+        if not self.gui.scanManager.isStarted():
+            pos = self.getParameterPosition(recipe_name, param_name)
+            param = self.config[recipe_name]['parameter'][pos]
+
+            if state != param['log']: param['log'] = state
+            self.addNewConfig()
+
+        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
+
+    # set step
     def addRecipeStep(self, recipe_name: str, stepType: str, element,
                       name: str = None, value = None):
         """ This function add a step to the scan recipe """
@@ -353,7 +439,7 @@ class ConfigManager:
     def renameRecipeStep(self, recipe_name: str, name: str, newName: str):
         """ This function rename a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
-            if newName != name :
+            if newName != name:
                 pos = self.getRecipeStepPosition(recipe_name, name)
                 newName = self.getUniqueName(recipe_name, newName)
                 self.config[recipe_name]['recipe'][pos]['name'] = newName
@@ -383,73 +469,13 @@ class ConfigManager:
 
         self.refreshRecipe(recipe_name)
 
-    def setNbPts(self, recipe_name: str, value: int):
-        """ This function set the value of the number of points of the scan """
-        if not self.gui.scanManager.isStarted():
-            self.config[recipe_name]['nbpts'] = value
-
-            if value == 1:
-                self.config[recipe_name]['step'] = 0
-            else:
-                xrange = tuple(self.getRange(recipe_name))
-                width = abs(xrange[1] - xrange[0])
-                self.config[recipe_name]['step'] = width / (value - 1)
-            self.addNewConfig()
-
-        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
-
-    def setStep(self, recipe_name: str, value: float):
-
-        """ This function set the value of the step between points of the scan """
-        if not self.gui.scanManager.isStarted():
-
-            if value == 0:
-                self.config[recipe_name]['nbpts'] = 1
-                self.config[recipe_name]['step'] = 0
-            else:
-                self.config[recipe_name]['step'] = value
-                xrange = tuple(self.getRange(recipe_name))
-                width = abs(xrange[1] - xrange[0])
-                self.config[recipe_name]['nbpts'] = int(round(width / value) + 1)
-                if width != 0:
-                    self.config[recipe_name]['step'] = width / (self.config[recipe_name]['nbpts'] - 1)
-            self.addNewConfig()
-
-        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
-
-    def setRange(self, recipe_name: str, lim: Tuple[float, float]):
-        """ This function set the range (start and end value) of the scan """
-        if not self.gui.scanManager.isStarted():
-            if lim != self.config[recipe_name]['range']:
-                self.config[recipe_name]['range'] = tuple(lim)
-
-            width = abs(lim[1] - lim[0])
-
-            if self.gui.recipeDict[recipe_name]['rangeManager'].point_or_step == "point":
-                self.config[recipe_name]['step'] = width / (self.getNbPts(recipe_name) - 1)
-
-            elif self.gui.recipeDict[recipe_name]['rangeManager'].point_or_step == "step":
-                self.config[recipe_name]['nbpts'] = int(round(width / self.getStep(recipe_name)) + 1)
-                self.config[recipe_name]['step'] = width / (self.getNbPts(recipe_name) - 1)
-            self.addNewConfig()
-
-        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
-
-    def setLog(self, recipe_name: str, state: bool):
-        """ This function set the log state of the scan """
-        if not self.gui.scanManager.isStarted():
-            if state != self.config[recipe_name]['log']:
-                self.config[recipe_name]['log'] = state
-            self.addNewConfig()
-
-        self.gui.recipeDict[recipe_name]['rangeManager'].refresh()
-
     # CONFIG READING
     ###########################################################################
     def getLinkedRecipe(self) -> Dict[str, list]:
         """ Returns a dict with recipe_name key and list of recipes linked to recipe_name recipe.
         Example: {'recipe_1': ['recipe_1', 'recipe_2', 'recipe_3', 'recipe_2'], 'recipe_3': ['recipe_3', 'recipe_2'], 'recipe_2': ['recipe_2']}"""
         linkedRecipe = dict()
+
         for recipe_name in list(self.config.keys()):
             recipe = self.config[recipe_name]
             recipe_name_link = [recipe_name]
@@ -495,13 +521,48 @@ class ConfigManager:
         """ Returns list of active recipes """
         return [i for i in self.config.keys() if self.getActive(i)]
 
-    def getParameter(self, recipe_name: str) -> devices.Device:
-        """ This function returns the element of the current parameter of the scan """
-        return self.config[recipe_name]['parameter']['element']
+    # get Param
+    def getParameterPosition(self, recipe_name: str, param_name: str) -> int:
+        """ This function returns the position of a parameter in the recipe """
+        return [i for i, param in enumerate(self.config[recipe_name]['parameter']) if param['name'] == param_name][0]
 
-    def getParameterName(self, recipe_name: str) -> str:
-        """ This function returns the name of the current parameter of the scan """
-        return self.config[recipe_name]['parameter']['name']
+    def parameterList(self, recipe_name: str) -> List[dict]:
+        """ Returns the list of parameter for the recipe with 'recipe_name' name """
+        return self.config[recipe_name]['parameter']
+
+    def TEMPgetParameterName(self, recipe_name: str) -> str:  # TODO: temporary function used to test new parameter functionnalities
+        """ This function returns the name of the parameter with 'name' name of the recipe with recipe_name name """
+        return self.config[recipe_name]['parameter'][0]['name']
+
+    def getParameterElement(self, recipe_name: str, param_name: str) -> devices.Device:
+        """ This function returns the element of the current parameter of the recipe with 'recipe_name' name"""
+        pos = self.getParameterPosition(recipe_name, param_name)
+        return self.config[recipe_name]['parameter'][pos]['element']
+
+    def getLog(self, recipe_name: str, param_name: str) -> bool:
+        """ This function returns the log state of the scan """
+        pos = self.getParameterPosition(recipe_name, param_name)
+        return self.config[recipe_name]['parameter'][pos]['log']
+
+    def getNbPts(self, recipe_name: str, param_name: str) -> int:
+        """ This function returns the number of points of the scan """
+        pos = self.getParameterPosition(recipe_name, param_name)
+        return self.config[recipe_name]['parameter'][pos]['nbpts']
+
+    def getStep(self, recipe_name: str, param_name: str) -> float:
+        """ This function returns the value of the step between points of the scan """
+        pos = self.getParameterPosition(recipe_name, param_name)
+        return self.config[recipe_name]['parameter'][pos]['step']
+
+    def getRange(self, recipe_name: str, param_name: str) -> Tuple[float, float]:
+        """ This function returns the range (start and end value) of the scan """
+        pos = self.getParameterPosition(recipe_name, param_name)
+        return self.config[recipe_name]['parameter'][pos]['range']
+
+    # get Step
+    def stepList(self, recipe_name: str) -> List[dict]:
+        """ This function returns the whole recipe of the scan """
+        return self.config[recipe_name]['recipe']
 
     def getRecipeStepElement(self, recipe_name: str, name: str) -> devices.Device:
         """ This function returns the element of a recipe step """
@@ -522,29 +583,12 @@ class ConfigManager:
         """ This function returns the position of a recipe step in the recipe """
         return [i for i, step in enumerate(self.config[recipe_name]['recipe']) if step['name'] == name][0]
 
-    def getLog(self, recipe_name: str) -> bool:
-        """ This function returns the log state of the scan """
-        return self.config[recipe_name]['log']
-
-    def getNbPts(self, recipe_name: str) -> int:
-        """ This function returns the number of points of the scan """
-        return self.config[recipe_name]['nbpts']
-
-    def getStep(self, recipe_name: str) -> float:
-        """ This function returns the value of the step between points of the scan """
-        return self.config[recipe_name]['step']
-
-    def getRange(self, recipe_name: str) -> Tuple[float, float]:
-        """ This function returns the range (start and end value) of the scan """
-        return self.config[recipe_name]['range']
-
-    def getParamDataFrame(self, recipe_name: str) -> pd.DataFrame:
-        """ This function returns a DataFrame with 'id' and '<parameterName>'
+    def getParamDataFrame(self, recipe_name: str, param_name: str) -> pd.DataFrame:
+        """ This function returns a DataFrame with 'id' and 'param_name'
         columns containing the parameter array """
-        startValue, endValue = self.getRange(recipe_name)
-        nbpts = self.getNbPts(recipe_name)
-        logScale: bool = self.getLog(recipe_name)
-        parameterName = self.getParameterName(recipe_name)
+        startValue, endValue = self.getRange(recipe_name, param_name)
+        nbpts = self.getNbPts(recipe_name, param_name)
+        logScale: bool = self.getLog(recipe_name, param_name)
 
         if logScale:
             paramValues = np.logspace(m.log10(startValue), m.log10(endValue),
@@ -554,13 +598,9 @@ class ConfigManager:
 
         data = pd.DataFrame()
         data["id"] = 1 + np.arange(len(paramValues))
-        data[parameterName] = paramValues
+        data[param_name] = paramValues
 
         return data
-
-    def getRecipe(self, recipe_name: str) -> List[dict]:
-        """ This function returns the whole recipe of the scan """
-        return self.config[recipe_name]['recipe']
 
     # EXPORT IMPORT ACTIONS
     ###########################################################################
@@ -596,20 +636,28 @@ class ConfigManager:
         configPars['autolab'] = {'version': __version__,
                                  'timestamp': str(datetime.datetime.now())}
 
-        for recipe_name, recipe_i in zip(self.config.keys(), self.config.values()):
+        for recipe_name in self.config.keys():
+            recipe_i = self.config[recipe_name]
             pars_recipe_i = {}
+
             pars_recipe_i['parameter'] = {}
-            pars_recipe_i['parameter']['name'] = recipe_i['parameter']['name']
 
-            if recipe_i['parameter']['element'] is not None:
-                pars_recipe_i['parameter']['address'] = recipe_i['parameter']['element'].address()
-            else:
-                pars_recipe_i['parameter']['address'] = "None"
+            for i, param in enumerate(recipe_i['parameter']):
+                param_name = f"parameter_{i+1}"
 
-            pars_recipe_i['parameter']['nbpts'] = str(recipe_i['nbpts'])
-            pars_recipe_i['parameter']['start_value'] = str(recipe_i['range'][0])
-            pars_recipe_i['parameter']['end_value'] = str(recipe_i['range'][1])
-            pars_recipe_i['parameter']['log'] = str(int(recipe_i['log']))
+                pars_recipe_i['parameter'][param_name] = {}
+
+                pars_recipe_i['parameter'][param_name]['name'] = param['name']
+
+                if param['element'] is not None:
+                    pars_recipe_i['parameter'][param_name]['address'] = param['element'].address()
+                else:
+                    pars_recipe_i['parameter'][param_name]['address'] = "None"
+
+                pars_recipe_i['parameter'][param_name]['nbpts'] = str(param['nbpts'])
+                pars_recipe_i['parameter'][param_name]['start_value'] = str(param['range'][0])
+                pars_recipe_i['parameter'][param_name]['end_value'] = str(param['range'][1])
+                pars_recipe_i['parameter'][param_name]['log'] = str(int(param['log']))
 
             pars_recipe_i['recipe'] = {}
 
@@ -706,27 +754,36 @@ class ConfigManager:
         already_loaded_devices = devices.list_loaded_devices()
 
         try:
-            # Legacy config
-            if 'parameter' in configPars:
-                new_configPars = collections.OrderedDict()
-                new_configPars["autolab"] = configPars["autolab"]
+            # LEGACY <= 1.2
+            try:
+                LEGACY = (configPars["autolab"]["version"].startswith("1.0")
+                          or configPars["autolab"]["version"].startswith("1.1.")
+                          or configPars["autolab"]["version"] == "1.2")
+                if LEGACY:
+                    new_configPars = collections.OrderedDict()
+                    new_configPars["autolab"] = configPars["autolab"]
 
-                if 'initrecipe' in configPars:
-                    new_configPars["init"] = {}
-                    new_configPars["init"]['parameter'] = self._defaultParameterPars()
-                    new_configPars["init"]['parameter']['name'] = 'init'
-                    new_configPars["init"]['recipe'] = configPars['initrecipe']
+                    if 'initrecipe' in configPars:
+                        new_configPars["init"] = {}
+                        new_configPars["init"]['parameter'] = {}
+                        new_configPars["init"]['parameter']["parameter_1"] = self._defaultParameterPars()
+                        new_configPars["init"]['parameter']["parameter_1"]['name'] = 'init'
+                        new_configPars["init"]['recipe'] = configPars['initrecipe']
 
-                new_configPars["recipe"] = {}
-                new_configPars["recipe"]['parameter'] = configPars['parameter']
-                new_configPars["recipe"]['recipe'] = configPars['recipe']
+                    new_configPars["recipe_1"] = {}
+                    new_configPars["recipe_1"]['parameter'] = {}
+                    new_configPars["recipe_1"]['parameter']["parameter_1"] = configPars['parameter']
+                    new_configPars["recipe_1"]['recipe'] = configPars['recipe']
 
-                if 'endrecipe' in configPars:
-                    new_configPars["end"] = {}
-                    new_configPars["end"]['parameter'] = self._defaultParameterPars()
-                    new_configPars["end"]['parameter']['name'] = 'end'
-                    new_configPars["end"]['recipe'] = configPars['endrecipe']
-                configPars = new_configPars
+                    if 'endrecipe' in configPars:
+                        new_configPars["end"] = {}
+                        new_configPars["end"]['parameter'] = {}
+                        new_configPars["end"]['parameter']["parameter_1"] = self._defaultParameterPars()
+                        new_configPars["end"]['parameter']['name'] = 'end'
+                        new_configPars["end"]['recipe'] = configPars['endrecipe']
+
+                    configPars = new_configPars
+            except: pass
 
             # Config
             config = collections.OrderedDict()
@@ -736,28 +793,46 @@ class ConfigManager:
                 config[recipe_name] = collections.OrderedDict()
                 recipe_i = config[recipe_name]
                 pars_recipe_i = configPars[recipe_name]
-                assert 'parameter' in pars_recipe_i, f'Missing parameter in {recipe_name}:{pars_recipe_i}'
-                assert 'address' in pars_recipe_i['parameter'], f"Missing address to {pars_recipe_i['parameter']}"
-                if pars_recipe_i['parameter']['address'] == "None":
-                    element = None
-                else:
-                    element = devices.get_element_by_address(pars_recipe_i['parameter']['address'])
-                    assert element is not None, f"Parameter {pars_recipe_i['parameter']['address']} not found."
 
-                assert 'name' in pars_recipe_i['parameter'], "Missing name to {pars_recipe_i['parameter']}"
-                recipe_i['parameter'] = {'element':element, 'name':pars_recipe_i['parameter']['name']}
+                assert 'parameter' in pars_recipe_i, f'Missing parameter in {recipe_name}'
 
-                for key in ['nbpts', 'start_value', 'end_value', 'log'] :
-                    assert key in pars_recipe_i['parameter'], "Missing parameter key {key}."
-                    recipe_i['nbpts'] = int(pars_recipe_i['parameter']['nbpts'])
-                    start = float(pars_recipe_i['parameter']['start_value'])
-                    end = float(pars_recipe_i['parameter']['end_value'])
-                    recipe_i['range'] = (start, end)
-                    recipe_i['log'] = bool(int(pars_recipe_i['parameter']['log']))
-                    if recipe_i['nbpts'] > 1:
-                        recipe_i['step'] = abs(end - start) / (recipe_i['nbpts'] - 1)
+                param_list = recipe_i['parameter'] = []
+
+                # LEGACY <= 1.2.1
+                if type(list(pars_recipe_i['parameter'].values())[0]) is not dict:
+                    pars_recipe_i['parameter'] = {'parameter_1': pars_recipe_i['parameter']}
+
+                for param_pars_name in pars_recipe_i['parameter']:
+                    param_pars = pars_recipe_i['parameter'][param_pars_name]
+
+                    param = {}
+
+                    assert 'name' in param_pars, f"Missing name to {param_pars}"
+                    param['name'] = param_pars['name']
+
+                    assert 'address' in param_pars, f"Missing address to {param_pars}"
+                    if param_pars['address'] == "None": element = None
                     else:
-                        recipe_i['step'] = 0
+                        element = devices.get_element_by_address(param_pars['address'])
+                        assert element is not None, f"Parameter {param_pars['address']} not found."
+
+                    param['element'] = element
+
+                    for key in ['nbpts', 'start_value', 'end_value', 'log']:
+                        assert key in param_pars, "Missing parameter key {key}."
+
+                    param['nbpts'] = int(param_pars['nbpts'])
+                    start = float(param_pars['start_value'])
+                    end = float(param_pars['end_value'])
+                    param['range'] = (start, end)
+                    param['log'] = bool(int(param_pars['log']))
+
+                    if param['nbpts'] > 1:
+                        param['step'] = abs(end - start) / (param['nbpts'] - 1)
+                    else:
+                        param['step'] = 0
+
+                    param_list.append(param)
 
                 recipe_i['recipe'] = []
                 recipe = recipe_i['recipe']
@@ -820,7 +895,7 @@ class ConfigManager:
                 if 'active' in pars_recipe_i:
                     recipe_i['active'] = utilities.boolean(pars_recipe_i['active'])
                 else:
-                    recipe_i['active'] = True  # for legacy config
+                    recipe_i['active'] = True  # LEGACY <= 1.2.1
 
             if append:
                 for recipe_name in config.keys():
