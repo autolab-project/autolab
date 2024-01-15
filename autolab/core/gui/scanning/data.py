@@ -5,7 +5,7 @@ Created on Sun Sep 29 18:10:31 2019
 @author: qchat
 """
 
-import collections
+from collections import OrderedDict
 from queue import Queue
 import os
 import shutil
@@ -255,8 +255,8 @@ class DataManager:
                         nb_id = len(dataframe)
 
                 # not-oPTIMIZE: edit: not necessary if show only one scan <- values will not correspond to previous scan if start a new scan with a different range parameter
-                param_name = self.gui.configManager.TEMPgetParameterName(recipe_name)
-                nb_total = self.gui.configManager.getNbPts(recipe_name, param_name)
+                nb_total = 1
+                for nbpts_i in [parameter['nbpts'] for parameter in self.gui.configManager.parameterList(recipe_name)]: nb_total *= nbpts_i
 
                 while self.gui.figureManager.nbCheckBoxMenuID > nb_total:
                     self.gui.figureManager.removeLastCheckBox2MenuID()
@@ -437,10 +437,10 @@ class Dataset():
                                 value.to_csv(path, index=False)
 
 
-    def addPoint(self, dataPoint: collections.OrderedDict):
+    def addPoint(self, dataPoint: OrderedDict):
         """ This function add a data point (parameter value, and results) in the dataset """
         ID = len(self.data) + 1
-        simpledata = collections.OrderedDict()
+        simpledata = OrderedDict()
         simpledata['id'] = ID
 
         for resultName in dataPoint.keys():

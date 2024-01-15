@@ -109,7 +109,7 @@ class InteractionThread(QtCore.QThread):
             elif self.intType == 'load':
                 # Note that threadItemDict needs to be updated outside of thread to avoid timing error
                 module = devices.get_device(self.item.name)  # Try to get / instantiated the device
-                self.item.gui.threadModuleDict[id(self.item)] = module
+                self.item.gui.threadDeviceDict[id(self.item)] = module
 
         except Exception as e:
             error = e

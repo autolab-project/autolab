@@ -113,7 +113,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.monitors = {}
         self.sliders = {}
         self.customGUIdict = {}
-        self.threadModuleDict = {}
+        self.threadDeviceDict = {}
         self.threadItemDict = {}
 
         scanAction = self.menuBar.addAction('Open scanner')
@@ -171,17 +171,17 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function checks if a module has been loaded and put to the queue.
         If it has been, associate item and module """
         threadItemDictTemp = self.threadItemDict.copy()
-        threadModuleDictTemp = self.threadModuleDict.copy()
+        threadDeviceDictTemp = self.threadDeviceDict.copy()
 
-        for item_id in threadModuleDictTemp.keys():
+        for item_id in threadDeviceDictTemp.keys():
             item = threadItemDictTemp[item_id]
-            module = threadModuleDictTemp[item_id]
+            module = threadDeviceDictTemp[item_id]
 
             self.associate(item, module)
             item.setExpanded(True)
 
             self.threadItemDict.pop(item_id)
-            self.threadModuleDict.pop(item_id)  # TODO: rename all module to Device for clarity
+            self.threadDeviceDict.pop(item_id)
 
         if len(threadItemDictTemp) == 0:
             self.timerDevice.stop()
@@ -299,27 +299,35 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Open the plotter configuration file """
         utilities.openFile(paths.PLOTTER_CONFIG)
 
-    def setScanParameter(self, recipe_name:str, variable: devices.Device):
-        """ Set the selected variable has parameter for the recipe with recipe_name name"""
+    def setScanParameter(self, recipe_name:str, param_name: str, variable: devices.Device):
+        """ Set the selected variable has parameter for the recipe """
         if self.scanner is None:
             self.openScanner()
-        param_name = self.scanner.configManager.TEMPgetParameterName(recipe_name)
+
         self.scanner.configManager.setParameter(recipe_name, param_name, variable)
 
     def addStepToScanRecipe(self, recipe_name:str, stepType: str, element: devices.Device):
-        """ Add the selected variable has a step for the recipe with recipe_name name"""
+        """ Add the selected variable has a step for the recipe """
         if self.scanner is None:
             self.openScanner()
 
         self.scanner.configManager.addRecipeStep(recipe_name, stepType, element)
 
     def getRecipeName(self) -> str:
-        """ Returns the name of the recipe which will receive the variables
+        """ Returns the name of the recipe that will receive the variables
         from the control center """
         if self.scanner is None:
             self.openScanner()
 
         return self.scanner.selectRecipe_comboBox.currentText()
+
+    def getParameterName(self) -> str:
+        """ Returns the name of the parameter that will receive the variables
+        from the control center """
+        if self.scanner is None:
+            self.openScanner()
+
+        return self.scanner.selectParameter_comboBox.currentText()
 
     def clearScanner(self):
         """ This clear the scanner instance reference when quitted """

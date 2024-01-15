@@ -368,7 +368,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             elif choice == sliderAction: self.openSlider()
             elif choice == scanParameterAction:
                 recipe_name = self.gui.getRecipeName()
-                self.gui.setScanParameter(recipe_name, self.variable)
+                param_name = self.gui.getParameterName()
+                self.gui.setScanParameter(recipe_name, param_name, self.variable)
             elif choice == scanMeasureStepAction:
                 recipe_name = self.gui.getRecipeName()
                 self.gui.addStepToScanRecipe(recipe_name, 'measure', self.variable)
