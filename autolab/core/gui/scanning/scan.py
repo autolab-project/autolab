@@ -8,7 +8,7 @@ Created on Sun Sep 29 18:08:45 2019
 import time
 import math as m
 import threading
-import collections
+from collections import OrderedDict
 from queue import Queue
 from itertools import product
 from typing import Any
@@ -44,7 +44,7 @@ class ScanManager:
     #############################################################################
 
     def startButtonClicked(self):
-        """ This function is called when the start / stop button is pressed.
+        """ Called when the start/stop button is pressed.
         Do the expected action """
         self.stop() if self.isStarted() else self.start()
 
@@ -53,7 +53,7 @@ class ScanManager:
         return self.thread is not None
 
     def start(self):
-        """ This function start a scan """
+        """ Starts a scan """
         self.gui.data_comboBox.setEnabled(False)
 
         try:
@@ -77,9 +77,9 @@ class ScanManager:
             ## Signal connections
             self.thread.errorSignal.connect(self.error)
 
-            self.thread.startParameterSignal.connect(lambda recipe_name: self.setParameterProcessingState(recipe_name, 'started'))
-            self.thread.finishParameterSignal.connect(lambda recipe_name: self.setParameterProcessingState(recipe_name, 'finished'))
-            self.thread.parameterCompletedSignal.connect(lambda recipe_name: self.resetParameterProcessingState(recipe_name))
+            self.thread.startParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'started'))
+            self.thread.finishParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'finished'))
+            self.thread.parameterCompletedSignal.connect(lambda recipe_name, param_name: self.resetParameterProcessingState(recipe_name, param_name))
 
             self.thread.startStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'started'))
             self.thread.finishStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'finished'))
@@ -109,14 +109,14 @@ class ScanManager:
     def resetStepsProcessingState(self, recipe_name: str):
         self.gui.recipeDict[recipe_name]['recipeManager'].resetStepsProcessingState()
 
-    def setParameterProcessingState(self, recipe_name: str, state: str):
-        self.gui.recipeDict[recipe_name]['parameterManager'].setProcessingState(state)
+    def setParameterProcessingState(self, recipe_name: str, param_name: str, state: str):
+        self.gui.recipeDict[recipe_name]['parameterManager'][param_name].setProcessingState(state)
 
-    def resetParameterProcessingState(self, recipe_name: str):
-        self.gui.recipeDict[recipe_name]['parameterManager'].setProcessingState('idle')
+    def resetParameterProcessingState(self, recipe_name: str, param_name: str):
+        self.gui.recipeDict[recipe_name]['parameterManager'][param_name].setProcessingState('idle')
 
     def stop(self):
-        """ This function stop manually the scan """
+        """ Stops manually the scan """
         self.gui.data_comboBox.setEnabled(True)
         self.disableContinuousMode()
         self.thread.stopFlag.set()
@@ -145,7 +145,7 @@ class ScanManager:
             self.start()
 
     def error(self, error: Exception):
-        """ This function is called if an error occured during the scan.
+        """ Called if an error occured during the scan.
         It displays it in the status bar """
         self.gui.setStatus(f'Scan Error : {error} ', 10000, False)
 
@@ -159,14 +159,14 @@ class ScanManager:
         return self.gui.continuous_checkBox.isChecked()
 
     def disableContinuousMode(self):
-        """ This function disables the continuous scan mode """
+        """ Disables the continuous scan mode """
         self.gui.continuous_checkBox.setChecked(False)
 
     # PAUSE
     #############################################################################
 
     def pauseButtonClicked(self):
-        """ This function is called when the Pause / Resume button is clicked.
+        """ Called when the Pause/Resume button is clicked.
         It does the required action """
         if self.isStarted():
             self.resume() if self.isPaused() else self.pause()
@@ -176,13 +176,13 @@ class ScanManager:
         return (self.thread is not None) and (self.thread.pauseFlag.is_set() is True)
 
     def pause(self):
-        """ This function pauses the scan """
+        """ Pauses the scan """
         self.thread.pauseFlag.set()
         self.gui.dataManager.timer.stop()
         self.gui.pause_pushButton.setText('Resume')
 
     def resume(self):
-        """ This function resumes the scan """
+        """ Resumes the scan """
         self.thread.pauseFlag.clear()
         self.gui.dataManager.timer.start()
         self.gui.pause_pushButton.setText('Pause')
@@ -194,9 +194,9 @@ class ScanThread(QtCore.QThread):
     # Signals
     errorSignal = QtCore.Signal(object)
 
-    startParameterSignal = QtCore.Signal(object)
-    finishParameterSignal = QtCore.Signal(object)
-    parameterCompletedSignal = QtCore.Signal(object)
+    startParameterSignal = QtCore.Signal(object, object)
+    finishParameterSignal = QtCore.Signal(object, object)
+    parameterCompletedSignal = QtCore.Signal(object, object)
 
     startStepSignal = QtCore.Signal(object, object)
     finishStepSignal = QtCore.Signal(object, object)
@@ -216,9 +216,9 @@ class ScanThread(QtCore.QThread):
             if self.config[recipe_name]['active']: self.execRecipe(recipe_name)
 
     def execRecipe(self, recipe_name: str,
-                   initPoint: collections.OrderedDict = None):
-        """ Execute the recipe with recipe_name name.
-        initPoint is used to add parameter value and master-recipe name to a sub-recipe """
+                   initPoint: OrderedDict = None):
+        """ Executes a recipe. initPoint is used to add parameters values
+        and master-recipe name to a sub-recipe """
 
         paramValues_list = []
 
@@ -235,35 +235,35 @@ class ScanThread(QtCore.QThread):
 
             paramValues_list.append(paramValues)
 
-        # iter over each parameter
+        # iter over each parameter (do once if no parameter!)
         for i, paramValueList in enumerate(product(*paramValues_list)):
 
             if not self.stopFlag.is_set():
 
                 if initPoint is None:
-                    initPoint = collections.OrderedDict()
+                    initPoint = OrderedDict()
                     initPoint[0] = recipe_name
 
-                initPointRecipe = initPoint.copy()
+                initPointStep = initPoint.copy()
 
                 try:
                     for parameter, paramValue in zip(
                             self.config[recipe_name]['parameter'], paramValueList):
                         element = parameter['element']
-                        name = parameter['name']
+                        param_name = parameter['name']
 
                         # Set the parameter value
-                        self.startParameterSignal.emit(recipe_name)
+                        self.startParameterSignal.emit(recipe_name, param_name)
                         if element is not None: element(paramValue)
-                        self.finishParameterSignal.emit(recipe_name)
+                        self.finishParameterSignal.emit(recipe_name, param_name)
 
-                        initPointRecipe[name] = paramValue
+                        initPointStep[param_name] = paramValue
 
-                    dataPoint = initPointRecipe.copy()
+                    dataPoint = initPointStep.copy()
 
                     # Start the recipe
-                    dataPoint = self.processRecipe(
-                        recipe_name, dataPoint, initPointRecipe)
+                    dataPoint = self.processStep(
+                        recipe_name, dataPoint, initPointStep)
                     # Send the whole data in the queue
                     if not self.stopFlag.is_set(): self.queue.put(dataPoint)
 
@@ -278,12 +278,13 @@ class ScanThread(QtCore.QThread):
             else:
                 break
 
-        self.parameterCompletedSignal.emit(recipe_name)
+        for parameter in self.config[recipe_name]['parameter']:
+            self.parameterCompletedSignal.emit(recipe_name, parameter['name'])
 
-    def processRecipe(self, recipe_name: str,
-                      dataPoint: collections.OrderedDict,
-                      initPoint: collections.OrderedDict):
-        """ This function executes the scan recipe """
+    def processStep(self, recipe_name: str,
+                    dataPoint: OrderedDict,
+                    initPoint: OrderedDict):
+        """ Executes the recipe step """
         for stepInfos in self.config[recipe_name]['recipe']:
             if not self.stopFlag.is_set():
                 # Process the recipe step
@@ -302,8 +303,8 @@ class ScanThread(QtCore.QThread):
         return dataPoint
 
     def processElement(self, recipe_name: str, stepInfos: dict,
-                       initPoint: collections.OrderedDict):
-        """ This function processes the recipe step """
+                       initPoint: OrderedDict):
+        """ Processes the recipe step """
         element = stepInfos['element']
         stepType = stepInfos['stepType']
         self.startStepSignal.emit(recipe_name, stepInfos['name'])
@@ -327,7 +328,7 @@ class ScanThread(QtCore.QThread):
         return result
 
     def checkVariable(self, value: Any):
-        """ Check if value is a device variable address and if is it, return its value """
+        """ Checks if value is a device variable address and if is it, return its value """
         if str(value).startswith("$eval:"):
             value = str(value)[len("$eval:"): ]
 

@@ -140,7 +140,24 @@
               </spacer>
              </item>
              <item>
-              <widget class="QComboBox" name="selectRecipe_comboBox"/>
+              <widget class="QComboBox" name="selectRecipe_comboBox">
+               <property name="toolTip">
+                <string>Name of recipe that receive variables from Control Panel</string>
+               </property>
+               <property name="sizeAdjustPolicy">
+                <enum>QComboBox::AdjustToContents</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="selectParameter_comboBox">
+               <property name="toolTip">
+                <string>Name of parameter that receive variables from Control Panel</string>
+               </property>
+               <property name="sizeAdjustPolicy">
+                <enum>QComboBox::AdjustToContents</enum>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
