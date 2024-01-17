@@ -6,6 +6,7 @@ Created on Oct 2022
 """
 import os
 import sys
+import queue
 
 from qtpy import QtCore, QtWidgets, uic, QtGui
 
@@ -123,12 +124,29 @@ class Plotter(QtWidgets.QMainWindow):
 
         self.setAcceptDrops(True)
 
+        # timer to load plugin to tree
         self.timerPlugin = QtCore.QTimer(self)
         self.timerPlugin.setInterval(50) # ms
         self.timerPlugin.timeout.connect(self.timerAction)
 
+        # queue and timer to add/remove plot from plugin
+        self.queue_driver = queue.Queue()
+        self.timerPluginQueue = QtCore.QTimer(self)
+        self.timerPluginQueue.setInterval(int(50)) # ms
+        self.timerPluginQueue.timeout.connect(self.queueDriverHandler)
+        self.timerPluginQueue.start()
+
         self.processPlugin()
 
+    def addToQueue(self, action: str, plot):
+        """ Function to be called by a driver to add/remove a plot.
+        plot can be any pyqtgraph graphic item or a list of graphic item.
+        action can be 'add' or 'remove' """
+        if isinstance(plot, list):
+            for plot_i in plot:
+                self.queue_driver.put((action, plot_i))
+        else:
+            self.queue_driver.put((action, plot))
 
     def timerAction(self):
 
@@ -307,6 +325,21 @@ class Plotter(QtWidgets.QMainWindow):
                     except Exception as error:
                         self.setStatus(f"Error in plugin {module.name}: '{error}'",10000, False)
 
+    def queueDriverHandler(self):
+        """ Adds/Removes plot from a driver requests throught a queue
+        thanks to :meth:`.addToQueue` """
+        while not self.queue_driver.empty():
+            action, plot = self.queue_driver.get()
+
+            if action == "add":
+                self.figureManager.fig.addItem(plot)
+            elif action == "remove":
+                self.figureManager.fig.removeItem(plot)
+            # if action == "show":  " useless, no issue to do it in driver directly
+            #     plot.show()
+            # if action == "hide":
+            #     plot.hide()
+
     def overwriteDataChanged(self):
         """ Set overwrite name for data import """
 
@@ -397,6 +430,7 @@ class Plotter(QtWidgets.QMainWindow):
 
         # Delete reference of this window in the control center
         self.timer.stop()
+        self.timerPluginQueue.stop()
         self.mainGui.clearPlotter()
 
 

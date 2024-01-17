@@ -182,7 +182,7 @@ class FigureManager :
 
                 # Plot
                 if len(x) > 300:
-                    curve = self.ax.plot(x, y, pen=color, clear=True)
+                    curve = self.ax.plot(x, y, pen=color)
                     curve.setAlpha(alpha, False)
                 else:
                     curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)

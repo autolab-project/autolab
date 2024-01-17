@@ -58,6 +58,9 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         # Change loaded status
         self.loaded = True
 
+        # Tooltip
+        if self.module._help is not None: self.setToolTip(0, self.module._help)
+
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if self.is_not_submodule and self.loaded:
