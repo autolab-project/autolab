@@ -117,6 +117,7 @@ def check_autolab_config():
     control_center_dict = {'precision': 7,
                            'print': True,
                            'logger': False,
+                           'console': False,
                            }
     if 'control_center' in autolab_config.sections():
         if 'precision' in autolab_config['control_center'].keys():
@@ -125,6 +126,8 @@ def check_autolab_config():
             control_center_dict['print'] = autolab_config['control_center']['print']
         if 'logger' in autolab_config['control_center'].keys():
             control_center_dict['logger'] = autolab_config['control_center']['logger']
+        if 'console' in autolab_config['control_center'].keys():
+            control_center_dict['console'] = autolab_config['control_center']['console']
     autolab_config['control_center'] = control_center_dict
 
     # Check monitor configuration

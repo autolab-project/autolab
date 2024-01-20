@@ -63,6 +63,8 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         # Change loaded status
         self.loaded = True
 
+        # Tooltip
+        if self.module._help is not None: self.setToolTip(0, self.module._help)
 
     def menu(self,position):
 
