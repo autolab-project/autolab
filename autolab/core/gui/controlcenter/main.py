@@ -70,19 +70,50 @@ class ControlCenter(QtWidgets.QMainWindow):
         # Import Autolab config
         control_center_config = config.get_control_center_config()
         logger_active = utilities.boolean(control_center_config['logger'])
+        console_active = utilities.boolean(control_center_config['console'])
         print_active = utilities.boolean(control_center_config['print'])
+
+        # Prepare docker
+        if console_active or logger_active:
+            from pyqtgraph.dockarea.DockArea import DockArea
+            from pyqtgraph.dockarea.Dock import Dock
 
         # Set logger
         self.stdout = OutputWrapper(self, True, logger_active, print_active)
         self.stderr = OutputWrapper(self, False, logger_active, print_active)
+
         if logger_active:
+
+            area_1 = DockArea(self)
+            self.splitter.addWidget(area_1)
+
+            logger_dock = Dock("Logger")
+            area_1.addDock(logger_dock, 'bottom')
+            self._logger_dock = logger_dock
+
             self.logger = QtWidgets.QTextBrowser(self)
             self.loggerDefaultColor = self.logger.textColor()
-            # self.verticalLayout.addWidget(self.logger)
-            self.splitter.insertWidget(1, self.logger)
-            self.splitter.setSizes([500, 100])
             self.stdout.outputWritten.connect(self.handleOutput)
             self.stderr.outputWritten.connect(self.handleOutput)
+
+            logger_dock.addWidget(self.logger)
+
+        if console_active:
+            from pyqtgraph.console import ConsoleWidget
+            import numpy as np
+            import pandas as pd
+            import autolab  # OPTIMIZE: not good to import autolab?
+            namespace = {'np': np, 'pd': pd, 'autolab': autolab}
+            text = """ Packages imported: autolab, np, pd. """
+            area_2 = DockArea(self)
+            self.splitter.addWidget(area_2)
+
+            console_dock = Dock("Console")
+            self._console_dock = console_dock
+            area_2.addDock(console_dock, 'bottom')
+
+            console_widget = ConsoleWidget(namespace=namespace, text=text)
+            console_dock.addWidget(console_widget)
 
         # Window configuration
         self.setWindowTitle("AUTOLAB - Control Panel")
@@ -116,6 +147,14 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.threadDeviceDict = {}
         self.threadItemDict = {}
 
+        icons_folder = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),  # gui
+            "icons")
+        GITHUB_ICON_NAME = os.path.join(icons_folder, 'github-icon.svg').replace("\\", "/")
+        READTHEDOCS_ICON_NAME = os.path.join(icons_folder, 'readthedocs-icon.svg').replace("\\", "/")
+        PDF_ICON_NAME = os.path.join(icons_folder, 'pdf-icon.png').replace("\\", "/")
+        CONFIG_ICON_NAME = os.path.join(icons_folder, 'config-icon.svg').replace("\\", "/")
+
         scanAction = self.menuBar.addAction('Open scanner')
         scanAction.triggered.connect(self.openScanner)
         scanAction.setStatusTip('Open the scanner in another window')
@@ -128,14 +167,17 @@ class ControlCenter(QtWidgets.QMainWindow):
         settingsMenu = self.menuBar.addMenu('Settings')
 
         autolabConfig = settingsMenu.addAction('Autolab config')
+        autolabConfig.setIcon(QtGui.QIcon(CONFIG_ICON_NAME))
         autolabConfig.triggered.connect(self.openAutolabConfig)
         autolabConfig.setStatusTip("Open the Autolab configuration file")
 
         devicesConfig = settingsMenu.addAction('Devices config')
+        devicesConfig.setIcon(QtGui.QIcon(CONFIG_ICON_NAME))
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
 
         plotterConfig = settingsMenu.addAction('Plotter config')
+        plotterConfig.setIcon(QtGui.QIcon(CONFIG_ICON_NAME))
         plotterConfig.triggered.connect(self.openPlotterConfig)
         plotterConfig.setStatusTip("Open the plotter configuration file")
 
@@ -143,17 +185,19 @@ class ControlCenter(QtWidgets.QMainWindow):
         helpMenu = self.menuBar.addMenu('Help')
 
         reportAction = helpMenu.addAction('Report bugs / suggestions')
-        reportAction.setIcon(QtGui.QIcon("bug.png"))
+        reportAction.setIcon(QtGui.QIcon(GITHUB_ICON_NAME))
         reportAction.triggered.connect(web.report)
         reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
 
         helpMenu.addSeparator()
 
         helpAction = helpMenu.addAction('Documentation')
+        helpAction.setIcon(QtGui.QIcon(READTHEDOCS_ICON_NAME))
         helpAction.triggered.connect(lambda : web.doc('default'))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
 
         helpActionOffline = helpMenu.addAction('Documentation (Offline)')
+        helpActionOffline.setIcon(QtGui.QIcon(PDF_ICON_NAME))
         helpActionOffline.triggered.connect(lambda : web.doc(False))
         helpActionOffline.setStatusTip('Open the pdf documentation form local file')
 
@@ -362,6 +406,9 @@ class ControlCenter(QtWidgets.QMainWindow):
         if hasattr(self, 'stdout'):
             sys.stdout = self.stdout._stream
             sys.stderr = self.stderr._stream
+
+        if hasattr(self, '_logger_dock'): self._logger_dock.close()
+        if hasattr(self, '_console_dock'): self._console_dock.close()
 
         try:
             import pyqtgraph as pg

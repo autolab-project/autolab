@@ -13,6 +13,7 @@ from queue import Queue
 from itertools import product
 from typing import Any
 
+from pyvisa import VisaIOError
 import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
@@ -147,7 +148,7 @@ class ScanManager:
     def error(self, error: Exception):
         """ Called if an error occured during the scan.
         It displays it in the status bar """
-        self.gui.setStatus(f'Scan Error : {error} ', 10000, False)
+        self.gui.setStatus(f'Scan Error: {error}', 10000, False)
 
 
     # CONTINUOUS MODE
@@ -247,8 +248,10 @@ class ScanThread(QtCore.QThread):
                 initPointStep = initPoint.copy()
 
                 try:
+                    self._source_of_error = None
                     for parameter, paramValue in zip(
                             self.config[recipe_name]['parameter'], paramValueList):
+                        self._source_of_error = parameter
                         element = parameter['element']
                         param_name = parameter['name']
 
@@ -269,6 +272,16 @@ class ScanThread(QtCore.QThread):
 
                 except Exception as e:
                     # If an error occurs, stop the scan and send an error signal
+                    name = self._source_of_error['name']
+                    if self._source_of_error['element'] is not None:
+                        address = f"='{self._source_of_error['element'].address()}'"
+                    else: address = ''
+
+                    if str(e) == str(VisaIOError(-1073807339)):
+                        e = f"Timeout reached for device {address}. Acquisition time may be too long. If so, you can increase timeout delay in the driver to avoid this error."
+                    else:
+                        e = f"In recipe '{recipe_name}' for element '{name}'{address}: {e}"
+
                     self.errorSignal.emit(e)
                     self.stopFlag.set()
 
@@ -286,6 +299,8 @@ class ScanThread(QtCore.QThread):
                     initPoint: OrderedDict):
         """ Executes the recipe step """
         for stepInfos in self.config[recipe_name]['recipe']:
+            self._source_of_error = stepInfos
+
             if not self.stopFlag.is_set():
                 # Process the recipe step
                 result = self.processElement(recipe_name, stepInfos, initPoint)
