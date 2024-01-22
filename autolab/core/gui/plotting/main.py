@@ -8,6 +8,7 @@ import os
 import sys
 import queue
 import time
+import uuid
 from typing import Any, Type
 
 from qtpy import QtCore, QtWidgets, uic, QtGui
@@ -73,7 +74,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.dataManager = DataManager(self)
 
         self.threadManager = ThreadManager(self)
-        self.threadModuleDict = {}
+        self.threadDeviceDict = {}
         self.threadItemDict = {}
 
         # Save button
@@ -134,57 +135,78 @@ class Plotter(QtWidgets.QMainWindow):
         # queue and timer to add/remove plot from plugin
         self.queue_driver = queue.Queue()
         self.dict_widget = dict()
-        self.timerPluginQueue = QtCore.QTimer(self)
-        self.timerPluginQueue.setInterval(int(50)) # ms
-        self.timerPluginQueue.timeout.connect(self.queueDriverHandler)
-        self.timerPluginQueue.start()
+        self.timerQueue = QtCore.QTimer(self)
+        self.timerQueue.setInterval(int(50)) # ms
+        self.timerQueue.timeout.connect(self._queueDriverHandler)
+        self.timerQueue.start()  # OPTIMIZE: should be started only when needed but difficult to know it before openning device which occurs in a diff thread! (can't start timer on diff thread)
 
         self.processPlugin()
 
-    def getFromGui(self, driver: Type, name: str) -> Type:
-        """ Returns a widget created in GUI on driver command (Called by driver) """
+    def createWidget(self, widget: Type, *args, **kwargs):
+        """ Function used by a driver to add a widget.
+        Mainly used to open a figure outside the GUI from a driver. """
+        unique_name = str(uuid.uuid4())
+        self.queue_driver.put(('create', unique_name, widget, args, kwargs))
+
         start = time.time()
         while True:
-            dict_driver = self.dict_widget.get(id(driver), dict())
-            widget = dict_driver.get(name)
+            widget_created = self.dict_widget.get(unique_name)
 
-            if widget: return widget
+            if widget_created: return widget_created
             else:
                 time.sleep(0.01)
                 if (time.time() - start) > 1:
-                    print(f"Warning: Importation of {name} from {driver} too long, skip it", file=sys.stderr)
+                    print(f"Warning: Importation of {widget} too long, skip it", file=sys.stderr)
                     return None
 
-    def addToQueue(self, action: str, driver: Type,
-                   widget_name: str, widget: Type, *args, **kwargs):
-        """ Function to be called by a driver to add/remove a widget.
-        widget can be any pyqtgraph graphic item or a list of graphic item.
-        action can be 'create', 'add', 'remove' """
-        if isinstance(widget, list):
-            assert isinstance(widget_name, list)
-            for widget_name_i, widget_i in zip(widget_name, widget):
-                self.queue_driver.put((action, driver,
-                                       widget_name_i, widget_i, args, kwargs))
-        else:
-            self.queue_driver.put((action, driver, widget_name, widget, args, kwargs))
+    def removeWidget(self, widget: Type):
+        """ Function used by a driver to remove a widget record from GUI """
+        self.queue_driver.put(('remove', "", widget, (), {}))
+
+    def _queueDriverHandler(self):
+        """ Adds/Removes plot from a driver requests throught a queue """
+        while not self.queue_driver.empty():
+            data = self.queue_driver.get()
+            action = data[0]
+            widget_name = data[1]
+            widget = data[2]
+            args = data[3]
+            kwargs = data[4]
+
+            if action == 'create':
+                widget = widget(*args, **kwargs)
+                self.dict_widget[widget_name] = widget
+                try: self.figureManager.fig.addItem(widget)
+                except: pass
+            elif action == "remove":
+                d = self.dict_widget
+                if widget is not None:
+                    widget_pos = list(d.values()).index(widget)
+                    if widget_pos is not None:
+                        widget_name = list(d.keys())[widget_pos]
+                        widget = d.get(widget_name)
+                        if widget is not None:
+                            widget = d.pop(widget_name)
+                            try: self.figureManager.fig.removeItem(widget)
+                            except: pass
 
     def timerAction(self):
 
         """ This function checks if a module has been loaded and put to the queue. If so, associate item and module """
 
         threadItemDictTemp = self.threadItemDict.copy()
-        threadModuleDictTemp = self.threadModuleDict.copy()
+        threadDeviceDictTemp = self.threadDeviceDict.copy()
 
-        for item_id in threadModuleDictTemp.keys():
+        for item_id in threadDeviceDictTemp.keys():
 
             item = threadItemDictTemp[item_id]
-            module = threadModuleDictTemp[item_id]
+            module = threadDeviceDictTemp[item_id]
 
             self.associate(item, module)
             item.setExpanded(True)
 
             self.threadItemDict.pop(item_id)
-            self.threadModuleDict.pop(item_id)
+            self.threadDeviceDict.pop(item_id)
 
         if len(threadItemDictTemp) == 0:
             self.timerPlugin.stop()
@@ -345,31 +367,6 @@ class Plotter(QtWidgets.QMainWindow):
                     except Exception as error:
                         self.setStatus(f"Error in plugin {module.name}: '{error}'",10000, False)
 
-    def queueDriverHandler(self):
-        """ Adds/Removes plot from a driver requests throught a queue
-        thanks to :meth:`.addToQueue` """
-        while not self.queue_driver.empty():
-            data = self.queue_driver.get()
-            action = data[0]
-            driver = data[1]
-            widget_name = data[2]
-            widget = data[3]
-            args = data[4]
-            kwargs = data[5]
-
-            if action in ('add', 'create'):
-                if action == 'create': widget = widget(*args, **kwargs)
-                dict_driver = self.dict_widget.get(id(driver))
-                if dict_driver is None:
-                    dict_driver = self.dict_widget[id(driver)] = dict()
-                dict_driver[widget_name] = widget
-                self.figureManager.fig.addItem(widget)
-            elif action == "remove":
-                self.figureManager.fig.removeItem(widget)
-                dict_driver = self.dict_widget.get(id(driver), dict())
-                widget = dict_driver.get(widget_name)
-                if widget is not None: dict_driver.pop(widget_name)
-
     def overwriteDataChanged(self):
         """ Set overwrite name for data import """
 
@@ -460,7 +457,8 @@ class Plotter(QtWidgets.QMainWindow):
 
         # Delete reference of this window in the control center
         self.timer.stop()
-        self.timerPluginQueue.stop()
+        self.timerPlugin.stop()
+        self.timerQueue.stop()
         self.mainGui.clearPlotter()
 
 
