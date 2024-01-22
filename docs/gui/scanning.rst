@@ -45,6 +45,7 @@ Store the configuration
 Once the configuration of a scan is finished, the user can save it locally in a file for future use, by opening the menu **Configuration** and selecting **Export current configuration**. The user will be prompted for a file path in which the current scan configuration (parameter, parameter range, recipe) will be saved.
 
 To load a previously exported scan configuration, open the menu **Configuration** and select **Import configuration**. The user will be prompted for the path of the configuration file.
+Use the **Append** check option to append the selected configuration to the existing one.
 
 Scan execution
 ##############
@@ -69,7 +70,7 @@ Figure
 
 The user can interact with the figure at any time (during a scan or not).
 
-After a first loop of the scan has been processed, the user can select the **Variable** displayed in x and y axis of the figure.
+After a first loop of a recipe has been processed, the user can select the **Variable** displayed in x and y axis of the figure.
 
 The user can display the previous scan results using the combobox above the scanner figure containing the scan name.
 

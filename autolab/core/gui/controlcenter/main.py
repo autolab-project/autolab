@@ -9,7 +9,10 @@ quentin.chateiller@c2n.upsaclay.fr
 
 import os
 import sys
-from typing import Any
+import queue
+import time
+import uuid
+from typing import Any, Type
 
 from qtpy import QtCore, QtWidgets, uic, QtGui
 from qtpy.QtWidgets import QApplication
@@ -83,7 +86,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.stderr = OutputWrapper(self, False, logger_active, print_active)
 
         if logger_active:
-
             area_1 = DockArea(self)
             self.splitter.addWidget(area_1)
 
@@ -143,7 +145,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.plotter = None
         self.monitors = {}
         self.sliders = {}
-        self.customGUIdict = {}
         self.threadDeviceDict = {}
         self.threadItemDict = {}
 
@@ -205,6 +206,57 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.timerDevice.setInterval(50) # ms
         self.timerDevice.timeout.connect(self.timerAction)
 
+        # queue and timer to add/remove plot from driver
+        self.queue_driver = queue.Queue()
+        self.dict_widget = dict()
+        self.timerQueue = QtCore.QTimer(self)
+        self.timerQueue.setInterval(int(50)) # ms
+        self.timerQueue.timeout.connect(self._queueDriverHandler)
+        self.timerQueue.start()  # OPTIMIZE: should be started only when needed but difficult to know it before openning device which occurs in a diff thread! (can't start timer on diff thread)
+
+    def createWidget(self, widget: Type, *args, **kwargs):
+        """ Function used by a driver to add a widget.
+        Mainly used to open a figure outside the GUI from a driver. """
+        unique_name = str(uuid.uuid4())
+        self.queue_driver.put(('create', unique_name, widget, args, kwargs))
+
+        start = time.time()
+        while True:
+            widget_created = self.dict_widget.get(unique_name)
+
+            if widget_created: return widget_created
+            else:
+                time.sleep(0.01)
+                if (time.time() - start) > 1:
+                    print(f"Warning: Importation of {widget} too long, skip it", file=sys.stderr)
+                    return None
+
+    def removeWidget(self, widget: Type):
+        """ Function used by a driver to remove a widget record from GUI """
+        self.queue_driver.put(('remove', "", widget, (), {}))
+
+    def _queueDriverHandler(self):
+        """ Adds/Removes plot from a driver requests throught a queue """
+        while not self.queue_driver.empty():
+            data = self.queue_driver.get()
+            action = data[0]
+            widget_name = data[1]
+            widget = data[2]
+            args = data[3]
+            kwargs = data[4]
+
+            if action == 'create':
+                widget = widget(*args, **kwargs)
+                self.dict_widget[widget_name] = widget
+            elif action == "remove":
+                d = self.dict_widget
+                if widget is not None:
+                    widget_pos = list(d.values()).index(widget)
+                    if widget_pos is not None:
+                        widget_name = list(d.keys())[widget_pos]
+                        widget = d.get(widget_name)
+                        if widget is not None: d.pop(widget_name)
+
     def handleOutput(self, text: str, stdout: bool):
         if not stdout: self.logger.setTextColor(QtCore.Qt.red)
         self.logger.insertPlainText(text)
@@ -223,6 +275,9 @@ class ControlCenter(QtWidgets.QMainWindow):
 
             self.associate(item, module)
             item.setExpanded(True)
+
+            # if hasattr(module.instance, 'gui'):  # Can't just start timer here because driver created before. But could reduce timer interval here if want to start with longer interval while no driver openned
+            #     self.timerQueue.setInterval(int(50)) # ms
 
             self.threadItemDict.pop(item_id)
             self.threadDeviceDict.pop(item_id)
@@ -275,22 +330,6 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def associate(self, item: QtWidgets.QTreeWidgetItem, module: devices.Device):
         """ Function called to associate a main module to one item in the tree """
-        # If the driver has an openGUI method, a button will be added to the Autolab menu to access it.
-        if hasattr(module.instance, "openGUI"):  # OPTIMIZE: redo it or remove it
-            if hasattr(module.instance, "gui_name"):
-                gui_name = str(module.instance.gui_name)
-            else:
-                gui_name = 'Custom GUI'
-
-            customButton = self.customGUIdict.get(gui_name, None)
-
-            if customButton is None:
-                customButton = self.menuBar.addAction(gui_name)
-                self.customGUIdict[gui_name] = customButton
-
-            customButton.triggered.disconnect()
-            customButton.triggered.connect(module.instance.openGUI)
-
         # load the entire module (submodules, variables, actions)
         item.load(module)
 
@@ -418,3 +457,6 @@ class ControlCenter(QtWidgets.QMainWindow):
 
             pg.ViewBox.quit()
         except: pass
+
+        self.timerDevice.stop()
+        self.timerQueue.stop()
