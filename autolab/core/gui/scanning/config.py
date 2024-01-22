@@ -14,9 +14,10 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 from qtpy.QtGui import QIcon
 
+from ..icons import icons
 from ... import utilities
 from ... import paths, devices, config
 from .... import __version__
@@ -75,20 +76,20 @@ class ConfigManager:
         # Configuration menu
         configMenu = self.gui.menuBar.addMenu('Configuration')
         self.importAction = configMenu.addAction('Import configuration')
-        self.importAction.setIcon(QIcon.fromTheme("folder-open"))
+        self.importAction.setIcon(QtGui.QIcon(icons['import']))
         self.importAction.triggered.connect(self.importActionClicked)
         exportAction = configMenu.addAction('Export current configuration')
+        exportAction.setIcon(QtGui.QIcon(icons['export']))
         exportAction.triggered.connect(self.exportActionClicked)
-        exportAction.setIcon(QIcon.fromTheme("document-save-as"))
 
         # Edition menu
         editMenu = self.gui.menuBar.addMenu('Edit')
         self.undo = editMenu.addAction('Undo')
-        self.undo.setIcon(QIcon.fromTheme("edit-undo"))
+        self.undo.setIcon(QtGui.QIcon(icons['undo']))
         self.undo.triggered.connect(self.undoClicked)
         self.undo.setEnabled(False)
         self.redo = editMenu.addAction('Redo')
-        self.redo.setIcon(QIcon.fromTheme("edit-redo"))
+        self.redo.setIcon(QtGui.QIcon(icons['redo']))
         self.redo.triggered.connect(self.redoClicked)
         self.redo.setEnabled(False)
 

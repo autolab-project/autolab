@@ -11,6 +11,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from . import main
 from .customWidgets import MyQTreeWidget, MyQTabWidget
+from ..icons import icons
 from ... import config
 
 
@@ -48,6 +49,7 @@ class RecipeManager:
         self.tree.customContextMenuRequested.connect(self.rightClick)
         self.tree.setMinimumSize(0, 200)
         self.tree.setMaximumSize(16777215, 16777215)
+        self.tree.setIndentation(0)
 
         layoutRecipe = QtWidgets.QVBoxLayout(frameRecipe)
         layoutRecipe.addWidget(self.tree)
@@ -100,12 +102,16 @@ class RecipeManager:
             # Column 2 : Step type
             if step['stepType'] == 'measure':
                 item.setText(1, 'Measure')
+                item.setIcon(0, QtGui.QIcon(icons['measure']))
             elif step['stepType']  == 'set':
                 item.setText(1, 'Set')
+                item.setIcon(0, QtGui.QIcon(icons['write']))
             elif step['stepType']  == 'action':
                 item.setText(1, 'Do')
+                item.setIcon(0, QtGui.QIcon(icons['action']))
             elif step['stepType']  == 'recipe':
                 item.setText(1, 'Recipe')
+                item.setIcon(0, QtGui.QIcon(icons['recipe']))
 
             # Column 3 : Element address
             if step['stepType'] == 'recipe':
@@ -147,12 +153,15 @@ class RecipeManager:
                 menuActions = {}
                 menu = QtWidgets.QMenu()
                 menuActions['rename'] = menu.addAction("Rename")
+                menuActions['rename'].setIcon(QtGui.QIcon(icons['rename']))
 
                 if stepType == 'set' or (stepType == 'action' and element.type in [
                         int, float, str, pd.DataFrame, np.ndarray]):
                     menuActions['setvalue'] = menu.addAction("Set value")
+                    menuActions['setvalue'].setIcon(QtGui.QIcon(icons['write']))
 
                 menuActions['remove'] = menu.addAction("Remove")
+                menuActions['remove'].setIcon(QtGui.QIcon(icons['remove']))
 
                 choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 
@@ -172,6 +181,7 @@ class RecipeManager:
                     menu = QtWidgets.QMenu()
                     for recipe_name in recipe_name_list:
                         menuActions[recipe_name] = menu.addAction(f'Add {recipe_name}')
+                        menuActions[recipe_name].setIcon(QtGui.QIcon(icons['recipe']))
 
                     choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 

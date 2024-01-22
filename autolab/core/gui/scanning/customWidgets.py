@@ -10,6 +10,7 @@ from typing import List
 from qtpy import QtCore, QtWidgets, QtGui
 
 from . import main
+from ..icons import icons
 from ...devices import Device
 
 
@@ -147,12 +148,15 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         """ Provides the menu when the user right click on an item """
         menu = QtWidgets.QMenu()
         scanMeasureStepAction = menu.addAction("Measure in scan recipe")
+        scanMeasureStepAction.setIcon(QtGui.QIcon(icons['measure']))
         scanSetStepAction = menu.addAction("Set value in scan recipe")
+        scanSetStepAction.setIcon(QtGui.QIcon(icons['write']))
         scanMeasureStepAction.setEnabled(variable.readable)
         scanSetStepAction.setEnabled(variable.writable)
         choice = menu.exec_(self.viewport().mapToGlobal(position))
         if choice == scanMeasureStepAction:
             gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
+
         elif choice == scanSetStepAction:
             gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
 
@@ -179,9 +183,25 @@ class MyQTabWidget(QtWidgets.QTabWidget):
     def menu(self, position: QtCore.QPoint):
         """ Provides the menu when the user right click on an item """
         if not self.gui.scanManager.isStarted():
+
             menu = QtWidgets.QMenu()
+
+            IS_ACTIVE = self.gui.configManager.getActive(self.recipe_name)
+
+            if IS_ACTIVE:
+                activateRecipeAction = menu.addAction("Disable")
+                activateRecipeAction.setIcon(QtGui.QIcon(icons['is-enable']))
+            else:
+                activateRecipeAction = menu.addAction("Enable")
+                activateRecipeAction.setIcon(QtGui.QIcon(icons['is-disable']))
+
+            menu.addSeparator()
+
             renameRecipeAction = menu.addAction("Rename")
+            renameRecipeAction.setIcon(QtGui.QIcon(icons['rename']))
             removeRecipeAction = menu.addAction("Remove")
+            removeRecipeAction.setIcon(QtGui.QIcon(icons['remove']))
+
             menu.addSeparator()
 
             recipeLink = self.gui.configManager.getRecipeLink(self.recipe_name)
@@ -190,24 +210,21 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             else:
                 renameRecipeAction.setEnabled(False)
 
-            IS_ACTIVE = self.gui.configManager.getActive(self.recipe_name)
-
-            if IS_ACTIVE:
-                activateRecipeAction = menu.addAction("Disable")
-            else:
-                activateRecipeAction = menu.addAction("Enable")
-
-            menu.addSeparator()
 
             addParameterAction = menu.addAction("Add Parameter")
+            addParameterAction.setIcon(QtGui.QIcon(icons['add']))
 
             removeMenuActions = {}
             for parameter in self.gui.configManager.parameterList(self.recipe_name):
                 removeMenuActions[parameter['name']] = menu.addAction(f"Remove {parameter['name']}")
+                removeMenuActions[parameter['name']] .setIcon(QtGui.QIcon(icons['remove']))
 
             menu.addSeparator()
+
             moveUpRecipeAction = menu.addAction("Move up")
+            moveUpRecipeAction.setIcon(QtGui.QIcon(icons['up']))
             moveDownRecipeAction = menu.addAction("Move down")
+            moveDownRecipeAction.setIcon(QtGui.QIcon(icons['down']))
 
             config = self.gui.configManager.config
             keys = list(config.keys())

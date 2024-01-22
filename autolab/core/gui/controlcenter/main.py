@@ -21,6 +21,7 @@ from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
+from ..icons import icons
 from ... import devices, web, paths, config, utilities
 
 
@@ -148,14 +149,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.threadDeviceDict = {}
         self.threadItemDict = {}
 
-        icons_folder = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),  # gui
-            "icons")
-        GITHUB_ICON_NAME = os.path.join(icons_folder, 'github-icon.svg').replace("\\", "/")
-        READTHEDOCS_ICON_NAME = os.path.join(icons_folder, 'readthedocs-icon.svg').replace("\\", "/")
-        PDF_ICON_NAME = os.path.join(icons_folder, 'pdf-icon.png').replace("\\", "/")
-        CONFIG_ICON_NAME = os.path.join(icons_folder, 'config-icon.svg').replace("\\", "/")
-
         scanAction = self.menuBar.addAction('Open scanner')
         scanAction.triggered.connect(self.openScanner)
         scanAction.setStatusTip('Open the scanner in another window')
@@ -168,17 +161,17 @@ class ControlCenter(QtWidgets.QMainWindow):
         settingsMenu = self.menuBar.addMenu('Settings')
 
         autolabConfig = settingsMenu.addAction('Autolab config')
-        autolabConfig.setIcon(QtGui.QIcon(CONFIG_ICON_NAME))
+        autolabConfig.setIcon(QtGui.QIcon(icons['config']))
         autolabConfig.triggered.connect(self.openAutolabConfig)
         autolabConfig.setStatusTip("Open the Autolab configuration file")
 
         devicesConfig = settingsMenu.addAction('Devices config')
-        devicesConfig.setIcon(QtGui.QIcon(CONFIG_ICON_NAME))
+        devicesConfig.setIcon(QtGui.QIcon(icons['config']))
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
 
         plotterConfig = settingsMenu.addAction('Plotter config')
-        plotterConfig.setIcon(QtGui.QIcon(CONFIG_ICON_NAME))
+        plotterConfig.setIcon(QtGui.QIcon(icons['config']))
         plotterConfig.triggered.connect(self.openPlotterConfig)
         plotterConfig.setStatusTip("Open the plotter configuration file")
 
@@ -186,19 +179,19 @@ class ControlCenter(QtWidgets.QMainWindow):
         helpMenu = self.menuBar.addMenu('Help')
 
         reportAction = helpMenu.addAction('Report bugs / suggestions')
-        reportAction.setIcon(QtGui.QIcon(GITHUB_ICON_NAME))
+        reportAction.setIcon(QtGui.QIcon(icons['github']))
         reportAction.triggered.connect(web.report)
         reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
 
         helpMenu.addSeparator()
 
         helpAction = helpMenu.addAction('Documentation')
-        helpAction.setIcon(QtGui.QIcon(READTHEDOCS_ICON_NAME))
+        helpAction.setIcon(QtGui.QIcon(icons['readthedocs']))
         helpAction.triggered.connect(lambda : web.doc('default'))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
 
         helpActionOffline = helpMenu.addAction('Documentation (Offline)')
-        helpActionOffline.setIcon(QtGui.QIcon(PDF_ICON_NAME))
+        helpActionOffline.setIcon(QtGui.QIcon(icons['pdf']))
         helpActionOffline.triggered.connect(lambda : web.doc(False))
         helpActionOffline.setStatusTip('Open the pdf documentation form local file')
 
