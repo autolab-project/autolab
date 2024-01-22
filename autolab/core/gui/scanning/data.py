@@ -326,6 +326,10 @@ class DataManager:
                     resultNamesList.append(resultName)
                 except:
                     pass
+
+        variable_x_index = self.gui.variable_x_comboBox.currentIndex()
+        variable_y_index = self.gui.variable_y_comboBox.currentIndex()
+
         self.gui.variable_x_comboBox.clear()
         self.gui.variable_x_comboBox.addItems(resultNamesList)  # parameter first
 
@@ -335,6 +339,10 @@ class DataManager:
 
         self.gui.variable_y_comboBox.clear()
         self.gui.variable_y_comboBox.addItems(resultNamesList)  # first numerical measure first
+
+        if data_name == "Scan":
+            if variable_x_index != -1: self.gui.variable_x_comboBox.setCurrentIndex(variable_x_index)
+            if variable_y_index != -1: self.gui.variable_y_comboBox.setCurrentIndex(variable_y_index)
 
 
 class Dataset():

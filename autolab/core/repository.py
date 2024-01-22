@@ -99,16 +99,13 @@ def _check_empty_driver_folder():
         install_drivers()
 
 
-def install_drivers(*github_url: str):
+def install_drivers(*github_url: str, skip_input=False):
     """ Ask if want to install drivers from all the given github_url.
     If no argument passed, use the official drivers url. """
     temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
     temp_repo_folder = tempfile.mkdtemp(dir=temp_folder)
 
-    if len(github_url) != 0:
-        list_github_url = list(github_url)
-    else:
-        list_github_url = paths.DRIVER_GITHUB.values()
+    list_github_url = list(github_url) if len(github_url) != 0 else paths.DRIVER_GITHUB.values()
 
     for github_repo_url in list_github_url:
         github_repo_zip_url = _format_url(github_repo_url)
@@ -116,9 +113,11 @@ def install_drivers(*github_url: str):
         zip_name = "-".join((repo_name, os.path.basename(github_repo_zip_url)))
         temp_repo_zip = os.path.join(temp_repo_folder, zip_name)
 
-        ans = input_wrap(f'Do you want to install all the drivers from {github_repo_url}? [default:yes] > ')
-        if ans.strip().lower() == 'no':
-            continue
+        if skip_input: ans = 'yes'
+        else:
+            ans = input_wrap(f'Do you want to install all the drivers from {github_repo_url}? [default:yes] > ')
+
+        if ans.strip().lower() == 'no': continue
         else:
             print(f"Downloading {github_repo_zip_url}")
             _download_repo(github_repo_zip_url, temp_repo_zip)

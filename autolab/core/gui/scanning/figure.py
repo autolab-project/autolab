@@ -187,7 +187,8 @@ class FigureManager:
     def clearData(self):
         """ This function removes any plotted curves """
         for curve in self.curves:
-            self.ax.removeItem(curve)
+            try: self.ax.removeItem(curve)  # try because curve=None if close before end of scan
+            except: pass
         self.curves = []
 
     def reloadData(self):

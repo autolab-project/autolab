@@ -10,10 +10,11 @@ import os
 
 import pandas as pd
 import numpy as np
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets, QtGui
 
 from .slider import Slider
 from ..monitoring.main import Monitor
+from ..icons import icons
 from ... import paths, config
 from ...devices import close, DEVICES
 from ...utilities import qt_object_exists
@@ -66,6 +67,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         if self.is_not_submodule and self.loaded:
             menu = QtWidgets.QMenu()
             disconnectDevice = menu.addAction(f"Disconnect {self.name}")
+            disconnectDevice.setIcon(QtGui.QIcon(icons['disconnect']))
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
@@ -170,6 +172,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         if not self.isDisabled():
             menu = QtWidgets.QMenu()
             scanRecipe = menu.addAction("Do in scan recipe")
+            scanRecipe.setIcon(QtGui.QIcon(icons['action']))
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
             if choice == scanRecipe:
@@ -350,14 +353,20 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
             menu = QtWidgets.QMenu()
             monitoringAction = menu.addAction("Start monitoring")
+            monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
             menu.addSeparator()
             sliderAction = menu.addAction("Create a slider")
+            sliderAction.setIcon(QtGui.QIcon(icons['slider']))
             menu.addSeparator()
             scanParameterAction = menu.addAction("Set as scan parameter")
+            scanParameterAction.setIcon(QtGui.QIcon(icons['parameter']))
             scanMeasureStepAction = menu.addAction("Measure in scan recipe")
+            scanMeasureStepAction.setIcon(QtGui.QIcon(icons['measure']))
             scanSetStepAction = menu.addAction("Set value in scan recipe")
+            scanSetStepAction.setIcon(QtGui.QIcon(icons['write']))
             menu.addSeparator()
             saveAction = menu.addAction("Read and save as...")
+            saveAction.setIcon(QtGui.QIcon(icons['read-save']))
 
             monitoringAction.setEnabled(self.variable.readable and self.variable.type in [int, float, np.ndarray, pd.DataFrame])
             sliderAction.setEnabled(self.variable.writable and self.variable.readable and self.variable.type in [int, float])

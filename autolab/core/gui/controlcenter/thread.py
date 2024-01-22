@@ -133,7 +133,7 @@ class InteractionThread(QtCore.QThread):
                     devices.DEVICES[device_name] = devices.Device(device_name, instance)
                     devices.DEVICES[device_name].device_config = device_config
 
-                    self.item.gui.threadDeviceDict[id(self.item)] = devices.DEVICES[device_name]
+                self.item.gui.threadDeviceDict[id(self.item)] = devices.DEVICES[device_name]
 
         except Exception as e:
             error = e
