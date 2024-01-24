@@ -7,6 +7,9 @@ Created on Fri Oct 18 23:09:51 2019
 from typing import Any, List, Tuple
 
 
+SUPPORTED_EXTENSION = "Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)"
+
+
 def emphasize(txt: str, sign: str = '-') -> str:
     ''' Returns:    ---
                     txt

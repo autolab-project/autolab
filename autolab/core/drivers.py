@@ -204,7 +204,8 @@ def get_class_args(clas: Type) -> dict:
     ''' Returns the dictionary of the optional arguments required by a class
     with their default values '''
     signature = inspect.signature(clas)
-    return {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
+    return {k: v.default for k, v in signature.parameters.items() if (
+        v.default is not inspect.Parameter.empty)}
 
 
 # =============================================================================
@@ -227,10 +228,12 @@ def load_drivers_paths() -> dict:
     for source_name, source_path in paths.DRIVER_SOURCES.items():
         for driver_name in os.listdir(source_path):
             temp_path = os.path.join(source_path, driver_name)
-            if os.path.isdir(temp_path) and f'{driver_name}.py' in os.listdir(temp_path):
+            if (os.path.isdir(temp_path)
+                    and f'{driver_name}.py' in os.listdir(temp_path)):
                 assert driver_name not in drivers_paths.keys(), f"Two drivers where found with the name '{driver_name}'. Each driver must have a unique name."
-                drivers_paths[driver_name] = {'path': os.path.join(temp_path, f'{driver_name}.py'),
-                                              'source': source_name}
+                drivers_paths[driver_name] = {
+                    'path': os.path.join(temp_path, f'{driver_name}.py'),
+                    'source': source_name}
 
     return drivers_paths
 

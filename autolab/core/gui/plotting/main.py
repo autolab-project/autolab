@@ -519,12 +519,3 @@ class Plotter(QtWidgets.QMainWindow):
         """ Erase the message displayed in the status bar """
 
         self.setStatus('')
-
-
-def cleanString(name):
-
-    """ This function clears the given name from special characters """
-
-    for character in r'*."/\[]:;|, ' :
-        name = name.replace(character,'')
-    return name

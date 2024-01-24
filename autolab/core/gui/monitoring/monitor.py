@@ -20,7 +20,7 @@ class MonitorManager:
         self.gui = gui
 
         # Configure a new thread
-        self.thread = MonitorThread(self.gui.variable,self.gui.queue)
+        self.thread = MonitorThread(self.gui.variable, self.gui.queue)
         self.thread.errorSignal.connect(self.error)
 
     def error(self, error: Exception):

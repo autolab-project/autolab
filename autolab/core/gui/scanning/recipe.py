@@ -9,10 +9,10 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
-from . import main
 from .customWidgets import MyQTreeWidget, MyQTabWidget
 from ..icons import icons
 from ... import config
+from ...utilities import clean_string
 
 
 class RecipeManager:
@@ -217,7 +217,7 @@ class RecipeManager:
             self.gui, name, f"Set {name} new name",
             QtWidgets.QLineEdit.Normal, name)
 
-        newName = main.cleanString(newName)
+        newName = clean_string(newName)
         if newName != '':
             self.gui.configManager.renameRecipeStep(
                 self.recipe_name, name, newName)

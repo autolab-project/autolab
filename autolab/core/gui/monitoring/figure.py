@@ -37,10 +37,12 @@ class FigureManager:
         self.setLabel('x', self.gui.xlabel)
         self.setLabel('y', self.gui.ylabel)
 
-        self.plot = self.ax.plot([], [], symbol='x', pen='r', symbolPen='r', symbolSize=10, symbolBrush='r')
-        self.plot_mean = self.ax.plot([], [], pen = pg.mkPen(color=0.4, style=pg.QtCore.Qt.DashLine))
-        self.plot_min = self.ax.plot([], [], pen =  pg.mkPen(color=0.4))
-        self.plot_max = self.ax.plot([], [], pen =  pg.mkPen(color=0.4))
+        self.plot = self.ax.plot([], [], symbol='x', pen='r', symbolPen='r',
+                                 symbolSize=10, symbolBrush='r')
+        self.plot_mean = self.ax.plot([], [], pen=pg.mkPen(
+            color=0.4, style=pg.QtCore.Qt.DashLine))
+        self.plot_min = self.ax.plot([], [], pen=pg.mkPen(color=0.4))
+        self.plot_max = self.ax.plot([], [], pen=pg.mkPen(color=0.4))
         self.ymin = None
         self.ymax = None
 

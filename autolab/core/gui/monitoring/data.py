@@ -35,7 +35,8 @@ class DataManager:
     def save(self, filename: str):
         """ This function save the data in a file with the provided filename"""
         if self.xlist is not None:
-            df = pd.DataFrame({self.gui.xlabel: self.xlist, self.gui.ylabel: self.ylist})
+            df = pd.DataFrame({self.gui.xlabel: self.xlist,
+                               self.gui.ylabel: self.ylist})
             df.to_csv(filename, index=False)
         else: # Image
             np.savetxt(filename, self.ylist, sep=",")
