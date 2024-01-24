@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   data-name="Layer 1"
+   height="48"
+   id="Layer_1"
+   viewBox="0 0 48 48"
+   width="48"
+   version="1.1"
+   sodipodi:docname="undo-icon.svg"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="12.828125"
+     inkscape:cx="10.289891"
+     inkscape:cy="26.309379"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
+  <defs
+     id="defs1">
+    <style
+       id="style1">&#10;      .cls-1 {&#10;        fill: none;&#10;      }&#10;    </style>
+  </defs>
+  <path
+     style="color:#000000;fill:#000000;stroke-width:1.73222;-inkscape-stroke:none"
+     d="M 20.249002,12.179254 C 12.267512,12.001374 6.5299549,14.91968 6.5299549,14.91968 l 1.9588973,3.86028 c 0,0 8.6466198,-4.373676 19.0375038,-1.045423 9.610272,3.078216 14.703571,15.843723 14.703571,15.843723 l 4.056507,-1.515693 c 0,0 -5.100348,-14.50064 -17.43723,-18.452201 -3.029793,-0.970459 -5.939706,-1.37182 -8.600202,-1.431112 z"
+     id="path2" />
+  <path
+     style="color:#000000;fill:#000000;stroke-width:1.73222;-inkscape-stroke:none"
+     d="M 9.3448124,7.046875 3.5019531,18.512683 15.894769,24.565303 17.796151,20.674575 9.3617286,16.553785 13.205092,9.0125387 Z"
+     id="path3" />
+</svg>
