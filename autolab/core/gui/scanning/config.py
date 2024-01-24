@@ -470,6 +470,8 @@ class ConfigManager:
                     'name': name, 'value': None}
 
             # Value
+            if stepType == 'recipe':
+                assert element != recipe_name, "Can't have a recipe in itself: {element}"  # safeguard but should be stopped before arriving here
             if stepType == 'set': setValue = True
             elif stepType == 'action' and element.type in [
                     int, float, str, pd.DataFrame,np.ndarray]: setValue = True
@@ -543,17 +545,23 @@ class ConfigManager:
 
         for recipe_name in list(self.config.keys()):
             recipe = self.config[recipe_name]
-            recipe_name_link = [recipe_name]
+            recipe_name_link = []
             list_recipe_new = [recipe]
             has_sub_recipe = True
 
+            i = 0
             while has_sub_recipe:
+                i +=1
+                if i > 100:  # safeguard, condition: "step['element'] in recipe_name_link" should be enough
+                    raise ValueError('ERROR: stopped recursive function to prevent crash')
                 has_sub_recipe = False
                 recipe_list = list_recipe_new
                 for recipe_i in recipe_list:
 
                     for step in recipe_i['recipe']:
                         if step['stepType'] == 'recipe':
+                            if step['element'] in recipe_name_link:
+                                raise ValueError(f"ERROR: cycle detected for recipe {step['element']}!")
                             has_sub_recipe = True
                             if step['element'] in self.config:
                                 other_recipe = self.config[step['element']]
@@ -562,6 +570,7 @@ class ConfigManager:
 
                     list_recipe_new.remove(recipe_i)
 
+            recipe_name_link.append(recipe_name)
             linkedRecipe[recipe_name] = recipe_name_link
 
         return linkedRecipe
@@ -577,6 +586,30 @@ class ConfigManager:
                 uniqueLinkedRecipe.append(linkedRecipe[key])
 
         return list(set(sum(uniqueLinkedRecipe, [])))
+
+    def getAllowedRecipe(self, recipe_name: str) -> List[str]:
+        """ Returns a list of recipe that can be added to recipe_name without
+        risk of cycle or twice same recipe """
+        recipe_name_list = list(self.config.keys())
+        linked_recipes = self.getLinkedRecipe()
+
+        for recipe_name_i in linked_recipes.keys():
+            # remove recipe that are in recipe_name
+            if recipe_name_i in linked_recipes[recipe_name]:
+                if recipe_name_i in recipe_name_list:
+                    recipe_name_list.remove(recipe_name_i)
+
+            # remove recipe that contains recipe_name
+            if recipe_name in linked_recipes[recipe_name_i]:
+                if recipe_name_i in recipe_name_list:
+                    recipe_name_list.remove(recipe_name_i)
+
+                # remove all recipes that are in recipe_name_i
+                for recipe_name_j in linked_recipes[recipe_name_i]:
+                    if recipe_name_j in recipe_name_list:
+                        recipe_name_list.remove(recipe_name_j)
+
+        return recipe_name_list
 
     def getActive(self, recipe_name: str) -> bool:
         """ Returns whether the recipe is active """

@@ -174,8 +174,8 @@ class RecipeManager:
             else:
                 config = self.gui.configManager.config
                 if len(config) > 1:
-                    recipe_name_list = list(config.keys())
-                    recipe_name_list.remove(self.recipe_name)
+
+                    recipe_name_list = self.gui.configManager.getAllowedRecipe(self.recipe_name)
 
                     menuActions = {}
                     menu = QtWidgets.QMenu()
@@ -183,7 +183,8 @@ class RecipeManager:
                         menuActions[recipe_name] = menu.addAction(f'Add {recipe_name}')
                         menuActions[recipe_name].setIcon(QtGui.QIcon(icons['recipe']))
 
-                    choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
+                    if len(recipe_name_list) != 0:
+                        choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 
                     for recipe_name in recipe_name_list:
                         if choice == menuActions[recipe_name]:
