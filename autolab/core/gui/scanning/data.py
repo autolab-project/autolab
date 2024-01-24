@@ -92,7 +92,7 @@ class DataManager:
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             self.gui,  caption="Save data",
             directory=paths.USER_LAST_CUSTOM_FOLDER,
-            filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")
+            filter=utilities.SUPPORTED_EXTENSION)
         path = os.path.dirname(filename)
 
         if path != '':

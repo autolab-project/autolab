@@ -201,9 +201,9 @@ class DataManager :
         """ This function prompts the user for a dataset filename,
         and import the dataset"""
 
-        filenames = QtWidgets.QFileDialog.getOpenFileNames(self.gui, "Import data file",
-                                                           paths.USER_LAST_CUSTOM_FOLDER,
-                                                           filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+        filenames = QtWidgets.QFileDialog.getOpenFileNames(
+            self.gui, "Import data file", paths.USER_LAST_CUSTOM_FOLDER,
+            filter=utilities.SUPPORTED_EXTENSION)[0]
         if not filenames:
             return
         else:
@@ -287,10 +287,10 @@ class DataManager :
         dataset = self.getLastSelectedDataset()
         if dataset is not None :
 
-            filename, _ = QtWidgets.QFileDialog.getSaveFileName(self.gui,
-                                              caption="Save data",
-                                              directory=paths.USER_LAST_CUSTOM_FOLDER,
-                                              filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self.gui, caption="Save data",
+                directory=paths.USER_LAST_CUSTOM_FOLDER,
+                filter=utilities.SUPPORTED_EXTENSION)
             path = os.path.dirname(filename)
 
             if path != '' :

@@ -14,6 +14,7 @@ from .data import DataManager
 from .figure import FigureManager
 from .monitor import MonitorManager
 from ... import paths
+from ...utilities import SUPPORTED_EXTENSION
 
 
 class Monitor(QtWidgets.QMainWindow):
@@ -40,7 +41,9 @@ class Monitor(QtWidgets.QMainWindow):
             self.xlabel = 'Time [s]'
             self.windowLength_lineEdit.setText('10')
             self.windowLength_lineEdit.returnPressed.connect(self.windowLengthChanged)
-            self.windowLength_lineEdit.textEdited.connect(lambda: self.setLineEditBackground(self.windowLength_lineEdit,'edited'))
+            self.windowLength_lineEdit.textEdited.connect(
+                lambda: self.setLineEditBackground(self.windowLength_lineEdit,
+                                                   'edited'))
             self.setLineEditBackground(self.windowLength_lineEdit, 'synced')
         else:
             self.xlabel = 'x'
@@ -56,7 +59,8 @@ class Monitor(QtWidgets.QMainWindow):
         # Delay
         self.delay_lineEdit.setText('0.01')
         self.delay_lineEdit.returnPressed.connect(self.delayChanged)
-        self.delay_lineEdit.textEdited.connect(lambda: self.setLineEditBackground(self.delay_lineEdit, 'edited'))
+        self.delay_lineEdit.textEdited.connect(
+            lambda: self.setLineEditBackground(self.delay_lineEdit, 'edited'))
         self.setLineEditBackground(self.delay_lineEdit, 'synced')
 
         # Pause
@@ -133,7 +137,7 @@ class Monitor(QtWidgets.QMainWindow):
             self, caption="Save data", directory=os.path.join(
                 paths.USER_LAST_CUSTOM_FOLDER,
                 f'{self.variable.address()}_monitor.txt'),
-            filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")
+            filter=SUPPORTED_EXTENSION)
 
         path = os.path.dirname(filename)
         # Save the given path for future, the data and the figure if the path provided is valid

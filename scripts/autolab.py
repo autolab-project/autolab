@@ -7,9 +7,10 @@ Created on Fri May 17 15:04:04 2019
 """
 
 import sys
-import autolab
 import argparse
 from typing import List, Type
+
+import autolab
 
 
 def print_help():
@@ -44,22 +45,22 @@ def main():
         command = args[1]   # first is 'autolab'
 
         # Update the sys.argv for parsers
-        args = [f'autolab {command}'] + args[2:]  # first is 'autolab' and second is command
+        args = [f'autolab {command}'] + args[2: ]  # first is 'autolab' and second is command
         sys.argv = args
 
-        if command=='doc':   # Open help on read the docs
+        if command == 'doc':   # Open help on read the docs
             autolab.doc()
-        elif command=='report':        # Open github report issue webpage
+        elif command == 'report':        # Open github report issue webpage
             autolab.report()
-        elif command=='gui':           # GUI
+        elif command == 'gui':           # GUI
             autolab.gui()
-        elif command=='infos':
+        elif command == 'infos':
             autolab.infos()
-        elif command=='install_drivers':
+        elif command == 'install_drivers':
             autolab.install_drivers()
-        elif command=='driver':
+        elif command == 'driver':
             driver_parser(args)
-        elif command=='device':
+        elif command == 'device':
             device_parser(args)
         else:
             print(f"Command {command} not known. Autolab doesn't have Super Cow Power... yet ^^")
@@ -75,7 +76,7 @@ def process_config(args_list: List[str]):
     parser.add_argument("-D", "--driver", type=str, dest="driver", help="Set the nickname or driver to use: 1) uses nickname if it is defined in devices_config.ini OR(if it is not) 2) Set the driver name to use." )
     parser.add_argument("-C", "--connection", type=str, dest="connection", help="Set the connection type to use for the connection." )
     parser.add_argument("-A", "--address", type=str, dest="address", help="Set the address to use for the communication." )
-    parser.add_argument("-O","--other", nargs='+', dest="other", help="Set other parameters [ports (e.g SOCKET), board_index, slots,...)." )
+    parser.add_argument("-O", "--other", nargs='+', dest="other", help="Set other parameters [ports (e.g SOCKET), board_index, slots,...)." )
 
     args, unknown = parser.parse_known_args(args_list)
 
@@ -84,7 +85,7 @@ def process_config(args_list: List[str]):
     if args.address is not None: config['address'] = args.address
     if args.other is not None:
         for part in args.other:
-            part = part.replace(' ','')
+            part = part.replace(' ', '')
             config[part.split('=')[0]] = part.split('=')[1]
 
     # Help for autolab driver/device -h/--help and autolab driver/device -h/--help -D driver_name
@@ -105,7 +106,7 @@ def process_config(args_list: List[str]):
     return args.driver, config, parser
 
 
-def print_help_parser(parser, args_list):
+def print_help_parser(parser: argparse.ArgumentParser, args_list: List[str]):
     parser.usage = f"""
 
 ----------------  General informations:  ----------------
@@ -163,7 +164,7 @@ def driver_parser(args_list: List[str]):
     # Instantiation of driver.py and driver_utilities.py
     global driver_instance
     assert 'connection' in config.keys(), f"Must provide a connection for the driver using -C connection with connection being for this driver among {autolab._drivers.get_connection_names(autolab._drivers.load_driver_lib(driver_name))}"
-    driver_instance = autolab.get_driver(driver_name,**config)
+    driver_instance = autolab.get_driver(driver_name, **config)
 
     if driver_name in autolab._config.list_all_devices_configs():
         # Load config object
@@ -172,15 +173,15 @@ def driver_parser(args_list: List[str]):
         assert 'driver' in config.keys(), f"Driver name not found in driver config '{driver_name}'"
         driver_name = config['driver']
 
-    driver_utilities = autolab._drivers.load_driver_utilities_lib(driver_name+'_utilities')
-    driver_utilities_instance = driver_utilities.Driver_parser(driver_instance,driver_name)
+    driver_utilities = autolab._drivers.load_driver_utilities_lib(driver_name + '_utilities')
+    driver_utilities_instance = driver_utilities.Driver_parser(driver_instance, driver_name)
 
     # Add arguments to the existing parser (driver dependant)
     parser = driver_utilities_instance.add_parser_arguments(parser)
 
     # Add help and usage to the parser only if "-h" options requested
     if '-h' in args_list:
-        dirver_infos_for_usage = build_driver_infos_for_usage(driver_name,driver_instance)
+        dirver_infos_for_usage = build_driver_infos_for_usage(driver_name, driver_instance)
         parser.usage = driver_utilities_instance.add_parser_usage(dirver_infos_for_usage)
         parser.usage = parser.usage + """
     autolab driver -D nickname -m 'some_methods1(arg1,arg2=23)' 'some_methods2(arg1="test")'
@@ -202,7 +203,7 @@ def driver_parser(args_list: List[str]):
             print(method)
             assert method.split('(')[0] in method_list, f"Method {method} not known or bound. Methods known are: {method_list}"
             print(f'\nExecuting command:  {method}')
-            exec(f"message = driver_instance.{method}",globals())
+            exec(f"message = driver_instance.{method}", globals())
             if message is not None: print(f'Return:  {message}\n')
 
     # Driver closing
@@ -263,16 +264,16 @@ def device_parser(args_list: List[str]):
     args, unknown = parser.parse_known_args(args_list)
 
     # Instantiation
-    instance = autolab.get_device(driver_name,**config)
+    instance = autolab.get_device(driver_name, **config)
     element = instance
 
     # Open element
     if args.element is not None:
         for name in args.element.split('.'):
-            element = getattr(element,name)
+            element = getattr(element, name)
 
     # Execute order
-    if args.help is True : element.help()
+    if args.help: element.help()
 
     elif args.path is not None:
         assert element._element_type == 'variable', "This element is not a Variable"

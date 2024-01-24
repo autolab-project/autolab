@@ -15,7 +15,7 @@ from qtpy import QtCore, QtWidgets
 
 from ...devices import DEVICES
 from ... import paths, config
-from ...utilities import qt_object_exists
+from ...utilities import qt_object_exists, SUPPORTED_EXTENSION
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -144,7 +144,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         value = self.valueWidget.text()
         if value == '' :
             if self.action.unit == "filename":
-                value = QtWidgets.QFileDialog.getOpenFileName(self.gui, caption="Filename", filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+                value = QtWidgets.QFileDialog.getOpenFileName(self.gui, caption="Filename", filter=SUPPORTED_EXTENSION)[0]
                 if value != '':
                     return value
                 else:
@@ -404,7 +404,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def saveValue(self):
         filename = QtWidgets.QFileDialog.getSaveFileName(self.gui, f"Save {self.variable.name} value",
                                         os.path.join(paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'),
-                                        filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+                                        filter=SUPPORTED_EXTENSION)[0]
 
         path = os.path.dirname(filename)
         if path != '' :

@@ -165,15 +165,18 @@ class ControlCenter(QtWidgets.QMainWindow):
         autolabConfig.triggered.connect(self.openAutolabConfig)
         autolabConfig.setStatusTip("Open the Autolab configuration file")
 
+        plotterConfig = settingsMenu.addAction('Plotter config')
+        plotterConfig.setIcon(QtGui.QIcon(icons['config']))
+        plotterConfig.triggered.connect(self.openPlotterConfig)
+        plotterConfig.setStatusTip("Open the plotter configuration file")
+
+        settingsMenu.addSeparator()
+
         devicesConfig = settingsMenu.addAction('Devices config')
         devicesConfig.setIcon(QtGui.QIcon(icons['config']))
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
 
-        plotterConfig = settingsMenu.addAction('Plotter config')
-        plotterConfig.setIcon(QtGui.QIcon(icons['config']))
-        plotterConfig.triggered.connect(self.openPlotterConfig)
-        plotterConfig.setStatusTip("Open the plotter configuration file")
 
         # Help menu
         helpMenu = self.menuBar.addMenu('Help')
@@ -221,7 +224,8 @@ class ControlCenter(QtWidgets.QMainWindow):
             else:
                 time.sleep(0.01)
                 if (time.time() - start) > 1:
-                    print(f"Warning: Importation of {widget} too long, skip it", file=sys.stderr)
+                    print(f"Warning: Importation of {widget} too long, skip it",
+                          file=sys.stderr)
                     return None
 
     def removeWidget(self, widget: Type):
@@ -306,7 +310,8 @@ class ControlCenter(QtWidgets.QMainWindow):
     def itemClicked(self, item: QtWidgets.QTreeWidgetItem):
         """ Function called when a normal click has been detected in the tree.
             Check the association if it is a main item """
-        if item.parent() is None and not item.loaded and id(item) not in self.threadItemDict.keys():
+        if (item.parent() is None and not item.loaded
+                and id(item) not in self.threadItemDict.keys()):
             self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
             self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerDevice.start()
@@ -333,7 +338,8 @@ class ControlCenter(QtWidgets.QMainWindow):
             try:
                 variable()
             except:
-                self.setStatus(f"Can't read variable {variable.address()} on instantiation", 10000, False)
+                self.setStatus(f"Can't read variable {variable.address()} on instantiation",
+                               10000, False)
 
     def openScanner(self):
         """ This function open the scanner associated to this variable. """
@@ -345,7 +351,8 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.activateWindow() # Put main window back to the front
         # If the scanner is already running, just make as the front window
         else:
-            self.scanner.setWindowState(self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.scanner.setWindowState(
+                self.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.scanner.activateWindow()
 
     def openPlotter(self):
@@ -360,7 +367,8 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.plotter.active = True
         # If the plotter is already running, just make as the front window
         else:
-            self.plotter.setWindowState(self.plotter.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.plotter.setWindowState(
+                self.plotter.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.plotter.activateWindow()
 
     def openAutolabConfig(self):
@@ -375,14 +383,16 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Open the plotter configuration file """
         utilities.openFile(paths.PLOTTER_CONFIG)
 
-    def setScanParameter(self, recipe_name:str, param_name: str, variable: devices.Device):
+    def setScanParameter(self, recipe_name: str, param_name: str,
+                         variable: devices.Device):
         """ Set the selected variable has parameter for the recipe """
         if self.scanner is None:
             self.openScanner()
 
         self.scanner.configManager.setParameter(recipe_name, param_name, variable)
 
-    def addStepToScanRecipe(self, recipe_name:str, stepType: str, element: devices.Device):
+    def addStepToScanRecipe(self, recipe_name: str, stepType: str,
+                            element: devices.Device):
         """ Add the selected variable has a step for the recipe """
         if self.scanner is None:
             self.openScanner()

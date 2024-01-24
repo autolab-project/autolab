@@ -12,6 +12,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 from . import main
 from ..icons import icons
 from ...devices import Device
+from ...utilities import clean_string
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
@@ -92,7 +93,6 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             self.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
             self.reorderSignal.emit(event)
         elif isinstance(event.source(), MyQTreeWidget):  # if event comes from another recipe -> remove from incoming recipe and add to outgoing recipe
-
             if event.mimeData().hasFormat(MyQTreeWidget.customMimeType):
                 encoded = event.mimeData().data(MyQTreeWidget.customMimeType)
                 items = self.decodeData(encoded, event.source())
@@ -205,6 +205,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             menu.addSeparator()
 
             recipeLink = self.gui.configManager.getRecipeLink(self.recipe_name)
+
             if len(recipeLink) == 1:  # A bit too restrictive but do the work
                 renameRecipeAction.setEnabled(True)
             else:
@@ -260,7 +261,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
                 self.gui, self.recipe_name, f"Set {self.recipe_name} new name",
                 QtWidgets.QLineEdit.Normal, self.recipe_name)
 
-            newName = main.cleanString(newName)
+            newName = clean_string(newName)
 
             if newName != '':
                 self.gui.configManager.renameRecipe(

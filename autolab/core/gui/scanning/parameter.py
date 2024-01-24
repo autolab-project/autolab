@@ -7,9 +7,9 @@ Created on Sun Sep 29 18:13:45 2019
 
 from qtpy import QtCore, QtWidgets
 
-from . import main
 from .display import DisplayValues
 from .customWidgets import parameterQFrame
+from ...utilities import clean_string
 
 
 class ParameterManager:
@@ -122,7 +122,7 @@ class ParameterManager:
     def nameChanged(self):
         """ Changes the name of the scan parameter """
         newName = self.parameterName_lineEdit.text()
-        newName = main.cleanString(newName)
+        newName = clean_string(newName)
 
         if newName != '':
             self.gui.configManager.renameParameter(self.recipe_name, self.param_name, newName)

@@ -15,7 +15,6 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from qtpy import QtWidgets, QtCore, QtGui
-from qtpy.QtGui import QIcon
 
 from ..icons import icons
 from ... import utilities
@@ -34,7 +33,8 @@ class ConfigHistory:
         # use pop if need to remove first data
 
     def __repr__(self) -> str:
-        return object.__repr__(self) + "\n\t" + self.list.__repr__() + f"\n\tCurrent data: {self.get_data()}"
+        return (object.__repr__(self) + "\n\t" + self.list.__repr__()
+                + f"\n\tCurrent data: {self.get_data()}")
 
     def __len__(self) -> int:
         return len(self.list)
@@ -324,14 +324,16 @@ class ConfigManager:
         """ Updates parameterManager and rangeManager with new parameter name """
         if newName is None: newName = param_name
 
-        self.gui.recipeDict[recipe_name]['parameterManager'][newName] = self.gui.recipeDict[recipe_name]['parameterManager'].pop(param_name)
-        self.gui.recipeDict[recipe_name]['parameterManager'][newName].param_name = newName
-        self.gui.recipeDict[recipe_name]['parameterManager'][newName].frameParameter.param_name = newName
-        self.gui.recipeDict[recipe_name]['parameterManager'][newName].refresh()
+        recipeDictParam = self.gui.recipeDict[recipe_name]['parameterManager']
+        recipeDictParam[newName] = recipeDictParam.pop(param_name)
+        recipeDictParam[newName].param_name = newName
+        recipeDictParam[newName].frameParameter.param_name = newName
+        recipeDictParam[newName].refresh()
 
-        self.gui.recipeDict[recipe_name]['rangeManager'][newName] = self.gui.recipeDict[recipe_name]['rangeManager'].pop(param_name)
-        self.gui.recipeDict[recipe_name]['rangeManager'][newName].param_name = newName
-        self.gui.recipeDict[recipe_name]['rangeManager'][newName].refresh()
+        recipeDictRange = self.gui.recipeDict[recipe_name]['rangeManager']
+        recipeDictRange[newName] = recipeDictRange.pop(param_name)
+        recipeDictRange[newName].param_name = newName
+        recipeDictRange[newName].refresh()
 
         self.gui._updateSelectParameter()
 
@@ -350,7 +352,8 @@ class ConfigManager:
             param = self.config[recipe_name]['parameter'][pos]
 
             param['element'] = element
-            if newName is None: newName = self.getUniqueName(recipe_name, element.name)
+            if newName is None: newName = self.getUniqueName(recipe_name,
+                                                             element.name)
             param['name'] = newName
             self.refreshParameterRange(recipe_name, param_name, newName)
             self.gui.dataManager.clear()
@@ -410,7 +413,8 @@ class ConfigManager:
 
         self.refreshParameterRange(recipe_name, param_name)
 
-    def setRange(self, recipe_name: str, param_name: str, lim: Tuple[float, float]):
+    def setRange(self, recipe_name: str, param_name: str,
+                 lim: Tuple[float, float]):
         """ Sets the range values (start and end value) of the scan """
         if not self.gui.scanManager.isStarted():
             pos = self.getParameterPosition(recipe_name, param_name)
@@ -420,12 +424,17 @@ class ConfigManager:
 
             width = abs(lim[1] - lim[0])
 
-            if self.gui.recipeDict[recipe_name]['rangeManager'][param_name].point_or_step == "point":
-                param['step'] = width / (self.getNbPts(recipe_name, param_name) - 1)
+            recipeDictRange = self.gui.recipeDict[recipe_name]['rangeManager']
 
-            elif self.gui.recipeDict[recipe_name]['rangeManager'][param_name].point_or_step == "step":
-                param['nbpts'] = int(round(width / self.getStep(recipe_name, param_name)) + 1)
-                param['step'] = width / (self.getNbPts(recipe_name, param_name) - 1)
+            if recipeDictRange[param_name].point_or_step == "point":
+                param['step'] = float(
+                    width / (self.getNbPts(recipe_name, param_name) - 1))
+
+            elif recipeDictRange[param_name].point_or_step == "step":
+                param['nbpts'] = int(
+                    round(width / self.getStep(recipe_name, param_name)) + 1)
+                param['step'] = float(
+                    width / (self.getNbPts(recipe_name, param_name) - 1))
             self.addNewConfig()
 
         self.refreshParameterRange(recipe_name, param_name)
@@ -516,7 +525,8 @@ class ConfigManager:
     def setRecipeStepOrder(self, recipe_name: str, stepOrder: list):
         """ Reorders steps of a recipe according to the list of step names 'stepOrder' """
         if not self.gui.scanManager.isStarted():
-            newOrder = [self.getRecipeStepPosition(recipe_name, name) for name in stepOrder]
+            newOrder = [self.getRecipeStepPosition(recipe_name,
+                                                   name) for name in stepOrder]
             recipe = self.config[recipe_name]['recipe']
             self.config[recipe_name]['recipe'] = [recipe[i] for i in newOrder]
             self.gui.dataManager.clear()

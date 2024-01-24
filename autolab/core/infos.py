@@ -80,7 +80,8 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     params['driver'] = driver_name
     params['connection'] = {}
     for conn in drivers.get_connection_names(driver_lib):
-        params['connection'][conn] = drivers.get_class_args(drivers.get_connection_class(driver_lib, conn))
+        params['connection'][conn] = drivers.get_class_args(
+            drivers.get_connection_class(driver_lib, conn))
     params['other'] = drivers.get_class_args(drivers.get_driver_class(driver_lib))
     if hasattr(drivers.get_driver_class(driver_lib), 'slot_config'):
         params['other']['slot1'] = f'{drivers.get_driver_class(driver_lib).slot_config}'
@@ -112,7 +113,8 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
         mess += '\n'
 
     # Example of a devices_config.ini section
-    mess += '\n\n' + utilities.underline('Saving a Device configuration in devices_config.ini:') + '\n'
+    mess += '\n\n' + utilities.underline(
+        'Saving a Device configuration in devices_config.ini:') + '\n'
     for conn in params['connection'].keys():
         mess += f"\n   [my_{params['driver']}]\n"
         mess += f"   driver = {params['driver']}\n"
@@ -146,7 +148,8 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
             mess += f"   autolab driver {args_str} -m method(value) \n"
 
     # Example of get_device
-    mess += '\n\n' + utilities.underline('Loading a Device configured in devices_config.ini:') + '\n\n'
+    mess += '\n\n' + utilities.underline(
+        'Loading a Device configured in devices_config.ini:') + '\n\n'
     if not _parser:
         mess += f"   a = autolab.get_device('my_{params['driver']}')"
     else :

@@ -216,11 +216,3 @@ class Scanner(QtWidgets.QMainWindow):
         if state == 'edited': color='#FFE5AE' # orange
 
         obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}" % color)
-
-
-def cleanString(name: str) -> str:
-    """ Clears the given name from special characters """
-    for character in r'*."/\[]:;|, ':
-        name = name.replace(character, '')
-
-    return name

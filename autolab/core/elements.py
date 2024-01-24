@@ -9,7 +9,7 @@ import os
 import inspect
 from typing import Type, Tuple, List, Any
 
-from .utilities import emphasize, clean_string
+from .utilities import emphasize, clean_string, SUPPORTED_EXTENSION
 
 
 class Element():
@@ -24,7 +24,8 @@ class Element():
     def address(self) -> str:
         """ Returns the address of the given element.
         <module.submodule.variable> """
-        if self._parent is not None: return self._parent.address() + '.' + self.name
+        if self._parent is not None:
+            return self._parent.address() + '.' + self.name
         else: return self.name
 
 
@@ -215,8 +216,9 @@ class Action(Element):
             elif self.unit == "filename":
                     import sys
                     from qtpy import QtWidgets
-                    app = QtWidgets.QApplication(sys.argv)
-                    filename = QtWidgets.QFileDialog.getOpenFileName(caption="Filename", filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+                    app = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
+                    filename = QtWidgets.QFileDialog.getOpenFileName(
+                        caption="Filename", filter=SUPPORTED_EXTENSION)[0]
                     if filename != '':
                         self.function(filename)
                     else:
@@ -382,4 +384,5 @@ class Module(Element):
 
     def __dir__(self):
         """ For auto-completion """
-        return self.list_modules() + self.list_variables() + self.list_actions() + ['help', 'instance']
+        return (self.list_modules() + self.list_variables()
+                + self.list_actions() + ['help', 'instance'])

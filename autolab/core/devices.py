@@ -34,7 +34,8 @@ class Device(Module):
 
     def __dir__(self):
         """ For auto-completion """
-        return self.list_modules() + self.list_variables() + self.list_actions() + ['close', 'help', 'instance']
+        return (self.list_modules() + self.list_variables()
+                + self.list_actions() + ['close', 'help', 'instance'])
 
 
 # =============================================================================
@@ -84,9 +85,10 @@ def get_device(device_name: str, **kwargs) -> Device:
         assert device_config == DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
 
     else:
-        instance = drivers.get_driver(device_config['driver'],
-                                      device_config['connection'],
-                                      **{ k: v for k, v in device_config.items() if k not in ['driver', 'connection']})
+        instance = drivers.get_driver(
+            device_config['driver'], device_config['connection'],
+            **{k: v for k, v in device_config.items() if k not in [
+                'driver', 'connection']})
         DEVICES[device_name] = Device(device_name, instance)
         DEVICES[device_name].device_config = device_config
 
@@ -113,7 +115,7 @@ def get_devices_status() -> dict:
     devices_names = list_devices()
     loaded_devices_names = list_loaded_devices()
 
-    return {k:(k in loaded_devices_names) for k in devices_names}
+    return {k: (k in loaded_devices_names) for k in devices_names}
 
 
 # =============================================================================

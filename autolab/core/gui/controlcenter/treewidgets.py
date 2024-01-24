@@ -17,7 +17,7 @@ from ..monitoring.main import Monitor
 from ..icons import icons
 from ... import paths, config
 from ...devices import close, DEVICES
-from ...utilities import qt_object_exists
+from ...utilities import qt_object_exists, SUPPORTED_EXTENSION
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -131,31 +131,37 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         if value == '':
             if self.action.unit == "filename":
-                value = QtWidgets.QFileDialog.getOpenFileName(self.gui, caption="Filename", filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+                value, _ = QtWidgets.QFileDialog.getOpenFileName(
+                    self.gui, caption="Filename", filter=SUPPORTED_EXTENSION)
                 if value != '':
                     return value
                 else:
-                    self.gui.setStatus(f"Action {self.action.name} cancel filename selection",10000)
+                    self.gui.setStatus(
+                        f"Action {self.action.name} cancel filename selection",
+                        10000)
             else:
-                self.gui.setStatus(f"Action {self.action.name} requires a value for its parameter",10000, False)
+                self.gui.setStatus(
+                    f"Action {self.action.name} requires a value for its parameter",
+                    10000, False)
         else:
             try:
                 value = self.checkVariable(value)
                 value = self.action.type(value)
                 return value
             except:
-                self.gui.setStatus(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000, False)
+                self.gui.setStatus(
+                    f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",
+                    10000, False)
 
     def checkVariable(self, value):
         """ Try to execute the given command line (meant to contain device variables) and return the result """
         if str(value).startswith("$eval:"):
-            value = str(value)[len("$eval:"):]
+            value = str(value)[len("$eval:"): ]
             try:
-                allowed_dict ={"np": np, "pd": pd}
+                allowed_dict = {"np": np, "pd": pd}
                 allowed_dict.update(DEVICES)
                 value = eval(str(value), {}, allowed_dict)
-            except:
-                pass
+            except: pass
         return value
 
     def execute(self):
@@ -163,7 +169,8 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         if not self.isDisabled():
             if self.has_value:
                 value = self.readGui()
-                if value is not None: self.gui.threadManager.start(self, 'execute', value=value)
+                if value is not None: self.gui.threadManager.start(
+                        self, 'execute', value=value)
             else:
                 self.gui.threadManager.start(self, 'execute')
 
@@ -189,7 +196,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if variable.unit is not None:
             self.displayName += f' ({variable.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [self.displayName, 'Variable'])
+        QtWidgets.QTreeWidgetItem.__init__(
+            self, itemParent, [self.displayName, 'Variable'])
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
         self.gui = gui
@@ -228,7 +236,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             elif self.variable.readable and self.variable.type in [int, float, str]:
                 self.valueWidget = QtWidgets.QLineEdit()
                 self.valueWidget.setReadOnly(True)
-                self.valueWidget.setStyleSheet("QLineEdit {border : 1px solid #a4a4a4; background-color : #f4f4f4}")
+                self.valueWidget.setStyleSheet(
+                    "QLineEdit {border: 1px solid #a4a4a4; background-color: #f4f4f4}")
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
             else:
                 self.valueWidget = QtWidgets.QLabel()
@@ -299,14 +308,18 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if self.variable.type in [int, float, str, np.ndarray, pd.DataFrame]:
             value = self.valueWidget.text()
             if value == '':
-                self.gui.setStatus(f"Variable {self.variable.name} requires a value to be set", 10000, False)
+                self.gui.setStatus(
+                    f"Variable {self.variable.name} requires a value to be set",
+                    10000, False)
             else:
                 try:
                     value = self.checkVariable(value)
                     value = self.variable.type(value)
                     return value
                 except:
-                    self.gui.setStatus(f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",10000, False)
+                    self.gui.setStatus(
+                        f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",
+                        10000, False)
 
         elif self.variable.type in [bool]:
             value = self.valueWidget.isChecked()
@@ -315,13 +328,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def checkVariable(self, value):
         """ Check if value is a device variable address and if is it, return its value """
         if str(value).startswith("$eval:"):
-            value = str(value)[len("$eval:"):]
+            value = str(value)[len("$eval:"): ]
             try:
-                allowed_dict ={"np": np, "pd": pd}
+                allowed_dict = {"np": np, "pd": pd}
                 allowed_dict.update(DEVICES)
                 value = eval(str(value), {}, allowed_dict)
-            except:
-                pass
+            except: pass
         return value
 
     def setValueKnownState(self, state: bool):
@@ -368,8 +380,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             saveAction = menu.addAction("Read and save as...")
             saveAction.setIcon(QtGui.QIcon(icons['read-save']))
 
-            monitoringAction.setEnabled(self.variable.readable and self.variable.type in [int, float, np.ndarray, pd.DataFrame])
-            sliderAction.setEnabled(self.variable.writable and self.variable.readable and self.variable.type in [int, float])
+            monitoringAction.setEnabled(
+                self.variable.readable and self.variable.type in [
+                    int, float, np.ndarray, pd.DataFrame])
+            sliderAction.setEnabled((self.variable.writable
+                                     and self.variable.readable
+                                     and self.variable.type in [int, float]))
             scanParameterAction.setEnabled(self.variable.parameter_allowed)
             scanMeasureStepAction.setEnabled(self.variable.readable)
             saveAction.setEnabled(self.variable.readable)
@@ -392,18 +408,21 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
     def saveValue(self):
         """ Prompt user for filename to save data of the variable """
-        filename = QtWidgets.QFileDialog.getSaveFileName(
-            self.gui, f"Save {self.variable.name} value",
-            os.path.join(paths.USER_LAST_CUSTOM_FOLDER, f'{self.variable.address()}.txt'),
-            filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")[0]
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self.gui, f"Save {self.variable.name} value", os.path.join(
+                paths.USER_LAST_CUSTOM_FOLDER, f'{self.variable.address()}.txt'),
+            filter=SUPPORTED_EXTENSION)
 
         path = os.path.dirname(filename)
         if path != '':
             paths.USER_LAST_CUSTOM_FOLDER = path
             try:
-                self.gui.setStatus(f"Saving value of {self.variable.name}...", 5000)
+                self.gui.setStatus(f"Saving value of {self.variable.name}...",
+                                   5000)
                 self.variable.save(filename)
-                self.gui.setStatus(f"Value of {self.variable.name} successfully read and save at {filename}", 5000)
+                self.gui.setStatus(
+                    f"Value of {self.variable.name} successfully read and save at {filename}",
+                    5000)
             except Exception as e:
                 self.gui.setStatus(f"An error occured: {str(e)}", 10000, False)
 
@@ -416,7 +435,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # If the monitor is already running, just make as the front window
         else:
             monitor = self.gui.monitors[id(self)]
-            monitor.setWindowState(monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            monitor.setWindowState(
+                monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             monitor.activateWindow()
 
     def openSlider(self):
@@ -428,7 +448,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # If the slider is already running, just make as the front window
         else:
             slider = self.gui.sliders[id(self)]
-            slider.setWindowState(slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            slider.setWindowState(
+                slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             slider.activateWindow()
 
     def clearMonitor(self):

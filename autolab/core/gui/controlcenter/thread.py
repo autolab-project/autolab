@@ -53,7 +53,8 @@ class ThreadManager:
         thread = InteractionThread(item, intType, value)
         tid = id(thread)
         self.threads[tid] = thread
-        thread.endSignal.connect(lambda error, x=tid : self.threadFinished(x,error))
+        thread.endSignal.connect(
+            lambda error, x=tid : self.threadFinished(x, error))
         thread.finished.connect(lambda x=tid : self.delete(x))
 
         # Starting thread
