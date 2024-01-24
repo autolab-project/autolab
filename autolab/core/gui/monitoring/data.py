@@ -39,7 +39,9 @@ class DataManager:
                                self.gui.ylabel: self.ylist})
             df.to_csv(filename, index=False)
         else: # Image
-            np.savetxt(filename, self.ylist, sep=",")
+            if 'int' in str(self.ylist.dtype):
+                np.savetxt(filename, self.ylist, fmt="%i", sep=",")  # avoid saving useless zeroes
+            else: np.savetxt(filename, self.ylist, sep=",")
 
     def addPoint(self, point: Tuple[Any, Any]):
         """ This function either replace list by array or add point to list depending on datapoint type """
