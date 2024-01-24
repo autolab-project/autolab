@@ -7,7 +7,7 @@ Plotting
 
 .. caution::
 
-    The plotter still need some work, feed-back are more than welcome (December 2023).
+    The plotter still need some work, feed-back are more than welcome (January 2024).
 
 Import data
 -----------
@@ -42,6 +42,6 @@ If a device uses the the argument ``gui`` in its ``__init__`` method, it will be
 
 If a plugin has a method called ``refresh``, the plotter will call it with the argument ``data`` containing the plot data everytime the figure is updated, allowing for each plugin to get the lastest available data and do operations on it.
 
-The plugin ``plotter`` is added by default to the Plotter, allowing to do basic analyzes on the plotted data.
+The plugin ``plotter`` can be added to the Plotter, allowing to do basic analyzes on the plotted data.
 Among them, getting the min, max values, but also computing the bandwidth around a local extremum.
 Note that this plugin can be used as a device to process data in the control panel or directly in a scan recipe.

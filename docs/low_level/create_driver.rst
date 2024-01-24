@@ -73,7 +73,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
         #################################################################################
         ############################## Connections classes ##############################
         class Driver_VISA(Driver):           # Inherits all the attributes of the class Driver
-            def __init__(self, address='GPIB0::2::INSTR',**kwargs):  # 0) Definition of the ``__init__`` function
+            def __init__(self, address='GPIB0::2::INSTR', **kwargs):  # 0) Definition of the ``__init__`` function
                 import pyvisa as visa                 # 1) Connection library to use
 
                 rm = visa.ResourceManager()  # Use of visa's ressource manager
@@ -82,12 +82,12 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
                 Driver.__init__(self)        # 3) Run what is define in the Driver.__init__ function
 
             # Communication functions
-            def write(self,command):         # 4) Defines a write function
+            def write(self, command):        # 4) Defines a write function
                 self.inst.write(command)     # Sends a string 'command' to the instrument
             def read(self):                  # 5) Defines a read function
                 rep = self.inst.read()       # Receives a string 'rep' from the instrument and return it
                 return rep
-            def query(self,query):           # 6) Defines a query function: combine your own write and read functions to send a string and ask for an answer
+            def query(self, query):          # 6) Defines a query function: combine your own write and read functions to send a string and ask for an answer
                 self.write(query)
                 return self.read()
             def close(self):                 # 7) Closes the communication
@@ -136,13 +136,13 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
         .. code-block:: python
 
-            def __init__(self, address=19,board_index=0,**kwargs):
+            def __init__(self, address=19, board_index=0, **kwargs):
 
         You may also need to pass arguments to the class Driver (see next section), that may come from e.g. the number of channels of an oscilloscope or the consideration of an instrument with *slots*, you would need to modify line 3\) of the example:
 
         .. code-block:: python
 
-            Driver.__init__(self,**kwargs)
+            Driver.__init__(self, **kwargs)
 
 
         Please check out autolab existing drivers for more examples and/or to re-use existing connection classes (those would most likely need small adjustments to fit your instruments).
@@ -213,7 +213,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     .. code-block:: python
 
-        def __init__(self,nb_channels=2):       # 1)
+        def __init__(self, nb_channels=2):      # 1)
             pass
 
     Importantly, the class Driver defines all the functions that are related to the main instrument: to set [4)]/query [6)] some values (e.g. the output amplitude of a function generator) or perform actions (e.g. trigger a single burst event).
@@ -235,18 +235,18 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
         .. code-block:: python
 
-            def __init__(self,nb_channels=2):       # 1) Definition of the ``__init__`` function
+            def __init__(self, nb_channels=2):      # 1) Definition of the ``__init__`` function
 
                 self.nb_channels = int(nb_channels) # 2) Set arguments given to the class as class attributes to be re-used elsewhere (within the class)
 
-                for i in range(1,self.nb_channels+1):
-                    setattr(self,f'channel{i}',Channel(self,i)) # 3) Set additional Module\_MODEL classes (called Channel here) as classes attibutes
+                for i in range(1, self.nb_channels+1):
+                    setattr(self, f'channel{i}', Channel(self, i)) # 3) Set additional Module\_MODEL classes (called Channel here) as classes attibutes
 
         Here, the number of channels is provided as argument to the ``__init__`` function [1)], and for each channel [3)] an attribute of the class Driver is created by instantiating an additional class called **Channel**. The line 3) is formally equivalent to (considering: i=1):
 
         .. code-block:: python
 
-            self.channel1 = Channel(self,1)
+            self.channel1 = Channel(self, 1)
 
         All the channels are thus equivalent in this example as they use the same additional class (**Channel**). The arguments provided to the class **Channel** are: all the attributes of the actual class (**Driver**) and the number of the instantiated channel; both will be used in the additional class (e.g. the connection functions, etc.)
 
@@ -274,31 +274,31 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
         .. note::
 
-            For the particular case of instruments that one usually gets 1 dimensionnal traces from (e.g. oscilloscope, spectrum annalyser, etc.), it is useful to add to the class Driver some user utilities such as procedure for channel acquisitions:
+            For the particular case of instruments that usually returns one dimensionnal traces (e.g. oscilloscope, spectrum annalyser, etc.), it is useful to add to the class Driver some user utilities such as procedure for channel acquisitions:
 
             .. code-block:: python
 
                 ### User utilities
-                def get_data_channels(self,channels=[],single=False):
+                def get_data_channels(self, channels=[], single=False):
                     """Get all channels or the ones specified"""
                     previous_trigger_state = self.get_previous_trigger_state()                   # 1)
                     self.stop()                                                                  # 2)
                     if single: self.single()                                                     # 3)
                     while not self.is_stopped(): time.sleep(0.05)                                # 4)
-                    if channels == []: channels = list(range(1,self.nb_channels+1))
+                    if channels == []: channels = list(range(1, self.nb_channels+1))
                     for i in channels:
-                        if not(getattr(self,f'channel{i}').is_active()): continue
-                        getattr(self,f'channel{i}').get_data_raw()                               # 5)
-                        getattr(self,f'channel{i}').get_log_data()                               # 6)
+                        if not(getattr(self, f'channel{i}').is_active()): continue
+                        getattr(self, f'channel{i}').get_data_raw()                              # 5)
+                        getattr(self, f'channel{i}').get_log_data()                              # 6)
                     self.set_previous_trigger_state(previous_trigger_state)                      # 7)
 
-                def save_data_channels(self,filename,channels=[],FORCE=False):
-                    if channels == []: channels = list(range(1,self.nb_channels+1))
+                def save_data_channels(self, filename, channels=[], FORCE=False):
+                    if channels == []: channels = list(range(1, self.nb_channels+1))
                     for i in channels:
-                        getattr(self,f'channel{i}').save_data_raw(filename=filename,FORCE=FORCE) # 8)
-                        getattr(self,f'channel{i}').save_log_data(filename=filename,FORCE=FORCE) # 9)
+                        getattr(self, f'channel{i}').save_data_raw(filename=filename, FORCE=FORCE) # 8)
+                        getattr(self, f'channel{i}').save_log_data(filename=filename, FORCE=FORCE) # 9)
 
-            These functions rely on some other functions that should be implemented by the user (``single``, ``get_previous_trigger_state``, etc.). The reader may find a `find a full template example here <https://github.com/autolab-project/autolab/tree/master/autolab/drivers/More/Templates>`_.
+            These functions rely on some other functions that should be implemented by the user (``single``, ``get_previous_trigger_state``, etc.). The reader may find a `find a full template example here <https://github.com/autolab-project/autolab-drivers/tree/master/More/Templates>`_.
 
             Overall, the function get_data_channels:
                 1) Store the previous trigger state
@@ -332,15 +332,15 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
     .. code-block:: python
 
         class Channel():
-            def __init__(self,dev,channel):
+            def __init__(self, dev, channel):
                 self.channel = int(channel)
-                self.dev     = dev
+                self.dev = dev
 
-            def amplitude(self,amplitude):
+            def amplitude(self, amplitude):
                 self.dev.write(f':VOLT{self.channel} {amplitude}')
-            def offset(self,offset):
+            def offset(self, offset):
                 self.dev.write(f':VOLT{self.channel}:OFFS {offset}')
-            def frequency(self,frequency):
+            def frequency(self, frequency):
                 self.dev.write(f':FREQ{self.channel} {frequency}')
 
     Here is an example of the two class Module_MODEL of a instrument with `slot` for which slots are non-equivalent (strings needed to perform the same actions are different):
@@ -348,21 +348,21 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
     .. code-block:: python
 
         class Module_TEST111() :
-            def __init__(self,driver,slot):
+            def __init__(self, driver, slot):
                 self.driver = driver
-                self.slot   = slot
+                self.slot = slot
 
-            def set_power(self,value):
+            def set_power(self, value):
                 self.dev.write(f'POWER={value}')
             def get_power(self):
                 return float(self.dev.query('POWER?'))
 
         class Module_TEST222() :
-            def __init__(self,driver,slot):
+            def __init__(self, driver, slot):
                 self.driver = driver
-                self.slot   = slot
+                self.slot = slot
 
-            def set_power(self,value):
+            def set_power(self, value):
                 self.dev.write(f'POWER={value}')
             def get_power(self):
                 return float(self.dev.query('POWER?'))
@@ -377,7 +377,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     .. note::
 
-        For the particular case of instruments that one usually gets 1 dimensionnal traces from (e.g. oscilloscope, spectrum annalyser, etc.), it is useful to define functions to get and save the data. See the folliwing instrument dependant example:
+        For the particular case of instruments that usually returns one dimensionnal traces (e.g. oscilloscope, spectrum annalyser, etc.), it is useful to define functions to get and save the data. See the following instrument dependant example:
 
         .. code-block:: python
 
@@ -386,28 +386,28 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
                     self.do_autoscale()
                 self.dev.write(f'C{self.channel}:WF? DAT1')
                 self.data_raw = self.dev.read_raw()
-                self.data_raw = self.data_raw[self.data_raw.find(b'#')+11:-1]
+                self.data_raw = self.data_raw[self.data_raw.find(b'#')+11: -1]
                 return self.data_raw
             def get_data(self):
-                return frombuffer(self.get_data_raw(),int8)
+                return frombuffer(self.get_data_raw(), int8)
             def get_log_data(self):
                 self.log_data = self.dev.query(f"C{self.channel}:INSP? 'WAVEDESC'")
                 return self.log_data
 
-            def save_data_raw(self,filename,FORCE=False):
+            def save_data_raw(self, filename, FORCE=False):
                 temp_filename = f'{filename}_WAVEMASTERCH{self.channel}'
                 if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
                     print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
                     return
-                f = open(temp_filename,'wb')# Save data
+                f = open(temp_filename, 'wb')# Save data
                 f.write(self.data_raw)
                 f.close()
-            def save_log_data(self,filename,FORCE=False):
+            def save_log_data(self, filename, FORCE=False):
                 temp_filename = f'{filename}_WAVEMASTERCH{self.channel}.log'
                 if os.path.exists(os.path.join(os.getcwd(),temp_filename)) and not(FORCE):
                     print('\nFile ', temp_filename, ' already exists, change filename or remove old file\n')
                     return
-                f = open(temp_filename,'w')
+                f = open(temp_filename, 'w')
                 f.write(self.log_data)
                 f.close()
 
@@ -450,7 +450,7 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
 *Action*:
     - 'do': class attribute (argument type: function)
     - 'param_type': python type, exclusively in: int, float, bool, str, bytes, np.ndarray, pd.DataFrame, optional
-    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit "filename" to open a file dialog)
+    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit "filename" to open a open file dialog)
 
 
 
@@ -481,11 +481,11 @@ Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py
 
     class Driver_parser():                                     #
         def __init__(self, Instance, name, **kwargs):          #
-            self.name     = name                               #
+            self.name = name                                   #
             self.Instance = Instance                           #
 
 
-        def add_parser_usage(self,message):                    #
+        def add_parser_usage(self, message):                   #
             """Usage to be used by the parser"""               #
             usage = f"""                                       #
     {message}                                                  #
@@ -499,16 +499,16 @@ Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py
                 """                                            #
             return usage                                       #
 
-        def add_parser_arguments(self,parser):                 #
+        def add_parser_arguments(self, parser):                #
             """Add arguments to the parser passed as input"""  #
             parser.add_argument("-a", "--amplitude", type=str, dest="amplitude", default=None, help="Set the pump current value in Ampere." )
 
             return parser                                      #
 
-        def do_something(self,args):                           #
+        def do_something(self, args):                          #
             if args.amplitude:                                 #
                 # next line equivalent to: self.Instance.amplitude = args.amplitude
-                getattr(self.Instance,'amplitude')(args.amplitude)
+                getattr(self.Instance, 'amplitude')(args.amplitude)
 
         def exit(self):                                        #
             self.Instance.close()                              #
@@ -532,4 +532,4 @@ It contains:
 
 .. note::
 
-    Please do consider, keeping each line ending with a # character in the example as is.This way you would need to modify 3 main parts to configure options, associated actions and help:  **3**), **4**) and **2**) (respectively).
+    Please do consider, keeping each line ending with a # character in the example as is. This way you would need to modify 3 main parts to configure options, associated actions and help:  **3**), **4**) and **2**) (respectively).

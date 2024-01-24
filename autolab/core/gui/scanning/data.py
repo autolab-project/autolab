@@ -440,7 +440,9 @@ class Dataset():
                             elif type(value) == bytes:
                                 with open(path, 'wb') as f: f.write(value)
                             elif type(value) == np.ndarray:
-                                np.savetxt(path, value)
+                                if 'int' in str(value.dtype):
+                                    np.savetxt(path, value, fmt="%i")  # avoid saving useless zeroes
+                                else: np.savetxt(path, value)
                             elif type(value) == pd.DataFrame:
                                 value.to_csv(path, index=False)
 

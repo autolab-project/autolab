@@ -18,7 +18,7 @@ To see the list of available drivers in Autolab, call the ``list_drivers`` funct
 
 .. note::
 
-	The driver of your instrument is missing ? Please contribute to Autolab by creating yourself a new driver, following the provided guidelines : :ref:`create_driver`
+	The driver of your instrument is missing? Please contribute to Autolab by creating yourself a new driver, following the provided guidelines : :ref:`create_driver`
 
 Load and close a Driver
 -----------------------
@@ -32,7 +32,7 @@ The instantiation of a *Driver* object is done through the function ``get_driver
 
 .. code-block:: python
 
-	>>> laserSource = autolab.get_driver('yenista_TUNICS','VISA',address='GPIB0::12::INSTR')
+	>>> laserSource = autolab.get_driver('yenista_TUNICS', 'VISA', address='GPIB0::12::INSTR')
 
 To know what is the required configuration to interact with a given instrument, call the function ``config_help`` with the name of the driver.
 
@@ -76,7 +76,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	import pandas as pd
 
 	# Open the Devices
-	myTunics = autolab.get_driver('yenista_TUNICS',connection='VISA', address='GPIB0::12::INSTR')
+	myTunics = autolab.get_driver('yenista_TUNICS', connection='VISA', address='GPIB0::12::INSTR')
 	myPowerMeter = autolab.get_driver('powermeter_driver', connection='DLL')
 
 	# Turn on the light source
@@ -87,7 +87,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	step = 0.01
 	start = 1550
 	stop = 1560
-	points = int(1+(stop-start)/step)
+	points = int(1 + (stop - start)/step)
 	for wl in np.linspace(start, stop, points):
 
 	    # Set the parameter
