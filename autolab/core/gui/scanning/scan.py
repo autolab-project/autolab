@@ -5,344 +5,352 @@ Created on Sun Sep 29 18:08:45 2019
 @author: qchat
 """
 
-from PyQt5 import QtCore
 import time
-import threading
-import numpy as np
-import collections
 import math as m
+import threading
+from collections import OrderedDict
+from queue import Queue
+from itertools import product
+from typing import Any
 
-class ScanManager :
-    
-    def __init__(self,gui):
+from pyvisa import VisaIOError
+import numpy as np
+import pandas as pd
+from qtpy import QtCore, QtWidgets
+
+from ...devices import DEVICES
+
+
+class ScanManager:
+    """ Manage a scan using a dedicated thread """
+
+    def __init__(self, gui: QtWidgets.QMainWindow):
         self.gui = gui
-        
+
         # Start / Stop button configuration
         self.gui.start_pushButton.clicked.connect(self.startButtonClicked)
-        
+
         # Pause / Resume button configuration
         self.gui.pause_pushButton.clicked.connect(self.pauseButtonClicked)
         self.gui.pause_pushButton.setEnabled(False)
-        
-        # Progress bar configuration        
+
+        # Progress bar configuration
         self.gui.progressBar.setMinimum(0)
         self.gui.progressBar.setValue(0)
-        
+
         # Thread
         self.thread = None
-        
-        
 
     # START AND STOP
-    #############################################################################  
+    #############################################################################
 
     def startButtonClicked(self):
-        
-        """ This function is called when the start / stop button is pressed.
+        """ Called when the start/stop button is pressed.
         Do the expected action """
-        
-        if self.isStarted() is False : 
-            self.start()
-        else :
-            self.stop()
-            
-            
+        self.stop() if self.isStarted() else self.start()
 
     def isStarted(self):
-        
         """ Returns True or False whether the scan is currently running or not """
-        
         return self.thread is not None
 
+    def start(self):
+        """ Starts a scan """
+        self.gui.data_comboBox.setEnabled(False)
 
-
-    def start(self) :
-        
-        """ This function start a scan """
-        
-        # Test if current config is valid to start a scan
-        test = False
-        try : 
-            config = self.gui.configManager.getConfig()
-            assert config['parameter']['element'] is not None, "Parameter no set"
-            assert len(config['recipe']) > 0, "Recipe is empty"
-            test = True
-        except Exception as e :
-            self.gui.statusBar.showMessage(f'ERROR The scan cannot start with the current configuration : {str(e)}',10000)
-            
-        if test is True :
-            
+        try:
+            self.gui.configManager.checkConfig()  #  raise error if config not valid
+            config = self.gui.configManager.config
+        except Exception as e:
+            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration : {str(e)}', 10000, False)
+        # Only if current config is valid to start a scan
+        else:
             # Prepare a new dataset in the datacenter
             self.gui.dataManager.newDataset(config)
-            
+
+            # put dataset id onto the combobox and associate data to it
+            dataSet_id = len(self.gui.dataManager.datasets)
+            self.gui.data_comboBox.addItem(f'Scan{dataSet_id}')
+            self.gui.data_comboBox.setCurrentIndex(int(dataSet_id)-1)  # trigger the currentIndexChanged event but don't trigger activated
+
             # Start a new thread
             ## Opening
             self.thread = ScanThread(self.gui.dataManager.queue, config)
             ## Signal connections
             self.thread.errorSignal.connect(self.error)
-            self.thread.startStepSignal.connect(lambda stepName:self.gui.recipeManager.setStepProcessingState(stepName,'started'))
-            self.thread.finishStepSignal.connect(lambda stepName:self.gui.recipeManager.setStepProcessingState(stepName,'finished'))
-            self.thread.startParameterSignal.connect(lambda:self.gui.parameterManager.setProcessingState('started'))
-            self.thread.finishParameterSignal.connect(lambda:self.gui.parameterManager.setProcessingState('finished'))
-            self.thread.recipeCompletedSignal.connect(self.gui.recipeManager.resetStepsProcessingState)
+
+            self.thread.startParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'started'))
+            self.thread.finishParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'finished'))
+            self.thread.parameterCompletedSignal.connect(lambda recipe_name, param_name: self.resetParameterProcessingState(recipe_name, param_name))
+
+            self.thread.startStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'started'))
+            self.thread.finishStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'finished'))
+            self.thread.recipeCompletedSignal.connect(lambda recipe_name:self.resetStepsProcessingState(recipe_name))
+
             self.thread.finished.connect(self.finished)
+
             # Starting
             self.thread.start()
-            
+
             # Start data center timer
             self.gui.dataManager.timer.start()
-            
-            # Update gui           
+
+            # Update gui
             self.gui.start_pushButton.setText('Stop')
             self.gui.pause_pushButton.setEnabled(True)
             self.gui.clear_pushButton.setEnabled(False)
             self.gui.progressBar.setValue(0)
             self.gui.configManager.importAction.setEnabled(False)
-            self.gui.statusBar.showMessage(f'Scan started !',5000)
-            
+            self.gui.configManager.undo.setEnabled(False)
+            self.gui.configManager.redo.setEnabled(False)
+            self.gui.setStatus('Scan started !', 5000)
 
+    def setStepProcessingState(self, recipe_name: str, stepName: str, state: str):
+        self.gui.recipeDict[recipe_name]['recipeManager'].setStepProcessingState(stepName, state)
+
+    def resetStepsProcessingState(self, recipe_name: str):
+        self.gui.recipeDict[recipe_name]['recipeManager'].resetStepsProcessingState()
+
+    def setParameterProcessingState(self, recipe_name: str, param_name: str, state: str):
+        self.gui.recipeDict[recipe_name]['parameterManager'][param_name].setProcessingState(state)
+
+    def resetParameterProcessingState(self, recipe_name: str, param_name: str):
+        self.gui.recipeDict[recipe_name]['parameterManager'][param_name].setProcessingState('idle')
 
     def stop(self):
-        
-        """ This function stop manually the scan """
-        
-        self.disableContinuousMode()   
+        """ Stops manually the scan """
+        self.gui.data_comboBox.setEnabled(True)
+        self.disableContinuousMode()
         self.thread.stopFlag.set()
         self.resume()
         self.thread.wait()
-        
-        
-        
-        
+
     # SIGNALS
-    #############################################################################  
-        
+    #############################################################################
+
     def finished(self):
-        
-        """ This function is called when the scan thread is finished. It restores
-        the GUI in a ready mode, and start a new scan if in continuous mode """
-        
+        """ This function is called when the scan thread is finished.
+        It restores the GUI in a ready mode, and start a new scan if in
+        continuous mode """
         self.gui.start_pushButton.setText('Start')
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
-        self.gui.parameterManager.setProcessingState('idle')
+        self.gui.data_comboBox.setEnabled(True)
+        self.gui.displayScanData_pushButton.setEnabled(True)
         self.gui.configManager.importAction.setEnabled(True)
+        self.gui.configManager.updateUndoRedoButtons()
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
         self.thread = None
-        
-        if self.isContinuousModeEnabled() : 
+
+        if self.isContinuousModeEnabled():
             self.start()
-        
-        
-        
-    def error(self,error):
-        
-        """ This function is called if an error occured during the scan. 
+
+    def error(self, error: Exception):
+        """ Called if an error occured during the scan.
         It displays it in the status bar """
-        
-        self.gui.statusBar.showMessage(f'Error : {error} ',10000)
-        
-        
-        
-        
-        
+        self.gui.setStatus(f'Scan Error: {error}', 10000, False)
+
+
     # CONTINUOUS MODE
     #############################################################################
-    
-    def isContinuousModeEnabled(self):
-        
-        """ Returns True or False whether the continuous scan mode is enabled or not """
-        
+
+    def isContinuousModeEnabled(self) -> bool:
+        """ Returns True or False whether the continuous scan mode is enabled
+        or not """
         return self.gui.continuous_checkBox.isChecked()
-    
-    
-    
+
     def disableContinuousMode(self):
-        
-        """ This function disables the continuous scan mode """
-        
+        """ Disables the continuous scan mode """
         self.gui.continuous_checkBox.setChecked(False)
-        
-        
-        
-        
-    
+
     # PAUSE
     #############################################################################
-    
+
     def pauseButtonClicked(self):
-        
-        """ This function is called when the Pause / Resume button is clicked.
+        """ Called when the Pause/Resume button is clicked.
         It does the required action """
-        
-        if self.isStarted() :
-            if self.isPaused() is False : 
-                self.pause()
-            else :
-                self.resume()
-                
-                
-    
+        if self.isStarted():
+            self.resume() if self.isPaused() else self.pause()
+
     def isPaused(self):
-        
         """ Returns True or False whether the scan is paused or not """
-        
-        return self.thread is not None and self.thread.pauseFlag.is_set() is True 
-    
-    
-               
+        return (self.thread is not None) and (self.thread.pauseFlag.is_set() is True)
+
     def pause(self):
-        
-        """ This function pauses the scan """
-        
+        """ Pauses the scan """
         self.thread.pauseFlag.set()
         self.gui.dataManager.timer.stop()
         self.gui.pause_pushButton.setText('Resume')
-        
-        
-        
+
     def resume(self):
-        
-        """ This function resumes the scan """
-        
+        """ Resumes the scan """
         self.thread.pauseFlag.clear()
         self.gui.dataManager.timer.start()
         self.gui.pause_pushButton.setText('Pause')
-        
-        
 
-        
-        
-        
-        
-        
+
 class ScanThread(QtCore.QThread):
-    
-    """ This thread class is dedicated to read the variable, and send its data to GUI through a queue """
-    
+    """ This thread class is dedicated to read the variable,
+        and send its data to GUI through a queue """
     # Signals
-    errorSignal = QtCore.pyqtSignal(object) 
-    startParameterSignal = QtCore.pyqtSignal()
-    finishParameterSignal = QtCore.pyqtSignal()
-    startStepSignal = QtCore.pyqtSignal(object)
-    finishStepSignal = QtCore.pyqtSignal(object)
-    recipeCompletedSignal = QtCore.pyqtSignal()
+    errorSignal = QtCore.Signal(object)
 
+    startParameterSignal = QtCore.Signal(object, object)
+    finishParameterSignal = QtCore.Signal(object, object)
+    parameterCompletedSignal = QtCore.Signal(object, object)
 
+    startStepSignal = QtCore.Signal(object, object)
+    finishStepSignal = QtCore.Signal(object, object)
+    recipeCompletedSignal = QtCore.Signal(object)
 
-    def __init__(self, queue, config):
-        
+    def __init__(self, queue: Queue, config: dict):
         QtCore.QThread.__init__(self)
         self.config = config
         self.queue = queue
-        
+
         self.pauseFlag = threading.Event()
         self.stopFlag = threading.Event()
-        
-        
-        
+
     def run(self):
-        
-        # Load scan configuration
-        parameter = self.config['parameter']['element']
-        name = self.config['parameter']['name']
-        startValue,endValue = self.config['range']
-        nbpts = self.config['nbpts']
-        logScale = self.config['log']
-        
-        # Creates the array of values for the parameter
-        if logScale is False : 
-            paramValues = np.linspace(startValue,endValue,nbpts,endpoint=True)
-        else : 
-            paramValues = np.logspace(m.log10(startValue),m.log10(endValue),nbpts,endpoint=True)
-            
         # Start the scan
-        for paramValue in paramValues : 
-                        
-            if self.stopFlag.is_set() is False :
-                
-                try : 
-                    
-                    # Set the parameter value
-                    self.startParameterSignal.emit()
-                    parameter(paramValue)
-                    self.finishParameterSignal.emit()
-                    
+        for recipe_name in self.config.keys():
+            if self.config[recipe_name]['active']: self.execRecipe(recipe_name)
+
+    def execRecipe(self, recipe_name: str,
+                   initPoint: OrderedDict = None):
+        """ Executes a recipe. initPoint is used to add parameters values
+        and master-recipe name to a sub-recipe """
+
+        paramValues_list = []
+
+        for parameter in self.config[recipe_name]['parameter']:
+            startValue, endValue = parameter['range']
+            nbpts = parameter['nbpts']
+            logScale = parameter['log']
+
+            # Creates the array of values for the parameter
+            if logScale:
+                paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+            else:
+                paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
+
+            paramValues_list.append(paramValues)
+
+        # iter over each parameter (do once if no parameter!)
+        for i, paramValueList in enumerate(product(*paramValues_list)):
+
+            if not self.stopFlag.is_set():
+
+                if initPoint is None:
+                    initPoint = OrderedDict()
+                    initPoint[0] = recipe_name
+
+                initPointStep = initPoint.copy()
+
+                try:
+                    self._source_of_error = None
+                    for parameter, paramValue in zip(
+                            self.config[recipe_name]['parameter'], paramValueList):
+                        self._source_of_error = parameter
+                        element = parameter['element']
+                        param_name = parameter['name']
+
+                        # Set the parameter value
+                        self.startParameterSignal.emit(recipe_name, param_name)
+                        if element is not None: element(paramValue)
+                        self.finishParameterSignal.emit(recipe_name, param_name)
+
+                        initPointStep[param_name] = paramValue
+
+                    dataPoint = initPointStep.copy()
+
                     # Start the recipe
-                    dataPoint = collections.OrderedDict()
-                    dataPoint[name] = paramValue
-                    dataPoint = self.processRecipe(dataPoint)
-                    
+                    dataPoint = self.processStep(
+                        recipe_name, dataPoint, initPointStep)
                     # Send the whole data in the queue
-                    if self.stopFlag.is_set() is False : self.queue.put(dataPoint)
+                    if not self.stopFlag.is_set(): self.queue.put(dataPoint)
 
-
-                except Exception as e :
-
+                except Exception as e:
                     # If an error occurs, stop the scan and send an error signal
+                    name = self._source_of_error['name']
+                    if self._source_of_error['element'] is not None:
+                        address = f"='{self._source_of_error['element'].address()}'"
+                    else: address = ''
+
+                    if str(e) == str(VisaIOError(-1073807339)):
+                        e = f"Timeout reached for device {address}. Acquisition time may be too long. If so, you can increase timeout delay in the driver to avoid this error."
+                    else:
+                        e = f"In recipe '{recipe_name}' for element '{name}'{address}: {e}"
+
                     self.errorSignal.emit(e)
                     self.stopFlag.set()
-                    
-                    
-                # Wait until the scan is no more in pause
-                while self.pauseFlag.is_set() :
-                    time.sleep(0.1)
-                        
-            else : 
-                break
-            
-            
-            
-    def processRecipe(self,dataPoint):
-        
-        """ This function executes the scan recipe """
 
-        for stepInfos in self.config['recipe'] : 
-            
-            if self.stopFlag.is_set() is False :
-                
-                # Process the recipe step
-                result = self.processElement(stepInfos)
-                if result is not None :
-                    dataPoint[stepInfos['name']] =  result
-                    
                 # Wait until the scan is no more in pause
-                while self.pauseFlag.is_set() :
+                while self.pauseFlag.is_set():
                     time.sleep(0.1)
-            
-            else : 
+            else:
                 break
-            
-        self.recipeCompletedSignal.emit()
-            
+
+        for parameter in self.config[recipe_name]['parameter']:
+            self.parameterCompletedSignal.emit(recipe_name, parameter['name'])
+
+    def processStep(self, recipe_name: str,
+                    dataPoint: OrderedDict,
+                    initPoint: OrderedDict):
+        """ Executes the recipe step """
+        for stepInfos in self.config[recipe_name]['recipe']:
+            self._source_of_error = stepInfos
+
+            if not self.stopFlag.is_set():
+                # Process the recipe step
+                result = self.processElement(recipe_name, stepInfos, initPoint)
+
+                if result is not None:
+                    dataPoint[stepInfos['name']] = result
+
+                # Wait until the scan is no more in pause
+                while self.pauseFlag.is_set():
+                    time.sleep(0.1)
+            else:
+                break
+
+        self.recipeCompletedSignal.emit(recipe_name)
         return dataPoint
-                 
-    
-        
-    def processElement(self,stepInfos):
-        
-        """ This function processes the recipe step """
-        
+
+    def processElement(self, recipe_name: str, stepInfos: dict,
+                       initPoint: OrderedDict):
+        """ Processes the recipe step """
         element = stepInfos['element']
         stepType = stepInfos['stepType']
-        
-        self.startStepSignal.emit(stepInfos['name'])
-            
+        self.startStepSignal.emit(recipe_name, stepInfos['name'])
         result = None
-        if stepType == 'measure' :
+
+        if stepType == 'measure':
             result = element()
-        if stepType == 'set' :
-            element(stepInfos['value'])
-        if stepType == 'action' :
-            if stepInfos['value'] is not None :
-                element(stepInfos['value'])
-            else :
+        elif stepType == 'set':
+            value = self.checkVariable(stepInfos['value'])
+            element(value)
+        elif stepType == 'action':
+            if stepInfos['value'] is not None:
+                value = self.checkVariable(stepInfos['value'])
+                element(value)
+            else:
                 element()
-            
-        self.finishStepSignal.emit(stepInfos['name'])
-        
+        elif stepType == 'recipe':
+            self.execRecipe(element, initPoint=initPoint)  # Execute a recipe in the recipe
+
+        self.finishStepSignal.emit(recipe_name, stepInfos['name'])
         return result
-    
-    
-    
+
+    def checkVariable(self, value: Any):
+        """ Checks if value is a device variable address and if is it, return its value """
+        if str(value).startswith("$eval:"):
+            value = str(value)[len("$eval:"): ]
+
+            try:
+                allowed_dict ={"np": np, "pd": pd}
+                allowed_dict.update(DEVICES)
+                value = eval(str(value), {}, allowed_dict)
+            except: pass
+
+        return value
