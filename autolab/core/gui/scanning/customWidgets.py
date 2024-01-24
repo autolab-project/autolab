@@ -98,18 +98,43 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                 items = self.decodeData(encoded, event.source())
                 recipe_name_output = event.source().recipe_name
 
-                for it in items:
+                for it in items:  # should always have one item
                     name = it.text(0)
                     stepType = self.scanner.configManager.getRecipeStepType(recipe_name_output, name)
                     stepElement = self.scanner.configManager.getRecipeStepElement(recipe_name_output, name)
                     stepValue = self.scanner.configManager.getRecipeStepValue(recipe_name_output, name)
-                    self.scanner.configManager.configHistory.active = False
-                    self.scanner.configManager.delRecipeStep(recipe_name_output, name)
-                    self.scanner.configManager.configHistory.active = True
-                    self.scanner.configManager.addRecipeStep(self.recipe_name, stepType, stepElement, name, stepValue)
+                    # OPTIMIZE: prevent cycle between recipe and twice same recipe in a recipe before accepting the drag event
+
+                    if stepElement != self.recipe_name:  # should always be different thanks to drag event refusal of dropping recipe in itself
+                        self.scanner.configManager.configHistory.active = False
+                        self.scanner.configManager.delRecipeStep(recipe_name_output, name)
+                        self.scanner.configManager.configHistory.active = True
+                        self.scanner.configManager.addRecipeStep(self.recipe_name, stepType, stepElement, name, stepValue)
+
+                        try: self.scanner.configManager.getAllowedRecipe(self.recipe_name)
+                        except ValueError:
+                            self.scanner.setStatus('ERROR cycle between recipes detected! change cancelled', 10000, False)
+                            self.scanner.configManager.configHistory.active = False
+                            self.scanner.configManager.configHistory.go_down()  # to overwrite config with error
+                            self.scanner.configManager.delRecipeStep(self.recipe_name, name)
+                            self.scanner.configManager.configHistory.active = True
+                            self.scanner.configManager.addRecipeStep(recipe_name_output, stepType, stepElement, name, stepValue)
 
         else: # event comes from controlcenter -> check type to add step
-            gui = event.source().gui
+            if hasattr(event.source(), 'gui'): gui = event.source().gui
+            else: # OPTIMIZE: event.source() should be either self or instance of MyQTreeWidget but is sometime not recognize as such so goes to else and raise error don't have gui
+                message = 'ERROR catched, please create an issue here: https://github.com/autolab-project/autolab/issues with the following informations:'
+                message += '\nTitle: event.source() error in scanner'
+                message += "\nDescription:"
+                message += f"\nEvent source: {event.source()}"
+                if hasattr(event.source(), 'customMimeType'):
+                    message += f"\nEvent Mime: {event.source().customMimeType}"
+                message += f"\nIs MyQTreeWidget: {isinstance(event.source(), MyQTreeWidget)}"
+                message += f"\nself: {self}"
+                message += f"\nIs self: {event.source() is self}"
+                self.scanner.setStatus(message, 0, False)
+                return None
+
             variable = event.source().last_drag
 
             if variable:
@@ -133,6 +158,20 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             self.setGraphicsEffect(shadow)
 
         elif type(event.source()) == type(self):
+            try:  # Refuse drop recipe in itself
+                if event.mimeData().hasFormat(MyQTreeWidget.customMimeType):
+                    encoded = event.mimeData().data(MyQTreeWidget.customMimeType)
+                    items = self.decodeData(encoded, event.source())
+                    recipe_name_output = event.source().recipe_name
+                    for it in items:
+                        name = it.text(0)
+                        stepElement = self.scanner.configManager.getRecipeStepElement(
+                            recipe_name_output, name)
+                        if self.recipe_name == stepElement:  # OPTIMIZE: not enought to prevent cycle (see how to use config.getAllowedRecipe)
+                            event.ignore()
+                            return None
+            except: pass
+
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             event.source().setGraphicsEffect(None)
             self.setGraphicsEffect(shadow)
