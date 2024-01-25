@@ -6,25 +6,109 @@ Created on Sun Sep 29 18:14:28 2019
 """
 import math as m
 
-from .display import DisplayValues
+from qtpy import QtCore, QtWidgets
 
 
 class RangeManager:
     """ Manage the range of a parameter """
 
-    def __init__(self, gui, recipe_name: str):
+    def __init__(self, gui: QtWidgets.QMainWindow, recipe_name: str, param_name: str):
 
         self.gui = gui
         self.recipe_name = recipe_name
+        self.param_name = param_name
 
-        self.scanLog_checkBox = self.gui.recipeDict[self.recipe_name]['recipeManager'].scanLog_checkBox
-        self.nbpts_lineEdit = self.gui.recipeDict[self.recipe_name]['recipeManager'].nbpts_lineEdit
-        self.step_lineEdit = self.gui.recipeDict[self.recipe_name]['recipeManager'].step_lineEdit
-        self.start_lineEdit = self.gui.recipeDict[self.recipe_name]['recipeManager'].start_lineEdit
-        self.end_lineEdit = self.gui.recipeDict[self.recipe_name]['recipeManager'].end_lineEdit
-        self.mean_lineEdit = self.gui.recipeDict[self.recipe_name]['recipeManager'].mean_lineEdit
-        self.width_lineEdit = self.gui.recipeDict[self.recipe_name]['recipeManager'].width_lineEdit
-        self.displayParameter_pushButton = self.gui.recipeDict[self.recipe_name]['recipeManager'].displayParameter_pushButton
+        self.point_or_step = "point"
+
+        # Scanrange frame
+        frameScanRange = QtWidgets.QFrame()
+        # frameScanRange.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        frameScanRange.setMinimumSize(0, 60)
+        frameScanRange.setMaximumSize(16777215, 60)
+        self.frameScanRange = frameScanRange
+
+        # first grid
+        labelStart = QtWidgets.QLabel("Start", frameScanRange)
+        start_lineEdit = QtWidgets.QLineEdit('0', frameScanRange)
+        start_lineEdit.setToolTip('Start value of the scan')
+        start_lineEdit.setMinimumSize(0, 20)
+        start_lineEdit.setMaximumSize(16777215, 20)
+        start_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.start_lineEdit = start_lineEdit
+
+        labelEnd = QtWidgets.QLabel("End", frameScanRange)
+        end_lineEdit = QtWidgets.QLineEdit('10', frameScanRange)
+        end_lineEdit.setMinimumSize(0, 20)
+        end_lineEdit.setMaximumSize(16777215, 20)
+        end_lineEdit.setToolTip('End value of the scan')
+        end_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.end_lineEdit = end_lineEdit
+
+        startEndGridLayout = QtWidgets.QGridLayout(frameScanRange)
+        startEndGridWidget = QtWidgets.QWidget(frameScanRange)
+        startEndGridWidget.setLayout(startEndGridLayout)
+        startEndGridLayout.addWidget(labelStart, 0, 0)
+        startEndGridLayout.addWidget(start_lineEdit, 0, 1)
+        startEndGridLayout.addWidget(labelEnd, 1, 0)
+        startEndGridLayout.addWidget(end_lineEdit, 1, 1)
+
+        # second grid
+        labelMean = QtWidgets.QLabel("Mean", frameScanRange)
+        mean_lineEdit = QtWidgets.QLineEdit('5', frameScanRange)
+        mean_lineEdit.setMinimumSize(0, 20)
+        mean_lineEdit.setMaximumSize(16777215, 20)
+        mean_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.mean_lineEdit = mean_lineEdit
+
+        labelWidth = QtWidgets.QLabel("Width", frameScanRange)
+        width_lineEdit = QtWidgets.QLineEdit('10', frameScanRange)
+        width_lineEdit.setMinimumSize(0, 20)
+        width_lineEdit.setMaximumSize(16777215, 20)
+        width_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.width_lineEdit = width_lineEdit
+
+        meanWidthGridLayout = QtWidgets.QGridLayout(frameScanRange)
+        meanWidthGridWidget = QtWidgets.QWidget(frameScanRange)
+        meanWidthGridWidget.setLayout(meanWidthGridLayout)
+        meanWidthGridLayout.addWidget(labelMean, 0, 0)
+        meanWidthGridLayout.addWidget(mean_lineEdit, 0, 1)
+        meanWidthGridLayout.addWidget(labelWidth, 1, 0)
+        meanWidthGridLayout.addWidget(width_lineEdit, 1, 1)
+
+        # third grid
+        labelNbpts = QtWidgets.QLabel("Nb points", frameScanRange)
+        nbpts_lineEdit = QtWidgets.QLineEdit('11', frameScanRange)
+        nbpts_lineEdit.setMinimumSize(0, 20)
+        nbpts_lineEdit.setMaximumSize(16777215, 20)
+        nbpts_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.nbpts_lineEdit = nbpts_lineEdit
+
+        labelStep = QtWidgets.QLabel("Step", frameScanRange)
+        step_lineEdit = QtWidgets.QLineEdit('1', frameScanRange)
+        step_lineEdit.setMinimumSize(0, 20)
+        step_lineEdit.setMaximumSize(16777215, 20)
+        step_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.step_lineEdit = step_lineEdit
+        scanLog_checkBox = QtWidgets.QCheckBox("Log")
+        self.scanLog_checkBox = scanLog_checkBox
+
+        nptsStepGridLayout = QtWidgets.QGridLayout(frameScanRange)
+        nptsStepGridWidget = QtWidgets.QWidget(frameScanRange)
+        nptsStepGridWidget.setLayout(nptsStepGridLayout)
+        nptsStepGridLayout.addWidget(labelNbpts, 0, 0)
+        nptsStepGridLayout.addWidget(nbpts_lineEdit, 0, 1)
+        nptsStepGridLayout.addWidget(labelStep, 1, 0)
+        nptsStepGridLayout.addWidget(step_lineEdit, 1, 1)
+        nptsStepGridLayout.addWidget(scanLog_checkBox, 1, 2)
+
+        layoutScanRange = QtWidgets.QHBoxLayout(frameScanRange)
+        layoutScanRange.setContentsMargins(0,0,0,0)
+        layoutScanRange.setSpacing(0)
+        layoutScanRange.addWidget(startEndGridWidget)
+        layoutScanRange.addStretch()
+        layoutScanRange.addWidget(meanWidthGridWidget)
+        layoutScanRange.addStretch()
+        layoutScanRange.addWidget(nptsStepGridWidget)
 
         # Widget 'return pressed' signal connections
         self.scanLog_checkBox.stateChanged.connect(self.scanLogChanged)
@@ -43,28 +127,20 @@ class RangeManager:
         self.mean_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.mean_lineEdit,'edited'))
         self.width_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.width_lineEdit,'edited'))
 
-        # Push button
-        self.displayParameter_pushButton.clicked.connect(self.displayParameterButtonClicked)
-
-        self.displayParameter = DisplayValues(self.gui, "Parameter", size=(250, 400))
-
-        self.point_or_step = "point"
+        # Do refresh at start
         self.refresh()
 
-    def displayParameterButtonClicked(self):
-        """ This function opens a window showing the parameter array that will
-            be used in the scan """
-        if not self.displayParameter.active:
-            self.displayParameter.refresh(
-                self.gui.configManager.getParamDataFrame(self.recipe_name))
-
-        self.displayParameter.show()
+    def _removeWidget(self):
+        if hasattr(self, 'frameScanRange'):
+            try:
+                self.frameScanRange.hide()
+                self.frameScanRange.deleteLater()
+                del self.frameScanRange
+            except: pass
 
     def refresh(self):
-        """ This function refreshes all the values displayed of the scan
-            configuration from the configuration center """
-
-        xrange = self.gui.configManager.getRange(self.recipe_name)
+        """ Refreshes all the values relative to parameter scan values """
+        xrange = self.gui.configManager.getRange(self.recipe_name, self.param_name)
 
         # Start
         start = xrange[0]
@@ -87,14 +163,14 @@ class RangeManager:
         self.gui.setLineEditBackground(self.width_lineEdit, 'synced')
 
         # Nbpts
-        nbpts = self.gui.configManager.getNbPts(self.recipe_name)
-        step = self.gui.configManager.getStep(self.recipe_name)
+        nbpts = self.gui.configManager.getNbPts(self.recipe_name, self.param_name)
+        step = self.gui.configManager.getStep(self.recipe_name, self.param_name)
 
         self.nbpts_lineEdit.setText(f'{nbpts:g}')
         self.gui.setLineEditBackground(self.nbpts_lineEdit, 'synced')
 
         # Log
-        log: bool = self.gui.configManager.getLog(self.recipe_name)
+        log: bool = self.gui.configManager.getLog(self.recipe_name, self.param_name)
         self.scanLog_checkBox.setChecked(log)
 
         # Step
@@ -107,25 +183,27 @@ class RangeManager:
 
         self.gui.setLineEditBackground(self.step_lineEdit, 'synced')
 
+        self.displayParameter = self.gui.recipeDict[self.recipe_name]['parameterManager'][self.param_name].displayParameter
+
         if self.displayParameter.active:
             self.displayParameter.refresh(
-                self.gui.configManager.getParamDataFrame(self.recipe_name))
+                self.gui.configManager.getParamDataFrame(self.recipe_name, self.param_name))
 
-    def nbptsChanged(self) :
-        """ This function changes the number of point of the scan """
+    def nbptsChanged(self):
+        """ Changes the number of points of the parameter """
         value = self.nbpts_lineEdit.text()
 
         try:
             value = int(float(value))
             assert value > 0
-            self.gui.configManager.setNbPts(self.recipe_name, value)
+
+            self.gui.configManager.setNbPts(self.recipe_name, self.param_name, value)
             self.point_or_step = "point"
         except:
             self.refresh()
 
-
     def stepChanged(self):
-        """ This function changes the step size of the scan """
+        """ Changes the step size of the parameter """
         value = self.step_lineEdit.text()
 
         try:
@@ -137,89 +215,87 @@ class RangeManager:
             value = float(value)
             assert value > 0
 
-            self.gui.configManager.setStep(self.recipe_name, value)
+            self.gui.configManager.setStep(self.recipe_name, self.param_name, value)
 
             self.point_or_step = "step"
         except:
             self.refresh()
 
-
     def startChanged(self):
-        """ This function changes the start value of the scan """
+        """ Changes the start value of the parameter """
         value = self.start_lineEdit.text()
 
         try:
-            value=float(value)
-            log: bool = self.gui.configManager.getLog(self.recipe_name)
+            value = float(value)
+            log: bool = self.gui.configManager.getLog(self.recipe_name, self.param_name)
             if log: assert value > 0
 
-            xrange = list(self.gui.configManager.getRange(self.recipe_name))
+            xrange = list(self.gui.configManager.getRange(self.recipe_name, self.param_name))
             xrange[0] = value
-            self.gui.configManager.setRange(self.recipe_name, xrange)
+
+            self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange)
         except:
             self.refresh()
 
-
-    def endChanged(self) :
-        """ This function changes the end value of the scan """
+    def endChanged(self):
+        """ Changes the end value of the parameter """
         value = self.end_lineEdit.text()
 
         try:
             value = float(value)
-            log:bool = self.gui.configManager.getLog(self.recipe_name)
+            log:bool = self.gui.configManager.getLog(self.recipe_name, self.param_name)
             if log: assert value > 0
-            xrange = list(self.gui.configManager.getRange(self.recipe_name))
+            xrange = list(self.gui.configManager.getRange(self.recipe_name, self.param_name))
             xrange[1] = value
-            self.gui.configManager.setRange(self.recipe_name, xrange)
+
+            self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange)
         except :
             self.refresh()
 
-
     def meanChanged(self):
-        """ This function changes the mean value of the scan """
+        """ Changes the mean value of the parameter """
         value = self.mean_lineEdit.text()
 
         try:
             value = float(value)
-            log: bool = self.gui.configManager.getLog(self.recipe_name)
+            log: bool = self.gui.configManager.getLog(self.recipe_name, self.param_name)
             if log: assert value > 0
-            xrange = list(self.gui.configManager.getRange(self.recipe_name))
+            xrange = list(self.gui.configManager.getRange(self.recipe_name, self.param_name))
             xrange_new = xrange.copy()
             xrange_new[0] = value - (xrange[1] - xrange[0])/2
             xrange_new[1] = value + (xrange[1] - xrange[0])/2
             assert xrange_new[0] > 0
             assert xrange_new[1] > 0
-            self.gui.configManager.setRange(self.recipe_name, xrange_new)
+
+            self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange_new)
         except:
             self.refresh()
 
-
-    def widthChanged(self) :
-        """ This function changes the width of the scan """
+    def widthChanged(self):
+        """ Changes the width of the parameter """
         value = self.width_lineEdit.text()
 
         try:
-            value=float(value)
-            log: bool = self.gui.configManager.getLog(self.recipe_name)
+            value = float(value)
+            log: bool = self.gui.configManager.getLog(self.recipe_name, self.param_name)
             if log: assert value > 0
-            xrange = list(self.gui.configManager.getRange(self.recipe_name))
+            xrange = list(self.gui.configManager.getRange(self.recipe_name, self.param_name))
             xrange_new = xrange.copy()
             xrange_new[0] = (xrange[1]+xrange[0])/2 - value/2
             xrange_new[1] = (xrange[1]+xrange[0])/2 + value/2
             assert xrange_new[0] > 0
             assert xrange_new[1] > 0
-            self.gui.configManager.setRange(self.recipe_name, xrange_new)
+
+            self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange_new)
         except:
             self.refresh()
 
-
     def scanLogChanged(self):
-        """ This function changes the log state of the scan """
+        """ Changes the log state of the parameter """
         state: bool = self.scanLog_checkBox.isChecked()
-
         if state:
             self.point_or_step = "point"
-            xrange = list(self.gui.configManager.getRange(self.recipe_name))
+            xrange = list(self.gui.configManager.getRange(self.recipe_name, self.param_name))
             change = False
 
             if xrange[1] <= 0:
@@ -230,6 +306,6 @@ class RangeManager:
                 xrange[0] = 10**(m.log10(xrange[1]) - 1)
                 change = True
 
-            if change: self.gui.configManager.setRange(self.recipe_name, xrange)
+            if change: self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange)
 
-        self.gui.configManager.setLog(self.recipe_name, state)
+        self.gui.configManager.setLog(self.recipe_name, self.param_name, state)

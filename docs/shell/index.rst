@@ -1,7 +1,7 @@
 .. _shell_scripts:
 
 OS shell
-=========
+========
 
 Most of the Autolab functions can also be used directly from a **Windows** or **Linux** terminal without opening explicitely a Python shell.
 

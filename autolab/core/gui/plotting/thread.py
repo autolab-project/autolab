@@ -148,7 +148,7 @@ class InteractionThread(QtCore.QThread):
                                               device_config['connection'],
                                               **driver_kwargs)
                 module = devices.Device(plugin_name,instance)
-                self.item.gui.threadModuleDict[id(self.item)] = module
+                self.item.gui.threadDeviceDict[id(self.item)] = module
         except Exception as e:
             error = e
             if self.intType == 'load' :

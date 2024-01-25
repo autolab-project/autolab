@@ -5,10 +5,10 @@ Created on Sun Sep 29 18:12:24 2019
 @author: qchat
 """
 
-
 import os
 
 import numpy as np
+import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.exporters
 from pyqtgraph.Qt import QtWidgets
@@ -17,10 +17,10 @@ from .display import DisplayValues
 from ... import utilities
 
 
-class FigureManager :
+class FigureManager:
     """ Manage the figure of the scanner """
 
-    def __init__(self, gui):
+    def __init__(self, gui: QtWidgets.QMainWindow):
 
         self.gui = gui
         self.curves = []
@@ -32,20 +32,20 @@ class FigureManager :
         self.gui.graph.addWidget(self.figMap)
         self.figMap.hide()
 
-        for axe in ['x','y'] :
+        for axe in ['x', 'y']:
             getattr(self.gui,f'variable_{axe}_comboBox').activated.connect(self.variableChanged)
 
         # Number of traces
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
-        self.gui.nbTraces_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
-        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
+        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
+        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced')
 
         # Window to show scan data
         self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)
         self.gui.displayScanData_pushButton.setEnabled(False)
-        self.displayScan = DisplayValues(self.gui, "Scan", size=(500,300))
+        self.displayScan = DisplayValues(self.gui, "Scan", size=(500, 300))
 
         # comboBox with scan id
         self.gui.data_comboBox.activated.connect(self.data_comboBoxClicked)
@@ -73,7 +73,7 @@ class FigureManager :
         self.menuActionList = list()
         self.nbCheckBoxMenuID = 0
 
-    def addCheckBox2MenuID(self, name_ID):
+    def addCheckBox2MenuID(self, name_ID: int):
         self.menuBoolList.append(True)
         checkBox = QtWidgets.QCheckBox(self.gui)
         checkBox.setChecked(True)  # Warning: trigger stateChanged (which do reloadData)
@@ -92,7 +92,7 @@ class FigureManager :
         self.gui.toolButton.menu().removeAction(self.menuActionList.pop(-1))
         self.nbCheckBoxMenuID -= 1  # edit: not true anymore because display only one scan <- will cause "Error encountered for scan id 1: list index out of range" if do scan with n points and due a new scan with n-m points
 
-    def checkBoxChanged(self, checkBox, state):
+    def checkBoxChanged(self, checkBox: QtWidgets.QCheckBox, state: bool):
         index = self.menuWidgetList.index(checkBox)
         self.menuBoolList[index] = bool(state)
         if self.gui.dataframe_comboBox.currentText() != "Scan":
@@ -101,10 +101,9 @@ class FigureManager :
     def data_comboBoxClicked(self):
         """ This function select a dataset """
         if len(self.gui.dataManager.datasets) != 0:
-            if self.gui.dataframe_comboBox.currentText() != "Scan":
-                self.resetCheckBoxMenuID()
-                self.updateDataframe_comboBox()
-                self.dataframe_comboBoxCurrentChanged()
+            self.resetCheckBoxMenuID()
+            self.updateDataframe_comboBox()
+            self.dataframe_comboBoxCurrentChanged()
 
             self.reloadData()
             self.gui.displayScanData_pushButton.setEnabled(True)
@@ -119,6 +118,7 @@ class FigureManager :
         self.dataframe_comboBoxCurrentChanged()
 
     def dataframe_comboBoxCurrentChanged(self):
+
         if self.gui.scan_recipe_comboBox.count() != 1:
             self.resetCheckBoxMenuID()
             self.updateDataframe_comboBox()
@@ -134,13 +134,8 @@ class FigureManager :
            self.gui.toolButton.show()
 
     def updateDataframe_comboBox(self):
-        # Executed each time the queue is read
-        data_name = self.gui.dataframe_comboBox.currentText()
-        if data_name == "Scan":
-            self.reloadLastData()
-        else:
-            self.reloadData()
 
+        # Executed each time the queue is read
         index = self.gui.dataframe_comboBox.currentIndex()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
         dataset = self.gui.dataManager.getLastSelectedDataset()
@@ -151,13 +146,15 @@ class FigureManager :
             i for i in sub_dataset.dictListDataFrame.keys() if type(
                 sub_dataset.dictListDataFrame[i][0]) != str]  # OPTIMIZE: remove this condition if want to plot string
 
+        self.gui.dataframe_comboBox.clear()
+        self.gui.dataframe_comboBox.addItems(resultNamesList)
+        if (index + 1) > len(resultNamesList): index = 0
+        self.gui.dataframe_comboBox.setCurrentIndex(index)
+
         if len(resultNamesList) == 1:
             self.gui.dataframe_comboBox.hide()
         else:
             self.gui.dataframe_comboBox.show()
-            self.gui.dataframe_comboBox.clear()
-            self.gui.dataframe_comboBox.addItems(resultNamesList)
-            self.gui.dataframe_comboBox.setCurrentIndex(index)
 
     def resetCheckBoxMenuID(self):
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
@@ -167,14 +164,13 @@ class FigureManager :
         if len(listDataFrame) != 0:
             nb_id = 0
             for dataframe in listDataFrame:
-                if len(dataframe) > nb_id:
+                if len(dataframe) > nb_id:  # OPTIMIZE: should not be the same for all the dataframe of a recipe because length can be different (recipe in recipe gives different size)
                     nb_id = len(dataframe)
 
             self.clearMenuID()
 
             for i in range(1, nb_id+1):
                 self.addCheckBox2MenuID(i)
-
 
     # AXE LABEL
     ###########################################################################
@@ -185,18 +181,17 @@ class FigureManager :
         if value == '': value = ' '
         self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
 
-
     # PLOT DATA
     ###########################################################################
 
     def clearData(self):
         """ This function removes any plotted curves """
         for curve in self.curves:
-            self.ax.removeItem(curve)
+            try: self.ax.removeItem(curve)  # try because curve=None if close before end of scan
+            except: pass
         self.curves = []
 
-
-    def reloadData(self) -> None:
+    def reloadData(self):
         ''' This function removes any plotted curves and reload all required curves from
         data available in the data manager'''
         # Remove all curves
@@ -225,7 +220,7 @@ class FigureManager :
             self.gui.graph_nbTracesLabel.hide()
         # Load the last results data
         try:
-            data = self.gui.dataManager.getData(
+            data: pd.DataFrame = self.gui.dataManager.getData(
                 nbtraces_temp, [variable_x, variable_y],
                 selectedData=selectedData, data_name=data_name)
         except:
@@ -243,9 +238,9 @@ class FigureManager :
 
             if len(data) != 0 and type(data[0]) is np.ndarray:  # to avoid errors
                 image_data = np.empty((len(data), *temp_data.shape))
-            for i in range(len(data)) :
+            for i in range(len(data)):
                 # Data
-                subdata = data[i]
+                subdata: pd.DataFrame = data[i]
 
                 if subdata is None:
                     continue
@@ -275,13 +270,18 @@ class FigureManager :
                     self.fig.show()
                     x = subdata.loc[:,variable_x]
                     y = subdata.loc[:,variable_y]
+                    if isinstance(x, pd.DataFrame):
+                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_x}!")
+                    if isinstance(y, pd.DataFrame):
+                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_y}!")
+                        y = y.iloc[:, 0]
 
-                    if i == (len(data)-1) :
+                    if i == (len(data) - 1):
                         color = 'r'
                         alpha = 1
                     else:
                         color = 'k'
-                        alpha = (true_nbtraces-(len(data)-1-i))/true_nbtraces
+                        alpha = (true_nbtraces - (len(data) - 1 - i)) / true_nbtraces
 
                     # Plot
                     curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
@@ -291,39 +291,20 @@ class FigureManager :
             self.gui.dataframe_comboBox.setEnabled(True)
             self.gui.scan_recipe_comboBox.setEnabled(True)
 
-    def reloadLastData(self):
-        ''' This functions update the data of the last curve
-        Only for scan plot '''
-        # Get current displayed result
-        variable_x = self.gui.variable_x_comboBox.currentText()
-        variable_y = self.gui.variable_y_comboBox.currentText()
+            self.gui.displayScanData_pushButton.setEnabled(True)
+            if self.displayScan.active:
+                dataset = self.gui.dataManager.getLastSelectedDataset()
+                recipe_name = self.gui.scan_recipe_comboBox.currentText()
+                sub_dataset = dataset[recipe_name]
+                self.displayScan.refresh(sub_dataset.data)
 
-        data = self.gui.dataManager.getData(1, [variable_x, variable_y])[0]
-
-        # Update plot data
-        if data is not None:
-            data = data.astype(float)
-
-            self.curves[-1].setData(data.loc[:, variable_x], data.loc[:, variable_y])
-
-        self.gui.displayScanData_pushButton.setEnabled(True)
-        if self.displayScan.active:
-            dataset = self.gui.dataManager.getLastSelectedDataset()
-            recipe_name = self.gui.scan_recipe_comboBox.currentText()
-            sub_dataset = dataset[recipe_name]
-            self.displayScan.refresh(sub_dataset.data)
-
-        self.gui.dataframe_comboBox.setEnabled(True)
-        self.gui.scan_recipe_comboBox.setEnabled(True)
-
-    def variableChanged(self,index):
+    def variableChanged(self, index):
         """ This function is called when the displayed result has been changed
         in the combo box. It proceeds to the change. """
         if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1:
             self.reloadData()
         else:
             self.clearData()
-
 
     # TRACES
     ###########################################################################
@@ -347,7 +328,6 @@ class FigureManager :
         if check is True and self.gui.variable_y_comboBox.currentIndex() != -1:
             self.reloadData()
 
-
     # Show data
     ###########################################################################
 
@@ -359,11 +339,10 @@ class FigureManager :
 
         self.displayScan.show()
 
-
     # SAVE FIGURE
     ###########################################################################
 
-    def save(self, filename):
+    def save(self, filename: str):
         """ This function save the figure with the provided filename """
         raw_name, extension = os.path.splitext(filename)
         new_filename = raw_name + ".png"

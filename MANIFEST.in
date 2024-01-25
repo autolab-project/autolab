@@ -1,1 +1,2 @@
 include autolab/autolab.pdf
+recursive-include autolab/core/gui/icons *

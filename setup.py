@@ -19,6 +19,7 @@ setup(
     name = 'autolab',
     version = version,  # Ideally should be same as your GitHub release tag varsion
     author = 'Quentin Chateiller & Bruno Garbin & Jonathan Peltier, C2N-CNRS',
+    license = "GPL-3.0 license",
     description = 'Python package for scientific experiments interfacing and automation',
     long_description = long_description,
     long_description_content_type="text/markdown",
@@ -39,6 +40,8 @@ setup(
             'pandas>=0.24',
             'pyvisa>=1.10',
             'python-vxi11>=0.9',
+            'qtpy',
+            'pyqtgraph>=0.13',
             ],
     entry_points={'console_scripts': ['autolab = scripts.autolab:main']},
 	python_requires='>=3.6',
