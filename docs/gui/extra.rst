@@ -14,36 +14,43 @@ The eval function only has access to all instantiated devices and to the pandas 
 
 .. code-block:: none
 
-	>>> # Usefull to have a recipe taking the loop number
+	>>> # Usefull to set the value of a parameter to a step of a recipe
 	>>> $eval:system.parameter_buffer()
 
-	>>> # Useful to define a recipe according to a measured data
+	>>> # Useful to define a step according to a measured data
 	>>> $eval:laser.wavelength()
 
-	>>> # Useful to define the recipe according to an analyzed value
+	>>> # Useful to define a step according to an analyzed value
 	>>> $eval:plotter.bandwitdh.x_left()
 	>>> $eval:np.max(mydummy.array_1D())
 
 	>>> # Usefull to define a filename which changes during an analysis
-	>>> $eval:"data_wavelength="+f"{laser.wavelength()}"+".txt"
+	>>> $eval:f"data_wavelength={laser.wavelength()}.txt"
 
 	>>> # Usefull to add a dataframe to a device variable (for example to add data using the action plotter.data.add_data)
 	>>> $eval:mydummy.array_1D()
 
-It is also useful in a scan to set the frequency of a signal analyzer relative to the frequency of a signal generator. Here is a example of the recipe using ``$eval:`` to do so.
+It can also be useful in a scan for example to set the central frequency of a spectral analyzer according to the frequency of a signal generator. Here is a example to realize this measurement using ``$eval:``.
 
 .. image:: recipe_eval_example.png
 
 
-Adding extra recipes
-####################
+Logger
+######
 
-This feature allows to add multiple recipes to a scan.
-Click on 'Add recipe' at the bottom of the scanner to add a new recipe.
-It is possible to add elements to a recipe by dragging and dropping a variable form the control panel to the corresponding recipe in the scanner.
-A variable from one recipe can be drag and drop to another recipe.
-With this feature, it is possible within one config file to have init and end recipe to start instruments, set all the constant variables before the scan, do a scan, and turn off the instruments.
-It is also possible to sweep one parameter with a specific recipe and another parameter with a different recipe in a single scan.
-It may be possible in the future to execute a recipe inside a recipe to do 2D scan.
+A logger can be added to the control center using the variable ``logger = True`` in the section [control_center] of ``autolab_config.ini``.
+It monitor every print functions coming from autolab GUI or drivers to keep track of bugs/errors.
+It is inside a pyqtgraph docker, allowing to detached it from the control panel and place it somewhere visible.
 
-.. image:: multiple_recipes.png
+Console
+#######
+
+A Python console can be added to the control center using the variable ``console = True`` in the section [control_center] of ``autolab_config.ini``.
+It allows to inspect autolab or drivers while using the GUI for debugging purposes.
+
+Plot from driver
+################
+
+When creating a plot from a driver inside the GUI usualy crashes Python because the created plot isn't connected to the GUI thread.
+To avoid this issue, a driver can put gui=None as an argument and use the command gui.createWidget to ask the GUI to create the widget and send back the instance.
+This solution can be used to create and plot data in a custom widget while using the GUI.

@@ -5,12 +5,13 @@ Created on Sun Sep 29 18:10:31 2019
 @author: qchat
 """
 
-import collections
+from collections import OrderedDict
 from queue import Queue
 import os
 import shutil
 import tempfile
 import sys
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -24,10 +25,10 @@ from ... import utilities
 class DataManager:
     """ Manage data from a scan """
 
-    def __init__(self, gui):
+    def __init__(self, gui: QtWidgets.QMainWindow):
 
         self.gui = gui
-        self.datasets = []
+        self.datasets = list()
         self.queue = Queue()
         self.initialized = False
 
@@ -54,8 +55,7 @@ class DataManager:
 
         for i in range(selectedData, nbDataset+selectedData):
             if i < len(self.datasets):
-                dataset = self.datasets[-(i+1)]
-                dataset = dataset[recipe_name]
+                dataset = self.datasets[-(i+1)][recipe_name]
 
                 if data_name == "Scan":
                     try:
@@ -92,36 +92,38 @@ class DataManager:
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             self.gui,  caption="Save data",
             directory=paths.USER_LAST_CUSTOM_FOLDER,
-            filter="Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)")
+            filter=utilities.SUPPORTED_EXTENSION)
         path = os.path.dirname(filename)
 
         if path != '':
             paths.USER_LAST_CUSTOM_FOLDER = path
             self.gui.setStatus('Saving data...', 5000)
-            dataset = self.getLastSelectedDataset()
+            datasets = self.getLastSelectedDataset()
 
-            for sub_dataset_name in dataset.keys():
-                sub_dataset = dataset[sub_dataset_name]
+            for dataset_name in datasets.keys():
+                dataset = datasets[dataset_name]
 
-                if len(dataset) == 1:
+                if len(datasets) == 1:
                     filename_recipe = filename
                 else:
                     dataset_folder, extension = os.path.splitext(filename)
-                    filename_recipe = f'{dataset_folder}_{sub_dataset_name}{extension}'
-                sub_dataset.save(filename_recipe)
+                    filename_recipe = f'{dataset_folder}_{dataset_name}{extension}'
+                dataset.save(filename_recipe)
 
             scanner_config = autolab_config.get_scanner_config()
             save_config = utilities.boolean(scanner_config["save_config"])
 
             if save_config:
                 dataset_folder, extension = os.path.splitext(filename)
-                new_configname = dataset_folder+".conf"
-                config_name = os.path.join(os.path.dirname(sub_dataset.tempFolderPath), 'config.conf')
+                new_configname = dataset_folder + ".conf"
+                config_name = os.path.join(os.path.dirname(dataset.tempFolderPath), 'config.conf')
 
                 if os.path.exists(config_name):
                     shutil.copy(config_name, new_configname)
                 else:
-                    self.gui.configManager.export(new_configname)
+                    if datasets is not self.getLastDataset():
+                        print("Warning: Can't find config for this dataset, save lastest config instead", file=sys.stderr)
+                    self.gui.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
 
             if utilities.boolean(scanner_config["save_figure"]):
                 self.gui.figureManager.save(filename)
@@ -130,7 +132,7 @@ class DataManager:
 
     def clear(self):
         """ This reset any recorded data, and the GUI accordingly """
-        self.datasets = []
+        self.datasets = list()
         self.initialized = False
         self.gui.figureManager.clearData()
         self.gui.figureManager.clearMenuID()
@@ -155,54 +157,83 @@ class DataManager:
         self.gui.scan_recipe_comboBox.setCurrentIndex(0)
         self.gui.scan_recipe_comboBox.setEnabled(False)
 
-    def getLastDataset(self):
-        """ This return the current (last created) dataset """
+    def getLastDataset(self) -> dict:
+        """ This return the last created dataset """
         return self.datasets[-1] if len(self.datasets) > 0 else None
 
-    def getLastSelectedDataset(self) -> list:
-        """ This return the current (last selected) dataset """
+    def getLastSelectedDataset(self) -> List[dict]:
+        """ This return the last selected dataset """
         return self.datasets[self.gui.data_comboBox.currentIndex()]
 
     def newDataset(self, config: dict):
         """ This function creates and returns a new empty dataset """
         maximum = 0
-        dataset_recipes = {}
+        datasets = dict()
 
         if self.save_temp:
             temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
             tempFolderPath = tempfile.mkdtemp(dir=temp_folder) # Creates a temporary directory for this dataset
-            self.gui.configManager.export(os.path.join(tempFolderPath,'config.conf'))
+            self.gui.configManager.export(os.path.join(tempFolderPath, 'config.conf'))
         else:
             import random
             tempFolderPath = str(random.random())
 
         for recipe_name in list(config.keys()):
-            sub_config = config[recipe_name]
-            sub_folder = os.path.join(tempFolderPath, recipe_name)
-            if self.save_temp: os.mkdir(sub_folder)
-            dataset = Dataset(sub_folder, recipe_name,
-                              sub_config, save_temp=self.save_temp)
-            dataset_recipes[recipe_name] = dataset
-            maximum += sub_config['nbpts']
+            recipe = config[recipe_name]
 
-        self.datasets.append(dataset_recipes)
+            if recipe['active']:
+                sub_folder = os.path.join(tempFolderPath, recipe_name)
+                if self.save_temp: os.mkdir(sub_folder)
+
+                dataset = Dataset(sub_folder, recipe_name,
+                                  config, save_temp=self.save_temp)
+                datasets[recipe_name] = dataset
+
+                # bellow just to know maximum point
+                nbpts = 1
+                for nbpts_i in [parameter['nbpts'] for parameter in recipe['parameter']]: nbpts *= nbpts_i
+
+                maximum += nbpts
+
+                list_recipe_nbpts_new = [[recipe, nbpts]]
+                has_sub_recipe = True
+
+                while has_sub_recipe:
+                    has_sub_recipe = False
+                    recipe_nbpts_list = list_recipe_nbpts_new
+
+                    for recipe_nbpts in recipe_nbpts_list:
+                        recipe_i, nbpts = recipe_nbpts
+
+                        for step in recipe_i['recipe']:
+                            if step['stepType'] == "recipe":
+                                has_sub_recipe = True
+                                other_recipe = config[step['element']]
+                                other_nbpts = 1
+                                for other_nbpts_i in [parameter['nbpts'] for parameter in other_recipe['parameter']]: other_nbpts *= other_nbpts_i
+                                sub_nbpts = nbpts * other_nbpts
+                                maximum += sub_nbpts
+                                list_recipe_nbpts_new.append([other_recipe, sub_nbpts])
+
+                        list_recipe_nbpts_new.remove(recipe_nbpts)
+
+        self.datasets.append(datasets)
         self.gui.progressBar.setMaximum(maximum)
-        return dataset
 
     def sync(self):
         """ This function sync the last dataset with the data available in the queue """
         # Empty the queue
         count = 0
-        dataset = self.getLastDataset()
+        datasets = self.getLastDataset()
         lenQueue = self.queue.qsize()
 
         for i in range(lenQueue):
-            try : point = self.queue.get()  # point is collections.OrderedDict{'recipe_name':recipe_name, 'parameter_name':parameter_value, 'step1_name':step1_value, 'step2_name':step2_value, ...}
-            except : break
+            try: point = self.queue.get()  # point is collections.OrderedDict{0:recipe_name, 'parameter_name':parameter_value, 'step1_name':step1_value, 'step2_name':step2_value, ...}
+            except: break
 
             recipe_name = list(point.values())[0]
-            sub_dataset = dataset[recipe_name]
-            sub_dataset.addPoint(point)
+            dataset = datasets[recipe_name]
+            dataset.addPoint(point)
             count += 1
 
         # Upload the plot if new data available
@@ -210,17 +241,13 @@ class DataManager:
             # Update progress bar
             progress = 0
 
-            for sub_dataset_name in dataset.keys():
-                if recipe_name == sub_dataset_name:
-                    progress += len(dataset[sub_dataset_name])
-                    break
-                else:
-                    progress += dataset[sub_dataset_name].config["nbpts"]
+            for dataset_name in self.gui.configManager.getRecipeActive():
+                progress += len(datasets[dataset_name])
 
             self.gui.progressBar.setValue(progress)
 
             # Update dataframe combobox and checkbox
-            listDataFrame = list(sub_dataset.dictListDataFrame.values())
+            listDataFrame = list(dataset.dictListDataFrame.values())
             if len(listDataFrame) != 0:
                 nb_id = 0
                 for dataframe in listDataFrame:
@@ -228,7 +255,8 @@ class DataManager:
                         nb_id = len(dataframe)
 
                 # not-oPTIMIZE: edit: not necessary if show only one scan <- values will not correspond to previous scan if start a new scan with a different range parameter
-                nb_total =  sub_dataset.config["nbpts"]
+                nb_total = 1
+                for nbpts_i in [parameter['nbpts'] for parameter in self.gui.configManager.parameterList(recipe_name)]: nb_total *= nbpts_i
 
                 while self.gui.figureManager.nbCheckBoxMenuID > nb_total:
                     self.gui.figureManager.removeLastCheckBox2MenuID()
@@ -254,25 +282,24 @@ class DataManager:
                 self.initialized = True
 
             # Executed after any dataset newly created and fed
-            if sub_dataset.new:
-                self.gui.figureManager.reloadData()
-                sub_dataset.new = False
+            if dataset.new:  # OBSOLETE: was used to add only new point to plot instead of resending everything. Removed it with the introdution of dataframe plot
+                # self.gui.figureManager.reloadData()
+                dataset.new = False
 
-            self.gui.figureManager.updateDataframe_comboBox()
+            self.gui.figureManager.data_comboBoxClicked()
 
     def updateDisplayableResults(self):
         """ This function update the combobox in the GUI that displays the names of
         the results that can be plotted """
         data_name = self.gui.dataframe_comboBox.currentText()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        dataset = self.getLastSelectedDataset()
-        sub_dataset = dataset[recipe_name]
+        dataset = self.getLastSelectedDataset()[recipe_name]
 
         if data_name == "Scan":
-            data = sub_dataset.data
+            data = dataset.data
         else:
-            if sub_dataset.dictListDataFrame.get(data_name) is not None:
-                for data in sub_dataset.dictListDataFrame[data_name]:  # used only to get columns name
+            if dataset.dictListDataFrame.get(data_name) is not None:
+                for data in dataset.dictListDataFrame[data_name]:  # used only to get columns name
                     if data is not None:
                         break
             else:
@@ -290,10 +317,18 @@ class DataManager:
         for resultName in data.columns:
             if resultName not in ['id']:
                 try:
-                    float(data.iloc[0][resultName])
+                    point = data.iloc[0][resultName]
+                    if isinstance(point, pd.Series):
+                        print(f"Warning: At least two variables have the same name. Data acquisition is incorrect for {resultName}!", file=sys.stderr)
+                        float(point[0])
+                    else:
+                        float(point)
                     resultNamesList.append(resultName)
                 except:
                     pass
+
+        variable_x_index = self.gui.variable_x_comboBox.currentIndex()
+        variable_y_index = self.gui.variable_y_comboBox.currentIndex()
 
         self.gui.variable_x_comboBox.clear()
         self.gui.variable_x_comboBox.addItems(resultNamesList)  # parameter first
@@ -305,6 +340,10 @@ class DataManager:
         self.gui.variable_y_comboBox.clear()
         self.gui.variable_y_comboBox.addItems(resultNamesList)  # first numerical measure first
 
+        if data_name == "Scan":
+            if variable_x_index != -1: self.gui.variable_x_comboBox.setCurrentIndex(variable_x_index)
+            if variable_y_index != -1: self.gui.variable_y_comboBox.setCurrentIndex(variable_y_index)
+
 
 class Dataset():
     """ Collection of data from a scan """
@@ -313,17 +352,42 @@ class Dataset():
                  save_temp: bool = True):
         self.all_data_temp = list()
         self.recipe_name = recipe_name
-        self.config = config
-        self.header = ["id", self.config['parameter']['name']
-                       ] + [step['name'] for step in self.config['recipe'] if step['stepType'] == 'measure' and step['element'].type in [int, float, bool]]
-        self.data = pd.DataFrame(columns=self.header)
         self.list_array = list()
         self.dictListDataFrame = dict()
         self.tempFolderPath = tempFolderPath
         self.new = True
         self.save_temp = save_temp
 
-    def getData(self, varList: list, data_name: str = "Scan", dataID: int = 0):
+        recipe = config[self.recipe_name]
+        list_recipe = [recipe]
+        list_recipe_new = [recipe]
+        has_sub_recipe = True
+
+        while has_sub_recipe:
+            has_sub_recipe = False
+            recipe_list = list_recipe_new
+
+            for recipe_i in recipe_list:
+                for step in recipe_i['recipe']:
+                    if step['stepType'] == "recipe":
+                        has_sub_recipe = True
+                        other_recipe = config[step['element']]
+                        list_recipe_new.append(other_recipe)
+                        list_recipe.append(other_recipe)
+
+                list_recipe_new.remove(recipe_i)
+
+        list_param = [recipe['parameter'] for recipe in list_recipe]
+        self.list_param = sum(list_param, [])
+
+        list_step = [recipe['recipe'] for recipe in list_recipe]
+        self.list_step = sum(list_step, [])
+
+        self.header = ["id"] + [step['name'] for step in self.list_param] + [step['name'] for step in self.list_step if step['stepType'] == 'measure' and step['element'].type in [int, float, bool]]
+        self.data = pd.DataFrame(columns=self.header)
+
+    def getData(self, varList: list, data_name: str = "Scan",
+                dataID: int = 0) -> pd.DataFrame:
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
         if data_name == "Scan":
@@ -376,26 +440,33 @@ class Dataset():
                             elif type(value) == bytes:
                                 with open(path, 'wb') as f: f.write(value)
                             elif type(value) == np.ndarray:
-                                np.savetxt(path, value)
+                                if 'int' in str(value.dtype):
+                                    np.savetxt(path, value, fmt="%i")  # avoid saving useless zeroes
+                                else: np.savetxt(path, value)
                             elif type(value) == pd.DataFrame:
                                 value.to_csv(path, index=False)
 
 
-    def addPoint(self, dataPoint: collections.OrderedDict):
+    def addPoint(self, dataPoint: OrderedDict):
         """ This function add a data point (parameter value, and results) in the dataset """
         ID = len(self.data) + 1
-        simpledata = collections.OrderedDict()
+        simpledata = OrderedDict()
         simpledata['id'] = ID
 
         for resultName in dataPoint.keys():
             result = dataPoint[resultName]
 
-            if resultName == self.recipe_name:
+            if resultName == 0:  # skip first result which is recipe_name
                 continue
-            elif resultName == self.config['parameter']['name']:
-                element = self.config['parameter']['element']
-            else :
-                element = [step['element'] for step in self.config['recipe'] if step['name']==resultName][0]
+            else:
+                element_list = [step['element'] for step in self.list_param if step['name']==resultName]
+                if len(element_list) != 0:
+                    element = element_list[0]
+                else:
+                    element_list = [step['element'] for step in self.list_step if step['name']==resultName]
+                    if len(element_list) != 0:
+                        element = element_list[0]
+                # should always find element in lists above
 
             # If the result is displayable (numerical), keep it in memory
             if element is None or element.type in [int, float, bool]:
@@ -413,11 +484,8 @@ class Dataset():
                 if folderPath not in self.list_array:
                     self.list_array.append(folderPath)
 
-                resultNameKey = self.dictListDataFrame.get(resultName)
-
-                if resultNameKey is None:
-                     if ID == 1:
-                         self.dictListDataFrame[resultName] = []
+                if self.dictListDataFrame.get(resultName) is None:
+                    self.dictListDataFrame[resultName] = []
 
                 self.dictListDataFrame[resultName].append(result)
 

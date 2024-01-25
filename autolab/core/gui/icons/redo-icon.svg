@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   data-name="Layer 1"
+   height="48"
+   id="Layer_1"
+   viewBox="0 0 48 48"
+   width="48"
+   version="1.1"
+   sodipodi:docname="redo-icon.svg"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="6.4140624"
+     inkscape:cx="-26.504264"
+     inkscape:cy="6.6260659"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
+  <defs
+     id="defs1">
+    <style
+       id="style1">&#10;      .cls-1 {&#10;        fill: none;&#10;      }&#10;    </style>
+  </defs>
+  <path
+     style="color:#000000;fill:#000000;stroke-width:1.74762;-inkscape-stroke:none"
+     d="m 29.770931,12.224895 c -2.684155,0.05982 -5.619946,0.46475 -8.676682,1.443839 C 8.6476576,17.655435 3.5019531,32.285027 3.5019531,32.285027 l 4.0891679,1.529171 c 0,0 5.142005,-12.879028 14.83774,-15.984617 10.483288,-3.357849 19.206801,1.054719 19.206801,1.054719 l 1.976317,-3.894609 c 0,0 -5.788581,-2.944258 -13.841048,-2.764796 z"
+     id="path2" />
+  <path
+     style="color:#000000;fill:#000000;stroke-width:1.74762;-inkscape-stroke:none"
+     d="m 40.77209,7.046875 -3.894609,1.983144 3.877541,7.608309 -8.509427,4.157436 1.914877,3.925327 12.506437,-6.106444 z"
+     id="path3" />
+</svg>

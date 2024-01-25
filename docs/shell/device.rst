@@ -1,7 +1,7 @@
 .. _os_device:
 
 Command device
-===============
+==============
 
 To read, write or save the value of a **Variable**, or to execute an **Action**, use the command ``autolab device`` in your terminal with the following general format:
 
