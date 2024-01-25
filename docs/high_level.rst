@@ -3,8 +3,8 @@
 Devices (High-level interface)
 ==============================
 
-What is a Device ?
-------------------
+What is a Device?
+-----------------
 
 The high-level interface of Autolab is an abstraction layer of its low-level interface, which allows to communicate easily and safely with laboratory instruments without knowing the structure of its associated **Driver**.
 
@@ -154,7 +154,7 @@ With all these commands, you can now create your own Python script. Here is an e
 	step = 0.01
 	start = 1550
 	stop = 1560
-	points = int(1+(stop-start)/step)
+	points = int(1 + (stop - start)/step)
 	for wl in np.linspace(start, stop, points):
 
 	    # Set the parameter

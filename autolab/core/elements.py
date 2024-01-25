@@ -100,7 +100,8 @@ class Variable(Element):
         elif self.type == bytes :
             with open(path, 'wb') as f: f.write(value)
         elif self.type == np.ndarray:
-            np.savetxt(path, value)
+            if 'int' in str(value.dtype): np.savetxt(path, value, fmt="%i")  # avoid saving useless zeroes
+            else: np.savetxt(path, value)
         elif self.type == pd.DataFrame:
             value.to_csv(path, index=False)
         else:
