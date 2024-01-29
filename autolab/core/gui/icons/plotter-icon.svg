@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="48"
+   height="48"
+   viewBox="0 0 12.7 12.7"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   sodipodi:docname="plotter-icon.svg"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="11.313709"
+     inkscape:cx="15.821514"
+     inkscape:cy="30.184621"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g2" /><defs
+     id="defs1" /><g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"><g
+       id="g2"
+       transform="matrix(0.26458333,0,0,0.26458333,-148.70816,-48.095303)"><path
+         style="color:#000000;fill:#1f77b4;stroke-width:1.00157481;stroke-dasharray:none"
+         d="m 604.4707,191.89062 c 0,0 -2.39465,3.80402 -5.6289,8.22461 -3.23425,4.4206 -7.36855,9.46538 -10.49219,11.76172 -3.13693,2.30612 -8.88768,4.6304 -13.78125,6.28907 -4.89357,1.65866 -8.94531,2.69921 -8.94531,2.69921 l 0.625,2.4336 c 0,0 4.13667,-1.06247 9.12695,-2.75391 4.99028,-1.69144 10.81978,-3.96434 14.46289,-6.64258 3.6564,-2.688 7.74235,-7.80672 11.0332,-12.30468 3.29085,-4.49797 5.72657,-8.36719 5.72657,-8.36719 z"
+         id="path4" /><path
+         style="color:#000000;fill:#000000;stroke-width:1.00157481;stroke-dasharray:none"
+         d="m 564.67969,188.84766 v 34.48632 l 41.27148,0.18164 0.0117,-2.51367 -38.76953,-0.16992 v -31.98437 z"
+         id="path5" /></g></g><style
+     id="style1">&#10;    image {&#10;        image-rendering: crisp-edges;&#10;        image-rendering: -moz-crisp-edges;&#10;        image-rendering: pixelated;&#10;    }&#10;</style></svg>
