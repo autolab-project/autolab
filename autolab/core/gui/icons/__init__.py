@@ -11,6 +11,7 @@ icons_folder = os.path.dirname(__file__)
 
 ACTION_ICON_NAME = os.path.join(icons_folder, 'action-icon.svg').replace("\\", "/")
 ADD_ICON_NAME = os.path.join(icons_folder, 'add-icon.svg').replace("\\", "/")
+AUTOLAB_ICON_NAME = os.path.join(icons_folder, 'autolab-icon.svg').replace("\\", "/")
 CONFIG_ICON_NAME = os.path.join(icons_folder, 'config-icon.svg').replace("\\", "/")
 DISCONNECT_ICON_NAME = os.path.join(icons_folder, 'disconnect-icon.svg').replace("\\", "/")
 DOWN_ICON_NAME = os.path.join(icons_folder, 'down-icon.svg').replace("\\", "/")
@@ -23,12 +24,14 @@ MEASURE_ICON_NAME = os.path.join(icons_folder, 'measure-icon.svg').replace("\\",
 MONITOR_ICON_NAME = os.path.join(icons_folder, 'monitor-icon.svg').replace("\\", "/")
 PARAMETER_ICON_NAME = os.path.join(icons_folder, 'parameter-icon.svg').replace("\\", "/")
 PDF_ICON_NAME = os.path.join(icons_folder, 'pdf-icon.svg').replace("\\", "/")
+PLOTTER_ICON_NAME = os.path.join(icons_folder, 'plotter-icon.svg').replace("\\", "/")
 READ_SAVE_ICON_NAME = os.path.join(icons_folder, 'read-save-icon.svg').replace("\\", "/")
 READTHEDOCS_ICON_NAME = os.path.join(icons_folder, 'readthedocs-icon.svg').replace("\\", "/")
 RECIPE_ICON_NAME = os.path.join(icons_folder, 'recipe-icon.svg').replace("\\", "/")
 REDO_ICON_NAME = os.path.join(icons_folder, 'redo-icon.svg').replace("\\", "/")
 REMOVE_ICON_NAME = os.path.join(icons_folder, 'remove-icon.svg').replace("\\", "/")
 RENAME_ICON_NAME = os.path.join(icons_folder, 'rename-icon.svg').replace("\\", "/")
+SCANNER_ICON_NAME = os.path.join(icons_folder, 'scanner-icon.svg').replace("\\", "/")
 SLIDER_ICON_NAME = os.path.join(icons_folder, 'slider-icon.svg').replace("\\", "/")
 UNDO_ICON_NAME = os.path.join(icons_folder, 'undo-icon.svg').replace("\\", "/")
 UP_ICON_NAME = os.path.join(icons_folder, 'up-icon.svg').replace("\\", "/")
@@ -37,6 +40,7 @@ WRITE_ICON_NAME = os.path.join(icons_folder, 'write-icon.svg').replace("\\", "/"
 
 icons = {'action': ACTION_ICON_NAME,
          'add': ADD_ICON_NAME,
+         'autolab': AUTOLAB_ICON_NAME,
          'config': CONFIG_ICON_NAME,
          'disconnect': DISCONNECT_ICON_NAME,
          'down': DOWN_ICON_NAME,
@@ -48,6 +52,7 @@ icons = {'action': ACTION_ICON_NAME,
          'measure': MEASURE_ICON_NAME,
          'monitor': MONITOR_ICON_NAME,
          'parameter': PARAMETER_ICON_NAME,
+         'plotter': PLOTTER_ICON_NAME,
          'pdf': PDF_ICON_NAME,
          'read-save': READ_SAVE_ICON_NAME,
          'readthedocs': READTHEDOCS_ICON_NAME,
@@ -55,6 +60,7 @@ icons = {'action': ACTION_ICON_NAME,
          'redo': REDO_ICON_NAME,
          'remove': REMOVE_ICON_NAME,
          'rename': RENAME_ICON_NAME,
+         'scanner': SCANNER_ICON_NAME,
          'slider': SLIDER_ICON_NAME,
          'undo': UNDO_ICON_NAME,
          'up': UP_ICON_NAME,

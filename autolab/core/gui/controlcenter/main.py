@@ -71,6 +71,8 @@ class ControlCenter(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
 
+        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
+
         # Import Autolab config
         control_center_config = config.get_control_center_config()
         logger_active = utilities.boolean(control_center_config['logger'])
@@ -107,7 +109,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             import pandas as pd
             import autolab  # OPTIMIZE: not good to import autolab?
             namespace = {'np': np, 'pd': pd, 'autolab': autolab}
-            text = """ Packages imported: autolab, np, pd. """
+            text = """ Packages imported: autolab, numpy as np, pandas as pd. """
             area_2 = DockArea(self)
             self.splitter.addWidget(area_2)
 
