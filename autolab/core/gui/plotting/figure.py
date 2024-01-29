@@ -12,9 +12,9 @@ import pyqtgraph.exporters
 from ... import utilities
 
 
-class FigureManager :
+class FigureManager:
 
-    def __init__(self,gui):
+    def __init__(self, gui):
 
         self.gui = gui
         self.curves = []
@@ -26,60 +26,39 @@ class FigureManager :
         # Number of traces
         self.nbtraces = 10
 
-    def start(self, new_dataset) :
+    def start(self, new_dataset=None):
         """ This function display data and ajust buttons """
-        try :
-            names = self.gui.dataManager.getDatasetsNames()
+        try:
+            resultNamesList = [dataset.name for dataset in self.gui.dataManager.datasets]
+            AllItems = [self.gui.data_comboBox.itemText(i) for i in range(self.gui.data_comboBox.count())]
 
-            if self.gui.overwriteDataButton.isChecked() and new_dataset.name in names:
-                dataSet_id = names.index(new_dataset.name)+1
-                current_dataset = self.gui.dataManager.datasets[dataSet_id-1]
+            index = self.gui.data_comboBox.currentIndex()
 
-                if new_dataset.data.equals(current_dataset.data):
-                    data_name = self.gui.data_comboBox.currentText()
-                    if new_dataset.name == data_name:
-                        self.gui.setStatus(f'Data {new_dataset.name} already plotted !',5000)
-                        return
-                    else:
-                        self.gui.data_comboBox.setCurrentIndex(dataSet_id-1)
-                        self.gui.dataManager.updateDisplayableResults()
+            if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+                self.gui.data_comboBox.clear()
+                self.gui.data_comboBox.addItems(resultNamesList)  # slow (0.25s)
 
-                        self.gui.save_pushButton.setEnabled(True)
-
-                        self.gui.clear_pushButton.setEnabled(True)
-                        self.gui.clear_all_pushButton.setEnabled(True)
-                        self.gui.openButton.setEnabled(True)
-
-                        self.gui.setStatus(f'Data {new_dataset.name} updated !',5000)
-                        return
-                else:
-                    current_dataset.update(new_dataset)
-
+            if new_dataset is None:
+                if (index + 1) > len(resultNamesList) or index == -1: index = 0
+                self.gui.data_comboBox.setCurrentIndex(index)
             else:
-                # Prepare a new dataset in the plotter
-                self.gui.dataManager.addDataset(new_dataset)
-                dataSet_id = len(self.gui.dataManager.datasets)
-                # put dataset id onto the combobox and associate data to it
-                self.gui.data_comboBox.addItem(str(new_dataset.name))
-                # dataset = self.gui.dataManager.getLastDataset()
+                index = self.gui.data_comboBox.findText(new_dataset.name)
+                self.gui.data_comboBox.setCurrentIndex(index)
 
-            self.gui.data_comboBox.setCurrentIndex(dataSet_id-1)  # trigger the currentIndexChanged event but don't trigger activated
-
-            # dataset.update(new_dataset)
+            data_name = self.gui.data_comboBox.currentText() # trigger the currentIndexChanged event but don't trigger activated
 
             self.gui.dataManager.updateDisplayableResults()
 
             self.gui.save_pushButton.setEnabled(True)
-
             self.gui.clear_pushButton.setEnabled(True)
             self.gui.clear_all_pushButton.setEnabled(True)
             self.gui.openButton.setEnabled(True)
 
-            self.gui.setStatus(f'Data {new_dataset.name} plotted !',5000)
+            self.gui.setStatus(f'Data {data_name} plotted!', 5000)
 
-        except Exception as e :
-            self.gui.setStatus(f'ERROR The data cannot be plotted with the given dataset : {str(e)}',10000, False)
-
+        except Exception as e:
+            self.gui.setStatus(f'ERROR The data cannot be plotted with the given dataset: {str(e)}',
+                               10000, False)
 
     # AXE LABEL
     ###########################################################################
@@ -163,7 +142,7 @@ class FigureManager :
                             curve = self.ax.plot(x, y, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine))
                             curve.setAlpha(alpha, False)
                         else:
-                            curve = self.ax.plot(x, y, symbol='+', symbolPen=color, symbolSize=10, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine), symbolBrush=color)
+                            curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine), symbolBrush=color)
                             curve.setAlpha(alpha, False)
                     self.curves.append(curve)
 

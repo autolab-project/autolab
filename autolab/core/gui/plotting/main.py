@@ -17,6 +17,7 @@ from .figure import FigureManager
 from .data import DataManager
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
+from ..icons import icons
 from ... import devices
 from ... import config
 
@@ -68,6 +69,7 @@ class Plotter(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
         uic.loadUi(ui_path,self)
         self.setWindowTitle("AUTOLAB Plotter")
+        self.setWindowIcon(QtGui.QIcon(icons['plotter']))
 
         # Loading of the different centers
         self.figureManager = FigureManager(self)

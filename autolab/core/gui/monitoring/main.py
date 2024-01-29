@@ -8,11 +8,12 @@ import os
 import sys
 import queue
 
-from qtpy import QtCore, QtWidgets, uic
+from qtpy import QtCore, QtWidgets, uic, QtGui
 
 from .data import DataManager
 from .figure import FigureManager
 from .monitor import MonitorManager
+from ..icons import icons
 from ... import paths
 from ...utilities import SUPPORTED_EXTENSION
 
@@ -29,7 +30,7 @@ class Monitor(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
         self.setWindowTitle(f"AUTOLAB Monitor : Variable {self.variable.name}")
-
+        self.setWindowIcon(QtGui.QIcon(icons['monitor']))
         # Queue
         self.queue = queue.Queue()
         self.timer = QtCore.QTimer(self)

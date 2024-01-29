@@ -146,10 +146,13 @@ class FigureManager:
             i for i in sub_dataset.dictListDataFrame.keys() if type(
                 sub_dataset.dictListDataFrame[i][0]) != str]  # OPTIMIZE: remove this condition if want to plot string
 
-        self.gui.dataframe_comboBox.clear()
-        self.gui.dataframe_comboBox.addItems(resultNamesList)
-        if (index + 1) > len(resultNamesList): index = 0
-        self.gui.dataframe_comboBox.setCurrentIndex(index)
+        AllItems = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
+
+        if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+            self.gui.dataframe_comboBox.clear()
+            self.gui.dataframe_comboBox.addItems(resultNamesList)
+            if (index + 1) > len(resultNamesList): index = 0
+            self.gui.dataframe_comboBox.setCurrentIndex(index)
 
         if len(resultNamesList) == 1:
             self.gui.dataframe_comboBox.hide()
@@ -206,8 +209,8 @@ class FigureManager:
         selectedData = data_len - data_id
 
         # Label update
-        self.setLabel('x',variable_x)
-        self.setLabel('y',variable_y)
+        self.setLabel('x', variable_x)
+        self.setLabel('y', variable_y)
 
         self.gui.frame_axis.show()
         if data_name == "Scan":
@@ -226,24 +229,33 @@ class FigureManager:
         except:
             data = None
 
-        # Plot them
+        # Active plot view and update displayScan
+        self.gui.dataframe_comboBox.setEnabled(True)
+        self.gui.scan_recipe_comboBox.setEnabled(True)
+
+        self.gui.displayScanData_pushButton.setEnabled(True)
+        if self.displayScan.active:
+            dataset = self.gui.dataManager.getLastSelectedDataset()
+            recipe_name = self.gui.scan_recipe_comboBox.currentText()
+            sub_dataset = dataset[recipe_name]
+            self.displayScan.refresh(sub_dataset.data)
+
+        # Plot data
         if data is not None:
             true_nbtraces = max(nbtraces_temp, len(data))  # not good but avoid error
             if len(data) != 0:
                 for temp_data in data:
-                    if temp_data is not None:
-                        break
-                else:
-                    return None
+                    if temp_data is not None: break
+                else: return None
 
             if len(data) != 0 and type(data[0]) is np.ndarray:  # to avoid errors
                 image_data = np.empty((len(data), *temp_data.shape))
+
             for i in range(len(data)):
                 # Data
                 subdata: pd.DataFrame = data[i]
 
-                if subdata is None:
-                    continue
+                if subdata is None: continue
 
                 if type(subdata) is str:  # OPTIMIZE: could think of someway to show text. Currently removed it from dataset directly
                     print("Warning: Can't display text")
@@ -287,16 +299,6 @@ class FigureManager:
                     curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
                     curve.setAlpha(alpha, False)
                     self.curves.append(curve)
-
-            self.gui.dataframe_comboBox.setEnabled(True)
-            self.gui.scan_recipe_comboBox.setEnabled(True)
-
-            self.gui.displayScanData_pushButton.setEnabled(True)
-            if self.displayScan.active:
-                dataset = self.gui.dataManager.getLastSelectedDataset()
-                recipe_name = self.gui.scan_recipe_comboBox.currentText()
-                sub_dataset = dataset[recipe_name]
-                self.displayScan.refresh(sub_dataset.data)
 
     def variableChanged(self, index):
         """ This function is called when the displayed result has been changed

@@ -7,8 +7,9 @@ Created on Mon Apr 17 23:23:51 2023
 from typing import Any
 
 import numpy as np
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets, QtGui
 
+from ..icons import icons
 from ... import config
 
 
@@ -20,6 +21,7 @@ class Slider(QtWidgets.QMainWindow):
         self.item = item
         self.resize(self.minimumSizeHint())
         self.setWindowTitle(self.item.variable.address())
+        self.setWindowIcon(QtGui.QIcon(icons['slider']))
 
         # Load configuration
         control_center_config = config.get_control_center_config()

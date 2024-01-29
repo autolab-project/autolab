@@ -222,7 +222,7 @@ class DataManager :
             else:
                 self.gui.setStatus(f"File {filename} loaded successfully",5000)
 
-                self.gui.figureManager.start(dataset)
+        self.gui.figureManager.start(dataset)
 
         path = os.path.dirname(filename)
         paths.USER_LAST_CUSTOM_FOLDER = path
@@ -260,6 +260,18 @@ class DataManager :
         dataset = self.newDataset(data_name, data)
         return dataset
 
+    def _addData(self, new_dataset):
+        names = self.gui.dataManager.getDatasetsNames()
+
+        if self.gui.overwriteDataButton.isChecked() and new_dataset.name in names:
+            dataSet_id = names.index(new_dataset.name) + 1
+            current_dataset = self.gui.dataManager.datasets[dataSet_id-1]
+
+            if not new_dataset.data.equals(current_dataset.data):
+                current_dataset.update(new_dataset)
+        else:
+            # Prepare a new dataset in the plotter
+            self.gui.dataManager.addDataset(new_dataset)
 
     def getData(self,nbDataset,varList, selectedData=0):
         """ This function returns to the figure manager the required data """
@@ -352,7 +364,7 @@ class DataManager :
         """ This return the current (last selected) dataset """
 
         if len(self.datasets) > 0:
-            return self.datasets[self.gui.data_comboBox.currentIndex()] # OPTIMIZE: should be local variable, not gui. thread should change local from gui
+            return self.datasets[self.gui.data_comboBox.currentIndex()]
 
     def addDataset(self, dataset):
         """ This function add the given dataset to datasets list """
@@ -363,9 +375,10 @@ class DataManager :
         """ This function creates a new dataset """
 
         dataset = Dataset(self.gui, name, data)
+        self._addData(dataset)
         return dataset
 
-    def updateDisplayableResults(self) :
+    def updateDisplayableResults(self):
         """ This function update the combobox in the GUI that displays the names of
         the results that can be plotted """
 
@@ -377,8 +390,8 @@ class DataManager :
             self.last_variables = variables_list
             resultNamesList = []
 
-            for resultName in variables_list :
-                    try :
+            for resultName in variables_list:
+                    try:
                         float(dataset.data.iloc[0][resultName])
                         resultNamesList.append(resultName)
                     except Exception as er:
@@ -388,9 +401,6 @@ class DataManager :
             variable_x = self.gui.variable_x_comboBox.currentText()
             variable_y = self.gui.variable_y_comboBox.currentText()
 
-            self.gui.variable_x_comboBox.clear()
-            self.gui.variable_y_comboBox.clear()
-
             # If can, put back previous x and y variable in combobox
             is_id = variables_list[0] == "id" and len(variables_list) > 2
 
@@ -398,24 +408,31 @@ class DataManager :
                 name=resultNamesList.pop(0)
                 resultNamesList.append(name)
 
-            self.gui.variable_x_comboBox.addItems(resultNamesList)  # slow (0.25s)
+            AllItems = [self.gui.variable_x_comboBox.itemText(i) for i in range(self.gui.variable_x_comboBox.count())]
 
-            # move first item to end (only for y axis)
-            name=resultNamesList.pop(0)
-            resultNamesList.append(name)
-            self.gui.variable_y_comboBox.addItems(resultNamesList)
+            if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
 
-            if variable_x in variables_list:
-                index = self.gui.variable_x_comboBox.findText(variable_x)
-                self.gui.variable_x_comboBox.setCurrentIndex(index)
-            # else:  # BAD IDEA: Too slow to be useful, better to rearange items like before
-            #     self.gui.variable_x_comboBox.setCurrentIndex(0+is_id)
+                self.gui.variable_x_comboBox.clear()
+                self.gui.variable_y_comboBox.clear()
 
-            if variable_y in variables_list:
-                index = self.gui.variable_y_comboBox.findText(variable_y)
-                self.gui.variable_y_comboBox.setCurrentIndex(index)
-            # else:
-            #     self.gui.variable_y_comboBox.setCurrentIndex(1+is_id)
+                self.gui.variable_x_comboBox.addItems(resultNamesList)  # slow (0.25s)
+
+                # move first item to end (only for y axis)
+                name=resultNamesList.pop(0)
+                resultNamesList.append(name)
+                self.gui.variable_y_comboBox.addItems(resultNamesList)
+
+                if variable_x in variables_list:
+                    index = self.gui.variable_x_comboBox.findText(variable_x)
+                    self.gui.variable_x_comboBox.setCurrentIndex(index)
+                # else:  # BAD IDEA: Too slow to be useful, better to rearange items like before
+                #     self.gui.variable_x_comboBox.setCurrentIndex(0+is_id)
+
+                if variable_y in variables_list:
+                    index = self.gui.variable_y_comboBox.findText(variable_y)
+                    self.gui.variable_y_comboBox.setCurrentIndex(index)
+                # else:
+                #     self.gui.variable_y_comboBox.setCurrentIndex(1+is_id)
         else:
             self.gui.figureManager.reloadData()  # 0.1s
 

@@ -17,6 +17,7 @@ from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
 from .scanrange import RangeManager
+from ..icons import icons
 
 
 class Scanner(QtWidgets.QMainWindow):
@@ -30,6 +31,7 @@ class Scanner(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
         self.setWindowTitle("AUTOLAB Scanner")
+        self.setWindowIcon(QtGui.QIcon(icons['scanner']))
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
         self.setAcceptDrops(True)
         self.recipeDict = {}
