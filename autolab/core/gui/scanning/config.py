@@ -17,7 +17,7 @@ import pandas as pd
 from qtpy import QtWidgets, QtCore, QtGui
 
 from ..icons import icons
-from ... import utilities
+from ...utilities import boolean, array_from_txt
 from ... import paths, devices, config
 from .... import __version__
 
@@ -517,8 +517,7 @@ class ConfigManager:
         """ Sets the value of a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
             pos = self.getRecipeStepPosition(recipe_name, name)
-
-            if value != self.config[recipe_name]['recipe'][pos]['value']:
+            if value is not self.config[recipe_name]['recipe'][pos]['value']:
                 self.config[recipe_name]['recipe'][pos]['value'] = value
                 self.refreshRecipe(recipe_name)
                 self.gui.dataManager.clear()
@@ -977,7 +976,9 @@ class ConfigManager:
                                     elif element.type in [str]:
                                         value = str(value)
                                     elif element.type in [bool]:
-                                        value = utilities.boolean(value)
+                                        value = boolean(value)
+                                    elif element.type in [np.ndarray]:
+                                        value = array_from_txt(value)
                                     else:
                                         assert self.checkVariable(value), "Need $eval: to evaluate the given string"
                             except:
@@ -992,7 +993,7 @@ class ConfigManager:
                         break
 
                 if 'active' in pars_recipe_i:
-                    recipe_i['active'] = utilities.boolean(pars_recipe_i['active'])
+                    recipe_i['active'] = boolean(pars_recipe_i['active'])
                 else:
                     recipe_i['active'] = True  # LEGACY <= 1.2.1
 

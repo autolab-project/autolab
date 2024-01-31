@@ -8,6 +8,8 @@ import time
 import threading
 from queue import Queue
 
+import numpy as np
+import pandas as pd
 from qtpy import QtCore, QtWidgets
 
 from ...devices import Device
@@ -96,13 +98,14 @@ class MonitorThread(QtCore.QThread):
                 value = self.variable()
 
                 # Check type
-                try:
-                    value = float(value)
-                except TypeError:
-                    assert hasattr(value, "shape"), "If data is not a float, should be an array or a dataframe"
+                if type(value) not in (np.ndarray, pd.DataFrame):  # should not float(array) because if 0D convert to float and loose information on type
+                    try:
+                        value = float(value)
+                    except TypeError:
+                        assert hasattr(value, "shape"), "If data is not a float, should be an array or a dataframe"
 
                 # Send signal new data
-                self.queue.put([now,value])
+                self.queue.put([now, value])
 
             except Exception as e:
                 self.errorSignal.emit(e)

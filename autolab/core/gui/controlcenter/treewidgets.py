@@ -7,6 +7,7 @@ Created on Sun Sep 29 18:29:07 2019
 
 
 import os
+from typing import Any
 
 import pandas as pd
 import numpy as np
@@ -17,7 +18,7 @@ from ..monitoring.main import Monitor
 from ..icons import icons
 from ... import paths, config
 from ...devices import close, DEVICES
-from ...utilities import qt_object_exists, SUPPORTED_EXTENSION
+from ...utilities import qt_object_exists, SUPPORTED_EXTENSION, array_from_txt, txt_to_array
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -25,13 +26,18 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
     def __init__(self, itemParent, name, gui):
 
-        QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Module'])
-        self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
         self.name = name
         self.module = None
         self.loaded = False
         self.gui = gui
         self.is_not_submodule = type(gui.tree) is type(itemParent)
+
+        if self.is_not_submodule:
+            QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Device'])
+        else:
+            QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Module'])
+
+        self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
     def load(self, module):
         """ This function loads the entire module (submodules, variables, actions) """
@@ -125,16 +131,33 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         else: tooltip = self.action._help
         self.setToolTip(0, tooltip)
 
-    def readGui(self):
+    def readGui(self) -> Any:
         """ This function returns the value in good format of the value in the GUI """
         value = self.valueWidget.text()
 
         if value == '':
-            if self.action.unit == "filename":
-                value, _ = QtWidgets.QFileDialog.getOpenFileName(
-                    self.gui, caption="Filename", filter=SUPPORTED_EXTENSION)
-                if value != '':
-                    return value
+            if self.action.unit in ('open-file', 'save-file', 'filename'):
+                if self.action.unit == "filename":  # LEGACY (may be removed later)
+                    self.gui.setStatus("Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
+                                       f"\nUpdate driver {self.action.name} to remove this warning",
+                                       10000, False)
+                    self.action.unit = "open-file"
+
+                if self.action.unit == "open-file":
+                    filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                        self.gui, caption="Open file",
+                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        filter=SUPPORTED_EXTENSION)
+                elif self.action.unit == "save-file":
+                    filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                        self.gui, caption="Save file",
+                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        filter=SUPPORTED_EXTENSION)
+
+                if filename != '':
+                    path = os.path.dirname(filename)
+                    paths.USER_LAST_CUSTOM_FOLDER = path
+                    return filename
                 else:
                     self.gui.setStatus(
                         f"Action {self.action.name} cancel filename selection",
@@ -216,7 +239,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.variable._write_signal = self.writeSignal
 
         # Main - Column 2 : Creation of a READ button if the variable is readable
-        if self.variable.readable and self.variable.type in [int, float, bool, str]:
+        if self.variable.readable and self.variable.type in [int, float, bool, str, tuple, np.ndarray]:
             self.readButton = QtWidgets.QPushButton()
             self.readButton.setText("Read")
             self.readButton.clicked.connect(self.read)
@@ -226,14 +249,13 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         ## QLineEdit or QLabel
         if self.variable.type in [int, float, str, pd.DataFrame, np.ndarray]:
-
             if self.variable.writable:
                 self.valueWidget = QtWidgets.QLineEdit()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
                 self.valueWidget.returnPressed.connect(self.write)
                 self.valueWidget.textEdited.connect(self.valueEdited)
-                # self.valueWidget.setPlaceholderText(self.variable._help)  # OPTIMIZE: Could be nice but take too much place. Maybe add it as option
-            elif self.variable.readable and self.variable.type in [int, float, str]:
+                # self.valueWidget.setPlaceholderText(self.variable._help)  # Could be nice but take too much place. Maybe add it as option
+            elif self.variable.readable and self.variable.type in [int, float, str, np.ndarray]:
                 self.valueWidget = QtWidgets.QLineEdit()
                 self.valueWidget.setReadOnly(True)
                 self.valueWidget.setStyleSheet(
@@ -275,8 +297,40 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
             self.gui.tree.setItemWidget(self, 3, widget)
 
+        ## Combobox for tuples: Tuple[List[str], int]
+        elif self.variable.type in [tuple]:
+            if self.variable.writable:
+                self.valueWidget = QtWidgets.QComboBox()
+                self.valueWidget.activated.connect(self.write)
+            elif self.variable.readable:
+
+                class ComboBox(QtWidgets.QComboBox):
+                    def __init__(self):
+                        QtWidgets.QComboBox.__init__(self)
+                        self.readonly = False
+
+                    def mousePressEvent(self, event):
+                        if not self.readonly:
+                            QtWidgets.QComboBox.mousePressEvent(self, event)
+
+                    def keyPressEvent(self, event):
+                        if not self.readonly:
+                            QtWidgets.QComboBox.keyPressEvent(self, event)
+
+                    def wheelEvent(self, event):
+                        if not self.readonly:
+                            QtWidgets.QComboBox.wheelEvent(self, event)
+
+                self.valueWidget = ComboBox()
+                self.valueWidget.readonly = True
+            else:
+                self.valueWidget = QtWidgets.QLabel()
+                self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
+
+            self.gui.tree.setItemWidget(self, 3, self.valueWidget)
+
         # Main - column 4 : indicator (status of the actual value : known or not known)
-        if self.variable.type in [int, float, str, bool, np.ndarray, pd.DataFrame]:
+        if self.variable.type in [int, float, str, bool, tuple, np.ndarray, pd.DataFrame]:
             self.indicator = QtWidgets.QLabel()
             self.gui.tree.setItemWidget(self, 4, self.indicator)
 
@@ -298,9 +352,17 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.valueWidget.setText(value)
             elif self.variable.type in [bool]:
                 self.valueWidget.setChecked(value)
+            elif self.variable.type in [tuple]:
+                AllItems = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+                if value[0] != AllItems:
+                    self.valueWidget.clear()
+                    self.valueWidget.addItems(value[0])
+                self.valueWidget.setCurrentIndex(value[1])
+            elif self.variable.type in [np.ndarray]:
+                self.valueWidget.setText(txt_to_array(value))
 
             # Change indicator light to green
-            if self.variable.type in [int, float, bool, str, np.ndarray, pd.DataFrame]:
+            if self.variable.type in [int, float, bool, str, tuple, np.ndarray, pd.DataFrame]:
                 self.setValueKnownState(True)
 
     def readGui(self):
@@ -314,7 +376,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             else:
                 try:
                     value = self.checkVariable(value)
-                    value = self.variable.type(value)
+                    if self.variable.type in [np.ndarray]:
+                        if type(value) is str: value = array_from_txt(value)
+                    else:
+                        value = self.variable.type(value)
                     return value
                 except:
                     self.gui.setStatus(
@@ -323,6 +388,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         elif self.variable.type in [bool]:
             value = self.valueWidget.isChecked()
+            return value
+        elif self.variable.type in [tuple]:
+            AllItems = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+            value = (AllItems, self.valueWidget.currentIndex())
             return value
 
     def checkVariable(self, value):
@@ -389,7 +458,9 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             scanParameterAction.setEnabled(self.variable.parameter_allowed)
             scanMeasureStepAction.setEnabled(self.variable.readable)
             saveAction.setEnabled(self.variable.readable)
-            scanSetStepAction.setEnabled(self.variable.writable)
+            scanSetStepAction.setEnabled(
+                self.variable.writable if self.variable.type not in [
+                    tuple] else False)  # OPTIMIZE: forbid setting tuple to scanner
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
             if choice == monitoringAction: self.openMonitor()
