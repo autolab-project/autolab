@@ -39,23 +39,20 @@ class DataManager:
                                self.gui.ylabel: self.ylist})
             df.to_csv(filename, index=False)
         else: # Image
-            if 'int' in str(self.ylist.dtype):
-                np.savetxt(filename, self.ylist, fmt="%i", sep=",")  # avoid saving useless zeroes
-            else: np.savetxt(filename, self.ylist, sep=",")
+            df = pd.DataFrame(self.ylist)
+            df.to_csv(filename, index=False, header=None)  # faster and handle better different dtype than np.savetxt
 
     def addPoint(self, point: Tuple[Any, Any]):
         """ This function either replace list by array or add point to list depending on datapoint type """
         x, y = point
-        try:
-            float(y)
-        except TypeError:
-            if type(y) is np.ndarray:
-                if len(y.T.shape) == 1 or y.T.shape[0] == 2:
-                    self._addArray(y.T)
-                else:
-                    self._addImage(y)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
-            elif type(y) is pd.DataFrame:
-                self._addArray(y.values.T)
+
+        if type(y) is np.ndarray:
+            if len(y.T.shape) == 1 or y.T.shape[0] == 2:
+                self._addArray(y.T)
+            else:
+                self._addImage(y)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+        elif type(y) is pd.DataFrame:
+            self._addArray(y.values.T)
         else:
             self._addPoint(point)
 
