@@ -6,9 +6,11 @@ Created on Fri Oct 18 22:20:14 2019
 """
 
 import os
+import sys
 import inspect
 from typing import Type, Tuple, List, Any
 
+from . import paths
 from .utilities import emphasize, clean_string, SUPPORTED_EXTENSION
 
 
@@ -40,7 +42,7 @@ class Variable(Element):
 
         # Type
         assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
-        assert config['type'] in [int, float, bool, str, bytes, pd.DataFrame, np.ndarray], f"Variable {self.address()} configuration: Variable type not supported in autolab"
+        assert config['type'] in [int, float, bool, str, bytes, tuple, pd.DataFrame, np.ndarray], f"Variable {self.address()} configuration: Variable type not supported in autolab"
         self.type = config['type']
 
         # Read and write function
@@ -95,13 +97,13 @@ class Variable(Element):
 
         if value is None: value = self() # New measure if value not provided
 
-        if self.type in [int, float, bool, str]:
+        if self.type in [int, float, bool, str, tuple]:
             with open(path, 'w') as f: f.write(str(value))
-        elif self.type == bytes :
+        elif self.type == bytes:
             with open(path, 'wb') as f: f.write(value)
         elif self.type == np.ndarray:
-            if 'int' in str(value.dtype): np.savetxt(path, value, fmt="%i")  # avoid saving useless zeroes
-            else: np.savetxt(path, value)
+            value = pd.DataFrame(value)  # faster and handle better different dtype than np.savetxt
+            value.to_csv(path, index=False, header=None)
         elif self.type == pd.DataFrame:
             value.to_csv(path, index=False)
         else:
@@ -112,11 +114,9 @@ class Variable(Element):
         print(self)
 
     def __str__(self):
-
         """ This function returns informations for the user about the current variable """
-
         display = '\n' + emphasize(f'Variable {self.name}') + '\n'
-        if self._help is not None: display+=f'Help: {self._help}\n'
+        if self._help is not None: display += f'Help: {self._help}\n'
         display += '\n'
 
         display += 'Readable: '
@@ -136,9 +136,7 @@ class Variable(Element):
         return display
 
     def __call__(self, value: Any = None):
-
         """ Measure or set the value of the variable """
-
         # GET FUNCTION
         if value is None:
             assert self.readable, f"The variable {self.name} is not readable"
@@ -149,7 +147,11 @@ class Variable(Element):
         # SET FUNCTION
         else:
             assert self.writable, f"The variable {self.name} is not writable"
-            value = self.type(value)
+            import numpy as np
+            if isinstance(value, np.ndarray):
+                value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
+            else:
+                value = self.type(value)
             self.write_function(value)
             if self._write_signal is not None: self._write_signal.emit_write()
 
@@ -172,7 +174,7 @@ class Action(Element):
         self.type = None
         self.unit = None
         if 'param_type' in config.keys():
-            assert config['param_type'] in [int, float, bool, str, bytes, pd.DataFrame, np.ndarray], f"Action {self.address()} configuration: Argument type not supported in autolab"
+            assert config['param_type'] in [int, float, bool, str, bytes, tuple, pd.DataFrame, np.ndarray], f"Action {self.address()} configuration: Argument type not supported in autolab"
             self.type = config['param_type']
             if 'param_unit' in config.keys():
                 assert isinstance(config['param_unit'], str), f"Action {self.address()} configuration: Argument unit parameter must be a string"
@@ -214,16 +216,33 @@ class Action(Element):
             if value is not None:
                 value = self.type(value)
                 self.function(value)
-            elif self.unit == "filename":
-                    import sys
-                    from qtpy import QtWidgets
-                    app = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
-                    filename = QtWidgets.QFileDialog.getOpenFileName(
-                        caption="Filename", filter=SUPPORTED_EXTENSION)[0]
-                    if filename != '':
-                        self.function(filename)
-                    else:
-                        print("Filename prompt cancelled")
+            elif self.unit in ('open-file', 'save-file', 'filename'):
+                if self.unit == 'filename':  # LEGACY (may be removed later)
+                    print(f"Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
+                          f"\nUpdate driver {self.name} to remove this warning",
+                          file=sys.stderr)
+                    self.unit = 'open-file'
+
+                from qtpy import QtWidgets
+                app = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
+
+                if self.unit == 'open-file':
+                    filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                        caption="Open file",
+                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        filter=SUPPORTED_EXTENSION)
+                elif self.unit == 'save-file':
+                    filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                        caption="Save file",
+                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        filter=SUPPORTED_EXTENSION)
+
+                if filename != '':
+                    path = os.path.dirname(filename)
+                    paths.USER_LAST_CUSTOM_FOLDER = path
+                    self.function(filename)
+                else:
+                    print("Filename prompt cancelled")
             else:
                 assert value is not None, f"The action {self.name} requires an argument"
         else:

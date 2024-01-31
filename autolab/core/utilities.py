@@ -34,7 +34,7 @@ def clean_string(txt: str) -> str:
     return txt
 
 
-def two_columns(txt_list: List[str]):
+def two_columns(txt_list: List[str]) -> str:
     ''' Returns a string of the form:
         txt[0]                         txt[1]
         with a minimal spacing between the first character of txt1 and txt2 '''
@@ -51,6 +51,20 @@ def boolean(value: Any) -> bool:
     else: value = bool(int(float(value)))
 
     return value
+
+
+def array_from_txt(string: str) -> Any:  # actually -> np.ndarray
+    import re, ast
+    import numpy as np
+    if "," in string: ls = re.sub('\s,+', ',', string)
+    else: ls = re.sub('\s+', ',', string)
+    value = np.array(ast.literal_eval(ls), ndmin=1)  # ndim=1 to avoid having float if 0D
+    return value
+
+
+def txt_to_array(value: Any) -> str:
+    import numpy as np
+    return np.array2string(value, separator=',', suppress_small=True)
 
 
 def openFile(filename: str):

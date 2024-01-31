@@ -24,8 +24,8 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="11.313709"
-     inkscape:cx="42.161242"
-     inkscape:cy="51.574601"
+     inkscape:cx="39.332813"
+     inkscape:cy="51.574599"
      inkscape:window-width="1920"
      inkscape:window-height="1017"
      inkscape:window-x="-8"
@@ -50,6 +50,13 @@
          id="path2" />
     </clipPath>
   </defs>
+  <rect
+     style="fill:#ffffff;stroke:none;stroke-width:1.999;fill-opacity:1"
+     id="rect1"
+     width="99.857224"
+     height="56.881783"
+     x="0.071387976"
+     y="21.568916" />
   <g
      fill="none"
      stroke="#666666"
@@ -72,33 +79,24 @@
   </g>
   <g
      fill="none"
-     stroke="#000000"
+     stroke="#ff0000"
+     stroke-opacity="1"
      stroke-width="1"
-     fill-rule="evenodd"
      stroke-linecap="square"
      stroke-linejoin="bevel"
-     id="PlotCurveItem_1"
+     font-family="'MS Shell Dlg 2'"
+     font-size="11px"
+     font-weight="400"
+     font-style="normal"
+     id="g3"
      transform="matrix(0.14277556,0,0,0.14277556,-9.865791,19.998385)"
-     style="display:inline">
-    <g
-       fill="none"
-       stroke="#ff0000"
-       stroke-opacity="1"
-       stroke-width="1"
-       stroke-linecap="square"
-       stroke-linejoin="bevel"
-       font-family="'MS Shell Dlg 2'"
-       font-size="11px"
-       font-weight="400"
-       font-style="normal"
-       id="g3">
-      <path
-         vector-effect="non-scaling-stroke"
-         fill-rule="evenodd"
-         d="m 94.886507,173.17855 53.605123,40.62032 55.12655,135.57163 52.03298,-72.28497 56.74941,-176.40518 52.69226,-4.2646 52.59083,294.17211 109.74596,-360.9131 56.24227,224.68045 54.16298,10.14975 53.35155,-22.6237 52.59084,45.46063"
-         id="path3"
-         style="display:inline;stroke:#000000;stroke-opacity:1" />
-    </g>
+     style="fill-rule:evenodd">
+    <path
+       vector-effect="non-scaling-stroke"
+       fill-rule="evenodd"
+       d="m 94.886507,173.17855 53.605123,40.62032 55.12655,135.57163 52.03298,-72.28497 56.74941,-176.40518 52.69226,-4.2646 52.59083,294.17211 109.74596,-360.9131 56.24227,224.68045 54.16298,10.14975 53.35155,-22.6237 52.59084,45.46063"
+       id="path3"
+       style="display:inline;stroke:#000000;stroke-opacity:1" />
   </g>
   <metadata
      id="metadata50">

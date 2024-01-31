@@ -6,7 +6,6 @@ Created on Tue Nov 21 18:16:20 2023
 """
 
 import os
-import urllib.request
 import zipfile
 import tempfile
 import shutil
@@ -31,9 +30,34 @@ def _format_url(url: str):
 
 
 def _download_repo(url: str, output_dir: str):
-    with urllib.request.urlopen(url) as github_repo_zip:
-        with open(output_dir, 'wb') as repo_zip:
-            repo_zip.write(github_repo_zip.read())
+    try:
+        import requests
+        from tqdm import tqdm
+    except:
+        print("Package tqdm or requests not found, can't display download progression")
+        print(f"Downloading {url}")
+        import urllib.request
+        with urllib.request.urlopen(url) as github_repo_zip:
+            with open(output_dir, 'wb') as repo_zip:
+                repo_zip.write(github_repo_zip.read())
+    else:
+        """https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests"""
+        # Streaming, so we can iterate over the response.
+        response = requests.get(url, stream=True)
+
+        # Sizes in bytes.
+        total_size = int(response.headers.get("content-length", 0))
+        block_size = 1024
+
+        with tqdm(total=total_size, unit="B", unit_scale=True,
+                  desc=f"Downloading {url}") as progress_bar:
+            with open(output_dir, "wb") as file:
+                for data in response.iter_content(block_size):
+                    progress_bar.update(len(data))
+                    file.write(data)
+
+        if total_size != 0 and progress_bar.n != total_size:
+            raise RuntimeError("Could not download file")
 
 
 def _unzip_repo(repo_zip: str, output_dir: str):
@@ -42,32 +66,52 @@ def _unzip_repo(repo_zip: str, output_dir: str):
         os.makedirs(output_dir)
 
     temp_dir = tempfile.mkdtemp()
+    try:
+        from tqdm import tqdm
+    except:
+        print("Package tqdm not found, can't display progression")
+        with zipfile.ZipFile(repo_zip, 'r') as zip_open:
+            repo_name = zip_open.namelist()[0][:-1]
+            print(f'Extracting {repo_name}')
+            zip_open.extractall(temp_dir)
 
-    with zipfile.ZipFile(repo_zip, 'r') as zip_open:
-        repo_name = zip_open.namelist()[0]
-        zip_open.extractall(temp_dir)
+        temp_unzip_repo = os.path.join(temp_dir, repo_name)
+        print(f'Moving drivers to {output_dir}')
+        for filename in os.listdir(temp_unzip_repo):
+            _copy_move(temp_unzip_repo, filename, output_dir)
+    else:
+        """https://stackoverflow.com/questions/4341584/extract-zipfile-using-python-display-progress-percentage"""
+        with zipfile.ZipFile(repo_zip, 'r') as zf:
+            repo_name = str(zf.namelist()[0])[:-1]
+            for member in tqdm(zf.infolist(),
+                               desc=f'Extracting {repo_name}'):
+                zf.extract(member, temp_dir)
 
-    temp_unzip_repo = os.path.join(temp_dir, repo_name)
-
-    for filename in os.listdir(temp_unzip_repo):
-        temp_file = os.path.join(temp_unzip_repo, filename)
-        output_file = os.path.join(output_dir, filename)
-
-        if os.path.isfile(temp_file):
-            shutil.copy(temp_file, output_file)
-            os.remove(temp_file)
-        else:
-            try:
-                shutil.copytree(temp_file, output_file, dirs_exist_ok=True)  # python >=3.8 only
-            except:
-                if os.path.exists(output_file):
-                    shutil.rmtree(output_file, ignore_errors=True)
-                shutil.copytree(temp_file, output_file)
-
-            shutil.rmtree(temp_file, ignore_errors=True)
+        temp_unzip_repo = os.path.join(temp_dir, repo_name)
+        for filename in tqdm(os.listdir(temp_unzip_repo),
+                             desc=f'Moving drivers to {output_dir}'):
+            _copy_move(temp_unzip_repo, filename, output_dir)
 
     os.rmdir(temp_unzip_repo)
     os.rmdir(temp_dir)
+
+
+def _copy_move(temp_unzip_repo, filename, output_dir):
+    temp_file = os.path.join(temp_unzip_repo, filename)
+    output_file = os.path.join(output_dir, filename)
+
+    if os.path.isfile(temp_file):
+        shutil.copy(temp_file, output_file)
+        os.remove(temp_file)
+    else:
+        try:
+            shutil.copytree(temp_file, output_file, dirs_exist_ok=True)  # python >=3.8 only
+        except:
+            if os.path.exists(output_file):
+                shutil.rmtree(output_file, ignore_errors=True)
+            shutil.copytree(temp_file, output_file)
+
+        shutil.rmtree(temp_file, ignore_errors=True)
 
 
 def input_wrap(*args):
@@ -119,9 +163,7 @@ def install_drivers(*github_url: str, skip_input=False):
 
         if ans.strip().lower() == 'no': continue
         else:
-            print(f"Downloading {github_repo_zip_url}")
             _download_repo(github_repo_zip_url, temp_repo_zip)
-            print(f'Moving drivers to {paths.DRIVER_SOURCES["official"]}')
             _unzip_repo(temp_repo_zip, paths.DRIVER_SOURCES["official"])
             os.remove(temp_repo_zip)
     os.rmdir(temp_repo_folder)

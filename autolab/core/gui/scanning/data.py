@@ -62,7 +62,8 @@ class DataManager:
                         data = dataset.getData(varList, data_name=data_name)  # OPTIMIZE: Currently can't recover dataset if error before end of first recipe loop
                     except Exception as e:
                         data = None
-                        print(f"Error encountered for scan id {selectedData+1}: {e}", file=sys.stderr)
+                        self.gui.setStatus(f"Error encountered for scan id {selectedData+1}: {e}",
+                                           10000, False)
                     dataList.append(data)
                 elif dataset.dictListDataFrame.get(data_name) is not None:
                     dataList2 = []
@@ -75,7 +76,8 @@ class DataManager:
                             if checkBoxChecked:
                                 data = dataset.getData(varList, data_name=data_name, dataID=index)
                         except Exception as e:
-                            print(f"Error encountered for scan id {selectedData+1} and dataframe {data_name} with ID {index+1}: {e}", file=sys.stderr)
+                            self.gui.setStatus(f"Error encountered for scan id {selectedData+1} and dataframe {data_name} with ID {index+1}: {e}",
+                                               10000, False)
                         dataList2.append(data)
 
                     dataList2.reverse()
@@ -128,7 +130,8 @@ class DataManager:
             if utilities.boolean(scanner_config["save_figure"]):
                 self.gui.figureManager.save(filename)
 
-            self.gui.setStatus(f'Last dataset successfully saved in {filename}',5000)
+            self.gui.setStatus(f'Last dataset successfully saved in {filename}',
+                               5000)
 
     def clear(self):
         """ This reset any recorded data, and the GUI accordingly """
@@ -310,7 +313,13 @@ class DataManager:
                 self.gui.variable_y_comboBox.clear()
                 return None
 
-            data = utilities.formatData(data)
+            try:
+                data = utilities.formatData(data)
+            except AssertionError as e:  # if np.ndarray of string for example
+                self.gui.variable_x_comboBox.clear()
+                self.gui.variable_y_comboBox.clear()
+                # self.gui.setStatus(f"Error, can't plot data {data_name}: {e}", 10000, False)  # already catched by getData
+                return None
 
         resultNamesList = []
 
@@ -430,6 +439,7 @@ class Dataset():
                 if os.path.exists(tmp_folder):
                     shutil.copytree(tmp_folder, dest_folder, dirs_exist_ok=True)
                 else:
+                    # This is only executed if no temp folder is set
                     if not os.path.exists(dest_folder): os.mkdir(dest_folder)
 
                     if array_name in self.dictListDataFrame.keys():
@@ -438,17 +448,15 @@ class Dataset():
                         for i, value in enumerate(list_data):
                             path = os.path.join(dest_folder, f"{i+1}.txt")
 
-                            if type(value) in [int, float, bool, str]:
+                            if type(value) in [int, float, bool, str, tuple]:
                                 with open(path, 'w') as f: f.write(str(value))
                             elif type(value) == bytes:
                                 with open(path, 'wb') as f: f.write(value)
                             elif type(value) == np.ndarray:
-                                if 'int' in str(value.dtype):
-                                    np.savetxt(path, value, fmt="%i")  # avoid saving useless zeroes
-                                else: np.savetxt(path, value)
+                                df = pd.DataFrame(value)
+                                df.to_csv(path, index=False, header=None)  # faster and handle better different dtype than np.savetxt
                             elif type(value) == pd.DataFrame:
                                 value.to_csv(path, index=False)
-
 
     def addPoint(self, dataPoint: OrderedDict):
         """ This function add a data point (parameter value, and results) in the dataset """

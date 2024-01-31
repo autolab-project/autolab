@@ -138,25 +138,41 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
 
     def readGui(self):
-
         """ This function returns the value in good format of the value in the GUI """
-
         value = self.valueWidget.text()
-        if value == '' :
-            if self.action.unit == "filename":
-                value = QtWidgets.QFileDialog.getOpenFileName(self.gui, caption="Filename", filter=SUPPORTED_EXTENSION)[0]
-                if value != '':
-                    return value
+        if value == '':
+            if self.action.unit in ('open-file', 'save-file', 'filename'):
+                if self.action.unit == "filename":  # LEGACY (may be removed later)
+                    self.gui.setStatus("Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
+                                       f"\nUpdate driver {self.action.name} to remove this warning",
+                                       10000, False)
+                    self.action.unit = "open-file"
+
+                if self.action.unit == "open-file":
+                    filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                        self.gui, caption="Open file",
+                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        filter=SUPPORTED_EXTENSION)
+                elif self.action.unit == "save-file":
+                    filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                        self.gui, caption="Save file",
+                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        filter=SUPPORTED_EXTENSION)
+
+                if filename != '':
+                    path = os.path.dirname(filename)
+                    paths.USER_LAST_CUSTOM_FOLDER = path
+                    return filename
                 else:
-                    self.gui.setStatus(f"Action {self.action.name} cancel filename selection",10000)
+                    self.gui.setStatus(f"Action {self.action.name} cancel filename selection", 10000)
             else:
                 self.gui.setStatus(f"Action {self.action.name} requires a value for its parameter",10000, False)
-        else :
-            try :
+        else:
+            try:
                 value = self.checkVariable(value)
                 value = self.action.type(value)
                 return value
-            except :
+            except:
                 self.gui.setStatus(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000, False)
 
 
