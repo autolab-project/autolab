@@ -12,8 +12,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 from .customWidgets import MyQTreeWidget, MyQTabWidget
 from ..icons import icons
 from ... import config
-from ...utilities import clean_string
-
+from ...utilities import clean_string, array_from_txt
 
 class RecipeManager:
     """ Manage a recipe from a scan """
@@ -123,7 +122,7 @@ class RecipeManager:
             value = step['value']
             if value is not None:
                 try:
-                    if step['element'].type in [bool, str]:
+                    if step['element'].type in [bool, str, np.ndarray]:
                        item.setText(3, f'{value}')
                     else:
                        item.setText(3, f'{value:.{self.precision}g}')
@@ -233,9 +232,9 @@ class RecipeManager:
         # Default value displayed in the QInputDialog
         try:
             defaultValue = f'{value:.{self.precision}g}'
-        except ValueError:
+        except (ValueError, TypeError):
             defaultValue = f'{value}'
-        value,state = QtWidgets.QInputDialog.getText(
+        value, state = QtWidgets.QInputDialog.getText(
             self.gui, name, f"Set {name} value",
             QtWidgets.QLineEdit.Normal, defaultValue)
 
@@ -257,6 +256,10 @@ class RecipeManager:
                         value = int(value)
                         assert value in [0, 1]
                         value = bool(value)
+                    elif element.type in [tuple]:
+                        pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
+                    elif element.type in [np.ndarray]:
+                        value = array_from_txt(value)
                     else:
                         assert self.checkVariable(value), "Need $eval: to evaluate the given string"
                 # Apply modification

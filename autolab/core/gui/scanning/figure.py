@@ -144,7 +144,7 @@ class FigureManager:
         # resultNamesList = ["Scan"] + list(sub_dataset.dictListDataFrame.keys())
         resultNamesList = ["Scan"] + [
             i for i in sub_dataset.dictListDataFrame.keys() if type(
-                sub_dataset.dictListDataFrame[i][0]) != str]  # OPTIMIZE: remove this condition if want to plot string
+                sub_dataset.dictListDataFrame[i][0]) not in (str, tuple)]  # OPTIMIZE: remove this condition if want to plot string or tuple: Tuple[List[str], int]
 
         AllItems = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
 
