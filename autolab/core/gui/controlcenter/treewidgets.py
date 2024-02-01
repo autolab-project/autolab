@@ -431,6 +431,17 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if not self.isDisabled():
+            # TODO: could be used to select which recipe and parameter the step should go
+            # But, seems not ergonomic (not finish to implement it if want it)
+            # if self.gui.scanner is None:
+            #     pass
+            # else:
+            #     recipe_name = self.gui.getRecipeName()
+            #     recipe_name_list = self.gui.scanner.configManager.recipeNameList()
+            #     param_name = self.gui.getParameterName()
+            #     param_name_list = self.gui.scanner.configManager.parameterNameList(recipe_name)
+            #     print(recipe_name, recipe_name_list,
+            #           param_name, param_name_list)
 
             menu = QtWidgets.QMenu()
             monitoringAction = menu.addAction("Start monitoring")
@@ -439,6 +450,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             sliderAction = menu.addAction("Create a slider")
             sliderAction.setIcon(QtGui.QIcon(icons['slider']))
             menu.addSeparator()
+            # sub_menu = QtWidgets.QMenu("Set as parameter", menu)
+            # sub_menu.setIcon(QtGui.QIcon(icons['parameter']))
+            # menu.addMenu(sub_menu)
+            # scanParameterAction = sub_menu.addAction(f"in {recipe_name}")
+            # scanParameterAction.setIcon(QtGui.QIcon(icons['recipe']))
             scanParameterAction = menu.addAction("Set as scan parameter")
             scanParameterAction.setIcon(QtGui.QIcon(icons['parameter']))
             scanMeasureStepAction = menu.addAction("Measure in scan recipe")

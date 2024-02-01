@@ -228,17 +228,17 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             IS_ACTIVE = self.gui.configManager.getActive(self.recipe_name)
 
             if IS_ACTIVE:
-                activateRecipeAction = menu.addAction("Disable")
+                activateRecipeAction = menu.addAction("Disable recipe")
                 activateRecipeAction.setIcon(QtGui.QIcon(icons['is-enable']))
             else:
-                activateRecipeAction = menu.addAction("Enable")
+                activateRecipeAction = menu.addAction("Enable recipe")
                 activateRecipeAction.setIcon(QtGui.QIcon(icons['is-disable']))
 
             menu.addSeparator()
 
-            renameRecipeAction = menu.addAction("Rename")
+            renameRecipeAction = menu.addAction("Rename recipe")
             renameRecipeAction.setIcon(QtGui.QIcon(icons['rename']))
-            removeRecipeAction = menu.addAction("Remove")
+            removeRecipeAction = menu.addAction("Remove recipe")
             removeRecipeAction.setIcon(QtGui.QIcon(icons['remove']))
 
             menu.addSeparator()
@@ -250,8 +250,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             else:
                 renameRecipeAction.setEnabled(False)
 
-
-            addParameterAction = menu.addAction("Add Parameter")
+            addParameterAction = menu.addAction("Add parameter")
             addParameterAction.setIcon(QtGui.QIcon(icons['add']))
 
             removeMenuActions = {}
@@ -261,9 +260,9 @@ class MyQTabWidget(QtWidgets.QTabWidget):
 
             menu.addSeparator()
 
-            moveUpRecipeAction = menu.addAction("Move up")
+            moveUpRecipeAction = menu.addAction("Move recipe up")
             moveUpRecipeAction.setIcon(QtGui.QIcon(icons['up']))
-            moveDownRecipeAction = menu.addAction("Move down")
+            moveDownRecipeAction = menu.addAction("Move recipe down")
             moveDownRecipeAction.setIcon(QtGui.QIcon(icons['down']))
 
             config = self.gui.configManager.config
