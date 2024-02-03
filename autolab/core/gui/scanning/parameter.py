@@ -43,7 +43,7 @@ class ParameterManager:
         parameterName_lineEdit.setMinimumSize(0, 20)
         parameterName_lineEdit.setMaximumSize(16777215, 20)
         parameterName_lineEdit.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
-        parameterName_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        parameterName_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         parameterName_lineEdit.setToolTip('Name of the parameter, as it will displayed in the data')
         parameterName_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(parameterName_lineEdit,'edited'))
         parameterName_lineEdit.returnPressed.connect(self.nameChanged)
@@ -58,7 +58,7 @@ class ParameterManager:
         parameterAddress_label = QtWidgets.QLabel("<variable>", frameParameter)
         parameterAddress_label.setMinimumSize(0, 20)
         parameterAddress_label.setMaximumSize(16777215, 20)
-        parameterAddress_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        parameterAddress_label.setAlignment(QtCore.Qt.AlignCenter)
         parameterAddress_label.setToolTip('Address of the parameter')
         self.parameterAddress_label = parameterAddress_label
 
@@ -97,7 +97,7 @@ class ParameterManager:
         start_lineEdit.setToolTip('Start value of the scan')
         start_lineEdit.setMinimumSize(0, 20)
         start_lineEdit.setMaximumSize(16777215, 20)
-        start_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        start_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.start_lineEdit = start_lineEdit
 
         labelEnd = QtWidgets.QLabel("End", frameScanRange)
@@ -105,7 +105,7 @@ class ParameterManager:
         end_lineEdit.setMinimumSize(0, 20)
         end_lineEdit.setMaximumSize(16777215, 20)
         end_lineEdit.setToolTip('End value of the scan')
-        end_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        end_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.end_lineEdit = end_lineEdit
 
         ### first grid layout: start, stop
@@ -123,14 +123,14 @@ class ParameterManager:
         mean_lineEdit = QtWidgets.QLineEdit('5', frameScanRange)
         mean_lineEdit.setMinimumSize(0, 20)
         mean_lineEdit.setMaximumSize(16777215, 20)
-        mean_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        mean_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.mean_lineEdit = mean_lineEdit
 
         labelWidth = QtWidgets.QLabel("Width", frameScanRange)
         width_lineEdit = QtWidgets.QLineEdit('10', frameScanRange)
         width_lineEdit.setMinimumSize(0, 20)
         width_lineEdit.setMaximumSize(16777215, 20)
-        width_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        width_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.width_lineEdit = width_lineEdit
 
         ### second grid layout: mean, width
@@ -147,14 +147,14 @@ class ParameterManager:
         nbpts_lineEdit = QtWidgets.QLineEdit('11', frameScanRange)
         nbpts_lineEdit.setMinimumSize(0, 20)
         nbpts_lineEdit.setMaximumSize(16777215, 20)
-        nbpts_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        nbpts_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.nbpts_lineEdit = nbpts_lineEdit
 
         labelStep = QtWidgets.QLabel("Step", frameScanRange)
         step_lineEdit = QtWidgets.QLineEdit('1', frameScanRange)
         step_lineEdit.setMinimumSize(0, 20)
         step_lineEdit.setMaximumSize(16777215, 20)
-        step_lineEdit.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        step_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.step_lineEdit = step_lineEdit
         scanLog_checkBox = QtWidgets.QCheckBox("Log")
         self.scanLog_checkBox = scanLog_checkBox

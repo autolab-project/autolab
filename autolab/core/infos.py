@@ -17,15 +17,19 @@ def list_drivers(_print: bool = True) -> str:
     s = '\n'
     s += f'{len(drivers.DRIVERS_PATHS)} drivers found\n\n'
 
-    for source_name in paths.DRIVER_SOURCES.keys():
+    for i, source_name in enumerate(paths.DRIVER_SOURCES.keys()):
         sub_driver_list = sorted([key for key in drivers.DRIVERS_PATHS.keys() if drivers.DRIVERS_PATHS[key]['source']==source_name])
         s += f'Drivers in {paths.DRIVER_SOURCES[source_name]}:\n'
         if len(sub_driver_list) > 0:
-            txt_list = [[f'    - {driver_name}', f'({drivers.get_driver_category(driver_name)})']
-                        for driver_name in sub_driver_list ]
+            txt_list = [[f'    - {driver_name}',
+                         f'({drivers.get_driver_category(driver_name)})']
+                            for driver_name in sub_driver_list]
             s += utilities.two_columns(txt_list) + '\n\n'
         else:
-            s += '    <No drivers>'
+            if i+1 == len(paths.DRIVER_SOURCES.keys()):
+                s += '    <No drivers>\n\n'
+            else:
+                s += '    <No drivers> (or overwritten)\n\n'
 
     if _print:
         print(s)
@@ -44,7 +48,7 @@ def list_devices(_print: bool = True) -> str:
     s += f'{len(devices_names)} devices found\n\n'
     txt_list = [[f'    - {name} ' + ('[loaded]' if name in devices_names_loaded else ''),
                  f'({config.get_device_config(name)["driver"]})']
-                 for name in devices_names]
+                     for name in devices_names]
     s += utilities.two_columns(txt_list) + '\n'
 
     if _print:

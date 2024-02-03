@@ -18,7 +18,9 @@ from ..monitoring.main import Monitor
 from ..icons import icons
 from ... import paths, config
 from ...devices import close, DEVICES
-from ...utilities import qt_object_exists, SUPPORTED_EXTENSION, array_from_txt, txt_to_array
+from ...utilities import (qt_object_exists, SUPPORTED_EXTENSION,
+                          array_from_txt, array_to_txt,
+                          dataframe_to_txt, dataframe_from_txt)
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -169,11 +171,16 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         else:
             try:
                 value = self.checkVariable(value)
-                value = self.action.type(value)
+                if self.action.type in [np.ndarray]:
+                    if type(value) is str: value = array_from_txt(value)
+                elif self.action.type in [pd.DataFrame]:
+                    if type(value) is str: value = dataframe_from_txt(value)
+                else:
+                    value = self.action.type(value)
                 return value
             except:
                 self.gui.setStatus(
-                    f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",
+                    f"Action {self.action.name}: Impossible to convert {value} to {self.action.type.__name__}",
                     10000, False)
 
     def checkVariable(self, value):
@@ -239,24 +246,43 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.variable._write_signal = self.writeSignal
 
         # Main - Column 2 : Creation of a READ button if the variable is readable
-        if self.variable.readable and self.variable.type in [int, float, bool, str, tuple, np.ndarray]:
+        if self.variable.readable and self.variable.type in [
+                int, float, bool, str, tuple, np.ndarray, pd.DataFrame]:
             self.readButton = QtWidgets.QPushButton()
             self.readButton.setText("Read")
             self.readButton.clicked.connect(self.read)
-            self.gui.tree.setItemWidget(self, 2, self.readButton)
+
+            if not self.variable.writable and self.variable.type in [
+                    np.ndarray, pd.DataFrame]:
+                self.readButtonCheck = QtWidgets.QCheckBox()
+                self.readButtonCheck.stateChanged.connect(self.readButtonCheckEdited)
+                self.readButtonCheck.setToolTip('Toggle reading in text, careful can truncate data and impact performance')
+                self.readButtonCheck.setMaximumWidth(15)
+
+                frameReadButton = QtWidgets.QFrame()
+                hbox = QtWidgets.QHBoxLayout(frameReadButton)
+                hbox.setSpacing(0)
+                hbox.setContentsMargins(0,0,0,0)
+                hbox.addWidget(self.readButtonCheck)
+                hbox.addWidget(self.readButton)
+                self.gui.tree.setItemWidget(self, 2, frameReadButton)
+            else:
+                self.gui.tree.setItemWidget(self, 2, self.readButton)
 
         # Main - column 3 : Creation of a VALUE widget, depending on the type
 
         ## QLineEdit or QLabel
-        if self.variable.type in [int, float, str, pd.DataFrame, np.ndarray]:
+        if self.variable.type in [int, float, str, np.ndarray, pd.DataFrame]:
             if self.variable.writable:
                 self.valueWidget = QtWidgets.QLineEdit()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
                 self.valueWidget.returnPressed.connect(self.write)
                 self.valueWidget.textEdited.connect(self.valueEdited)
+                self.valueWidget.setMaxLength(1000000)  # default is 32767, not enought for array and dataframe
                 # self.valueWidget.setPlaceholderText(self.variable._help)  # Could be nice but take too much place. Maybe add it as option
-            elif self.variable.readable and self.variable.type in [int, float, str, np.ndarray]:
+            elif self.variable.readable:
                 self.valueWidget = QtWidgets.QLineEdit()
+                self.valueWidget.setMaxLength(1000000)
                 self.valueWidget.setReadOnly(True)
                 self.valueWidget.setStyleSheet(
                     "QLineEdit {border: 1px solid #a4a4a4; background-color: #f4f4f4}")
@@ -299,29 +325,33 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         ## Combobox for tuples: Tuple[List[str], int]
         elif self.variable.type in [tuple]:
+
+            class MyQComboBox(QtWidgets.QComboBox):
+                def __init__(self):
+                    QtWidgets.QComboBox.__init__(self)
+                    self.readonly = False
+                    self.wheel = True
+                    self.key = True
+
+                def mousePressEvent(self, event):
+                    if not self.readonly:
+                        QtWidgets.QComboBox.mousePressEvent(self, event)
+
+                def keyPressEvent(self, event):
+                    if not self.readonly and self.key:
+                        QtWidgets.QComboBox.keyPressEvent(self, event)
+
+                def wheelEvent(self, event):
+                    if not self.readonly and self.wheel:
+                        QtWidgets.QComboBox.wheelEvent(self, event)
+
             if self.variable.writable:
-                self.valueWidget = QtWidgets.QComboBox()
+                self.valueWidget = MyQComboBox()
+                self.valueWidget.wheel = False  # prevent changing value by mistake
+                self.valueWidget.key = False
                 self.valueWidget.activated.connect(self.write)
             elif self.variable.readable:
-
-                class ComboBox(QtWidgets.QComboBox):
-                    def __init__(self):
-                        QtWidgets.QComboBox.__init__(self)
-                        self.readonly = False
-
-                    def mousePressEvent(self, event):
-                        if not self.readonly:
-                            QtWidgets.QComboBox.mousePressEvent(self, event)
-
-                    def keyPressEvent(self, event):
-                        if not self.readonly:
-                            QtWidgets.QComboBox.keyPressEvent(self, event)
-
-                    def wheelEvent(self, event):
-                        if not self.readonly:
-                            QtWidgets.QComboBox.wheelEvent(self, event)
-
-                self.valueWidget = ComboBox()
+                self.valueWidget = MyQComboBox()
                 self.valueWidget.readonly = True
             else:
                 self.valueWidget = QtWidgets.QLabel()
@@ -342,6 +372,9 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             tooltip += f" ({variable_type})"
         self.setToolTip(0, tooltip)
 
+        # disable read button if array/dataframe
+        if hasattr(self, 'readButtonCheck'): self.readButtonCheckEdited()
+
     def writeGui(self, value):
         """ This function displays a new value in the GUI """
         if qt_object_exists(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finished)
@@ -358,8 +391,15 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     self.valueWidget.clear()
                     self.valueWidget.addItems(value[0])
                 self.valueWidget.setCurrentIndex(value[1])
-            elif self.variable.type in [np.ndarray]:
-                self.valueWidget.setText(txt_to_array(value))
+            elif self.variable.type in [np.ndarray, pd.DataFrame]:
+
+                if self.variable.writable or self.readButtonCheck.isChecked():
+                    if self.variable.type in [np.ndarray]:
+                        self.valueWidget.setText(array_to_txt(value))
+                    if self.variable.type in [pd.DataFrame]:
+                        self.valueWidget.setText(dataframe_to_txt(value))
+                # else:
+                #     self.valueWidget.setText('')
 
             # Change indicator light to green
             if self.variable.type in [int, float, bool, str, tuple, np.ndarray, pd.DataFrame]:
@@ -378,12 +418,14 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     value = self.checkVariable(value)
                     if self.variable.type in [np.ndarray]:
                         if type(value) is str: value = array_from_txt(value)
+                    elif self.variable.type in [pd.DataFrame]:
+                        if type(value) is str: value = dataframe_from_txt(value)
                     else:
                         value = self.variable.type(value)
                     return value
                 except:
                     self.gui.setStatus(
-                        f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",
+                        f"Variable {self.variable.name}: Impossible to convert {value} to {self.variable.type.__name__}",
                         10000, False)
 
         elif self.variable.type in [bool]:
@@ -427,6 +469,16 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         """ Function call when the value displayed in not sure anymore.
             The value has been modified either in the GUI (but not sent) or by command line """
         self.setValueKnownState(False)
+
+    def readButtonCheckEdited(self):
+        state = bool(self.readButtonCheck.isChecked())
+
+        self.readButton.setEnabled(state)
+
+        # if not self.variable.writable:
+        #     self.valueWidget.setVisible(state) # doesn't work on instantiation, but not problem if start with visible
+
+            # if not state: self.valueWidget.setText('')
 
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """

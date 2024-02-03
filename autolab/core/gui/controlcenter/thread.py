@@ -131,8 +131,8 @@ class InteractionThread(QtCore.QThread):
                     instance = drivers.get_driver(device_config['driver'],
                                                   device_config['connection'],
                                                   **driver_kwargs)
-                    devices.DEVICES[device_name] = devices.Device(device_name, instance)
-                    devices.DEVICES[device_name].device_config = device_config
+                    devices.DEVICES[device_name] = devices.Device(
+                        device_name, instance, device_config)
 
                 self.item.gui.threadDeviceDict[id(self.item)] = devices.DEVICES[device_name]
 
