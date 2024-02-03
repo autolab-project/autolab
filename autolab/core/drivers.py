@@ -226,11 +226,17 @@ def load_drivers_paths() -> dict:
     '''
     drivers_paths = {}
     for source_name, source_path in paths.DRIVER_SOURCES.items():
+        if not os.path.isdir(source_path):
+            print(f"Warning, can't found driver folder: {source_path}")
+            continue
         for driver_name in os.listdir(source_path):
             temp_path = os.path.join(source_path, driver_name)
             if (os.path.isdir(temp_path)
                     and f'{driver_name}.py' in os.listdir(temp_path)):
-                assert driver_name not in drivers_paths.keys(), f"Two drivers where found with the name '{driver_name}'. Each driver must have a unique name."
+                ## Before, raised error if two identical drivers in different folders, I thought of putting a warning message instead but there was too much printing, now don't say that overwrite path (don't overwrite file).
+                # if driver_name in drivers_paths.keys():
+                #     print(f"Two drivers where found with the name '{driver_name}', will use path {source_name}")
+                # assert driver_name not in drivers_paths.keys(), f"Two drivers where found with the name '{driver_name}'. Each driver must have a unique name."
                 drivers_paths[driver_name] = {
                     'path': os.path.join(temp_path, f'{driver_name}.py'),
                     'source': source_name}
@@ -244,4 +250,4 @@ def update_drivers_paths():
 
 
 # Loading the drivers informations at startup
-DRIVERS_PATHS = load_drivers_paths()
+update_drivers_paths()

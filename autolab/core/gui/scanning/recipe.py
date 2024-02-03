@@ -12,7 +12,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 from .customWidgets import MyQTreeWidget, MyQTabWidget
 from ..icons import icons
 from ... import config
-from ...utilities import clean_string, array_from_txt
+from ...utilities import clean_string, array_from_txt, dataframe_from_txt
 
 class RecipeManager:
     """ Manage a recipe from a scan """
@@ -122,7 +122,7 @@ class RecipeManager:
             value = step['value']
             if value is not None:
                 try:
-                    if step['element'].type in [bool, str, np.ndarray]:
+                    if step['element'].type in [bool, str, np.ndarray, pd.DataFrame]:
                        item.setText(3, f'{value}')
                     else:
                        item.setText(3, f'{value:.{self.precision}g}')
@@ -155,7 +155,7 @@ class RecipeManager:
                 menuActions['rename'].setIcon(QtGui.QIcon(icons['rename']))
 
                 if stepType == 'set' or (stepType == 'action' and element.type in [
-                        int, float, str, pd.DataFrame, np.ndarray]):
+                        int, float, str, np.ndarray, pd.DataFrame]):
                     menuActions['setvalue'] = menu.addAction("Set value")
                     menuActions['setvalue'].setIcon(QtGui.QIcon(icons['write']))
 
@@ -256,10 +256,13 @@ class RecipeManager:
                         value = int(value)
                         assert value in [0, 1]
                         value = bool(value)
-                    elif element.type in [tuple]:
-                        pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
-                    elif element.type in [np.ndarray]:
-                        value = array_from_txt(value)
+                    # elif element.type in [tuple]:
+                    #     pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
+                    # BUG: bad with large data (truncate), better to stick with $eval: for now
+                    # elif element.type in [np.ndarray]:
+                    #     value = array_from_txt(value)
+                    # elif element.type in [pd.DataFrame]:
+                    #     value = dataframe_from_txt(value)
                     else:
                         assert self.checkVariable(value), "Need $eval: to evaluate the given string"
                 # Apply modification
@@ -296,7 +299,7 @@ class RecipeManager:
                 self.renameStep(name)
             elif column == 3:
                 if stepType == 'set' or (stepType == 'action' and element.type in [
-                        int, float, str, pd.DataFrame, np.ndarray]):
+                        int, float, str, np.ndarray, pd.DataFrame]):
                     self.setStepValue(name)
 
     def setStepProcessingState(self, name: str, state: str):

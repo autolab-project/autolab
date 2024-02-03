@@ -45,7 +45,7 @@ class FigureManager:
         # Window to show scan data
         self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)
         self.gui.displayScanData_pushButton.setEnabled(False)
-        self.displayScan = DisplayValues(self.gui, "Scan", size=(500, 300))
+        self.displayScan = DisplayValues("Scan", size=(500, 300))
 
         # comboBox with scan id
         self.gui.data_comboBox.activated.connect(self.data_comboBoxClicked)
@@ -141,10 +141,9 @@ class FigureManager:
         dataset = self.gui.dataManager.getLastSelectedDataset()
         sub_dataset = dataset[recipe_name]
 
-        # resultNamesList = ["Scan"] + list(sub_dataset.dictListDataFrame.keys())
         resultNamesList = ["Scan"] + [
             i for i in sub_dataset.dictListDataFrame.keys() if type(
-                sub_dataset.dictListDataFrame[i][0]) not in (str, tuple)]  # OPTIMIZE: remove this condition if want to plot string or tuple: Tuple[List[str], int]
+                sub_dataset.dictListDataFrame[i][0]) not in (str, tuple)]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
 
         AllItems = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
 
@@ -257,8 +256,11 @@ class FigureManager:
 
                 if subdata is None: continue
 
-                if type(subdata) is str:  # OPTIMIZE: could think of someway to show text. Currently removed it from dataset directly
+                if type(subdata) is str:  # Could think of someway to show text. Currently removed it from dataset directly
                     print("Warning: Can't display text")
+                    continue
+                elif type(subdata) is tuple:
+                    print("Warning: Can't display tuple")
                     continue
 
                 subdata = subdata.astype(float)
@@ -350,3 +352,9 @@ class FigureManager:
         new_filename = raw_name + ".png"
         exporter = pg.exporters.ImageExporter(self.fig.plotItem)
         exporter.export(new_filename)
+
+    def close(self):
+        """ Called by scanner on closing """
+        self.displayScan.close()
+        self.fig.close()  # prevent crash without traceback when reopenning scanner multiple times
+        self.figMap.close()

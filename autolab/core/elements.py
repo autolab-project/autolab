@@ -51,6 +51,7 @@ class Variable(Element):
         # Read function
         self.read_function = None
         self.read_init = False
+        if config['type'] in [tuple]: assert 'read' in config.keys(), f"Variable {self.address()} configuration: Must provide a read function"
         if 'read' in config.keys():
             assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
