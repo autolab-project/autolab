@@ -59,9 +59,14 @@ def save_config(config_name, config):
 
 def load_config(config_name) -> configparser.ConfigParser:
     """ This function loads the autolab configuration file in a config parser """
-    config = configparser.ConfigParser(allow_no_value=True)
+    config = configparser.ConfigParser(allow_no_value=True, delimiters='=')  # don't want ':' as delim, needed for path as key
     config.optionxform = str
-    config.read(getattr(paths, f'{config_name.upper()}_CONFIG'))
+    try:  # encoding order matter
+        config.read(getattr(paths, f'{config_name.upper()}_CONFIG'),
+                    encoding='utf-8')
+    except:
+        config.read(getattr(paths, f'{config_name.upper()}_CONFIG'))
+
     return config
 
 
@@ -173,6 +178,24 @@ def check_autolab_config():
             directories_dict['temp_folder'] = autolab_config['directories']['temp_folder']
     autolab_config['directories'] = directories_dict
 
+    # Check extra driver path configuration
+    driver_path_dict = {}
+    if 'extra_driver_path' in autolab_config.sections():
+        driver_path_dict = dict()
+        for driver_path in autolab_config['extra_driver_path'].keys():
+            driver_path_dict[driver_path] = autolab_config['extra_driver_path'][driver_path]
+    autolab_config['extra_driver_path'] = driver_path_dict
+    autolab_config.set('extra_driver_path', r'# Example: onedrive = C:\Users\username\OneDrive\my_drivers')
+
+    # Check extra driver repo url configuration
+    driver_repo_url_dict = {}
+    if 'extra_driver_url_repo' in autolab_config.sections():
+        driver_repo_url_dict = dict()
+        for driver_repo_url in autolab_config['extra_driver_url_repo'].keys():
+            driver_repo_url_dict[driver_repo_url] = autolab_config['extra_driver_url_repo'][driver_repo_url]
+    autolab_config['extra_driver_url_repo'] = driver_repo_url_dict
+    autolab_config.set('extra_driver_url_repo', r'# Example: C:\Users\username\OneDrive\my_drivers = https://github.com/my_repo/my_drivers')
+
     # # Check plotter configuration
     # plotter_dict = {'precision': 10,
     #                 }
@@ -221,6 +244,16 @@ def get_directories_config() -> configparser.SectionProxy:
     return get_config('directories')
 
 
+def get_extra_driver_path_config() -> configparser.SectionProxy:
+    ''' Returns section extra_driver_path from autolab_config.ini '''
+    return get_config('extra_driver_path')
+
+
+def get_extra_driver_repo_url_config() -> configparser.SectionProxy:
+    ''' Returns section extra_driver_url_repo from autolab_config.ini '''
+    return get_config('extra_driver_url_repo')
+
+
 def set_temp_folder() -> str:
     ''' Set temporary folder using given path in autolab_config.ini
     Write it in os.environ['TEMP'] to be used in autolab and drivers '''
@@ -235,6 +268,34 @@ def set_temp_folder() -> str:
     os.environ['TEMP'] = temp_folder
 
     return temp_folder
+
+
+def add_extra_driver_path():
+    """ Add extra driver path to DRIVER_SOURCES. If several drivers have the
+    same name among different folders, the last one called will be used """
+    extra_driver_path = get_extra_driver_path_config()
+
+    for driver_path_name in extra_driver_path.keys():
+        assert driver_path_name not in ['official', 'local'], (
+            "Can't change 'official' nor 'local' driver folder paths. " \
+            f"Change name '{driver_path_name}' in section [extra_driver_path] of {paths.AUTOLAB_CONFIG}")
+
+    paths.DRIVER_SOURCES.update(extra_driver_path)
+
+
+def add_extra_driver_repo_url():
+    """ Add extra driver repository url to DRIVER_REPOSITORY.If several drivers
+    have the same name, the last one overwrites the others (destructive operation) """
+    extra_driver_path = get_extra_driver_repo_url_config()
+
+    for driver_path_name in extra_driver_path.keys():
+        assert driver_path_name not in [paths.DRIVER_SOURCES['official']], (
+            "Can't install driver in 'official' folder. " \
+            f"Change path '{driver_path_name}' in section [extra_driver_path]" \
+            f" of {paths.AUTOLAB_CONFIG}")
+
+        paths.DRIVER_REPOSITORY.update(
+            {driver_path_name: extra_driver_path[driver_path_name]})
 
 
 # ==============================================================================
@@ -276,14 +337,12 @@ def get_all_devices_configs() -> configparser.ConfigParser:
     ''' Returns current devices configuration '''
     config = load_config('devices')
     assert len(set(config.sections())) == len(config.sections()), "Each device must have a unique name."
-
     return config
 
 
 def list_all_devices_configs() -> List[str]:
     ''' Returns the list of available configuration names '''
     devices_configs = get_all_devices_configs()
-
     return sorted(list(devices_configs.sections()))
 
 
@@ -291,5 +350,4 @@ def get_device_config(config_name) -> configparser.SectionProxy:
     ''' Returns the config associated with config_name '''
     assert config_name in list_all_devices_configs(), f"Device configuration {config_name} not found"
     devices_configs = get_all_devices_configs()
-
     return devices_configs[config_name]

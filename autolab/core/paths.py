@@ -22,8 +22,11 @@ PLOTTER_CONFIG = os.path.join(USER_FOLDER, 'plotter_config.ini')
 DRIVERS = os.path.join(USER_FOLDER,'drivers')
 DRIVER_LEGACY = {'official': os.path.join(AUTOLAB_FOLDER, 'drivers'),
                   'local': os.path.join(USER_FOLDER, 'local_drivers')}
+# can add paths in autolab_config.ini [extra_driver_path]
 DRIVER_SOURCES = {'official': os.path.join(DRIVERS, 'official'),
                   'local': os.path.join(DRIVERS, 'local')}
 
-# Driver github repo
-DRIVER_GITHUB = {'official': 'https://github.com/autolab-project/autolab-drivers'}
+# Driver repository
+# can add paths in autolab_config.ini [extra_driver_url_repo]
+# format is {'path to install': 'url to download'}
+DRIVER_REPOSITORY = {DRIVER_SOURCES['official']: 'https://github.com/autolab-project/autolab-drivers'}

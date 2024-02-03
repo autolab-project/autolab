@@ -9,6 +9,7 @@ import os
 import zipfile
 import tempfile
 import shutil
+from typing import Union, List, Dict
 
 from . import paths
 
@@ -143,27 +144,45 @@ def _check_empty_driver_folder():
         install_drivers()
 
 
-def install_drivers(*github_url: str, skip_input=False):
-    """ Ask if want to install drivers from all the given github_url.
-    If no argument passed, use the official drivers url. """
-    temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
+def install_drivers(*repo_url: Union[str, Dict[str, str]], skip_input=False):
+    """ Ask if want to install drivers from repo url.
+    repo_url: can be url or dict {'path to install': 'url to download'}.
+    If no argument passed, download official drivers to official driver folder.
+    If only url given, use official driver folder. """
+    temp_folder = os.environ['TEMP']  # This variable can be set in autolab_config.ini
     temp_repo_folder = tempfile.mkdtemp(dir=temp_folder)
 
-    list_github_url = list(github_url) if len(github_url) != 0 else paths.DRIVER_GITHUB.values()
+    # create list of dict with dict being {'path to install': 'url to download'}
+    if len(repo_url) == 0:
+        list_repo_dict = [paths.DRIVER_REPOSITORY]  # This variable can be modified in autolab_config.ini
+    else:
+        list_repo_dict = list(repo_url)
+        for i, repo_url_tmp in enumerate(list_repo_dict):
+            if type(repo_url_tmp) is str:
+                list_repo_dict[i] = {paths.DRIVER_SOURCES["official"]: repo_url_tmp}
+            elif type(repo_url_tmp) is not dict:
+                raise TypeError(f'repo_url must be str or dict. Given {type(repo_url_tmp)}')
 
-    for github_repo_url in list_github_url:
-        github_repo_zip_url = _format_url(github_repo_url)
-        repo_name = github_repo_url.split(r"github.com/")[1].split("/")[1]
-        zip_name = "-".join((repo_name, os.path.basename(github_repo_zip_url)))
-        temp_repo_zip = os.path.join(temp_repo_folder, zip_name)
+    for repo_dict in list_repo_dict:
+        for drivers_folder in repo_dict.keys():
+            drivers_url = repo_dict[drivers_folder]
 
-        if skip_input: ans = 'yes'
-        else:
-            ans = input_wrap(f'Do you want to install all the drivers from {github_repo_url}? [default:yes] > ')
+            if r"github.com/" in drivers_url:
+                repo_name = drivers_url.split(r"github.com/")[1].split("/")[1]
+            else:
+                repo_name = "temp_folder"
 
-        if ans.strip().lower() == 'no': continue
-        else:
-            _download_repo(github_repo_zip_url, temp_repo_zip)
-            _unzip_repo(temp_repo_zip, paths.DRIVER_SOURCES["official"])
-            os.remove(temp_repo_zip)
+            repo_zip_url = _format_url(drivers_url)
+            zip_name = "-".join((repo_name, os.path.basename(repo_zip_url)))
+            temp_repo_zip = os.path.join(temp_repo_folder, zip_name)
+
+            if skip_input: ans = 'yes'
+            else:
+                ans = input_wrap(f'Install drivers from {drivers_url} to {drivers_folder}? [default:yes] > ')
+
+            if ans.strip().lower() == 'no': continue
+            else:
+                _download_repo(repo_zip_url, temp_repo_zip)
+                _unzip_repo(temp_repo_zip, drivers_folder)
+                os.remove(temp_repo_zip)
     os.rmdir(temp_repo_folder)
