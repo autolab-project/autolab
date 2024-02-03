@@ -12,15 +12,13 @@ from qtpy import QtCore, QtWidgets
 
 class DisplayValues(QtWidgets.QWidget):
 
-    def __init__(self, gui: QtWidgets.QMainWindow,
-                 name: str, size: QtCore.QSize = (250, 400)):
+    def __init__(self, name: str, size: QtCore.QSize = (250, 400)):
         """ Create a QWidget displaying the dataFrame input to the refresh method.
         size is of type QtCore.QSize or tuple of int """
 
         if type(size) in (tuple, list):
            size = QtCore.QSize(*size)
 
-        self.gui = gui
         self.active = False
 
         QtWidgets.QWidget.__init__(self)

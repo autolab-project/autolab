@@ -58,13 +58,33 @@ def array_from_txt(string: str) -> Any:  # actually -> np.ndarray
     import numpy as np
     if "," in string: ls = re.sub('\s,+', ',', string)
     else: ls = re.sub('\s+', ',', string)
-    value = np.array(ast.literal_eval(ls), ndmin=1)  # ndim=1 to avoid having float if 0D
+    test = ast.literal_eval(ls)
+
+    try: value = np.array(test, ndmin=1, dtype=float)  # check validity of array
+    except ValueError as e: raise ValueError(e)
+    else: value = np.array(test, ndmin=1)  # ndim=1 to avoid having float if 0D
     return value
 
 
-def txt_to_array(value: Any) -> str:
+def array_to_txt(value: Any) -> str:
     import numpy as np
-    return np.array2string(value, separator=',', suppress_small=True)
+    # import sys
+    # with np.printoptions(threshold=sys.maxsize):  # not a solution, can't display large data: too slow
+    return np.array2string(value, separator=',', suppress_small=True)  # this truncates data to 1000 elements
+
+
+def dataframe_from_txt(value: str) -> Any:
+    from io import StringIO
+    import pandas as pd
+    value_io = StringIO(value)
+    # TODO: find sep (use \t to be compatible with excel but not nice to write by hand)
+    df = pd.read_csv(value_io, sep="\t")
+    return df
+
+
+def dataframe_to_txt(value: Any) -> str:
+    import pandas as pd
+    return pd.DataFrame(value).head(1000).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
 
 
 def openFile(filename: str):
@@ -80,10 +100,8 @@ def formatData(data: Any) -> Any: # actually -> pd.DataFrame but don't want to i
     """ Format data to DataFrame """
     import pandas as pd
 
-    try:
-        data = pd.DataFrame(data)
-    except ValueError:
-        data = pd.DataFrame([data])
+    try: data = pd.DataFrame(data)
+    except ValueError: data = pd.DataFrame([data])
 
     data.columns = data.columns.astype(str)
     data_type = data.values.dtype
@@ -91,7 +109,7 @@ def formatData(data: Any) -> Any: # actually -> pd.DataFrame but don't want to i
     try:
         data[data.columns] = data[data.columns].apply(pd.to_numeric, errors="coerce")
     except ValueError:
-        pass  # OPTIMIZE: This happens when their is identical column name
+        pass  # OPTIMIZE: This happens when there is identical column name
 
     if len(data) != 0:
         assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"

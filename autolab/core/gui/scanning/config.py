@@ -121,7 +121,7 @@ class ConfigManager:
         names = []
 
         for recipe_name in self.getRecipeLink(recipe_name):
-            if recipe_name in self.config.keys():
+            if recipe_name in self.recipeNameList():
                 names += self.getNames(recipe_name)
 
         compt = 0
@@ -142,7 +142,7 @@ class ConfigManager:
 
         names.append('recipe')  # don't want 'recipe' as name but only 'recipe_i'
         names.append('autolab')  # don't want 'autolab' as name
-        names += self.config.keys()
+        names += self.recipeNameList()
 
         compt = 0
         while True:
@@ -209,19 +209,17 @@ class ConfigManager:
         self.gui._clearRecipe()  # before everything to have access to recipe and del it
         self.gui.dataManager.clear()
 
-        for recipe_name in self.config.keys():
+        for recipe_name in self.recipeNameList():
             self.gui._addRecipe(recipe_name)
             for parameterManager in self.gui.recipeDict[recipe_name]['parameterManager'].values():
                 parameterManager.refresh()
             self.refreshRecipe(recipe_name)
-            for rangeManager in self.gui.recipeDict[recipe_name]['rangeManager'].values():
-                rangeManager.refresh()
 
     def renameRecipe(self, existing_recipe_name: str, new_recipe_name: str):
         """ Renames recipe """
         if not self.gui.scanManager.isStarted():
-            if existing_recipe_name not in self.config.keys():
-                raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.config.keys()}')
+            if existing_recipe_name not in self.recipeNameList():
+                raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.recipeNameList()}')
 
             new_recipe_name = self.getUniqueNameRecipe(new_recipe_name)
             old_config = self.config
@@ -244,11 +242,10 @@ class ConfigManager:
 
     def checkConfig(self):
         """ Checks validity of a config. Used before a scan start. """
-        recipe_name_list = list(self.config.keys())
-        assert len(recipe_name_list) != 0, 'Need a recipe to start a scan!'
+        assert len(self.recipeNameList()) != 0, 'Need a recipe to start a scan!'
 
         one_recipe_active = False
-        for recipe_name in recipe_name_list:
+        for recipe_name in self.recipeNameList():
             recipe = self.config[recipe_name]
             if recipe['active']:
                 one_recipe_active = True
@@ -277,7 +274,7 @@ class ConfigManager:
 
     def lastRecipeName(self) -> str:
         """ Returns last recipe name """
-        return list(self.config.keys())[-1] if len(self.config.keys()) != 0 else ""
+        return self.recipeNameList()[-1] if len(self.recipeNameList()) != 0 else ""
 
     def _defaultParameterPars(self) -> dict:
         return {'name': 'parameter',
@@ -321,19 +318,13 @@ class ConfigManager:
 
     def refreshParameterRange(self, recipe_name: str,
                               param_name: str, newName: str = None):
-        """ Updates parameterManager and rangeManager with new parameter name """
+        """ Updates parameterManager with new parameter name """
         if newName is None: newName = param_name
 
         recipeDictParam = self.gui.recipeDict[recipe_name]['parameterManager']
         recipeDictParam[newName] = recipeDictParam.pop(param_name)
-        recipeDictParam[newName].param_name = newName
-        recipeDictParam[newName].frameParameter.param_name = newName
+        recipeDictParam[newName].changeName(newName)
         recipeDictParam[newName].refresh()
-
-        recipeDictRange = self.gui.recipeDict[recipe_name]['rangeManager']
-        recipeDictRange[newName] = recipeDictRange.pop(param_name)
-        recipeDictRange[newName].param_name = newName
-        recipeDictRange[newName].refresh()
 
         self.gui._updateSelectParameter()
 
@@ -424,7 +415,7 @@ class ConfigManager:
 
             width = abs(lim[1] - lim[0])
 
-            recipeDictRange = self.gui.recipeDict[recipe_name]['rangeManager']
+            recipeDictRange = self.gui.recipeDict[recipe_name]['parameterManager']
 
             if recipeDictRange[param_name].point_or_step == "point":
                 param['step'] = float(
@@ -459,7 +450,7 @@ class ConfigManager:
             recipe_name = self.lastRecipeName()
 
         if not self.gui.scanManager.isStarted():
-            assert recipe_name in self.config.keys(), f'{recipe_name} not in {list(self.config.keys())}'
+            assert recipe_name in self.recipeNameList(), f'{recipe_name} not in {self.recipeNameList()}'
 
             if name is None:
                 name = self.getUniqueName(recipe_name, element.name)
@@ -537,12 +528,16 @@ class ConfigManager:
 
     # CONFIG READING
     ###########################################################################
+    def recipeNameList(self):
+        """ Returns the list of recipe names """
+        return list(self.config.keys())
+
     def getLinkedRecipe(self) -> Dict[str, list]:
         """ Returns a dict with recipe_name key and list of recipes linked to recipe_name recipe.
         Example: {'recipe_1': ['recipe_1', 'recipe_2', 'recipe_3', 'recipe_2'], 'recipe_3': ['recipe_3', 'recipe_2'], 'recipe_2': ['recipe_2']}"""
         linkedRecipe = dict()
 
-        for recipe_name in list(self.config.keys()):
+        for recipe_name in self.recipeNameList():
             recipe = self.config[recipe_name]
             recipe_name_link = []
             list_recipe_new = [recipe]
@@ -589,7 +584,7 @@ class ConfigManager:
     def getAllowedRecipe(self, recipe_name: str) -> List[str]:
         """ Returns a list of recipe that can be added to recipe_name without
         risk of cycle or twice same recipe """
-        recipe_name_list = list(self.config.keys())
+        recipe_name_list = self.recipeNameList()
         linked_recipes = self.getLinkedRecipe()
 
         for recipe_name_i in linked_recipes.keys():
@@ -616,49 +611,49 @@ class ConfigManager:
 
     def getRecipeActive(self) -> List[str]:
         """ Returns list of active recipes """
-        return [i for i in self.config.keys() if self.getActive(i)]
+        return [i for i in self.recipeNameList() if self.getActive(i)]
 
     # get Param
     def getParameterPosition(self, recipe_name: str, param_name: str) -> int:
-        """ Returns the position of a parameter in the recipe """
+        """ Returns the position of a parameter """
         return [i for i, param in enumerate(self.config[recipe_name]['parameter']) if param['name'] == param_name][0]
 
     def parameterList(self, recipe_name: str) -> List[dict]:
-        """ Returns the list of parameter for the recipe with 'recipe_name' name """
+        """ Returns the list of parameters in the recipe """
         return self.config[recipe_name]['parameter']
 
     def parameterNameList(self, recipe_name: str) -> List[str]:
-        """ Returns the list of parameter for the recipe with 'recipe_name' name """
+        """ Returns the list of parameter names in the recipe """
         return [param['name'] for param in self.config[recipe_name]['parameter']]
 
     def getParameterElement(self, recipe_name: str, param_name: str) -> devices.Device:
-        """ Returns the element of the current parameter of the recipe with 'recipe_name' name"""
+        """ Returns the element of a parameter """
         pos = self.getParameterPosition(recipe_name, param_name)
         return self.config[recipe_name]['parameter'][pos]['element']
 
     def getLog(self, recipe_name: str, param_name: str) -> bool:
-        """ Returns the log state of the scan """
+        """ Returns the log state of a parameter """
         pos = self.getParameterPosition(recipe_name, param_name)
         return self.config[recipe_name]['parameter'][pos]['log']
 
     def getNbPts(self, recipe_name: str, param_name: str) -> int:
-        """ Returns the number of points of the scan """
+        """ Returns the number of points of a parameter """
         pos = self.getParameterPosition(recipe_name, param_name)
         return self.config[recipe_name]['parameter'][pos]['nbpts']
 
     def getStep(self, recipe_name: str, param_name: str) -> float:
-        """ Returns the value of the step between points of the scan """
+        """ Returns the value of the step between points of a parameter """
         pos = self.getParameterPosition(recipe_name, param_name)
         return self.config[recipe_name]['parameter'][pos]['step']
 
     def getRange(self, recipe_name: str, param_name: str) -> Tuple[float, float]:
-        """ Returns the range (start and end value) of the scan """
+        """ Returns the range (start and end value) of a parameter """
         pos = self.getParameterPosition(recipe_name, param_name)
         return self.config[recipe_name]['parameter'][pos]['range']
 
     # get Step
     def stepList(self, recipe_name: str) -> List[dict]:
-        """ Returns the whole recipe of the scan """
+        """ Returns the list of steps in the recipe """
         return self.config[recipe_name]['recipe']
 
     def getRecipeStepElement(self, recipe_name: str, name: str) -> devices.Device:
@@ -733,7 +728,7 @@ class ConfigManager:
         configPars['autolab'] = {'version': __version__,
                                  'timestamp': str(datetime.datetime.now())}
 
-        for recipe_name in self.config.keys():
+        for recipe_name in self.recipeNameList():
             recipe_i = self.config[recipe_name]
             pars_recipe_i = {}
 
@@ -1000,7 +995,7 @@ class ConfigManager:
             if append:
                 for recipe_name in config.keys():
 
-                    if recipe_name in self.config.keys():
+                    if recipe_name in self.recipeNameList():
                         new_recipe_name = self.getUniqueNameRecipe('recipe')
                     else:
                         new_recipe_name = recipe_name

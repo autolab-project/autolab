@@ -16,7 +16,6 @@ from .parameter import ParameterManager
 from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
-from .scanrange import RangeManager
 from ..icons import icons
 
 
@@ -62,7 +61,6 @@ class Scanner(QtWidgets.QMainWindow):
         self.recipeDict[recipe_name]['recipeManager'] = RecipeManager(self, recipe_name)
 
         self.recipeDict[recipe_name]['parameterManager'] = OrderedDict()
-        self.recipeDict[recipe_name]['rangeManager'] = OrderedDict()
 
         for parameter in self.configManager.parameterList(recipe_name):
             self._addParameter(recipe_name, parameter['name'])
@@ -116,12 +114,8 @@ class Scanner(QtWidgets.QMainWindow):
         new_ParameterManager = ParameterManager(self, recipe_name, param_name)
         self.recipeDict[recipe_name]['parameterManager'][param_name] = new_ParameterManager
 
-        new_RangeManager = RangeManager(self, recipe_name, param_name)
-        self.recipeDict[recipe_name]['rangeManager'][param_name] = new_RangeManager
-
         layoutAll = self.recipeDict[recipe_name]['recipeManager']._layoutAll
-        layoutAll.insertWidget(len(layoutAll)-1, new_ParameterManager.frameParameter)
-        layoutAll.insertWidget(len(layoutAll)-1, new_RangeManager.frameScanRange)
+        layoutAll.insertWidget(len(layoutAll)-1, new_ParameterManager.mainFrame)
 
         self._updateSelectParameter()
         self.selectParameter_comboBox.setCurrentIndex(self.selectParameter_comboBox.count()-1)
@@ -129,8 +123,6 @@ class Scanner(QtWidgets.QMainWindow):
     def _removeParameter(self, recipe_name: str, param_name: str):
         """ Removes parameter from managers. Called by configManager """
         test = self.recipeDict[recipe_name]['parameterManager'].pop(param_name)
-        test._removeWidget()
-        test = self.recipeDict[recipe_name]['rangeManager'].pop(param_name)
         test._removeWidget()
 
         self._updateSelectParameter()
@@ -199,13 +191,12 @@ class Scanner(QtWidgets.QMainWindow):
 
         # Delete reference of this window in the control center
         self.mainGui.clearScanner()
-        for recipe in self.recipeDict.values():
-            for rangeManager in recipe['rangeManager'].values():
-                rangeManager.displayParameter.close()
 
-        self.figureManager.displayScan.close()
-        self.figureManager.fig.close()  # prevent crash without traceback when reopenning scanner multiple times
-        self.figureManager.figMap.close()
+        for recipe in self.recipeDict.values():
+            for parameterManager in recipe['parameterManager'].values():
+                parameterManager.close()
+
+        self.figureManager.close()
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modifies displayed message in status bar and adds error message to logger """

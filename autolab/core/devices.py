@@ -21,10 +21,14 @@ DEVICES = {}
 
 class Device(Module):
 
-    def __init__(self, device_name: str, instance):
+    def __init__(self, device_name: str, instance, device_config: dict):
+        """ device_config is returned by :meth:`get_final_device_config` """
+
+        self.device_config = device_config  # hidden from completion
+        self.driver_path = drivers.get_driver_path(device_config["driver"])
 
         Module.__init__(self, None, {'name': device_name, 'object': instance,
-                                     'help': f'Device {device_name}'})
+                                     'help': f'Device {device_name} at {self.driver_path}'})
 
     def close(self):
         """ This function close the connection of the current physical device """
@@ -35,7 +39,7 @@ class Device(Module):
     def __dir__(self):
         """ For auto-completion """
         return (self.list_modules() + self.list_variables()
-                + self.list_actions() + ['close', 'help', 'instance'])
+                + self.list_actions() + ['driver_path', 'close', 'help', 'instance'])
 
 
 # =============================================================================
@@ -89,8 +93,7 @@ def get_device(device_name: str, **kwargs) -> Device:
             device_config['driver'], device_config['connection'],
             **{k: v for k, v in device_config.items() if k not in [
                 'driver', 'connection']})
-        DEVICES[device_name] = Device(device_name, instance)
-        DEVICES[device_name].device_config = device_config
+        DEVICES[device_name] = Device(device_name, instance, device_config)
 
     return DEVICES[device_name]
 
