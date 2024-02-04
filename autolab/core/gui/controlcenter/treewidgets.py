@@ -104,7 +104,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         self.action = action
 
         if self.action.has_parameter:
-            if self.action.type in [int, float, str, pd.DataFrame, np.ndarray]:
+            if self.action.type in [int, float, str, np.ndarray, pd.DataFrame]:
                 self.executable = True
                 self.has_value = True
             else:

@@ -148,6 +148,11 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                 elif variable._element_type == "action":
                     gui.addStepToScanRecipe(self.recipe_name, 'action', variable)
 
+            # OPTIMIZE: should be done in control panel somehow to catch drop cancel
+            self.scanner.mainGui.setWindowState(
+                self.scanner.mainGui.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.scanner.mainGui.activateWindow()
+
     def dragEnterEvent(self, event):
         """ Check if drag event is acceptable """
         # Could use mimeData instead of last_drag but overkill

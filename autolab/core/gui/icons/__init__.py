@@ -66,3 +66,25 @@ icons = {'action': ACTION_ICON_NAME,
          'up': UP_ICON_NAME,
          'write': WRITE_ICON_NAME,
          }
+
+
+INT_ICON_NAME = os.path.join(icons_folder, 'int-icon.svg').replace("\\", "/")
+FLOAT_ICON_NAME = os.path.join(icons_folder, 'float-icon.svg').replace("\\", "/")
+STR_ICON_NAME = os.path.join(icons_folder, 'str-icon.svg').replace("\\", "/")
+BYTES_ICON_NAME = os.path.join(icons_folder, 'bytes-icon.svg').replace("\\", "/")
+BOOL_ICON_NAME = os.path.join(icons_folder, 'bool-icon.svg').replace("\\", "/")
+TUPLE_ICON_NAME = os.path.join(icons_folder, 'tuple-icon.svg').replace("\\", "/")
+NDARRAY_ICON_NAME = os.path.join(icons_folder, 'ndarray-icon.svg').replace("\\", "/")
+DATAFRAME_ICON_NAME = os.path.join(icons_folder, 'dataframe-icon.svg').replace("\\", "/")
+
+
+icons.update({
+'int': INT_ICON_NAME,
+'float': FLOAT_ICON_NAME,
+'str': STR_ICON_NAME,
+'bytes': BYTES_ICON_NAME,
+'bool': BOOL_ICON_NAME,
+'tuple': TUPLE_ICON_NAME,
+'ndarray': NDARRAY_ICON_NAME,
+'DataFrame': DATAFRAME_ICON_NAME,
+})
