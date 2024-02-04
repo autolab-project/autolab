@@ -55,6 +55,11 @@ conda install -c conda-forge pyside6
         pg.setConfigOptions(background='w', foreground="k")
         pg.setConfigOption('imageAxisOrder', 'row-major')
 
+        # TODO: add size to config (maybe font also)
+        # from qtpy import QtGui
+        # font = QtGui.QFont('MS Shell Dlg 2', 10)
+        # QtWidgets.QApplication.setFont(font)
+
         app = QtWidgets.QApplication.instance()
         if app is None:
             app = QtWidgets.QApplication([])

@@ -14,7 +14,7 @@ import time
 import uuid
 from typing import Any, Type
 
-from qtpy import QtCore, QtWidgets, uic, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtWidgets import QApplication
 
 from .thread import ThreadManager
@@ -66,12 +66,134 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def __init__(self):
 
-        # Set up the user interface from Designer.
+        # Set up the user interface.
         QtWidgets.QMainWindow.__init__(self)
-        ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
-        uic.loadUi(ui_path, self)
 
+        # Window configuration
+        self.setWindowTitle("AUTOLAB - Control Panel")
         self.setWindowIcon(QtGui.QIcon(icons['autolab']))
+        self.setFocus()
+        self.activateWindow()
+        self.resize(700, 573)
+
+        # Main frame configuration: centralWidget(verticalLayout(splitter(tree)))
+
+        # Tree widget configuration
+        class MyQTreeWidget(QtWidgets.QTreeWidget):
+
+            def __init__(self, gui, parent=None):
+                self.gui = gui
+                QtWidgets.QTreeWidget.__init__(self, parent)
+
+            def startDrag(self, event):
+
+                if self.gui.scanner is not None:
+                    self.gui.scanner.setWindowState(
+                        self.gui.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+                    self.gui.scanner.activateWindow()
+                QtWidgets.QTreeWidget.startDrag(self, event)
+
+        self.tree = MyQTreeWidget(self)
+        self.tree.last_drag = None
+        self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])
+        self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
+        self.tree.header().resizeSection(0, 200)
+        self.tree.header().resizeSection(4, 15)
+        self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragOnly)
+        self.tree.header().setStretchLastSection(False)
+        self.tree.itemClicked.connect(self.itemClicked)
+        self.tree.itemPressed.connect(self.itemPressed)
+        self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self.rightClick)
+        self.tree.setAlternatingRowColors(True)
+
+        self.splitter = QtWidgets.QSplitter()
+        self.splitter.setOrientation(QtCore.Qt.Orientation.Vertical)
+        self.splitter.addWidget(self.tree)
+
+        verticalLayout = QtWidgets.QVBoxLayout()
+        verticalLayout.setSpacing(0)
+        verticalLayout.setContentsMargins(0,0,0,0)
+        verticalLayout.addWidget(self.splitter)
+
+        centralWidget = QtWidgets.QWidget()
+        centralWidget.setLayout(verticalLayout)
+        self.setCentralWidget(centralWidget)
+
+        self.menuBar = self.menuBar()
+        self.statusBar = self.statusBar()
+
+        # Thread manager
+        self.threadManager = ThreadManager(self)
+
+        # Scanner / Monitors
+        self.scanner = None
+        self.plotter = None
+        self.monitors = {}
+        self.sliders = {}
+        self.threadDeviceDict = {}
+        self.threadItemDict = {}
+
+        scanAction = self.menuBar.addAction('Open scanner')
+        scanAction.triggered.connect(self.openScanner)
+        scanAction.setStatusTip('Open the scanner in another window')
+
+        plotAction = self.menuBar.addAction('Open plotter')
+        plotAction.triggered.connect(self.openPlotter)
+        plotAction.setStatusTip('Open the plotter in another window')
+
+        # Settings menu
+        settingsMenu = self.menuBar.addMenu('Settings')
+
+        autolabConfig = settingsMenu.addAction('Autolab config')
+        autolabConfig.setIcon(QtGui.QIcon(icons['config']))
+        autolabConfig.triggered.connect(self.openAutolabConfig)
+        autolabConfig.setStatusTip("Open the Autolab configuration file")
+
+        plotterConfig = settingsMenu.addAction('Plotter config')
+        plotterConfig.setIcon(QtGui.QIcon(icons['config']))
+        plotterConfig.triggered.connect(self.openPlotterConfig)
+        plotterConfig.setStatusTip("Open the plotter configuration file")
+
+        settingsMenu.addSeparator()
+
+        devicesConfig = settingsMenu.addAction('Devices config')
+        devicesConfig.setIcon(QtGui.QIcon(icons['config']))
+        devicesConfig.triggered.connect(self.openDevicesConfig)
+        devicesConfig.setStatusTip("Open the devices configuration file")
+
+        # Help menu
+        helpMenu = self.menuBar.addMenu('Help')
+
+        reportAction = helpMenu.addAction('Report bugs / suggestions')
+        reportAction.setIcon(QtGui.QIcon(icons['github']))
+        reportAction.triggered.connect(web.report)
+        reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
+
+        helpMenu.addSeparator()
+
+        helpAction = helpMenu.addAction('Documentation')
+        helpAction.setIcon(QtGui.QIcon(icons['readthedocs']))
+        helpAction.triggered.connect(lambda : web.doc('default'))
+        helpAction.setStatusTip('Open the documentation on Read The Docs website')
+
+        helpActionOffline = helpMenu.addAction('Documentation (Offline)')
+        helpActionOffline.setIcon(QtGui.QIcon(icons['pdf']))
+        helpActionOffline.triggered.connect(lambda : web.doc(False))
+        helpActionOffline.setStatusTip('Open the pdf documentation form local file')
+
+        # Timer for device instantiation
+        self.timerDevice = QtCore.QTimer(self)
+        self.timerDevice.setInterval(50) # ms
+        self.timerDevice.timeout.connect(self.timerAction)
+
+        # queue and timer to add/remove plot from driver
+        self.queue_driver = queue.Queue()
+        self.dict_widget = dict()
+        self.timerQueue = QtCore.QTimer(self)
+        self.timerQueue.setInterval(int(50)) # ms
+        self.timerQueue.timeout.connect(self._queueDriverHandler)
+        self.timerQueue.start()  # OPTIMIZE: should be started only when needed but difficult to know it before openning device which occurs in a diff thread! (can't start timer on diff thread)
 
         # Import Autolab config
         control_center_config = config.get_control_center_config()
@@ -119,98 +241,6 @@ class ControlCenter(QtWidgets.QMainWindow):
 
             console_widget = ConsoleWidget(namespace=namespace, text=text)
             console_dock.addWidget(console_widget)
-
-        # Window configuration
-        self.setWindowTitle("AUTOLAB - Control Panel")
-        self.setFocus()
-        self.activateWindow()
-
-        # Tree widget configuration
-        self.tree.last_drag = None
-        self.tree.gui = self
-        self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])
-        self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
-        self.tree.header().resizeSection(0, 200)
-        self.tree.header().resizeSection(4, 15)
-        self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragOnly)
-        self.tree.header().setStretchLastSection(False)
-        self.tree.itemClicked.connect(self.itemClicked)
-        self.tree.itemPressed.connect(self.itemPressed)
-        self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.tree.customContextMenuRequested.connect(self.rightClick)
-        self.tree.setAlternatingRowColors(True)
-
-        # Thread manager
-        self.threadManager = ThreadManager(self)
-
-        # Scanner / Monitors
-        self.scanner = None
-        self.plotter = None
-        self.monitors = {}
-        self.sliders = {}
-        self.threadDeviceDict = {}
-        self.threadItemDict = {}
-
-        scanAction = self.menuBar.addAction('Open scanner')
-        scanAction.triggered.connect(self.openScanner)
-        scanAction.setStatusTip('Open the scanner in another window')
-
-        plotAction = self.menuBar.addAction('Open plotter')
-        plotAction.triggered.connect(self.openPlotter)
-        plotAction.setStatusTip('Open the plotter in another window')
-
-        # Settings menu
-        settingsMenu = self.menuBar.addMenu('Settings')
-
-        autolabConfig = settingsMenu.addAction('Autolab config')
-        autolabConfig.setIcon(QtGui.QIcon(icons['config']))
-        autolabConfig.triggered.connect(self.openAutolabConfig)
-        autolabConfig.setStatusTip("Open the Autolab configuration file")
-
-        plotterConfig = settingsMenu.addAction('Plotter config')
-        plotterConfig.setIcon(QtGui.QIcon(icons['config']))
-        plotterConfig.triggered.connect(self.openPlotterConfig)
-        plotterConfig.setStatusTip("Open the plotter configuration file")
-
-        settingsMenu.addSeparator()
-
-        devicesConfig = settingsMenu.addAction('Devices config')
-        devicesConfig.setIcon(QtGui.QIcon(icons['config']))
-        devicesConfig.triggered.connect(self.openDevicesConfig)
-        devicesConfig.setStatusTip("Open the devices configuration file")
-
-
-        # Help menu
-        helpMenu = self.menuBar.addMenu('Help')
-
-        reportAction = helpMenu.addAction('Report bugs / suggestions')
-        reportAction.setIcon(QtGui.QIcon(icons['github']))
-        reportAction.triggered.connect(web.report)
-        reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
-
-        helpMenu.addSeparator()
-
-        helpAction = helpMenu.addAction('Documentation')
-        helpAction.setIcon(QtGui.QIcon(icons['readthedocs']))
-        helpAction.triggered.connect(lambda : web.doc('default'))
-        helpAction.setStatusTip('Open the documentation on Read The Docs website')
-
-        helpActionOffline = helpMenu.addAction('Documentation (Offline)')
-        helpActionOffline.setIcon(QtGui.QIcon(icons['pdf']))
-        helpActionOffline.triggered.connect(lambda : web.doc(False))
-        helpActionOffline.setStatusTip('Open the pdf documentation form local file')
-
-        self.timerDevice = QtCore.QTimer(self)
-        self.timerDevice.setInterval(50) # ms
-        self.timerDevice.timeout.connect(self.timerAction)
-
-        # queue and timer to add/remove plot from driver
-        self.queue_driver = queue.Queue()
-        self.dict_widget = dict()
-        self.timerQueue = QtCore.QTimer(self)
-        self.timerQueue.setInterval(int(50)) # ms
-        self.timerQueue.timeout.connect(self._queueDriverHandler)
-        self.timerQueue.start()  # OPTIMIZE: should be started only when needed but difficult to know it before openning device which occurs in a diff thread! (can't start timer on diff thread)
 
     def createWidget(self, widget: Type, *args, **kwargs):
         """ Function used by a driver to add a widget.
@@ -320,7 +350,8 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def itemPressed(self, item: QtWidgets.QTreeWidgetItem):
         """ Function called when a click (not released) has been detected in the tree.
-            Store last dragged variable in tree so scanner can know it when it is dropped there """
+            Store last dragged variable in tree so scanner can know it when it is dropped there.
+            """
         if hasattr(item, "module"):
             if item.is_not_submodule: self.tree.last_drag = item.name
             else: self.tree.last_drag = None

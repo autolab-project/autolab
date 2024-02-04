@@ -440,7 +440,7 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
 *Variable*:
     - 'read': class attribute (argument type: function)
     - 'write': class attribute (argument type: function)
-    - 'type': python type, exclusively in: int, float, bool, str, bytes, np.ndarray, pd.DataFrame
+    - 'type': python type, exclusively in: int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame
     - 'unit': unit of the variable, optionnal (argument type: string)
     - 'read_init': bool to tell :ref:`control_panel` to read variable on instantiation, optionnal
 
@@ -449,7 +449,7 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
 
 *Action*:
     - 'do': class attribute (argument type: function)
-    - 'param_type': python type, exclusively in: int, float, bool, str, bytes, np.ndarray, pd.DataFrame, optional
+    - 'param_type': python type, exclusively in: int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame, optional
     - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit "filename" to open a open file dialog)
 
 

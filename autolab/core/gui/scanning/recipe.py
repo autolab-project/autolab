@@ -94,6 +94,7 @@ class RecipeManager:
             # Loading step informations
             item = QtWidgets.QTreeWidgetItem()
             item.setFlags(item.flags() ^ QtCore.Qt.ItemIsDropEnabled)
+            item.setToolTip(0, step['element']._help)
 
             # Column 1 : Step name
             item.setText(0, step['name'])
@@ -121,13 +122,24 @@ class RecipeManager:
             # Column 4 : Value if stepType is 'set'
             value = step['value']
             if value is not None:
+
                 try:
-                    if step['element'].type in [bool, str, np.ndarray, pd.DataFrame]:
+                    if step['element'].type in [bool, str, tuple, np.ndarray, pd.DataFrame]:
                        item.setText(3, f'{value}')
                     else:
                        item.setText(3, f'{value:.{self.precision}g}')
                 except ValueError:
                     item.setText(3, f'{value}')
+
+            etype = step['element'].type
+            if etype is int: item.setIcon(3, QtGui.QIcon(icons['int']))
+            elif etype is float: item.setIcon(3, QtGui.QIcon(icons['float']))
+            elif etype is bool: item.setIcon(3, QtGui.QIcon(icons['bool']))
+            elif etype is str: item.setIcon(3, QtGui.QIcon(icons['str']))
+            elif etype is bytes: item.setIcon(3, QtGui.QIcon(icons['bytes']))
+            elif etype is tuple: item.setIcon(3, QtGui.QIcon(icons['tuple']))
+            elif etype is np.ndarray: item.setIcon(3, QtGui.QIcon(icons['ndarray']))
+            elif etype is pd.DataFrame: item.setIcon(3, QtGui.QIcon(icons['DataFrame']))
 
             # Add item to the tree
             self.tree.addTopLevelItem(item)

@@ -42,7 +42,7 @@ class Variable(Element):
 
         # Type
         assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
-        assert config['type'] in [int, float, bool, str, bytes, tuple, pd.DataFrame, np.ndarray], f"Variable {self.address()} configuration: Variable type not supported in autolab"
+        assert config['type'] in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame], f"Variable {self.address()} configuration: Variable type not supported in autolab"
         self.type = config['type']
 
         # Read and write function
@@ -175,7 +175,7 @@ class Action(Element):
         self.type = None
         self.unit = None
         if 'param_type' in config.keys():
-            assert config['param_type'] in [int, float, bool, str, bytes, tuple, pd.DataFrame, np.ndarray], f"Action {self.address()} configuration: Argument type not supported in autolab"
+            assert config['param_type'] in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame], f"Action {self.address()} configuration: Argument type not supported in autolab"
             self.type = config['param_type']
             if 'param_unit' in config.keys():
                 assert isinstance(config['param_unit'], str), f"Action {self.address()} configuration: Argument unit parameter must be a string"
