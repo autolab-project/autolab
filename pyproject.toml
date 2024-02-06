@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autolab"
-version = "2.0b1"
+dynamic = ["version", "requires-python"]
+
 authors = [
   {name = "Quentin Chateiller"},
   {name = "Bruno Garbin"},
@@ -20,8 +21,10 @@ dependencies = [
 	"pandas>=0.24",
     "pyvisa>=1.10",
     "python-vxi11>=0.9",
-	"pyqtgraph>=0.12.4",
-	"qtpy"
+	"pyqtgraph",
+	"qtpy",
+	"requests",
+	"tqdm"
 ]
 classifiers=["Programming Language :: Python :: 3",
                  "Programming Language :: Python :: 3 :: Only",
