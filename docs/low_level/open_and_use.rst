@@ -95,7 +95,7 @@ With all these commands, you can now create your own Python script. Here is an e
 
 	    # Measures the values
 	    wl_measured = myTunics.get_wavelength()
-	    power = myPowerMeter.line1.set_power()
+	    power = myPowerMeter.line1.get_power()
 
 	    # Store the values in a list
 	    df = df.append({'wl_measured': wl_measured, 'power': power}, ignore_index=True)

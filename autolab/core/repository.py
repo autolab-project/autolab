@@ -12,6 +12,7 @@ import shutil
 from typing import Union, List, Dict
 
 from . import paths
+from . import drivers
 
 # Removed the possibility to download drivers individually due to the restriction of Github requests
 # Removed the small driver installer GUI made to select which driver to install
@@ -186,3 +187,6 @@ def install_drivers(*repo_url: Union[str, Dict[str, str]], skip_input=False):
                 _unzip_repo(temp_repo_zip, drivers_folder)
                 os.remove(temp_repo_zip)
     os.rmdir(temp_repo_folder)
+
+    # Update available drivers
+    drivers.update_drivers_paths()

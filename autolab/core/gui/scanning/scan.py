@@ -13,7 +13,6 @@ from queue import Queue
 from itertools import product
 from typing import Any
 
-from pyvisa import VisaIOError
 import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
@@ -277,10 +276,15 @@ class ScanThread(QtCore.QThread):
                         address = f"='{self._source_of_error['element'].address()}'"
                     else: address = ''
 
-                    if str(e) == str(VisaIOError(-1073807339)):
-                        e = f"Timeout reached for device {address}. Acquisition time may be too long. If so, you can increase timeout delay in the driver to avoid this error."
-                    else:
+                    try:
+                        from pyvisa import VisaIOError
+                    except:
                         e = f"In recipe '{recipe_name}' for element '{name}'{address}: {e}"
+                    else:
+                        if str(e) == str(VisaIOError(-1073807339)):
+                            e = f"Timeout reached for device {address}. Acquisition time may be too long. If so, you can increase timeout delay in the driver to avoid this error."
+                        else:
+                            e = f"In recipe '{recipe_name}' for element '{name}'{address}: {e}"
 
                     self.errorSignal.emit(e)
                     self.stopFlag.set()
