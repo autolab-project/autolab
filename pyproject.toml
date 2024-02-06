@@ -35,7 +35,7 @@ classifiers=["Programming Language :: Python :: 3",
                  "Operating System :: OS Independent"]
 
 [project.scripts]
-autolab = "autolab:main"
+autolab = "autolab:_main"
 
 [tool.setuptools.package-data]
 "*"  = ["*.ui", "*.txt"]
