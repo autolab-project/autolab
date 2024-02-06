@@ -108,7 +108,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.tree.setAlternatingRowColors(True)
 
         self.splitter = QtWidgets.QSplitter()
-        self.splitter.setOrientation(QtCore.Qt.Orientation.Vertical)
+        self.splitter.setOrientation(QtCore.Qt.Vertical)
         self.splitter.addWidget(self.tree)
 
         verticalLayout = QtWidgets.QVBoxLayout()

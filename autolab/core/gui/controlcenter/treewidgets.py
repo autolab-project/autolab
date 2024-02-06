@@ -521,7 +521,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.variable.readable and self.variable.type in [
                     int, float, np.ndarray, pd.DataFrame])
             sliderAction.setEnabled((self.variable.writable
-                                     and self.variable.readable
+                                     #and self.variable.readable
                                      and self.variable.type in [int, float]))
             scanParameterAction.setEnabled(self.variable.parameter_allowed)
             scanMeasureStepAction.setEnabled(self.variable.readable)

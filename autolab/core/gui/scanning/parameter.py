@@ -54,7 +54,7 @@ class ParameterManager:
         parameterAddressIndicator_label = QtWidgets.QLabel("Address:", frameParameter)
         parameterAddressIndicator_label.setMinimumSize(0, 20)
         parameterAddressIndicator_label.setMaximumSize(16777215, 20)
-        parameterAddressIndicator_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        parameterAddressIndicator_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         parameterAddress_label = QtWidgets.QLabel("<variable>", frameParameter)
         parameterAddress_label.setMinimumSize(0, 20)
         parameterAddress_label.setMaximumSize(16777215, 20)
@@ -66,7 +66,7 @@ class ParameterManager:
         unit_label = QtWidgets.QLabel("uA", frameParameter)
         unit_label.setMinimumSize(0, 20)
         unit_label.setMaximumSize(16777215, 20)
-        unit_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        unit_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.unit_label = unit_label
 
         ### displayParameter button
