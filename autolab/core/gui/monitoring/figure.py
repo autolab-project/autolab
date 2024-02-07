@@ -59,6 +59,12 @@ class FigureManager:
             self.figMap.show()
             self.figMap.setImage(ylist)
             return None
+        else:
+            self.fig.show()
+            self.gui.min_checkBox.show()
+            self.gui.mean_checkBox.show()
+            self.gui.max_checkBox.show()
+            self.figMap.hide()
 
         # Data retrieval
         self.plot.setData(xlist, ylist)
