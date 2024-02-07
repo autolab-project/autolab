@@ -65,3 +65,10 @@ _repository._check_empty_driver_folder()
 
 del numpy
 del socket
+
+# Used by os shell to start autolab
+from ._entry_script import main as _main
+
+
+if __name__ == '__main__':
+    _main()
