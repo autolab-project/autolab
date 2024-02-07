@@ -18,7 +18,7 @@ with open("./autolab/version.txt", "r") as fh:
 setup(
     name = 'autolab',
     version = version,  # Ideally should be same as your GitHub release tag varsion
-    author = 'Quentin Chateiller & Bruno Garbin & Jonathan Peltier, C2N-CNRS',
+    author = 'Quentin Chateiller & Bruno Garbin & Jonathan Peltier & Mathieu Jeannin',
     author_email = 'autolab-project@googlegroups.com',
     license = "GPL-3.0 license",
     description = 'Python package for scientific experiments interfacing and automation',
@@ -46,7 +46,7 @@ setup(
             'requests',
             'tqdm',
             ],
-    entry_points={'console_scripts': ['autolab = scripts.autolab:main']},
+    entry_points={'console_scripts': ['autolab = autolab:_main']},
 	python_requires='>=3.6',
     include_package_data=True,
     package_data={'': ['*.ini','*.txt','*.ui']},# If any package contains *.ini files, include them:
