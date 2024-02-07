@@ -2,7 +2,7 @@
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
 
@@ -10,17 +10,31 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
 
+
+with open("../autolab/version.txt", "r") as fh:
+    version = fh.read().strip()
+
+sys.path.insert(0, os.path.abspath('..'))
+
+# use this command in the docs folder to create the html or pdf file:
+# cd docs
+# sphinx-build -b html . html
+# sphinx-build -M latexpdf . latexpdf
+# cd latexpdf/latex
+# latexmk
+# move autolab.pdf ..\..\..\autolab\autolab.pdf
 
 # -- Project information -----------------------------------------------------
 
 project = 'Autolab'
-copyright = '2019, Quentin Chateiller & Bruno Garbin, (C2N-CNRS)'
-author = 'Quentin Chateiller & Bruno Garbin'
+copyright = '2023, Quentin Chateiller & Bruno Garbin & Jonathan Peltier, (C2N-CNRS)'
+author = 'Quentin Chateiller & Bruno Garbin & Jonathan Peltier'
 
+# The full version, including alpha/beta/rc tags
+release = version
 
 # -- General configuration ---------------------------------------------------
 
@@ -30,6 +44,7 @@ master_doc = 'index'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx_rtd_theme',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -46,7 +61,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

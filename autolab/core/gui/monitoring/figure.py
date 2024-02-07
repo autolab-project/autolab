@@ -5,95 +5,133 @@ Created on Sun Sep 29 18:22:35 2019
 @author: qchat
 """
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib
 import os
-            
-class FigureManager :
-    
-    def __init__(self,gui):
-        
+
+import numpy as np
+import pyqtgraph as pg
+import pyqtgraph.exporters
+from qtpy import QtWidgets
+
+from ... import config
+from ... import utilities
+
+
+class FigureManager:
+
+    def __init__(self, gui: QtWidgets.QMainWindow):
+
         self.gui = gui
-        
+
+        # Import Autolab config
+        monitor_config = config.get_monitor_config()
+        self.precision = int(monitor_config['precision'])
+        self.do_save_figure = utilities.boolean(monitor_config['save_figure'])
+
         # Configure and initialize the figure in the GUI
-        self.fig = Figure()
-        matplotlib.rcParams.update({'font.size': 12})
-        self.ax = self.fig.add_subplot(111)        
-        self.ax.set_xlabel('Time [s]')
-        ylabel = f'{self.gui.variable.address()}'
-        if self.gui.variable.unit is not None :
-            ylabel += f' ({self.gui.variable.unit})'
-        self.ax.set_ylabel(ylabel)
-        self.ax.grid()
-        self.plot=self.ax.plot([0],[0],'x-',color='r')[0]
-        # The first time we open a monitor it doesn't work, I don't know why..
-        # There is no current event loop in thread 'Thread-7'.
-        # More accurately, FigureCanvas doesn't find the event loop the first time it is called
-        # The second time it works..
-        # Seems to be only in Spyder..
-        try : 
-            self.canvas = FigureCanvas(self.fig) 
-        except :
-            self.canvas = FigureCanvas(self.fig)
-        self.gui.graph.addWidget(self.canvas)
-        self.fig.tight_layout()
-        self.canvas.draw()
+        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.gui.graph.addWidget(self.fig)
+        self.figMap = pg.ImageView()
+        self.gui.graph.addWidget(self.figMap)
+        self.figMap.hide()
 
-    
-    def update(self,xlist,ylist):
-        
-        """ This function update the figure in the GUI """ 
-        
+        self.setLabel('x', self.gui.xlabel)
+        self.setLabel('y', self.gui.ylabel)
+
+        self.plot = self.ax.plot([], [], symbol='x', pen='r', symbolPen='r',
+                                 symbolSize=10, symbolBrush='r')
+        self.plot_mean = self.ax.plot([], [], pen=pg.mkPen(
+            color=0.4, width=2, style=pg.QtCore.Qt.DashLine))
+        self.plot_min = self.ax.plot([], [], pen=pg.mkPen(color=0.4, width=2))
+        self.plot_max = self.ax.plot([], [], pen=pg.mkPen(color=0.4, width=2))
+        self.ymin = None
+        self.ymax = None
+
+    # PLOT DATA
+    ###########################################################################
+
+    def update(self, xlist: list, ylist: list):
+        """ This function update the figure in the GUI """
+        if xlist is None: # image
+            self.fig.hide()
+            self.gui.min_checkBox.hide()
+            self.gui.mean_checkBox.hide()
+            self.gui.max_checkBox.hide()
+            self.figMap.show()
+            self.figMap.setImage(ylist)
+            return None
+        else:
+            self.fig.show()
+            self.gui.min_checkBox.show()
+            self.gui.mean_checkBox.show()
+            self.gui.max_checkBox.show()
+            self.figMap.hide()
+
         # Data retrieval
-        self.plot.set_xdata(xlist)
-        self.plot.set_ydata(ylist)
+        self.plot.setData(xlist, ylist)
 
-        # X axis update
-        xlist = self.plot.get_xdata()
+        xlist, ylist = self.plot.getData()
+
+        if xlist is None or ylist is None or len(xlist) == 0 or len(ylist) == 0:
+            return None
+
         xmin = min(xlist)
         xmax = max(xlist)
-        if xmin != xmax :
-            self.ax.set_xlim(xmin,xmax+0.15*(xmax-xmin))
-        else :
-            self.ax.set_xlim(xmin-0.1,xmin+0.1)
-        
-        # Y axis update
-        ylist = self.plot.get_ydata()
         ymin = min(ylist)
         ymax = max(ylist)
-        if ymin != ymax :
-            self.ax.set_ylim(ymin-0.1*(ymax-ymin),ymax+0.1*(ymax-ymin))
-        else :
-            self.ax.set_ylim(ymin-0.1,ymin+0.1)
-            
-        # Figure finalization  
-        self.redraw()
-        #self.canvas.draw()
 
-            
-            
-        
-    def redraw(self):
-        
-        """ This function finalize the figure update in the GUI """
-        
-        try :
-            self.fig.tight_layout()
-        except :
-            pass
-        self.canvas.draw()
-        
-        
-        
-        
-                
-    def save(self,path):
-        
-        """ This function save the figure in the provided path """
-        
-        self.fig.savefig(os.path.join(path,'figure.jpg'),dpi=300)
-        
-        
-        
-        
+        if self.ymin is None: self.ymin = ymin
+        if self.ymax is None: self.ymax = ymax
+
+        if ymin < self.ymin: self.ymin = ymin
+        if ymax > self.ymax: self.ymax = ymax
+
+        # Mean update
+        if self.gui.mean_checkBox.isChecked():
+            ymean = np.mean(ylist)
+            self.plot_mean.setData([xmin, xmax], [ymean, ymean])
+
+        # Min update
+        if self.gui.min_checkBox.isChecked():
+            self.plot_min.setData([xmin, xmax], [self.ymin, self.ymin])
+
+        # Max update
+        if self.gui.max_checkBox.isChecked():
+            self.plot_max.setData([xmin, xmax], [self.ymax, self.ymax])
+
+        # Figure finalization
+        if len(ylist) >= 1:
+            self.gui.dataDisplay.setText(f'{ylist[-1]:.{self.precision}g}')
+
+            width = self.gui.dataDisplay.geometry().width()
+            # height = self.gui.dataDisplay.geometry().height()
+            # limit = min((width, height))
+            new_size = max(width/8, 10)
+            new_size = min(new_size, 25)
+
+            font = self.gui.dataDisplay.font()
+            font.setPointSize(int(new_size))
+            self.gui.dataDisplay.setFont(font)
+
+    def setLabel(self, axe: str, value: str):
+        """ This function changes the label of the given axis """
+        axes = {'x':'bottom', 'y':'left'}
+        if value == '': value = ' '
+        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
+
+    def clear(self):
+        self.ymin = None
+        self.ymax = None
+        self.update([],[])
+        self.gui.dataDisplay.clear()
+
+    def save(self, filename: str):
+        """ This function save the figure with the provided filename """
+        if self.do_save_figure:
+            raw_name, extension = os.path.splitext(filename)
+            new_filename = raw_name+".png"
+
+            if not self.fig.isHidden():
+                exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+                exporter.export(new_filename)
+            else:
+                self.figMap.export(new_filename)
