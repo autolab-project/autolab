@@ -5,571 +5,356 @@ Created on Sun Sep 29 18:12:24 2019
 @author: qchat
 """
 
-
 import os
-import math as m
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib
 
-class FigureManager :    
-    
-    def __init__(self,gui):
-        
+import numpy as np
+import pandas as pd
+import pyqtgraph as pg
+import pyqtgraph.exporters
+from pyqtgraph.Qt import QtWidgets
+
+from .display import DisplayValues
+from ... import utilities
+
+
+class FigureManager:
+    """ Manage the figure of the scanner """
+
+    def __init__(self, gui: QtWidgets.QMainWindow):
+
         self.gui = gui
-        
         self.curves = []
-        
+
         # Configure and initialize the figure in the GUI
-        self.fig = Figure()
-        matplotlib.rcParams.update({'font.size': 12})
-        self.ax = self.fig.add_subplot(111)  
-        self.ax.grid()
-        self.ax.set_xlim((0,10))
-        self.ax.autoscale(enable=False)
-        # The first time we open a monitor it doesn't work, I don't know why..
-        # There is no current event loop in thread 'Thread-7'.
-        # More accurately, FigureCanvas doesn't find the event loop the first time it is called
-        # The second time it works..
-        # Seems to be only in Spyder..
-        try : 
-            self.canvas = FigureCanvas(self.fig) 
-        except :
-            self.canvas = FigureCanvas(self.fig)
-        self.gui.graph.addWidget(self.canvas)
-        self.fig.tight_layout()
-        self.canvas.draw()
-        
-        for axe in ['x','y'] :
-            getattr(self.gui,f'logScale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.logScaleChanged(axe))
-            getattr(self.gui,f'autoscale_{axe}_checkBox').stateChanged.connect(lambda b, axe=axe:self.autoscaleChanged(axe))
-            getattr(self.gui,f'autoscale_{axe}_checkBox').setChecked(True)
-            getattr(self.gui,f'zoom_{axe}_pushButton').clicked.connect(lambda b,axe=axe:self.zoomButtonClicked('zoom',axe))
-            getattr(self.gui,f'unzoom_{axe}_pushButton').clicked.connect(lambda b,axe=axe:self.zoomButtonClicked('unzoom',axe))
-            getattr(self.gui,f'variable_{axe}_comboBox').currentIndexChanged.connect(self.variableChanged)
-                    
-        self.gui.goUp_pushButton.clicked.connect(lambda:self.moveButtonClicked('up'))
-        self.gui.goDown_pushButton.clicked.connect(lambda:self.moveButtonClicked('down'))
-        self.gui.goLeft_pushButton.clicked.connect(lambda:self.moveButtonClicked('left'))
-        self.gui.goRight_pushButton.clicked.connect(lambda:self.moveButtonClicked('right'))
-        
-        self.fig.canvas.mpl_connect('button_press_event', self.onPress)
-        self.fig.canvas.mpl_connect('scroll_event', self.onScroll)
-        self.fig.canvas.mpl_connect('motion_notify_event', self.onMotion)
-        self.fig.canvas.mpl_connect('button_release_event', self.onRelease)
-        self.press = None
-        
-        self.movestep = 0.05
+        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.gui.graph.addWidget(self.fig)
+        self.figMap = pg.ImageView()
+        self.gui.graph.addWidget(self.figMap)
+        self.figMap.hide()
+
+        for axe in ['x', 'y']:
+            getattr(self.gui,f'variable_{axe}_comboBox').activated.connect(self.variableChanged)
 
         # Number of traces
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
-        self.gui.nbTraces_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
-        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
-        
+        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
+        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced')
 
-        
-        
-        
-    
-        
-    # AUTOSCALING
-    ###########################################################################
-    
-    def autoscaleChanged(self,axe):
-        
-        """ Set or unset the autoscale mode for the given axis """
-        state = self.isAutoscaleEnabled(axe)
-        getattr(self.ax,f'set_autoscale{axe}_on')(state)
-        if state is True :
-            self.doAutoscale(axe)
-            self.redraw()
-            
-            
-            
-    def isAutoscaleEnabled(self,axe):
-        
-        """ This function returns True or False whether the autoscale for the given axis
-        is enabled """
-        
-        return getattr(self.gui,f'autoscale_{axe}_checkBox').isChecked()
-    
-    
-    
-    def doAutoscale(self,axe):
-        
-        """ This function proceeds to an autoscale operation of the given axis """
-        
-        datas = [getattr(curve,f'get_{axe}data')() for curve in self.curves]
-        if len(datas)>0 :
-            min([min(data) for data in datas])
-            minValue = min([min(data) for data in datas])
-            maxValue = max([max(data) for data in datas])
-            if (minValue,maxValue) != self.getRange(axe) :
-                self.setRange(axe,(minValue,maxValue))
+        # Window to show scan data
+        self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)
+        self.gui.displayScanData_pushButton.setEnabled(False)
+        self.displayScan = DisplayValues("Scan", size=(500, 300))
 
+        # comboBox with scan id
+        self.gui.data_comboBox.activated.connect(self.data_comboBoxClicked)
 
-            
-            
-            
-    # LOGSCALING
-    ###########################################################################
+        # Combobo to select the recipe to plot
+        self.gui.scan_recipe_comboBox.activated.connect(self.scan_recipe_comboBoxCurrentChanged)
 
-    def logScaleChanged(self,axe):
-        
-        """ This function is called when the log scale state is changed in the GUI. """
-        
-        state = getattr(self.gui,f'logScale_{axe}_checkBox').isChecked()
-        self.setLogScale(axe,state)
-        self.redraw()
-        
-        
-    
-    def isLogScaleEnabled(self,axe):
-        
-        """ This function returns True or False whether the log scale is enabled
-        in the given axis """
-        
-        return getattr(self.ax,f'get_{axe}scale')() == 'log'
+        # Combobox to select datafram to plot
+        self.gui.dataframe_comboBox.activated.connect(self.dataframe_comboBoxCurrentChanged)
+        self.gui.dataframe_comboBox.setEnabled(False)
+        self.gui.dataframe_comboBox.clear()
+        self.gui.dataframe_comboBox.addItems(["Scan"])
+        self.gui.dataframe_comboBox.hide()
 
-            
-    
-    def setLogScale(self,axe,state):
-        
-        """ This functions sets or not the log scale for the given axis """
-        
-        if state is True :
-            scaleType = 'log'
-        else :
-            scaleType = 'linear'
-        
-        self.checkLimPositive(axe)
-        self.ax.grid(state,which='minor',axis=axe)
-        getattr(self.ax,f'set_{axe}scale')(scaleType)
-        
-        
-        
-    def checkLimPositive(self,axe):
-        
-        """ This function updates the current range of the given axis to be positive, 
-        in case we enter in a log scale mode """
-        
-        axeRange = list(self.getRange(axe))
-            
-        change = False
-        if axeRange[1] <= 0 : 
-            axeRange[1] = 1
-            change = True
-        if axeRange[0] <= 0 : 
-            axeRange[0] = 10**(m.log10(axeRange[1])-1)
-            change = True
-            
-        if change is True :
-            self.setRange(axe,axeRange)
-        
-        
-        
-        
-        
-        
+        self.gui.toolButton.hide()
+        self.clearMenuID()
+
+    def clearMenuID(self):
+        self.gui.toolButton.setText("Parameter")
+        self.gui.toolButton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        self.gui.toolButton.setMenu(QtWidgets.QMenu(self.gui.toolButton))
+
+        self.menuBoolList = list()  # OPTIMIZE: edit: maybe not necessary <- when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
+        self.menuWidgetList = list()
+        self.menuActionList = list()
+        self.nbCheckBoxMenuID = 0
+
+    def addCheckBox2MenuID(self, name_ID: int):
+        self.menuBoolList.append(True)
+        checkBox = QtWidgets.QCheckBox(self.gui)
+        checkBox.setChecked(True)  # Warning: trigger stateChanged (which do reloadData)
+        checkBox.stateChanged.connect(lambda state, checkBox=checkBox: self.checkBoxChanged(checkBox, state))
+        checkBox.setText(str(name_ID))
+        self.menuWidgetList.append(checkBox)
+        action = QtWidgets.QWidgetAction(self.gui.toolButton)
+        action.setDefaultWidget(checkBox)
+        self.gui.toolButton.menu().addAction(action)
+        self.menuActionList.append(action)
+        self.nbCheckBoxMenuID += 1
+
+    def removeLastCheckBox2MenuID(self):
+        self.menuBoolList.pop(-1)
+        self.menuWidgetList.pop(-1)
+        self.gui.toolButton.menu().removeAction(self.menuActionList.pop(-1))
+        self.nbCheckBoxMenuID -= 1  # edit: not true anymore because display only one scan <- will cause "Error encountered for scan id 1: list index out of range" if do scan with n points and due a new scan with n-m points
+
+    def checkBoxChanged(self, checkBox: QtWidgets.QCheckBox, state: bool):
+        index = self.menuWidgetList.index(checkBox)
+        self.menuBoolList[index] = bool(state)
+        if self.gui.dataframe_comboBox.currentText() != "Scan":
+            self.reloadData()
+
+    def data_comboBoxClicked(self):
+        """ This function select a dataset """
+        if len(self.gui.dataManager.datasets) != 0:
+            self.resetCheckBoxMenuID()
+            self.updateDataframe_comboBox()
+            self.dataframe_comboBoxCurrentChanged()
+
+            self.reloadData()
+            self.gui.displayScanData_pushButton.setEnabled(True)
+
+            if self.displayScan.active:
+                dataset = self.gui.dataManager.getLastSelectedDataset()
+                recipe_name = self.gui.scan_recipe_comboBox.currentText()
+                sub_dataset = dataset[recipe_name]
+                self.displayScan.refresh(sub_dataset.data)
+
+    def scan_recipe_comboBoxCurrentChanged(self):
+        self.dataframe_comboBoxCurrentChanged()
+
+    def dataframe_comboBoxCurrentChanged(self):
+
+        if self.gui.scan_recipe_comboBox.count() != 1:
+            self.resetCheckBoxMenuID()
+            self.updateDataframe_comboBox()
+
+        self.gui.dataManager.updateDisplayableResults()
+        self.reloadData()
+
+        data_name = self.gui.dataframe_comboBox.currentText()
+
+        if data_name == "Scan" or self.fig.isHidden():
+            self.gui.toolButton.hide()
+        else:
+           self.gui.toolButton.show()
+
+    def updateDataframe_comboBox(self):
+
+        # Executed each time the queue is read
+        index = self.gui.dataframe_comboBox.currentIndex()
+        recipe_name = self.gui.scan_recipe_comboBox.currentText()
+        dataset = self.gui.dataManager.getLastSelectedDataset()
+        sub_dataset = dataset[recipe_name]
+
+        resultNamesList = ["Scan"] + [
+            i for i in sub_dataset.dictListDataFrame.keys() if type(
+                sub_dataset.dictListDataFrame[i][0]) not in (str, tuple)]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
+
+        AllItems = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
+
+        if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+            self.gui.dataframe_comboBox.clear()
+            self.gui.dataframe_comboBox.addItems(resultNamesList)
+            if (index + 1) > len(resultNamesList): index = 0
+            self.gui.dataframe_comboBox.setCurrentIndex(index)
+
+        if len(resultNamesList) == 1:
+            self.gui.dataframe_comboBox.hide()
+        else:
+            self.gui.dataframe_comboBox.show()
+
+    def resetCheckBoxMenuID(self):
+        recipe_name = self.gui.scan_recipe_comboBox.currentText()
+        dataset = self.gui.dataManager.getLastSelectedDataset()
+        sub_dataset = dataset[recipe_name]
+        listDataFrame = list(sub_dataset.dictListDataFrame.values())
+        if len(listDataFrame) != 0:
+            nb_id = 0
+            for dataframe in listDataFrame:
+                if len(dataframe) > nb_id:  # OPTIMIZE: should not be the same for all the dataframe of a recipe because length can be different (recipe in recipe gives different size)
+                    nb_id = len(dataframe)
+
+            self.clearMenuID()
+
+            for i in range(1, nb_id+1):
+                self.addCheckBox2MenuID(i)
+
     # AXE LABEL
     ###########################################################################
-        
-    def setLabel(self,axe,value):
-        
+
+    def setLabel(self, axe: str, value: str):
         """ This function changes the label of the given axis """
-        
-        getattr(self.ax,f'set_{axe}label')(value)
-
-
-
-
-
+        axes = {'x':'bottom', 'y':'left'}
+        if value == '': value = ' '
+        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
 
     # PLOT DATA
     ###########################################################################
 
-            
     def clearData(self):
-        
         """ This function removes any plotted curves """
-        
-        for curve in self.curves :
-            curve.remove()
+        for curve in self.curves:
+            try: self.ax.removeItem(curve)  # try because curve=None if close before end of scan
+            except: pass
         self.curves = []
-        self.redraw()
-            
-        
-        
+
     def reloadData(self):
-        
-        ''' This function removes any plotted curves and reload all required curves from 
+        ''' This function removes any plotted curves and reload all required curves from
         data available in the data manager'''
-        
         # Remove all curves
         self.clearData()
-        
-        # Get current displayed result
-        variable_x = self.gui.variable_x_comboBox.currentText()
-        variable_y = self.gui.variable_y_comboBox.currentText()
-        
-        # Label update
-        self.setLabel('x',variable_x)
-        self.setLabel('y',variable_y)
-        
-        # Load the last results data
-        try :
-            data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y])       
-        except :
-            data = None
-        
-        # Plot them
-        if data is not None :
-            
-            for i in range(len(data)) :
-                                
-                # Data
-                subdata = data[i]
-                subdata = subdata.astype(float)
-                x = subdata.loc[:,variable_x]
-                y = subdata.loc[:,variable_y]
-                
-                # Apprearance:    
-                if i == (len(data)-1) :      
-                    color = 'r'
-                    alpha = 1
-                else:
-                    color = 'k'
-                    alpha = (self.nbtraces-(len(data)-1-i))/self.nbtraces
-                
-                # Plot
-                curve = self.ax.plot(x,y,'x-',color=color,alpha=alpha)[0]
-                self.curves.append(curve)
-            
-            # Autoscale
-            if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
-            if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
-            
-            self.redraw()
-        
-        
-        
-    def reloadLastData(self):
-        
-        ''' This functions update the data of the last curve '''
-        
-        # Get current displayed result
-        variable_x = self.gui.variable_x_comboBox.currentText()
-        variable_y = self.gui.variable_y_comboBox.currentText()
-        
-        data = self.gui.dataManager.getData(1,[variable_x,variable_y])[0]
-        data = data.astype(float)
-        
-        # Update plot data
-        self.curves[-1].set_xdata(data.loc[:,variable_x])
-        self.curves[-1].set_ydata(data.loc[:,variable_y])
-        
-        # Autoscale
-        if self.isAutoscaleEnabled('x') is True : self.doAutoscale('x')
-        if self.isAutoscaleEnabled('y') is True : self.doAutoscale('y')
-        
-        self.redraw()
-        
-        
-        
-    def variableChanged(self,index):
-        
-        """ This function is called when the displayed result has been changed in
-        the combo box. It proceeds to the change. """
-        
-        self.clearData()        
-        
-        if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1 : 
-            self.reloadData()
-            
-        if self.gui.variable_x_comboBox.currentText() == self.gui.configManager.getParameterName() :
-            self.gui.fromFigure_pushButton.setEnabled(True)
-        else :
-            self.gui.fromFigure_pushButton.setEnabled(False)
 
-            
-            
-        
+        # Get current displayed result
+        data_name = self.gui.dataframe_comboBox.currentText()
+        variable_x = self.gui.variable_x_comboBox.currentText()
+        variable_y = self.gui.variable_y_comboBox.currentText()
+        data_id = int(self.gui.data_comboBox.currentIndex()) + 1
+        data_len = len(self.gui.dataManager.datasets)
+        selectedData = data_len - data_id
+
+        # Label update
+        self.setLabel('x', variable_x)
+        self.setLabel('y', variable_y)
+
+        self.gui.frame_axis.show()
+        if data_name == "Scan":
+            nbtraces_temp  = self.nbtraces
+            self.gui.nbTraces_lineEdit.show()
+            self.gui.graph_nbTracesLabel.show()
+        else:
+            nbtraces_temp = 1  # decided to only show the last scan data for dataframes
+            self.gui.nbTraces_lineEdit.hide()
+            self.gui.graph_nbTracesLabel.hide()
+        # Load the last results data
+        try:
+            data: pd.DataFrame = self.gui.dataManager.getData(
+                nbtraces_temp, [variable_x, variable_y],
+                selectedData=selectedData, data_name=data_name)
+        except:
+            data = None
+
+        # Active plot view and update displayScan
+        self.gui.dataframe_comboBox.setEnabled(True)
+        self.gui.scan_recipe_comboBox.setEnabled(True)
+
+        self.gui.displayScanData_pushButton.setEnabled(True)
+        if self.displayScan.active:
+            dataset = self.gui.dataManager.getLastSelectedDataset()
+            recipe_name = self.gui.scan_recipe_comboBox.currentText()
+            sub_dataset = dataset[recipe_name]
+            self.displayScan.refresh(sub_dataset.data)
+
+        # Plot data
+        if data is not None:
+            true_nbtraces = max(nbtraces_temp, len(data))  # not good but avoid error
+            if len(data) != 0:
+                for temp_data in data:
+                    if temp_data is not None: break
+                else: return None
+
+            if len(data) != 0 and type(data[0]) is np.ndarray:  # to avoid errors
+                image_data = np.empty((len(data), *temp_data.shape))
+
+            for i in range(len(data)):
+                # Data
+                subdata: pd.DataFrame = data[i]
+
+                if subdata is None: continue
+
+                if type(subdata) is str:  # Could think of someway to show text. Currently removed it from dataset directly
+                    print("Warning: Can't display text")
+                    continue
+                elif type(subdata) is tuple:
+                    print("Warning: Can't display tuple")
+                    continue
+
+                subdata = subdata.astype(float)
+
+                if type(subdata) is np.ndarray:  # is image
+                    self.fig.hide()
+                    self.figMap.show()
+                    self.gui.frame_axis.hide()
+                    image_data[i] = subdata
+                    if i == len(data)-1:
+                        if image_data.ndim == 3:
+                            x,y = (0, 1) if self.figMap.imageItem.axisOrder == 'col-major' else (1, 0)
+                            axes = {'t': 0, 'x': x+1, 'y': y+1, 'c': None}  # to avoid a special case in pg that incorrectly assumes the axis
+                        else:
+                            axes = None
+                        self.figMap.setImage(image_data, axes=axes)# xvals=() # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+                        self.figMap.setCurrentIndex(len(self.figMap.tVals))
+
+                else: # not an image (is pd.DataFrame)
+                    self.figMap.hide()
+                    self.fig.show()
+                    x = subdata.loc[:,variable_x]
+                    y = subdata.loc[:,variable_y]
+                    if isinstance(x, pd.DataFrame):
+                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_x}!")
+                    if isinstance(y, pd.DataFrame):
+                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_y}!")
+                        y = y.iloc[:, 0]
+
+                    if i == (len(data) - 1):
+                        color = 'r'
+                        alpha = 1
+                    else:
+                        color = 'k'
+                        alpha = (true_nbtraces - (len(data) - 1 - i)) / true_nbtraces
+
+                    # Plot
+                    curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+                    curve.setAlpha(alpha, False)
+                    self.curves.append(curve)
+
+    def variableChanged(self, index):
+        """ This function is called when the displayed result has been changed
+        in the combo box. It proceeds to the change. """
+        if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1:
+            self.reloadData()
+        else:
+            self.clearData()
+
     # TRACES
-    ###########################################################################      
-        
+    ###########################################################################
+
     def nbTracesChanged(self):
-        
         """ This function is called when the number of traces displayed has been changed
         in the GUI. It proceeds to the change and update the plot. """
-                
         value = self.gui.nbTraces_lineEdit.text()
-        
         check = False
-        try :
+        try:
             value = int(float(value))
             assert value > 0
             self.nbtraces = value
             check = True
-        except :
+        except:
             pass
-        
+
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
-        
-        if check is True and self.gui.variable_y_comboBox.currentIndex() != -1 :
+
+        if check is True and self.gui.variable_y_comboBox.currentIndex() != -1:
             self.reloadData()
-        
-        
-    
 
-
-    # ZOOM UNZOOM BUTTONS
+    # Show data
     ###########################################################################
 
-    def zoomButtonClicked(self,action,axe):
-        
-        """ This function is called when a zoom/unzoom button of a given axis has been pressed.
-        It proceeds to the change to the figure range """
+    def displayScanDataButtonClicked(self):
+        """ This function opens a window showing the scan data for the displayed scan id """
+        if not self.displayScan.active:
+            recipe_name = self.gui.scan_recipe_comboBox.currentText()
+            self.displayScan.refresh(self.gui.dataManager.getLastSelectedDataset()[recipe_name].data)
 
-        logState = self.isLogScaleEnabled(axe)
-        inf,sup = self.getRange(axe)
-        
-        if logState is False :
-            if action == 'zoom' :
-                inf_new = inf + (sup-inf)*self.movestep
-                sup_new = sup - (sup-inf)*self.movestep
-            elif action == 'unzoom' :
-                inf_new = inf - (sup-inf)*self.movestep/(1-2*self.movestep)
-                sup_new = sup + (sup-inf)*self.movestep/(1-2*self.movestep)
-        else :
-            log_inf = m.log10(inf)
-            log_sup = m.log10(sup)
-            if action == 'zoom' :
-                inf_new = 10**(log_inf+(log_sup-log_inf)*self.movestep)
-                sup_new = 10**(log_sup-(log_sup-log_inf)*self.movestep)
-            elif action == 'unzoom' :
-                inf_new = 10**(log_inf-(log_sup-log_inf)*self.movestep/(1-2*self.movestep))
-                sup_new = 10**(log_sup+(log_sup-log_inf)*self.movestep/(1-2*self.movestep))
-                
-        self.setRange(axe,(inf_new,sup_new))
-        self.redraw()
+        self.displayScan.show()
 
-
-
-
-    # MOVE BUTTONS
-    ###########################################################################
-    
-    def moveButtonClicked(self,action):
-        
-        """ This function is called when a move button of a given axis has been pressed.
-        It proceeds to the change to the figure range """
-        
-        if action in ['up','down'] :
-            axe = 'y'
-            if action == 'up' : action = 'increase'
-            elif action == 'down' : action = 'decrease'
-        elif action in ['left','right'] :
-            axe = 'x'
-            if action == 'left' : action = 'decrease'
-            elif action == 'right' : action = 'increase'
-
-        logState = self.isLogScaleEnabled(axe)
-            
-        inf,sup = self.getRange(axe)
-        
-        if logState is False :
-            if action == 'increase' :
-                inf_new = inf + (sup-inf)*self.movestep
-                sup_new = sup + (sup-inf)*self.movestep
-            elif action == 'decrease' :
-                inf_new = inf - (sup-inf)*self.movestep
-                sup_new = sup - (sup-inf)*self.movestep
-        else :
-            log_inf = m.log10(inf)
-            log_sup = m.log10(sup)
-            if action == 'increase' :
-                inf_new = 10**(log_inf+(log_sup-log_inf)*self.movestep)
-                sup_new = 10**(log_sup+(log_sup-log_inf)*self.movestep)
-            elif action == 'decrease' :
-                inf_new = 10**(log_inf-(log_sup-log_inf)*self.movestep)
-                sup_new = 10**(log_sup-(log_sup-log_inf)*self.movestep)
-            
-        self.setRange(axe,(inf_new,sup_new))
-        self.redraw()
-   
-    
-    
-    
-        
-    # MOUSE SCROLL
-    ###########################################################################
-     
-    def onScroll(self,event):
-        
-        """ This function is called when the scrolling button of the mouse has been
-        actioned for a given axis has been pressed.
-        It proceeds to the change to the figure range """
-        
-        data = {'x':event.xdata,'y':event.ydata}
-        
-        for axe in ['x','y'] :
-            
-            logState = self.isLogScaleEnabled(axe)
-            inf,sup = self.getRange(axe)
-            
-            if logState :
-            
-                if event.button == 'up' : 
-                    inf_new = 10**(m.log10(data[axe]) * self.movestep + (1-self.movestep) * m.log10(inf)) 
-                    sup_new = 10**(m.log10(data[axe]) * self.movestep + (1-self.movestep) * m.log10(sup)) 
-                elif event.button == 'down' :
-                    inf_new = 10**( ( - m.log10(data[axe]) * self.movestep + m.log10(inf) ) / (1 - self.movestep) )
-                    sup_new = 10**( ( - m.log10(data[axe]) * self.movestep + m.log10(sup) ) / (1 - self.movestep) )
-                    
-            else :
-            
-                if event.button == 'up' : 
-                    inf_new = data[axe] * self.movestep + (1-self.movestep) * inf 
-                    sup_new = data[axe] * self.movestep + (1-self.movestep) * sup 
-                elif event.button == 'down' :
-                    inf_new = ( - data[axe] * self.movestep + inf ) / (1 - self.movestep)
-                    sup_new = ( - data[axe] * self.movestep + sup ) / (1 - self.movestep)   
-                
-            self.setRange(axe,(inf_new,sup_new))
-            self.redraw()
-            
-            
-            
-            
-        
-    # MOUSE DRAG
-    ###########################################################################
-        
-    def onPress(self,event):
-        
-        """ This function is called when the main button of the mouse is pressed on the figure.
-        It saves information about this location, in order to use it in the onMotion function. """
-        
-        xlim = self.getRange('x')
-        ylim = self.getRange('y')
-        
-        if self.isLogScaleEnabled('x') is False :
-            x_width_data = xlim[1]-xlim[0]
-        else :
-            x_width_data = m.log10(xlim[1])-m.log10(xlim[0])
-        
-        if self.isLogScaleEnabled('y') is False :
-            y_width_data = ylim[1]-ylim[0]
-        else :
-            y_width_data = m.log10(ylim[1])-m.log10(ylim[0])
-        
-        leftInfCornerCoords = self.ax.transData.transform((xlim[0],ylim[0]))
-        rightSupCornerCoords = self.ax.transData.transform((xlim[1],ylim[1]))       
-        x_width_pixel = rightSupCornerCoords[0] - leftInfCornerCoords[0]
-        y_width_pixel = rightSupCornerCoords[1] - leftInfCornerCoords[1]
-    
-        self.press = xlim,ylim,x_width_data,y_width_data,x_width_pixel,y_width_pixel,event.x,event.y
-
-        
-
-    def onMotion(self,event):
-        
-        """ This function is called when the mouse if moved above the figure. If its button is pressed, 
-        proceeds to the corresponding change in range with the help on the data saved with 
-        the onPress function. """
-        
-        if self.press is not None and event.inaxes is not None :
-            
-            xlim,ylim,x_width_data,y_width_data,x_width_pixel,y_width_pixel,x_press_pixel, y_press_pixel = self.press
-
-            x_pixel,y_pixel = event.x,event.y
-            
-            xlim_new = list(xlim)
-            ylim_new = list(ylim)
-            
-            dx_pixel = x_pixel - x_press_pixel
-            dy_pixel = y_pixel - y_press_pixel
-            
-            dx_data = dx_pixel * x_width_data / x_width_pixel
-            dy_data = dy_pixel * y_width_data / y_width_pixel
-            
-            if self.isLogScaleEnabled('x'):
-                xlim_new[0] = 10**(m.log10(xlim[0])-dx_data)
-                xlim_new[1] = 10**(m.log10(xlim[1])-dx_data)
-            else :
-                xlim_new[0] = xlim[0]-dx_data
-                xlim_new[1] = xlim[1]-dx_data
-  
-            if self.isLogScaleEnabled('y'):
-                ylim_new[0] = 10**(m.log10(ylim[0])-dy_data)
-                ylim_new[1] = 10**(m.log10(ylim[1])-dy_data)
-            else :
-                ylim_new[0] = ylim[0]-dy_data
-                ylim_new[1] = ylim[1]-dy_data
-            
-            self.setRange('x',xlim_new)
-            self.setRange('y',ylim_new)
-            self.redraw()
-            
-            
-    def onRelease(self,event):
-        
-        """ This function is called when the wiew change using the mouse is finshed.
-        It clears the data of the initial press position """
-        
-        self.press = None
-        
-
-        
-
-    
     # SAVE FIGURE
     ###########################################################################
-        
-    def save(self,path):
-        
-        """ This function save the figure in the provided path """
-        
-        self.fig.savefig(os.path.join(path,'figure.jpg'),dpi=300)
-        
-        
-        
-        
-        
-    # redraw
-    ###########################################################################
 
-    def redraw(self):
-        
-        """ This function make the previous changes appears in the GUI """
-        
-        try :
-            self.fig.tight_layout()
-        except :
-            pass
-        self.canvas.draw()
-        
-        
-        
-        
-    # RANGE
-    ###########################################################################
-        
-    def getRange(self,axe):
-        
-        """ This function returns the current range of the given axis """
-        
-        return getattr(self.ax,f'get_{axe}lim')()
-    
-    
-    
-    def setRange(self,axe,r):
-        
-        """ This function sets the current range of the given axis """
-        
-        if r[0] != r[1] :
-            getattr(self.ax,f'set_{axe}lim')(r)
-        
+    def save(self, filename: str):
+        """ This function save the figure with the provided filename """
+        raw_name, extension = os.path.splitext(filename)
+        new_filename = raw_name + ".png"
+        exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+        exporter.export(new_filename)
+
+    def close(self):
+        """ Called by scanner on closing """
+        self.displayScan.close()
+        self.fig.close()  # prevent crash without traceback when reopenning scanner multiple times
+        self.figMap.close()

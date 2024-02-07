@@ -2,8 +2,21 @@
 """
 Created on Fri May 17 15:04:04 2019
 
-@author: quentin.chateiller
+Python package for scientific experiments automation
+
+The purpose of this package it to provide easy and efficient tools to deal with your scientific instruments, and to run automated experiments with them, by command line instructions or through a graphical user interface (GUI).
+
+Created by Quentin Chateiller, Python drivers originally from Quentin Chateiller and Bruno Garbin, for the C2N-CNRS (Center for Nanosciences and Nanotechnologies, Palaiseau, France) ToniQ team.
+Project continued by Jonathan Peltier, for the C2N-CNRS, Minaphot team.
+
+Project hosted at https://github.com/autolab-project/autolab
+
+Drivers made for this package can be found at https://github.com/autolab-project/autolab-drivers
+
+Visit https://autolab.readthedocs.io/ for the full documentation of this package.
 """
+import numpy  # OPTIMIZE: temporary fix to an infinite loading on some computer following the master merge (commit 25fd4d6)
+import socket  # OPTIMIZE: temporary fix to an infinite loading on some computer
 
 # Load current version in version file
 from .core import paths as _paths
@@ -20,22 +33,42 @@ del version_adapter
 from .core import config as _config
 _config.initialize_local_directory()
 _config.check_autolab_config()
-
-# Statistics
-from .core import stats as _stats
-_stats.startup()
+_config.check_plotter_config()
+_config.set_temp_folder()
+_config.add_extra_driver_path()
+_config.add_extra_driver_repo_url()
 
 # infos
-from .core.infos import list_devices, list_drivers, infos, config_help, statistics
+from .core.infos import list_devices, list_drivers, infos, config_help
 
 # Devices
-from .core.devices import get_device
+from .core.devices import get_device, close
+from .core import devices as _devices
+
+# Drivers
+from .core.drivers import get_driver, explore_driver
+from .core import drivers as _drivers
 
 # Webbrowser shortcuts
-from .core.web import community, doc
+from .core.web import report, doc
 
 # Server
 from .core.server import Server as server
 
 # GUI
 from .core.gui import start as gui
+
+# Repository
+from .core.repository import install_drivers
+from .core import repository as _repository
+_repository._check_empty_driver_folder()
+
+del numpy
+del socket
+
+# Used by os shell to start autolab
+from ._entry_script import main as _main
+
+
+if __name__ == '__main__':
+    _main()
