@@ -182,46 +182,46 @@ class RecipeManager:
                     self.gui.configManager.delRecipeStep(self.recipe_name, name)
                 elif 'setvalue' in menuActions.keys() and choice == menuActions['setvalue']:
                     self.setStepValue(name)
-            else:
-                config = self.gui.configManager.config
-                if len(config) > 1:
+            # else:  # TODO: disabled this feature has it is not good in its current state
+            #     config = self.gui.configManager.config
+            #     if len(config) > 1:
 
-                    recipe_name_list = self.gui.configManager.getAllowedRecipe(self.recipe_name)
+            #         recipe_name_list = self.gui.configManager.getAllowedRecipe(self.recipe_name)
 
-                    menuActions = {}
-                    menu = QtWidgets.QMenu()
-                    for recipe_name in recipe_name_list:
-                        menuActions[recipe_name] = menu.addAction(f'Add {recipe_name}')
-                        menuActions[recipe_name].setIcon(QtGui.QIcon(icons['recipe']))
+            #         menuActions = {}
+            #         menu = QtWidgets.QMenu()
+            #         for recipe_name in recipe_name_list:
+            #             menuActions[recipe_name] = menu.addAction(f'Add {recipe_name}')
+            #             menuActions[recipe_name].setIcon(QtGui.QIcon(icons['recipe']))
 
-                    if len(recipe_name_list) != 0:
-                        choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
+            #         if len(recipe_name_list) != 0:
+            #             choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 
-                    for recipe_name in recipe_name_list:
-                        if choice == menuActions[recipe_name]:
-                            self.gui.configManager.configHistory.active = False
-                            active = self.gui.configManager.getActive(recipe_name)
+            #         for recipe_name in recipe_name_list:
+            #             if choice == menuActions[recipe_name]:
+            #                 self.gui.configManager.configHistory.active = False
+            #                 active = self.gui.configManager.getActive(recipe_name)
 
-                            if active: self.gui.configManager.activateRecipe(
-                                    recipe_name, not active)  # disable
+            #                 if active: self.gui.configManager.activateRecipe(
+            #                         recipe_name, not active)  # disable
 
-                            for param in self.gui.configManager.parameterList(recipe_name):
-                                newName = self.gui.configManager.getUniqueName(self.recipe_name, param['name'])
-                                self.gui.configManager.renameParameter(
-                                    recipe_name, param['name'], newName)
+            #                 for param in self.gui.configManager.parameterList(recipe_name):
+            #                     newName = self.gui.configManager.getUniqueName(self.recipe_name, param['name'])
+            #                     self.gui.configManager.renameParameter(
+            #                         recipe_name, param['name'], newName)
 
-                            for step in self.gui.configManager.stepList(recipe_name):
-                                newName = self.gui.configManager.getUniqueName(self.recipe_name, step['name'])
-                                self.gui.configManager.renameRecipeStep(
-                                    recipe_name, step['name'], newName)
+            #                 for step in self.gui.configManager.stepList(recipe_name):
+            #                     newName = self.gui.configManager.getUniqueName(self.recipe_name, step['name'])
+            #                     self.gui.configManager.renameRecipeStep(
+            #                         recipe_name, step['name'], newName)
 
-                            self.gui.configManager.configHistory.active = True
+            #                 self.gui.configManager.configHistory.active = True
 
-                            self.gui.configManager.addRecipeStep(
-                                self.recipe_name, 'recipe',
-                                recipe_name,  f'do_{recipe_name}')
+            #                 self.gui.configManager.addRecipeStep(
+            #                     self.recipe_name, 'recipe',
+            #                     recipe_name,  f'do_{recipe_name}')
 
-                            break
+            #                 break
 
     def renameStep(self, name: str):
         """ Prompts the user for a new step name and apply it to the selected step """
