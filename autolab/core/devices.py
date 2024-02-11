@@ -49,11 +49,10 @@ class Device(Module):
 def get_element_by_address(address: str) -> Device:
     """ Returns the Element located at the provided address """
     address = address.split('.')
-
     try:
         element = get_device(address[0])
         for addressPart in address[1: ]:
-            element = getattr(element, addressPart)
+            element = getattr(element, addressPart.replace(" ", ""))
         return element
     except:
         return None
