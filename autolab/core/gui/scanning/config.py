@@ -319,12 +319,17 @@ class ConfigManager:
     def refreshParameterRange(self, recipe_name: str,
                               param_name: str, newName: str = None):
         """ Updates parameterManager with new parameter name """
-        if newName is None: newName = param_name
-
         recipeDictParam = self.gui.recipeDict[recipe_name]['parameterManager']
-        recipeDictParam[newName] = recipeDictParam.pop(param_name)
-        recipeDictParam[newName].changeName(newName)
-        recipeDictParam[newName].refresh()
+
+        if newName is None:
+            recipeDictParam[param_name].refresh()
+        else:
+            if param_name in recipeDictParam:
+                recipeDictParam[newName] = recipeDictParam.pop(param_name)
+                recipeDictParam[newName].changeName(newName)
+                recipeDictParam[newName].refresh()
+            else:
+                print(f"Error: Can't refresh parameter '{param_name}', not found in recipeDictParam '{recipeDictParam}'")
 
         self.gui._updateSelectParameter()
 
@@ -624,7 +629,10 @@ class ConfigManager:
 
     def parameterNameList(self, recipe_name: str) -> List[str]:
         """ Returns the list of parameter names in the recipe """
-        return [param['name'] for param in self.config[recipe_name]['parameter']]
+        if recipe_name in self.config:
+            return [param['name'] for param in self.config[recipe_name]['parameter']]
+        else:
+            return []
 
     def getParameterElement(self, recipe_name: str, param_name: str) -> devices.Device:
         """ Returns the element of a parameter """

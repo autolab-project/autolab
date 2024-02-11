@@ -50,16 +50,11 @@ class Scanner(QtWidgets.QMainWindow):
 
     def _addRecipe(self, recipe_name: str):
         """ Adds recipe to managers. Called by configManager """
-        if self.configManager.config[recipe_name]['active']:
-            self.scan_recipe_comboBox.addItem(recipe_name)
-
-        self.selectRecipe_comboBox.addItem(recipe_name)
-        self.selectRecipe_comboBox.setCurrentIndex(self.selectRecipe_comboBox.count()-1)
-        self._show_recipe_combobox()
+        self._update_recipe_combobox()  # recreate all and display first index
+        self.selectRecipe_comboBox.setCurrentIndex(self.selectRecipe_comboBox.count()-1)  # display last index
 
         self.recipeDict[recipe_name] = {}  # order of creation matter
         self.recipeDict[recipe_name]['recipeManager'] = RecipeManager(self, recipe_name)
-
         self.recipeDict[recipe_name]['parameterManager'] = OrderedDict()
 
         for parameter in self.configManager.parameterList(recipe_name):
@@ -69,29 +64,29 @@ class Scanner(QtWidgets.QMainWindow):
         """ Removes recipe from managers. Called by configManager and self """
         test = self.recipeDict.pop(recipe_name)
         test['recipeManager']._removeWidget()
-
-        index = self.scan_recipe_comboBox.findText(recipe_name)  # assert no duplicate name
-        self.scan_recipe_comboBox.removeItem(index)
-        index = self.selectRecipe_comboBox.findText(recipe_name)  # assert no duplicate name
-        self.selectRecipe_comboBox.removeItem(index)
-        self._show_recipe_combobox()
+        self._update_recipe_combobox()
+        self._updateSelectParameter()
 
     def _activateRecipe(self, recipe_name: str, state: bool):
         """ Activates/Deactivates an existing recipe. Called by configManager and recipeManager """
         active = bool(state)
-        index = self.scan_recipe_comboBox.findText(recipe_name)
-
-        if active:
-            if index == -1:
-                self.scan_recipe_comboBox.addItem(recipe_name)
-        else:
-            self.scan_recipe_comboBox.removeItem(index)
-
+        self._update_recipe_combobox()
         self.recipeDict[recipe_name]['recipeManager']._activateTree(active)
 
-    def _show_recipe_combobox(self):
+    def _update_recipe_combobox(self):
         """ Shows recipe combobox if multi recipes else hide """
-        dataSet_id = len(self.configManager.config.keys())
+        prev_index = self.selectRecipe_comboBox.currentIndex()
+
+        self.scan_recipe_comboBox.clear()
+        self.scan_recipe_comboBox.addItems(self.configManager.getRecipeActive())
+
+        self.selectRecipe_comboBox.clear()
+        self.selectRecipe_comboBox.addItems(self.configManager.recipeNameList())
+
+        new_index = min(prev_index, self.selectRecipe_comboBox.count()-1)
+        self.selectRecipe_comboBox.setCurrentIndex(new_index)
+
+        dataSet_id = len(self.configManager.recipeNameList())
         if dataSet_id > 1:
             self.scan_recipe_comboBox.show()
             self.selectRecipe_comboBox.show()
@@ -103,11 +98,6 @@ class Scanner(QtWidgets.QMainWindow):
         """ Clears recipes from managers. Called by configManager """
         for recipe_name in list(self.recipeDict.keys()):
             self._removeRecipe(recipe_name)
-
-        self.recipeDict.clear()  # remove recipe from gui with __del__ in recipeManager
-        self.scan_recipe_comboBox.clear()
-        self.selectRecipe_comboBox.clear()
-        self.selectParameter_comboBox.clear()
 
     def _addParameter(self, recipe_name: str, param_name: str):
         """ Adds parameter to managers. Called by configManager and self """
@@ -135,19 +125,15 @@ class Scanner(QtWidgets.QMainWindow):
         if prev_index == -1: prev_index = 0
 
         self.selectParameter_comboBox.clear()
-        self.selectParameter_comboBox.addItems(self.configManager.parameterNameList(recipe_name))
-        self.selectParameter_comboBox.setCurrentIndex(prev_index)
+        if recipe_name != "":
+            self.selectParameter_comboBox.addItems(self.configManager.parameterNameList(recipe_name))
+            self.selectParameter_comboBox.setCurrentIndex(prev_index)
 
         if self.selectParameter_comboBox.currentText() == "":
             self.selectParameter_comboBox.setCurrentIndex(self.selectParameter_comboBox.count()-1)
 
-        self._show_parameter_combobox()
-
-    def _show_parameter_combobox(self):
-        """ Shows parameter combobox if multi parameters else hide """
-        recipe_name = self.selectRecipe_comboBox.currentText()
-
-        if len(self.configManager.parameterList(recipe_name)) > 1:
+        #Shows parameter combobox if multi parameters else hide
+        if recipe_name != "" and len(self.configManager.parameterList(recipe_name)) > 1:
             self.selectParameter_comboBox.show()
         else:
             self.selectParameter_comboBox.hide()
