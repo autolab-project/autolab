@@ -123,6 +123,21 @@ def formatData(data: Any) -> Any: # actually -> pd.DataFrame but don't want to i
     return data
 
 
+def pyqtgraph_image() -> Any : # actually -> pyqtgraph.imageview.ImageView.ImageView but don't want to import it in file
+    import pyqtgraph as pg
+
+    class myImageView(pg.ImageView):
+        def __init__(self, *args, **kwargs):
+            pg.ImageView.__init__(self, *args, **kwargs)
+
+        def roiChanged(self):
+            pg.ImageView.roiChanged(self)
+            for c in self.roiCurves:
+                c.setPen(pg.getConfigOption("foreground"))
+
+    return myImageView()
+
+
 def pyqtgraph_fig_ax() -> Tuple[Any, Any]: # actually -> Tuple[pyqtgraph.widgets.PlotWidget.PlotWidget, pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem] but don't want to import it in file
     """ Return a formated fig and ax pyqtgraph for a basic plot """
     import pyqtgraph as pg
