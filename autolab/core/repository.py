@@ -184,7 +184,7 @@ def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
             assert len(list_repo_tuple[i]) == 2, "Expect (folder, url), got wrong length: {len(list_repo_tuple[i])} for {list_repo_tuple[i]}"
 
     for repo_tuple in list_repo_tuple:
-        drivers_url, drivers_folder = repo_tuple
+        drivers_folder, drivers_url = repo_tuple
 
         if r"github.com/" in drivers_url:
             repo_name = drivers_url.split(r"github.com/")[1].split("/")[1]
@@ -261,7 +261,11 @@ def _install_drivers_custom(_print=True):
     official_folder = paths.DRIVER_SOURCES['official']
     official_url = paths.DRIVER_REPOSITORY[official_folder]
 
-    list_driver = _get_drivers_list_from_github(official_url)
+    try:
+        list_driver = _get_drivers_list_from_github(official_url)
+    except:
+        print(f'Cannot access {official_url}, skip installation')
+        return
 
     try:
         from qtpy import QtWidgets, QtGui
