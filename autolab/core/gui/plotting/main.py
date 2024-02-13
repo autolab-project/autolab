@@ -64,6 +64,12 @@ class Plotter(QtWidgets.QMainWindow):
         self.all_plugin_list = list()
         self.active_plugin_dict = dict()
 
+        GUI_config = config.get_GUI_config()
+        if GUI_config['font_size'] != 'default':
+            self._font_size = int(GUI_config['font_size'])
+        else:
+            self._font_size = QtWidgets.QApplication.instance().font().pointSize()
+
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
@@ -475,7 +481,9 @@ class Plotter(QtWidgets.QMainWindow):
             color='#FFE5AE' # orange
 
         # if "QLineEdit".lower() in str(obj).lower():
-        obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}"%color)
+        obj.setStyleSheet(
+            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
+                color, self._font_size+1))
         # elif "QSpinBox".lower() in str(obj).lower():
         #     obj.setStyleSheet("QSpinBox {background-color : %s}"%color)
         # else:

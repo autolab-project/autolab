@@ -17,7 +17,8 @@ from ...utilities import clean_string
 class ParameterManager:
     """ Manage the parameter from a recipe in a scan """
 
-    def __init__(self, gui: QtWidgets.QMainWindow, recipe_name: str, param_name: str):
+    def __init__(self, gui: QtWidgets.QMainWindow,
+                 recipe_name: str, param_name: str):
 
         self.gui = gui
         self.recipe_name = recipe_name
@@ -432,11 +433,13 @@ class ParameterManager:
     def setProcessingState(self, state: str):
         """ Sets the background color of the parameter address during the scan """
         if state == 'idle':
-            self.parameterAddress_label.setStyleSheet("font-size: 9pt;")
+            self.parameterAddress_label.setStyleSheet(
+                f"font-size: {self.gui._font_size+1}pt;")
         else :
             if state == 'started': color = '#ff8c1a'
             if state == 'finished': color = '#70db70'
-            self.parameterAddress_label.setStyleSheet(f"background-color: {color}; font-size: 9pt;")
+            self.parameterAddress_label.setStyleSheet(
+                f"background-color: {color}; font-size: {self.gui._font_size+1}pt;")
 
     def close(self):
         """ Called by scanner on closing """

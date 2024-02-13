@@ -15,6 +15,7 @@ from .figure import FigureManager
 from .monitor import MonitorManager
 from ..icons import icons
 from ... import paths
+from ... import config
 from ...utilities import SUPPORTED_EXTENSION
 
 
@@ -24,6 +25,12 @@ class Monitor(QtWidgets.QMainWindow):
 
         self.item = item
         self.variable = item.variable
+
+        GUI_config = config.get_GUI_config()
+        if GUI_config['font_size'] != 'default':
+            self._font_size = int(GUI_config['font_size'])
+        else:
+            self._font_size = QtWidgets.QApplication.instance().font().pointSize()
 
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
@@ -97,7 +104,9 @@ class Monitor(QtWidgets.QMainWindow):
         """ Change color of QLineEdit to inform on edit state """
         if state == 'synced': color='#D2FFD2' # vert
         if state == 'edited': color='#FFE5AE' # orange
-        obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}" % color)
+        obj.setStyleSheet(
+            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
+                color, self._font_size+1))
 
     def sync(self):
         """ This function updates the data and then the figure.

@@ -27,6 +27,12 @@ class Slider(QtWidgets.QMainWindow):
         control_center_config = config.get_control_center_config()
         self.precision = int(control_center_config['precision'])
 
+        GUI_config = config.get_GUI_config()
+        if GUI_config['font_size'] != 'default':
+            self._font_size = int(GUI_config['font_size'])
+        else:
+            self._font_size = QtWidgets.QApplication.instance().font().pointSize()
+
         # Slider
         self.slider_instantaneous = False
         self.true_min = self.item.variable.type(0)
@@ -226,7 +232,8 @@ class Slider(QtWidgets.QMainWindow):
         if state == 'edited': color='#FFE5AE' # orange
 
         obj.setStyleSheet(
-            "QLineEdit:enabled {background-color: %s; font-size: 9pt}" % color)
+            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
+                color, self._font_size+1))
 
 
 class ProxyStyle(QtWidgets.QProxyStyle):

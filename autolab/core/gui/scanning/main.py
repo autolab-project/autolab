@@ -17,6 +17,7 @@ from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
 from ..icons import icons
+from ...config import get_GUI_config
 
 
 class Scanner(QtWidgets.QMainWindow):
@@ -24,6 +25,12 @@ class Scanner(QtWidgets.QMainWindow):
     def __init__(self, mainGui: QtWidgets.QMainWindow):
 
         self.mainGui = mainGui
+
+        GUI_config = get_GUI_config()
+        if GUI_config['font_size'] != 'default':
+            self._font_size = int(GUI_config['font_size'])
+        else:
+            self._font_size = QtWidgets.QApplication.instance().font().pointSize()
 
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
@@ -194,4 +201,6 @@ class Scanner(QtWidgets.QMainWindow):
         if state == 'synced': color='#D2FFD2' # vert
         if state == 'edited': color='#FFE5AE' # orange
 
-        obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}" % color)
+        obj.setStyleSheet(
+            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
+                color, self._font_size+1))
