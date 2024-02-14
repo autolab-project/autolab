@@ -24,7 +24,8 @@ dependencies = [
 	"pyqtgraph",
 	"qtpy",
 	"requests",
-	"tqdm"
+	"tqdm",
+	"comtypes",
 ]
 classifiers=["Programming Language :: Python :: 3",
                  "Programming Language :: Python :: 3 :: Only",

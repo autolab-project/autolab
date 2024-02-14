@@ -16,6 +16,7 @@ from typing import Union, Tuple
 
 from . import paths
 from . import drivers
+from .utilities import input_wrap
 from .gitdir import download
 
 
@@ -113,29 +114,6 @@ def _copy_move(temp_unzip_repo, filename, output_dir):
             shutil.copytree(temp_file, output_file)
 
         shutil.rmtree(temp_file, ignore_errors=True)
-
-
-def input_wrap(*args):
-
-    """ Wrap input function to avoid crash with Spyder using Qtconsole=5.3 """
-
-    input_allowed = True
-    try:
-        import spyder_kernels
-        import qtconsole
-    except ModuleNotFoundError:
-        pass
-    else:
-        if hasattr(spyder_kernels, "console") and hasattr(qtconsole, "__version__"):
-            if qtconsole.__version__.startswith("5.3"):
-                print("Warning: Spyder crashes with input() if Qtconsole=5.3, skip user input.")
-                input_allowed = False
-    if input_allowed:
-        ans = input(*args)
-    else:
-        ans = "yes"
-
-    return ans
 
 
 def _check_empty_driver_folder():

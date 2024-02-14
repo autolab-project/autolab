@@ -16,11 +16,12 @@ from . import utilities
 # GENERAL
 # ==============================================================================
 
-def initialize_local_directory():
-    """ This function creates the default autolab local directory """
-    # LOCAL DIRECTORY
-
+def initialize_local_directory() -> bool:
+    """ This function creates the default autolab local directory.
+    Returns True if create default autolab folder (first autolab use) """
+    first = False
     _print = True
+    # LOCAL DIRECTORY
     if not os.path.exists(paths.USER_FOLDER):
         os.mkdir(paths.USER_FOLDER)
         print(f'The local directory of AUTOLAB has been created: {paths.USER_FOLDER}.\n'\
@@ -29,6 +30,7 @@ def initialize_local_directory():
               "It also contains the 'driver' directory with 'official' and 'local' sub-directories."
               )
         _print = False
+        first = True
 
     # DEVICES CONFIGURATION FILE
     if not os.path.exists(paths.DEVICES_CONFIG):
@@ -59,6 +61,9 @@ def initialize_local_directory():
     if not os.path.exists(paths.PLOTTER_CONFIG):
         save_config('plotter', configparser.ConfigParser())
         if _print: print(f'The configuration file plotter_config.ini has been created: {paths.PLOTTER_CONFIG}')
+
+    return first
+
 
 def save_config(config_name, config):
     """ This function saves the given config parser in the autolab configuration file """

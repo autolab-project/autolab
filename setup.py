@@ -45,6 +45,7 @@ setup(
             'pyqtgraph',
             'requests',
             'tqdm',
+            'comtypes',
             ],
     entry_points={'console_scripts': ['autolab = autolab:_main']},
 	python_requires='>=3.6',

@@ -124,18 +124,111 @@ def formatData(data: Any) -> Any: # actually -> pd.DataFrame but don't want to i
 
 
 def pyqtgraph_image() -> Any : # actually -> pyqtgraph.imageview.ImageView.ImageView but don't want to import it in file
+    import numpy as np
     import pyqtgraph as pg
+    from qtpy import QtWidgets, QtCore
 
     class myImageView(pg.ImageView):
         def __init__(self, *args, **kwargs):
             pg.ImageView.__init__(self, *args, **kwargs)
+
+            self.figLineROI, self.axLineROI = pyqtgraph_fig_ax()
+            self.figLineROI.hide()
+            self.plot = self.axLineROI.plot([], [], pen='k')
+
+            self.lineROI = pg.LineSegmentROI([[0, 100], [100, 100]], pen='r')
+            self.lineROI.sigRegionChanged.connect(self.updateLineROI)
+            self.lineROI.hide()
+
+            self.addItem(self.lineROI)
+
+            # update slice when change frame number in scanner
+            self.timeLine.sigPositionChanged.connect(self.updateLineROI)
+
+            slice_pushButton = QtWidgets.QPushButton('Slice')
+            slice_pushButton.state = False
+            slice_pushButton.setMinimumSize(0, 23)
+            slice_pushButton.setMaximumSize(75, 23)
+            slice_pushButton.clicked.connect(self.slice_pushButtonClicked)
+            self.slice_pushButton = slice_pushButton
+
+            horizontalLayoutButton = QtWidgets.QHBoxLayout()
+            horizontalLayoutButton.setSpacing(0)
+            horizontalLayoutButton.setContentsMargins(0,0,0,0)
+            horizontalLayoutButton.addStretch()
+            horizontalLayoutButton.addWidget(self.slice_pushButton)
+
+            widgetButton = QtWidgets.QWidget()
+            widgetButton.setLayout(horizontalLayoutButton)
+
+            verticalLayoutImageButton = QtWidgets.QVBoxLayout()
+            verticalLayoutImageButton.setSpacing(0)
+            verticalLayoutImageButton.setContentsMargins(0,0,0,0)
+            verticalLayoutImageButton.addWidget(self)
+            verticalLayoutImageButton.addWidget(widgetButton)
+
+            widgetImageButton = QtWidgets.QWidget()
+            widgetImageButton.setLayout(verticalLayoutImageButton)
+
+            splitter = QtWidgets.QSplitter()
+            splitter.setOrientation(QtCore.Qt.Vertical)
+            splitter.addWidget(widgetImageButton)
+            splitter.addWidget(self.figLineROI)
+            splitter.setSizes([500,500])
+
+            verticalLayoutMain = QtWidgets.QVBoxLayout()
+            verticalLayoutMain.setSpacing(0)
+            verticalLayoutMain.setContentsMargins(0,0,0,0)
+            verticalLayoutMain.addWidget(splitter)
+
+            centralWidget = QtWidgets.QWidget()
+            centralWidget.setLayout(verticalLayoutMain)
+            self.centralWidget = centralWidget
+
+        def slice_pushButtonClicked(self):
+            self.slice_pushButton.state = not self.slice_pushButton.state
+            self.display_line()
+
+        def display_line(self):
+            if self.slice_pushButton.state:
+                self.figLineROI.show()
+                self.lineROI.show()
+                self.updateLineROI()
+            else:
+                self.figLineROI.hide()
+                self.lineROI.hide()
+
+        def show(self):
+            self.centralWidget.show()
+
+        def hide(self):
+            self.centralWidget.hide()
 
         def roiChanged(self):
             pg.ImageView.roiChanged(self)
             for c in self.roiCurves:
                 c.setPen(pg.getConfigOption("foreground"))
 
-    return myImageView()
+        def setImage(self, *args, **kwargs):
+            pg.ImageView.setImage(self, *args, **kwargs)
+            self.updateLineROI()
+
+        def updateLineROI(self):
+            if self.slice_pushButton.state:
+                img = self.image if self.image.ndim == 2 else self.image[self.currentIndex]
+                img = np.array([img])
+
+                x,y = (0, 1) if self.imageItem.axisOrder == 'col-major' else (1, 0)
+                d2 = self.lineROI.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
+                self.plot.setData(d2[0])
+
+        def close(self):
+            self.figLineROI.close()
+            pg.ImageView.close(self)
+
+    imageView = myImageView()
+
+    return imageView, imageView.centralWidget
 
 
 def pyqtgraph_fig_ax() -> Tuple[Any, Any]: # actually -> Tuple[pyqtgraph.widgets.PlotWidget.PlotWidget, pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem] but don't want to import it in file
@@ -188,7 +281,6 @@ def qt_object_exists(QtObject) -> bool:
     """ Return True if object exists (not deleted).
     Check if use pyqt5, pyqt6, pyside2 or pyside6 to use correct implementation
     """
-
     global CHECK_ONCE
     import os
     QT_API = os.environ.get("QT_API")
@@ -210,3 +302,24 @@ def qt_object_exists(QtObject) -> bool:
             print(f"Warning: {e}. Skip check if Qt Object not deleted.")
             CHECK_ONCE = False
         return True
+
+
+def input_wrap(*args):
+    """ Wrap input function to avoid crash with Spyder using Qtconsole=5.3 """
+    input_allowed = True
+    try:
+        import spyder_kernels
+        import qtconsole
+    except ModuleNotFoundError:
+        pass
+    else:
+        if hasattr(spyder_kernels, "console") and hasattr(qtconsole, "__version__"):
+            if qtconsole.__version__.startswith("5.3"):
+                print("Warning: Spyder crashes with input() if Qtconsole=5.3, skip user input.")
+                input_allowed = False
+    if input_allowed:
+        ans = input(*args)
+    else:
+        ans = "yes"
+
+    return ans

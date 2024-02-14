@@ -218,6 +218,8 @@ class ConfigManager:
     def renameRecipe(self, existing_recipe_name: str, new_recipe_name: str):
         """ Renames recipe """
         if not self.gui.scanManager.isStarted():
+            if new_recipe_name == existing_recipe_name:
+                return
             if existing_recipe_name not in self.recipeNameList():
                 raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.recipeNameList()}')
 
