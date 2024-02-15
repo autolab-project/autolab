@@ -132,16 +132,22 @@ def check_autolab_config():
                     'save_figure': True,
                     'save_temp': True},
         'directories': {'temp_folder': 'default'},
-
+        'extra_driver_path': {},
+        'extra_driver_url_repo': {},
+        # 'plotter': {'precision': 10},
     }
+
     for section_key in autolab_dict.keys():
+        dic = autolab_dict[section_key]
         if section_key in autolab_config.sections():
             conf = autolab_config[section_key]
-            dic = autolab_dict[section_key]
             for key in dic.keys():
-                if key in conf.keys():
-                    dic[key] = conf[key]
-        autolab_config[section_key] = dic
+                if key not in conf.keys():
+                    conf[key] = str(dic[key])
+        else:
+            conf = dic
+
+        autolab_config[section_key] = conf
 
     autolab_config.set('GUI', '# QT_API -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
 
@@ -154,29 +160,9 @@ def check_autolab_config():
               'Disabling this option is only useful if you want to do fast ' \
               'scan when plotting large dataframe (images for examples)')
 
-    # Check extra driver path configuration
-    driver_path_dict = {}
-    if 'extra_driver_path' in autolab_config.sections():
-        for driver_path in autolab_config['extra_driver_path'].keys():
-            driver_path_dict[driver_path] = autolab_config['extra_driver_path'][driver_path]
-    autolab_config['extra_driver_path'] = driver_path_dict
     autolab_config.set('extra_driver_path', r'# Example: onedrive = C:\Users\username\OneDrive\my_drivers')
 
-    # Check extra driver repo url configuration
-    driver_repo_url_dict = {}
-    if 'extra_driver_url_repo' in autolab_config.sections():
-        for driver_repo_url in autolab_config['extra_driver_url_repo'].keys():
-            driver_repo_url_dict[driver_repo_url] = autolab_config['extra_driver_url_repo'][driver_repo_url]
-    autolab_config['extra_driver_url_repo'] = driver_repo_url_dict
     autolab_config.set('extra_driver_url_repo', r'# Example: C:\Users\username\OneDrive\my_drivers = https://github.com/my_repo/my_drivers')
-
-    # # Check plotter configuration
-    # plotter_dict = {'precision': 10,
-    #                 }
-    # if 'plotter' in autolab_config.sections():
-    #     if 'precision' in autolab_config['plotter'].keys() :
-    #         plotter_dict['precision'] = autolab_config['plotter']['precision']
-    # autolab_config['plotter'] = plotter_dict
 
     save_config('autolab', autolab_config)
 
@@ -280,23 +266,26 @@ def check_plotter_config():
     """ This function checks config file structures """
     plotter_config = load_config('plotter')
 
-    # Check plugin configuration
-    plugin_dict = {}#'plotter': 'plotter'}
-    if 'plugin' in plotter_config.sections():
-        plugin_dict = dict()
-        for plugin_name in plotter_config['plugin'].keys():
-            plugin_dict[plugin_name] = plotter_config['plugin'][plugin_name]
-    plotter_config['plugin'] = plugin_dict
+    plotter_dict = {
+        'plugin': {'plotter': 'plotter'},
+        'device': {'address': 'dummy.array_1D'},
+    }
+
+    for section_key in plotter_dict.keys():
+        dic = plotter_dict[section_key]
+        if section_key in plotter_config.sections():
+            conf = plotter_config[section_key]
+            for key in dic.keys():
+                if key not in conf.keys():
+                    conf[key] = str(dic[key])
+        else:
+            conf = dic
+
+        plotter_config[section_key] = conf
+
     plotter_config.set('plugin', '# Usage: <PLUGIN_NAME> = <DEVICE_NAME>')
     plotter_config.set('plugin', '# Example: plotter = plotter')
 
-    # Check device configuration
-    device_dict = {}#'address': 'dummy.array_1D'}
-    if 'device' in plotter_config.sections():
-        if 'address' in plotter_config['device'].keys():
-            device_dict['address'] = plotter_config['device']['address']
-
-    plotter_config['device'] = device_dict
     plotter_config.set('device', '# Usage: address = <DEVICE_VARIABLE>')
     plotter_config.set('device', '# Example: address = dummy.array_1D')
 
