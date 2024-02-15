@@ -123,7 +123,7 @@ def formatData(data: Any) -> Any: # actually -> pd.DataFrame but don't want to i
     return data
 
 
-def pyqtgraph_image() -> Any : # actually -> pyqtgraph.imageview.ImageView.ImageView but don't want to import it in file
+def pyqtgraph_image() -> Any: # actually -> pyqtgraph.imageview.ImageView.ImageView but don't want to import it in file
     import numpy as np
     import pyqtgraph as pg
     from qtpy import QtWidgets, QtCore
@@ -131,6 +131,11 @@ def pyqtgraph_image() -> Any : # actually -> pyqtgraph.imageview.ImageView.Image
     class myImageView(pg.ImageView):
         def __init__(self, *args, **kwargs):
             pg.ImageView.__init__(self, *args, **kwargs)
+
+            for tick in self.ui.histogram.gradient.ticks:
+                tick.pen = pg.mkPen(pg.getConfigOption("foreground"))
+                tick.currentPen = tick.pen
+                tick.hoverPen = pg.mkPen(200, 120, 0)
 
             self.figLineROI, self.axLineROI = pyqtgraph_fig_ax()
             self.figLineROI.hide()
