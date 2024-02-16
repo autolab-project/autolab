@@ -140,7 +140,7 @@ def check_autolab_config():
     for section_key in autolab_dict.keys():
         dic = autolab_dict[section_key]
         if section_key in autolab_config.sections():
-            conf = autolab_config[section_key]
+            conf = dict(autolab_config[section_key])
             for key in dic.keys():
                 if key not in conf.keys():
                     conf[key] = str(dic[key])
