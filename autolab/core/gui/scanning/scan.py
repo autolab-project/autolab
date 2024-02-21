@@ -223,15 +223,18 @@ class ScanThread(QtCore.QThread):
         paramValues_list = []
 
         for parameter in self.config[recipe_name]['parameter']:
-            startValue, endValue = parameter['range']
-            nbpts = parameter['nbpts']
-            logScale = parameter['log']
-
-            # Creates the array of values for the parameter
-            if logScale:
-                paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+            if 'values' in parameter:
+                paramValues = parameter['values']
             else:
-                paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
+                startValue, endValue = parameter['range']
+                nbpts = parameter['nbpts']
+                logScale = parameter['log']
+
+                # Creates the array of values for the parameter
+                if logScale:
+                    paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+                else:
+                    paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
 
             paramValues_list.append(paramValues)
 

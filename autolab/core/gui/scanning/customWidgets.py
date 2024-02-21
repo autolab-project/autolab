@@ -258,11 +258,6 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             addParameterAction = menu.addAction("Add parameter")
             addParameterAction.setIcon(QtGui.QIcon(icons['add']))
 
-            removeMenuActions = {}
-            for parameter in self.gui.configManager.parameterList(self.recipe_name):
-                removeMenuActions[parameter['name']] = menu.addAction(f"Remove {parameter['name']}")
-                removeMenuActions[parameter['name']] .setIcon(QtGui.QIcon(icons['remove']))
-
             menu.addSeparator()
 
             moveUpRecipeAction = menu.addAction("Move recipe up")
@@ -293,9 +288,6 @@ class MyQTabWidget(QtWidgets.QTabWidget):
                 self.gui.configManager.setRecipeOrder(keys)
             elif choice == addParameterAction:
                 self.addParameter()
-            elif choice in removeMenuActions.values():
-                param_name = list(removeMenuActions.keys())[list(removeMenuActions.values()).index(choice)]
-                self.removeParameter(param_name)
 
     def renameRecipe(self):
         """ Prompts the user for a new recipe name and apply it to the selected recipe """

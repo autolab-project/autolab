@@ -7,11 +7,15 @@ Created on Sun Sep 29 18:13:45 2019
 
 import math as m
 
-from qtpy import QtCore, QtWidgets
+import numpy as np
+import pandas as pd
+from qtpy import QtCore, QtWidgets, QtGui
 
 from .display import DisplayValues
 from .customWidgets import parameterQFrame
-from ...utilities import clean_string
+from ..icons import icons
+from ...utilities import clean_string, array_from_txt, array_to_txt
+from ...devices import DEVICES
 
 
 class ParameterManager:
@@ -32,6 +36,9 @@ class ParameterManager:
         mainFrame.setMinimumSize(0, 32+60)
         mainFrame.setMaximumSize(16777215, 32+60)
         self.mainFrame = mainFrame
+
+        self.mainFrame.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.mainFrame.customContextMenuRequested.connect(self.rightClick)
 
         ## 1st row frame: Parameter
         frameParameter = QtWidgets.QFrame(mainFrame)
@@ -90,7 +97,7 @@ class ParameterManager:
         frameScanRange = QtWidgets.QFrame(mainFrame)
         frameScanRange.setMinimumSize(0, 60)
         frameScanRange.setMaximumSize(16777215, 60)
-        frameScanRange = frameScanRange
+        self.frameScanRange = frameScanRange
 
         ### first grid widgets: start, stop
         labelStart = QtWidgets.QLabel("Start", frameScanRange)
@@ -180,12 +187,42 @@ class ParameterManager:
         layoutScanRange.addStretch()
         layoutScanRange.addWidget(nptsStepGridWidget)
 
+        ## 2nd row bis frame: Values (hidden at start)
+        frameScanRange_values = QtWidgets.QFrame(mainFrame)
+        frameScanRange_values.setMinimumSize(0, 60)
+        frameScanRange_values.setMaximumSize(16777215, 60)
+        self.frameScanRange_values = frameScanRange_values
+
+        ### first grid widgets: values (hidden at start)
+        labelValues = QtWidgets.QLabel("Values", frameScanRange_values)
+        values_lineEdit = QtWidgets.QLineEdit('[0,1,2,3]', frameScanRange_values)
+        values_lineEdit.setToolTip('Values of the scan')
+        values_lineEdit.setMinimumSize(0, 20)
+        values_lineEdit.setMaximumSize(16777215, 20)
+        values_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
+        self.values_lineEdit = values_lineEdit
+
+        ### first grid layout: values (hidden at start)
+        valuesGridLayout = QtWidgets.QGridLayout(frameScanRange_values)
+        valuesGridLayout.addWidget(labelValues, 0, 0)
+        valuesGridLayout.addWidget(values_lineEdit, 0, 1)
+
+        valuesGridWidget = QtWidgets.QWidget(frameScanRange_values)
+        valuesGridWidget.setLayout(valuesGridLayout)
+
+        ## 2nd row bis layout: Values (hidden at start)
+        layoutScanRange_values = QtWidgets.QHBoxLayout(frameScanRange_values)
+        layoutScanRange_values.setContentsMargins(0,0,0,0)
+        layoutScanRange_values.setSpacing(0)
+        layoutScanRange_values.addWidget(valuesGridWidget)
+
         # Parameter layout
         parameterLayout = QtWidgets.QVBoxLayout(mainFrame)
         parameterLayout.setContentsMargins(0,0,0,0)
         parameterLayout.setSpacing(0)
         parameterLayout.addWidget(frameParameter)
         parameterLayout.addWidget(frameScanRange)
+        parameterLayout.addWidget(frameScanRange_values)  # hidden at start
 
         # Widget 'return pressed' signal connections
         self.scanLog_checkBox.stateChanged.connect(self.scanLogChanged)
@@ -195,14 +232,16 @@ class ParameterManager:
         self.end_lineEdit.returnPressed.connect(self.endChanged)
         self.mean_lineEdit.returnPressed.connect(self.meanChanged)
         self.width_lineEdit.returnPressed.connect(self.widthChanged)
+        self.values_lineEdit.returnPressed.connect(self.valuesChanged)
 
         # Widget 'text edited' signal connections
-        self.nbpts_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.nbpts_lineEdit,'edited'))
-        self.step_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.step_lineEdit,'edited'))
-        self.start_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.start_lineEdit,'edited'))
-        self.end_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.end_lineEdit,'edited'))
-        self.mean_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.mean_lineEdit,'edited'))
-        self.width_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(self.width_lineEdit,'edited'))
+        self.nbpts_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.nbpts_lineEdit,'edited'))
+        self.step_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.step_lineEdit,'edited'))
+        self.start_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.start_lineEdit,'edited'))
+        self.end_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.end_lineEdit,'edited'))
+        self.mean_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.mean_lineEdit,'edited'))
+        self.width_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.width_lineEdit,'edited'))
+        self.values_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.values_lineEdit,'edited'))
 
         # Do refresh at start
         self.refresh()
@@ -241,49 +280,60 @@ class ParameterManager:
         else:
             self.unit_label.setText(f'({unit})')
 
-        # Range
-        xrange = self.gui.configManager.getRange(self.recipe_name, self.param_name)
-
-        # Start
-        start = xrange[0]
-        self.start_lineEdit.setText(f'{start:g}')
-        self.gui.setLineEditBackground(self.start_lineEdit, 'synced')
-
-        # End
-        end = xrange[1]
-        self.end_lineEdit.setText(f'{end:g}')
-        self.gui.setLineEditBackground(self.end_lineEdit, 'synced')
-
-        # Mean
-        mean = (start + end) / 2
-        self.mean_lineEdit.setText(f'{mean:g}')
-        self.gui.setLineEditBackground(self.mean_lineEdit, 'synced')
-
-        # Width
-        width = abs(end - start)
-        self.width_lineEdit.setText(f'{width:g}')
-        self.gui.setLineEditBackground(self.width_lineEdit, 'synced')
-
-        # Nbpts
-        nbpts = self.gui.configManager.getNbPts(self.recipe_name, self.param_name)
-        step = self.gui.configManager.getStep(self.recipe_name, self.param_name)
-
-        self.nbpts_lineEdit.setText(f'{nbpts:g}')
-        self.gui.setLineEditBackground(self.nbpts_lineEdit, 'synced')
-
-        # Log
-        log: bool = self.gui.configManager.getLog(self.recipe_name, self.param_name)
-        self.scanLog_checkBox.setChecked(log)
-
-        # Step
-        if log:
-            self.step_lineEdit.setEnabled(False)
-            self.step_lineEdit.setText('')
+        # Values if defined
+        if self.gui.configManager.hasCustomValues(self.recipe_name, self.param_name):
+            values = self.gui.configManager.getValues(self.recipe_name, self.param_name)
+            values = array_to_txt(values)
+            self.frameScanRange.hide()
+            self.frameScanRange_values.show()
+            self.values_lineEdit.setText(f'{values}')
+            self.gui.setLineEditBackground(self.values_lineEdit, 'synced')
         else:
-            self.step_lineEdit.setText(f'{step:g}')
-            self.step_lineEdit.setEnabled(True)
+            self.frameScanRange.show()
+            self.frameScanRange_values.hide()
+            # Range
+            xrange = self.gui.configManager.getRange(self.recipe_name, self.param_name)
 
-        self.gui.setLineEditBackground(self.step_lineEdit, 'synced')
+            # Start
+            start = xrange[0]
+            self.start_lineEdit.setText(f'{start:g}')
+            self.gui.setLineEditBackground(self.start_lineEdit, 'synced')
+
+            # End
+            end = xrange[1]
+            self.end_lineEdit.setText(f'{end:g}')
+            self.gui.setLineEditBackground(self.end_lineEdit, 'synced')
+
+            # Mean
+            mean = (start + end) / 2
+            self.mean_lineEdit.setText(f'{mean:g}')
+            self.gui.setLineEditBackground(self.mean_lineEdit, 'synced')
+
+            # Width
+            width = abs(end - start)
+            self.width_lineEdit.setText(f'{width:g}')
+            self.gui.setLineEditBackground(self.width_lineEdit, 'synced')
+
+            # Nbpts
+            nbpts = self.gui.configManager.getNbPts(self.recipe_name, self.param_name)
+            step = self.gui.configManager.getStep(self.recipe_name, self.param_name)
+
+            self.nbpts_lineEdit.setText(f'{nbpts:g}')
+            self.gui.setLineEditBackground(self.nbpts_lineEdit, 'synced')
+
+            # Log
+            log: bool = self.gui.configManager.getLog(self.recipe_name, self.param_name)
+            self.scanLog_checkBox.setChecked(log)
+
+            # Step
+            if log:
+                self.step_lineEdit.setEnabled(False)
+                self.step_lineEdit.setText('')
+            else:
+                self.step_lineEdit.setText(f'{step:g}')
+                self.step_lineEdit.setEnabled(True)
+
+            self.gui.setLineEditBackground(self.step_lineEdit, 'synced')
 
         if self.displayParameter.active:
             self.displayParameter.refresh(
@@ -426,6 +476,72 @@ class ParameterManager:
 
         self.gui.configManager.setLog(self.recipe_name, self.param_name, state)
 
+    def valuesChanged(self):
+        """ Changes values of the parameter """
+        values = self.values_lineEdit.text()
+        try:
+            values = self.checkVariable(values)
+            if not isinstance(values, str):
+                values = array_to_txt(values)
+
+            values = array_from_txt(values)
+            self.gui.configManager.setValues(self.recipe_name, self.param_name, values)
+        except:
+            self.refresh()
+
+    def rightClick(self, position: QtCore.QPoint):
+        """ Provides the menu when the user right click on a parameter """
+        menu = QtWidgets.QMenu()
+
+        CUSTOM_VALUES = self.gui.configManager.hasCustomValues(self.recipe_name, self.param_name)
+
+        if CUSTOM_VALUES:
+            customParameterAction = menu.addAction("Standard values")
+            customParameterAction.setIcon(QtGui.QIcon(icons['ndarray']))
+        else:
+            customParameterAction = menu.addAction("Custom values")
+            customParameterAction.setIcon(QtGui.QIcon(icons['ndarray']))
+
+        removeActions = menu.addAction(f"Remove {self.param_name}")
+        removeActions.setIcon(QtGui.QIcon(icons['remove']))
+
+        choice = menu.exec_(self.mainFrame.mapToGlobal(position))
+
+        if choice == customParameterAction:
+            values = self.gui.configManager.getValues(
+                self.recipe_name, self.param_name)
+
+            if CUSTOM_VALUES:
+                param = self.gui.configManager.getParameter(
+                    self.recipe_name, self.param_name)
+                # OPTIMIZE: would be cleaner in configManager but easier that way
+                param.pop('values')
+                param['range'] = (values[0], values[-1])
+                if 'log' not in param: param['log'] = False
+
+                self.gui.configManager.setNbPts(
+                    self.recipe_name, self.param_name, len(values))
+            else:
+                try:
+                    self.gui.configManager.setValues(
+                        self.recipe_name, self.param_name, values)
+                except:
+                    self.gui.configManager.setValues(
+                        self.recipe_name, self.param_name, [1, 2, 3])
+
+        elif choice == removeActions:
+            self.gui.configManager.removeParameter(self.recipe_name, self.param_name)
+
+    def checkVariable(self, value):
+        """ Try to execute the given command line (meant to contain device variables) and return the result """
+        if str(value).startswith("$eval:"):
+            value = str(value)[len("$eval:"): ]
+            try:
+                allowed_dict = {"np": np, "pd": pd}
+                allowed_dict.update(DEVICES)
+                value = eval(str(value), {}, allowed_dict)
+            except: pass
+        return value
 
     # PROCESSING STATE BACKGROUND
     ###########################################################################

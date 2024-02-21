@@ -194,7 +194,11 @@ class DataManager:
 
                 # bellow just to know maximum point
                 nbpts = 1
-                for nbpts_i in [parameter['nbpts'] for parameter in recipe['parameter']]: nbpts *= nbpts_i
+                for parameter in recipe['parameter']:
+                    if 'values' in parameter:
+                        nbpts *= len(parameter['values'])
+                    else:
+                        nbpts *= parameter['nbpts']
 
                 maximum += nbpts
 
@@ -213,7 +217,12 @@ class DataManager:
                                 has_sub_recipe = True
                                 other_recipe = config[step['element']]
                                 other_nbpts = 1
-                                for other_nbpts_i in [parameter['nbpts'] for parameter in other_recipe['parameter']]: other_nbpts *= other_nbpts_i
+
+                                for parameter in other_recipe['parameter']:
+                                    if 'values' in parameter:
+                                        other_nbpts *= len(parameter['values'])
+                                    else:
+                                        other_nbpts *= parameter['nbpts']
                                 sub_nbpts = nbpts * other_nbpts
                                 maximum += sub_nbpts
                                 list_recipe_nbpts_new.append([other_recipe, sub_nbpts])

@@ -443,6 +443,17 @@ class ConfigManager:
 
         self.refreshParameterRange(recipe_name, param_name)
 
+    def setValues(self, recipe_name: str, param_name: str, values: List[float]):
+        """ Sets custom values to a parameter """
+        if not self.gui.scanManager.isStarted():
+            param = self.getParameter(recipe_name, param_name)
+
+            if np.ndim(values) == 1:
+                param['values'] = values
+                self.addNewConfig()
+
+        self.refreshParameterRange(recipe_name, param_name)
+
     # set step
     def addRecipeStep(self, recipe_name: str, stepType: str, element,
                       name: str = None, value = None):
@@ -660,6 +671,29 @@ class ConfigManager:
         param = self.getParameter(recipe_name, param_name)
         return param['range']
 
+    def getValues(self, recipe_name: str, param_name: str) -> List[float]:
+        """ Returns the values of a parameter """
+        param = self.getParameter(recipe_name, param_name)
+        if 'values' in param:
+            return param['values']
+        else:
+            startValue, endValue = param['range']
+            nbpts = param['nbpts']
+            logScale = param['log']
+
+            # Creates the array of values for the parameter
+            if logScale:
+                paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+            else:
+                paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
+
+            return paramValues
+
+    def hasCustomValues(self, recipe_name: str, param_name: str) -> bool:
+        """ Boolean to know if parameter has custom array """
+        param = self.getParameter(recipe_name, param_name)
+        return 'values' in param
+
     # get Step
     def stepList(self, recipe_name: str) -> List[dict]:
         """ Returns the list of steps in the recipe """
@@ -687,15 +721,7 @@ class ConfigManager:
     def getParamDataFrame(self, recipe_name: str, param_name: str) -> pd.DataFrame:
         """ Returns a pd.DataFrame with 'id' and 'param_name'
         columns containing the parameter array """
-        startValue, endValue = self.getRange(recipe_name, param_name)
-        nbpts = self.getNbPts(recipe_name, param_name)
-        logScale: bool = self.getLog(recipe_name, param_name)
-
-        if logScale:
-            paramValues = np.logspace(m.log10(startValue), m.log10(endValue),
-                                      nbpts, endpoint=True)
-        else:
-            paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
+        paramValues = self.getValues(recipe_name, param_name)
 
         data = pd.DataFrame()
         data["id"] = 1 + np.arange(len(paramValues))
@@ -746,19 +772,24 @@ class ConfigManager:
             for i, param in enumerate(recipe_i['parameter']):
                 param_name = f"parameter_{i+1}"
 
-                pars_recipe_i['parameter'][param_name] = {}
+                param_pars = {}
 
-                pars_recipe_i['parameter'][param_name]['name'] = param['name']
+                param_pars['name'] = param['name']
 
                 if param['element'] is not None:
-                    pars_recipe_i['parameter'][param_name]['address'] = param['element'].address()
+                    param_pars['address'] = param['element'].address()
                 else:
-                    pars_recipe_i['parameter'][param_name]['address'] = "None"
+                    param_pars['address'] = "None"
 
-                pars_recipe_i['parameter'][param_name]['nbpts'] = str(param['nbpts'])
-                pars_recipe_i['parameter'][param_name]['start_value'] = str(param['range'][0])
-                pars_recipe_i['parameter'][param_name]['end_value'] = str(param['range'][1])
-                pars_recipe_i['parameter'][param_name]['log'] = str(int(param['log']))
+                if 'values' in param:
+                    param_pars['values'] = array_to_txt(param['values'])
+                else:
+                    param_pars['nbpts'] = str(param['nbpts'])
+                    param_pars['start_value'] = str(param['range'][0])
+                    param_pars['end_value'] = str(param['range'][1])
+                    param_pars['log'] = str(int(param['log']))
+
+                pars_recipe_i['parameter'][param_name] = param_pars
 
             pars_recipe_i['recipe'] = {}
 
@@ -925,19 +956,24 @@ class ConfigManager:
 
                     param['element'] = element
 
-                    for key in ['nbpts', 'start_value', 'end_value', 'log']:
-                        assert key in param_pars, "Missing parameter key {key}."
-
-                    param['nbpts'] = int(param_pars['nbpts'])
-                    start = float(param_pars['start_value'])
-                    end = float(param_pars['end_value'])
-                    param['range'] = (start, end)
-                    param['log'] = bool(int(param_pars['log']))
-
-                    if param['nbpts'] > 1:
-                        param['step'] = abs(end - start) / (param['nbpts'] - 1)
+                    if 'values' in param_pars:
+                        values = array_from_txt(param_pars['values'])
+                        assert np.ndim(values) == 1, f"Values must be one dimension array in parameter: {param['name']}"
+                        param['values'] = values
                     else:
-                        param['step'] = 0
+                        for key in ['nbpts', 'start_value', 'end_value', 'log']:
+                            assert key in param_pars, "Missing parameter key {key}."
+
+                        param['nbpts'] = int(param_pars['nbpts'])
+                        start = float(param_pars['start_value'])
+                        end = float(param_pars['end_value'])
+                        param['range'] = (start, end)
+                        param['log'] = bool(int(param_pars['log']))
+
+                        if param['nbpts'] > 1:
+                            param['step'] = abs(end - start) / (param['nbpts'] - 1)
+                        else:
+                            param['step'] = 0
 
                     param_list.append(param)
 
