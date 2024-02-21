@@ -12,7 +12,8 @@ from qtpy import QtCore, QtWidgets, QtGui
 from .customWidgets import MyQTreeWidget, MyQTabWidget
 from ..icons import icons
 from ... import config
-from ...utilities import clean_string, array_from_txt, dataframe_from_txt
+from ...utilities import (clean_string, array_from_txt, array_to_txt,
+                          dataframe_from_txt, dataframe_to_txt)
 
 class RecipeManager:
     """ Manage a recipe from a scan """
@@ -34,10 +35,19 @@ class RecipeManager:
 
         # Tree configuration
         self.tree = MyQTreeWidget(frameRecipe, self.gui, self.recipe_name)
-        self.tree.setHeaderLabels(['Step name', 'Type', 'Element address', 'Value'])
-        self.tree.header().resizeSection(0, 100)
-        self.tree.header().resizeSection(1, 60)
-        self.tree.header().resizeSection(2, 150)
+        self.tree.setHeaderLabels(['Step name', 'Action', 'Element address', 'Type', 'Value', 'Unit'])
+        header = self.tree.header()
+        header.setMinimumSectionSize(20)
+        # header.resizeSections(QtWidgets.QHeaderView.ResizeToContents)
+        header.setStretchLastSection(False)
+        header.resizeSection(0, 95)
+        header.resizeSection(1, 55)
+        header.resizeSection(2, 115)
+        header.resizeSection(3, 35)
+        header.resizeSection(4, 110)
+        # header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
+        header.resizeSection(5, 32)
+        header.setMaximumSize(16777215, 16777215)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
         self.tree.reorderSignal.connect(self.orderChanged)
         self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
@@ -99,6 +109,7 @@ class RecipeManager:
             # Column 1 : Step name
             item.setText(0, step['name'])
 
+            # OPTIMIZE: stepType is a bad name. Possible confusion with element type. stepType should be stepAction or just action
             # Column 2 : Step type
             if step['stepType'] == 'measure':
                 item.setText(1, 'Measure')
@@ -119,18 +130,7 @@ class RecipeManager:
             else:
                 item.setText(2, step['element'].address())
 
-            # Column 4 : Value if stepType is 'set'
-            value = step['value']
-            if value is not None:
-
-                try:
-                    if step['element'].type in [bool, str, tuple, np.ndarray, pd.DataFrame]:
-                       item.setText(3, f'{value}')
-                    else:
-                       item.setText(3, f'{value:.{self.precision}g}')
-                except ValueError:
-                    item.setText(3, f'{value}')
-
+            # Column 4 : Icon of element type
             etype = step['element'].type
             if etype is int: item.setIcon(3, QtGui.QIcon(icons['int']))
             elif etype is float: item.setIcon(3, QtGui.QIcon(icons['float']))
@@ -140,6 +140,29 @@ class RecipeManager:
             elif etype is tuple: item.setIcon(3, QtGui.QIcon(icons['tuple']))
             elif etype is np.ndarray: item.setIcon(3, QtGui.QIcon(icons['ndarray']))
             elif etype is pd.DataFrame: item.setIcon(3, QtGui.QIcon(icons['DataFrame']))
+
+            # Column 5 : Value if stepType is 'set'
+            value = step['value']
+            if value is not None:
+
+                try:
+                    if step['element'].type in [bool, str, tuple]:
+                        item.setText(4, f'{value}')
+                    elif step['element'].type in [np.ndarray]:
+                        value = array_to_txt(value)
+                        item.setText(4, f'{value}')
+                    elif step['element'].type in [pd.DataFrame]:
+                        value = dataframe_to_txt(value)
+                        item.setText(4, f'{value}')
+                    else:
+                       item.setText(4, f'{value:.{self.precision}g}')
+                except ValueError:
+                    item.setText(4, f'{value}')
+
+            # Column 6 : Unit of element
+            unit = step['element'].unit
+            if unit is not None:
+                item.setText(5, str(unit))
 
             # Add item to the tree
             self.tree.addTopLevelItem(item)
@@ -242,10 +265,16 @@ class RecipeManager:
             self.recipe_name, name)
 
         # Default value displayed in the QInputDialog
-        try:
-            defaultValue = f'{value:.{self.precision}g}'
-        except (ValueError, TypeError):
-            defaultValue = f'{value}'
+        if element.type in [np.ndarray]:
+            defaultValue = array_to_txt(value)
+        elif element.type in [pd.DataFrame]:
+            defaultValue = dataframe_to_txt(value)
+        else:
+            try:
+                defaultValue = f'{value:.{self.precision}g}'
+            except (ValueError, TypeError):
+                defaultValue = f'{value}'
+
         value, state = QtWidgets.QInputDialog.getText(
             self.gui, name, f"Set {name} value",
             QtWidgets.QLineEdit.Normal, defaultValue)
@@ -270,11 +299,11 @@ class RecipeManager:
                         value = bool(value)
                     # elif element.type in [tuple]:
                     #     pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
-                    # BUG: bad with large data (truncate), better to stick with $eval: for now
-                    # elif element.type in [np.ndarray]:
-                    #     value = array_from_txt(value)
-                    # elif element.type in [pd.DataFrame]:
-                    #     value = dataframe_from_txt(value)
+                    # OPTIMIZE: bad with large data (truncate), but nobody will use it for large data right?
+                    elif element.type in [np.ndarray]:
+                        value = array_from_txt(value)
+                    elif element.type in [pd.DataFrame]:
+                        value = dataframe_from_txt(value)
                     else:
                         assert self.checkVariable(value), "Need $eval: to evaluate the given string"
                 # Apply modification
@@ -309,7 +338,7 @@ class RecipeManager:
 
             if column == 0:
                 self.renameStep(name)
-            elif column == 3:
+            elif column == 4:
                 if stepType == 'set' or (stepType == 'action' and element.type in [
                         int, float, str, np.ndarray, pd.DataFrame]):
                     self.setStepValue(name)

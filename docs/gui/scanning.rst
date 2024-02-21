@@ -39,8 +39,6 @@ The third step is to configure recipe steps, that will be executed for each valu
 	* **Measure the value of a Variable**. Right click on the desired *Variable* in the control panel and select **Measure in scan recipe** to append this step to the recipe.
 	* **Set the value of a Variable**. Right click on the desired *Variable* in the control panel and select **Set value in scan recipe** to append this step to the recipe. The variable must be numerical (integer, float or boolean value). To set the value, right click on the recipe step and click **Set value**. The user can also directly double click on the value to change it.
 	* **Execute an Action**. Right click on the desired *Action* in the control panel and select **Do in scan recipe** to append this step to the recipe.
-	* **Execute a Recipe**. Right click inside a recipe (1) to add another recipe (2) as a step. Each step of the recipe 2 will be executed in recipe 1 with both the value of recipe 1 and 2 parameters.
-
 
 Each recipe step must have a unique name. To change the name of a recipe step, right click on it and select **Rename**, or directly double click on the name to change it. This name will be used in the data files.
 

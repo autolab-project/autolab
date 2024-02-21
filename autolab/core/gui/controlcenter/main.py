@@ -231,7 +231,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             import pandas as pd
             import autolab  # OPTIMIZE: not good to import autolab?
             namespace = {'np': np, 'pd': pd, 'autolab': autolab}
-            text = """ Packages imported: autolab, numpy as np, pandas as pd. """
+            text = """ Packages imported: autolab, numpy as np, pandas as pd.\n"""
             area_2 = DockArea(self)
             self.splitter.addWidget(area_2)
 

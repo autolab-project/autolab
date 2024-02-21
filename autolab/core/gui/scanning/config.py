@@ -17,7 +17,8 @@ import pandas as pd
 from qtpy import QtWidgets, QtCore, QtGui
 
 from ..icons import icons
-from ...utilities import boolean, array_from_txt
+from ...utilities import (boolean, array_from_txt, array_to_txt,
+                          dataframe_from_txt, dataframe_to_txt)
 from ... import paths, devices, config
 from .... import __version__
 
@@ -346,8 +347,7 @@ class ConfigManager:
                 self.configHistory.active = True
                 param_name = self.config[recipe_name]['parameter'][-1]['name']
 
-            pos = self.getParameterPosition(recipe_name, param_name)
-            param = self.config[recipe_name]['parameter'][pos]
+            param = self.getParameter(recipe_name, param_name)
 
             param['element'] = element
             if newName is None: newName = self.getUniqueName(recipe_name,
@@ -361,8 +361,7 @@ class ConfigManager:
         """ Renames a parameter of a recipe """
         if not self.gui.scanManager.isStarted():
             if newName != param_name:
-                pos = self.getParameterPosition(recipe_name, param_name)
-                param = self.config[recipe_name]['parameter'][pos]
+                param = self.getParameter(recipe_name, param_name)
 
                 newName = self.getUniqueName(recipe_name, newName)
                 param['name'] = newName
@@ -374,10 +373,9 @@ class ConfigManager:
         self.refreshParameterRange(recipe_name, param_name, newName)
 
     def setNbPts(self, recipe_name: str, param_name: str, value: int):
-        """ Sets the value of the number of points of the scan """
+        """ Sets the number of points of a parameter """
         if not self.gui.scanManager.isStarted():
-            pos = self.getParameterPosition(recipe_name, param_name)
-            param = self.config[recipe_name]['parameter'][pos]
+            param = self.getParameter(recipe_name, param_name)
 
             param['nbpts'] = value
 
@@ -392,10 +390,9 @@ class ConfigManager:
         self.refreshParameterRange(recipe_name, param_name)
 
     def setStep(self, recipe_name: str, param_name: str, value: float):
-        """ Sets the value of the step between points of the scan """
+        """ Sets the step between points of a parameter """
         if not self.gui.scanManager.isStarted():
-            pos = self.getParameterPosition(recipe_name, param_name)
-            param = self.config[recipe_name]['parameter'][pos]
+            param = self.getParameter(recipe_name, param_name)
 
             if value == 0:
                 param['nbpts'] = 1
@@ -413,10 +410,9 @@ class ConfigManager:
 
     def setRange(self, recipe_name: str, param_name: str,
                  lim: Tuple[float, float]):
-        """ Sets the range values (start and end value) of the scan """
+        """ Sets the range values (start and end value) of a parameter """
         if not self.gui.scanManager.isStarted():
-            pos = self.getParameterPosition(recipe_name, param_name)
-            param = self.config[recipe_name]['parameter'][pos]
+            param = self.getParameter(recipe_name, param_name)
 
             if lim != param['range']: param['range'] = tuple(lim)
 
@@ -438,10 +434,9 @@ class ConfigManager:
         self.refreshParameterRange(recipe_name, param_name)
 
     def setLog(self, recipe_name: str, param_name: str, state: bool):
-        """ Sets the log state of the scan """
+        """ Sets the log state of a parameter """
         if not self.gui.scanManager.isStarted():
-            pos = self.getParameterPosition(recipe_name, param_name)
-            param = self.config[recipe_name]['parameter'][pos]
+            param = self.getParameter(recipe_name, param_name)
 
             if state != param['log']: param['log'] = state
             self.addNewConfig()
@@ -524,8 +519,8 @@ class ConfigManager:
     def setRecipeStepOrder(self, recipe_name: str, stepOrder: list):
         """ Reorders steps of a recipe according to the list of step names 'stepOrder' """
         if not self.gui.scanManager.isStarted():
-            newOrder = [self.getRecipeStepPosition(recipe_name,
-                                                   name) for name in stepOrder]
+            newOrder = [self.getRecipeStepPosition(
+                recipe_name, name) for name in stepOrder]
             recipe = self.config[recipe_name]['recipe']
             self.config[recipe_name]['recipe'] = [recipe[i] for i in newOrder]
             self.gui.dataManager.clear()
@@ -621,6 +616,10 @@ class ConfigManager:
         return [i for i in self.recipeNameList() if self.getActive(i)]
 
     # get Param
+    def getParameter(self, recipe_name: str, param_name: str) -> dict:
+        pos = self.getParameterPosition(recipe_name, param_name)
+        return self.config[recipe_name]['parameter'][pos]
+
     def getParameterPosition(self, recipe_name: str, param_name: str) -> int:
         """ Returns the position of a parameter """
         return [i for i, param in enumerate(self.config[recipe_name]['parameter']) if param['name'] == param_name][0]
@@ -638,28 +637,28 @@ class ConfigManager:
 
     def getParameterElement(self, recipe_name: str, param_name: str) -> devices.Device:
         """ Returns the element of a parameter """
-        pos = self.getParameterPosition(recipe_name, param_name)
-        return self.config[recipe_name]['parameter'][pos]['element']
+        param = self.getParameter(recipe_name, param_name)
+        return param['element']
 
     def getLog(self, recipe_name: str, param_name: str) -> bool:
         """ Returns the log state of a parameter """
-        pos = self.getParameterPosition(recipe_name, param_name)
-        return self.config[recipe_name]['parameter'][pos]['log']
+        param = self.getParameter(recipe_name, param_name)
+        return param['log']
 
     def getNbPts(self, recipe_name: str, param_name: str) -> int:
         """ Returns the number of points of a parameter """
-        pos = self.getParameterPosition(recipe_name, param_name)
-        return self.config[recipe_name]['parameter'][pos]['nbpts']
+        param = self.getParameter(recipe_name, param_name)
+        return param['nbpts']
 
     def getStep(self, recipe_name: str, param_name: str) -> float:
-        """ Returns the value of the step between points of a parameter """
-        pos = self.getParameterPosition(recipe_name, param_name)
-        return self.config[recipe_name]['parameter'][pos]['step']
+        """ Returns the step between points of a parameter """
+        param = self.getParameter(recipe_name, param_name)
+        return param['step']
 
     def getRange(self, recipe_name: str, param_name: str) -> Tuple[float, float]:
         """ Returns the range (start and end value) of a parameter """
-        pos = self.getParameterPosition(recipe_name, param_name)
-        return self.config[recipe_name]['parameter'][pos]['range']
+        param = self.getParameter(recipe_name, param_name)
+        return param['range']
 
     # get Step
     def stepList(self, recipe_name: str) -> List[dict]:
@@ -780,10 +779,15 @@ class ConfigManager:
                                              np.ndarray, pd.DataFrame]):
                     value = config_step['value']
 
-                    try:
-                        valueStr = f'{value:.{self.precision}g}'
-                    except:
-                        valueStr = f'{value}'
+                    if config_step['element'].type in [np.ndarray]:
+                        valueStr = array_to_txt(value)
+                    elif config_step['element'].type in [pd.DataFrame]:
+                        valueStr = dataframe_to_txt(value)
+                    elif config_step['element'].type in [int, float, str]:
+                        try:
+                            valueStr = f'{value:.{self.precision}g}'
+                        except:
+                            valueStr = f'{value}'
 
                     pars_recipe_i['recipe'][f'{i+1}_value'] = valueStr
 
@@ -984,6 +988,8 @@ class ConfigManager:
                                         value = boolean(value)
                                     elif element.type in [np.ndarray]:
                                         value = array_from_txt(value)
+                                    elif element.type in [pd.DataFrame]:
+                                        value = dataframe_from_txt(value)
                                     else:
                                         assert self.checkVariable(value), "Need $eval: to evaluate the given string"
                             except:

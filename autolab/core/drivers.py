@@ -128,15 +128,18 @@ def get_connection_names(driver_lib: ModuleType) -> str:
 
 def get_driver_category(driver_name: str) -> str:
     ''' Returns the driver's category from class Driver '''
-    driver_utilities_path = os.path.join(
-        os.path.dirname(get_driver_path(driver_name)), f'{driver_name}_utilities.py')
-    category = 'Other'
+    for filename in ('', '_utilities'):
 
-    if os.path.exists(driver_utilities_path):
-        driver_utilities = load_lib(driver_utilities_path)
+        driver_utilities_path = os.path.join(
+            os.path.dirname(get_driver_path(driver_name)), f'{driver_name}{filename}.py')
+        category = 'Other'
 
-        if hasattr(driver_utilities, 'category'):
-            category = driver_utilities.category
+        if os.path.exists(driver_utilities_path):
+            driver_utilities = load_lib(driver_utilities_path)
+
+            if hasattr(driver_utilities, 'category'):
+                category = driver_utilities.category
+                break
 
     return category
 

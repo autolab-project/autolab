@@ -70,7 +70,7 @@ from .core._create_shortcut import create_shortcut
 
 if first:
     # Ask if create shortcut
-    create_shortcut(ask=True, overwrite=False)
+    create_shortcut(ask=True)
 del first
 
 # Used by os shell to start autolab

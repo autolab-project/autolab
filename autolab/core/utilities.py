@@ -70,7 +70,7 @@ def array_to_txt(value: Any) -> str:
     import numpy as np
     # import sys
     # with np.printoptions(threshold=sys.maxsize):  # not a solution, can't display large data: too slow
-    return np.array2string(value, separator=',', suppress_small=True)  # this truncates data to 1000 elements
+    return np.array2string(np.array(value), separator=',', suppress_small=True)  # this truncates data to 1000 elements
 
 
 def dataframe_from_txt(value: str) -> Any:
@@ -84,6 +84,8 @@ def dataframe_from_txt(value: str) -> Any:
 
 def dataframe_to_txt(value: Any) -> str:
     import pandas as pd
+    if isinstance(value, str) and value == '':
+        value = None
     return pd.DataFrame(value).head(1000).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
 
 
@@ -132,10 +134,8 @@ def pyqtgraph_image() -> Any: # actually -> pyqtgraph.imageview.ImageView.ImageV
         def __init__(self, *args, **kwargs):
             pg.ImageView.__init__(self, *args, **kwargs)
 
-            for tick in self.ui.histogram.gradient.ticks:
-                tick.pen = pg.mkPen(pg.getConfigOption("foreground"))
-                tick.currentPen = tick.pen
-                tick.hoverPen = pg.mkPen(200, 120, 0)
+            # update tick background on gradient change
+            self.ui.histogram.gradient.sigGradientChanged.connect(self.update_ticks)
 
             self.figLineROI, self.axLineROI = pyqtgraph_fig_ax()
             self.figLineROI.hide()
@@ -189,6 +189,12 @@ def pyqtgraph_image() -> Any: # actually -> pyqtgraph.imageview.ImageView.ImageV
             centralWidget = QtWidgets.QWidget()
             centralWidget.setLayout(verticalLayoutMain)
             self.centralWidget = centralWidget
+
+        def update_ticks(self):
+            for tick in self.ui.histogram.gradient.ticks:
+                tick.pen = pg.mkPen(pg.getConfigOption("foreground"))
+                tick.currentPen = tick.pen
+                tick.hoverPen = pg.mkPen(200, 120, 0)
 
         def slice_pushButtonClicked(self):
             self.slice_pushButton.state = not self.slice_pushButton.state
