@@ -149,10 +149,11 @@ class RecipeManager:
                     if step['element'].type in [bool, str, tuple]:
                         item.setText(4, f'{value}')
                     elif step['element'].type in [np.ndarray]:
-                        value = array_to_txt(value)
+                        value = array_to_txt(
+                            value, threshold=1000000, max_line_width=100)
                         item.setText(4, f'{value}')
                     elif step['element'].type in [pd.DataFrame]:
-                        value = dataframe_to_txt(value)
+                        value = dataframe_to_txt(value, threshold=1000000)
                         item.setText(4, f'{value}')
                     else:
                        item.setText(4, f'{value:.{self.precision}g}')
@@ -163,6 +164,11 @@ class RecipeManager:
             unit = step['element'].unit
             if unit is not None:
                 item.setText(5, str(unit))
+
+            # set AlignTop to all columns
+            for i in range(item.columnCount()):
+                item.setTextAlignment(i, QtCore.Qt.AlignTop)
+                # OPTIMIZE: icon are not aligned with text: https://www.xingyulei.com/post/qt-button-alignment/index.html
 
             # Add item to the tree
             self.tree.addTopLevelItem(item)
@@ -266,20 +272,26 @@ class RecipeManager:
 
         # Default value displayed in the QInputDialog
         if element.type in [np.ndarray]:
-            defaultValue = array_to_txt(value)
+            defaultValue = array_to_txt(value, threshold=1000000, max_line_width=100)
         elif element.type in [pd.DataFrame]:
-            defaultValue = dataframe_to_txt(value)
+            defaultValue = dataframe_to_txt(value, threshold=1000000)
         else:
             try:
                 defaultValue = f'{value:.{self.precision}g}'
             except (ValueError, TypeError):
                 defaultValue = f'{value}'
 
-        value, state = QtWidgets.QInputDialog.getText(
-            self.gui, name, f"Set {name} value",
-            QtWidgets.QLineEdit.Normal, defaultValue)
+        dialog = QtWidgets.QInputDialog(self.gui)
+        dialog.setWindowTitle(name)
+        dialog.setLabelText(f"Set {name} value")
+        dialog.setInputMode(QtWidgets.QInputDialog.TextInput)
+        lineEdit = dialog.findChild(QtWidgets.QLineEdit)
+        lineEdit.setMaxLength(10000000)
+        dialog.setTextValue(defaultValue)
 
-        if value != '':
+        if dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+            value = dialog.textValue()
+
             try:
                 try:
                     assert self.checkVariable(value), "Need $eval: to evaluate the given string"

@@ -177,7 +177,6 @@ class ConfigManager:
             self._addDefaultParameter(recipe_name)
 
             self.gui._addRecipe(recipe_name)
-            self.gui.dataManager.clear()
             self.addNewConfig()
 
     def removeRecipe(self, recipe_name: str):
@@ -185,7 +184,6 @@ class ConfigManager:
         if not self.gui.scanManager.isStarted():
             self.config.pop(recipe_name)
             self.gui._removeRecipe(recipe_name)
-            self.gui.dataManager.clear()
             self.addNewConfig()
 
     def activateRecipe(self, recipe_name: str, state: bool):
@@ -194,21 +192,18 @@ class ConfigManager:
             self.config[recipe_name]['active'] = bool(state)
 
             self.gui._activateRecipe(recipe_name, self.config[recipe_name]['active'])
-            self.gui.dataManager.clear()
             self.addNewConfig()
 
     def setRecipeOrder(self, keys: List[str]):
         """ Reorders recipes according to the list of recipe names 'keys' """
         if not self.gui.scanManager.isStarted():
             self.config = OrderedDict((key, self.config[key]) for key in keys)
-            self.gui.dataManager.clear()
             self.resetRecipe()
             self.addNewConfig()
 
     def resetRecipe(self):
         """ Resets recipe """
         self.gui._clearRecipe()  # before everything to have access to recipe and del it
-        self.gui.dataManager.clear()
 
         for recipe_name in self.recipeNameList():
             self.gui._addRecipe(recipe_name)
@@ -307,7 +302,6 @@ class ConfigManager:
         param_name = self.config[recipe_name]['parameter'][-1]['name']
         self.gui._addParameter(recipe_name, param_name)
 
-        self.gui.dataManager.clear()
         self.addNewConfig()
 
     def removeParameter(self, recipe_name: str, param_name: str):
@@ -316,7 +310,6 @@ class ConfigManager:
         self.config[recipe_name]['parameter'].pop(pos)
         self.gui._removeParameter(recipe_name, param_name)
 
-        self.gui.dataManager.clear()
         self.addNewConfig()
 
     def refreshParameterRange(self, recipe_name: str,
@@ -354,7 +347,6 @@ class ConfigManager:
                                                              element.name)
             param['name'] = newName
             self.refreshParameterRange(recipe_name, param_name, newName)
-            self.gui.dataManager.clear()
             self.addNewConfig()
 
     def renameParameter(self, recipe_name: str, param_name: str, newName: str):
@@ -365,7 +357,6 @@ class ConfigManager:
 
                 newName = self.getUniqueName(recipe_name, newName)
                 param['name'] = newName
-                self.gui.dataManager.clear()
                 self.addNewConfig()
         else:
             newName = param_name
@@ -491,7 +482,6 @@ class ConfigManager:
 
             self.config[recipe_name]['recipe'].append(step)
             self.refreshRecipe(recipe_name)
-            self.gui.dataManager.clear()
             self.addNewConfig()
 
     def refreshRecipe(self, recipe_name: str):
@@ -503,7 +493,6 @@ class ConfigManager:
             pos = self.getRecipeStepPosition(recipe_name, name)
             self.config[recipe_name]['recipe'].pop(pos)
             self.refreshRecipe(recipe_name)
-            self.gui.dataManager.clear()
             self.addNewConfig()
 
     def renameRecipeStep(self, recipe_name: str, name: str, newName: str):
@@ -514,7 +503,6 @@ class ConfigManager:
                 newName = self.getUniqueName(recipe_name, newName)
                 self.config[recipe_name]['recipe'][pos]['name'] = newName
                 self.refreshRecipe(recipe_name)
-                self.gui.dataManager.clear()
                 self.addNewConfig()
 
     def setRecipeStepValue(self, recipe_name: str, name: str, value: Any):
@@ -524,7 +512,6 @@ class ConfigManager:
             if value is not self.config[recipe_name]['recipe'][pos]['value']:
                 self.config[recipe_name]['recipe'][pos]['value'] = value
                 self.refreshRecipe(recipe_name)
-                self.gui.dataManager.clear()
                 self.addNewConfig()
 
     def setRecipeStepOrder(self, recipe_name: str, stepOrder: list):
@@ -534,7 +521,6 @@ class ConfigManager:
                 recipe_name, name) for name in stepOrder]
             recipe = self.config[recipe_name]['recipe']
             self.config[recipe_name]['recipe'] = [recipe[i] for i in newOrder]
-            self.gui.dataManager.clear()
             self.addNewConfig()
 
         self.refreshRecipe(recipe_name)
@@ -782,7 +768,8 @@ class ConfigManager:
                     param_pars['address'] = "None"
 
                 if 'values' in param:
-                    param_pars['values'] = array_to_txt(param['values'])
+                    param_pars['values'] = array_to_txt(
+                        param['values'], threshold=1000000, max_line_width=9000000)
                 else:
                     param_pars['nbpts'] = str(param['nbpts'])
                     param_pars['start_value'] = str(param['range'][0])
@@ -811,9 +798,10 @@ class ConfigManager:
                     value = config_step['value']
 
                     if config_step['element'].type in [np.ndarray]:
-                        valueStr = array_to_txt(value)
+                        valueStr = array_to_txt(
+                            value, threshold=1000000, max_line_width=9000000)
                     elif config_step['element'].type in [pd.DataFrame]:
-                        valueStr = dataframe_to_txt(value)
+                        valueStr = dataframe_to_txt(value, threshold=1000000)
                     elif config_step['element'].type in [int, float, str]:
                         try:
                             valueStr = f'{value:.{self.precision}g}'

@@ -97,6 +97,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.tree.last_drag = None
         self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])
         self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
+        self.tree.header().setMinimumSectionSize(15)
         self.tree.header().resizeSection(0, 200)
         self.tree.header().resizeSection(4, 15)
         self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragOnly)

@@ -60,9 +60,11 @@ class DataManager:
                 if data_name == "Scan":
                     try:
                         data = dataset.getData(varList, data_name=data_name)  # OPTIMIZE: Currently can't recover dataset if error before end of first recipe loop
+                    except KeyError:
+                        pass  # this occurs when plot variable from scani that is not in scanj
                     except Exception as e:
                         data = None
-                        self.gui.setStatus(f"Error encountered for scan id {selectedData+1}: {e}",
+                        self.gui.setStatus(f"Scan warning: Can't plot Scan{len(self.datasets)-i}: {e}",
                                            10000, False)
                     dataList.append(data)
                 elif dataset.dictListDataFrame.get(data_name) is not None:
@@ -76,7 +78,7 @@ class DataManager:
                             if checkBoxChecked:
                                 data = dataset.getData(varList, data_name=data_name, dataID=index)
                         except Exception as e:
-                            self.gui.setStatus(f"Error encountered for scan id {selectedData+1} and dataframe {data_name} with ID {index+1}: {e}",
+                            self.gui.setStatus(f"Scan warning: Can't plot Scan{len(self.datasets)-i} and dataframe {data_name} with ID {index+1}: {e}",
                                                10000, False)
                         dataList2.append(data)
 
@@ -124,7 +126,7 @@ class DataManager:
                     shutil.copy(config_name, new_configname)
                 else:
                     if datasets is not self.getLastDataset():
-                        print("Warning: Can't find config for this dataset, save lastest config instead", file=sys.stderr)
+                        print("Warning: Can't find config for this dataset, save latest config instead", file=sys.stderr)
                     self.gui.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
 
             if utilities.boolean(scanner_config["save_figure"]):

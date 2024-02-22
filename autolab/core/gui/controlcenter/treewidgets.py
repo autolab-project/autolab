@@ -278,11 +278,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
                 self.valueWidget.returnPressed.connect(self.write)
                 self.valueWidget.textEdited.connect(self.valueEdited)
-                self.valueWidget.setMaxLength(1000000)  # default is 32767, not enought for array and dataframe
+                self.valueWidget.setMaxLength(10000000)  # default is 32767, not enought for array and dataframe
                 # self.valueWidget.setPlaceholderText(self.variable._help)  # Could be nice but take too much place. Maybe add it as option
             elif self.variable.readable:
                 self.valueWidget = QtWidgets.QLineEdit()
-                self.valueWidget.setMaxLength(1000000)
+                self.valueWidget.setMaxLength(10000000)
                 self.valueWidget.setReadOnly(True)
                 self.valueWidget.setStyleSheet(
                     "QLineEdit {border: 1px solid #a4a4a4; background-color: #f4f4f4}")

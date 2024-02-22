@@ -200,6 +200,7 @@ class ParameterManager:
         values_lineEdit.setMinimumSize(0, 20)
         values_lineEdit.setMaximumSize(16777215, 20)
         values_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
+        values_lineEdit.setMaxLength(10000000)
         self.values_lineEdit = values_lineEdit
 
         ### first grid layout: values (hidden at start)
@@ -283,7 +284,7 @@ class ParameterManager:
         # Values if defined
         if self.gui.configManager.hasCustomValues(self.recipe_name, self.param_name):
             values = self.gui.configManager.getValues(self.recipe_name, self.param_name)
-            values = array_to_txt(values)
+            values = array_to_txt(values, threshold=1000000, max_line_width=9000000)
             self.frameScanRange.hide()
             self.frameScanRange_values.show()
             self.values_lineEdit.setText(f'{values}')
@@ -482,7 +483,7 @@ class ParameterManager:
         try:
             values = self.checkVariable(values)
             if not isinstance(values, str):
-                values = array_to_txt(values)
+                values = array_to_txt(values, threshold=1000000, max_line_width=9000000)
 
             values = array_from_txt(values)
             self.gui.configManager.setValues(self.recipe_name, self.param_name, values)

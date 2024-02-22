@@ -132,8 +132,7 @@ class Monitor(QtWidgets.QMainWindow):
             self.timer.stop()
             self.pauseButton.setText('Resume')
             self.monitorManager.pause()
-            while not self.queue.empty():
-                self.queue.get()
+            self.sync()
 
     def saveButtonClicked(self):
         """ This function is called when the SAVE button is pressed, and launch the procedure

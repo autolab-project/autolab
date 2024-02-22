@@ -66,11 +66,10 @@ def array_from_txt(string: str) -> Any:  # actually -> np.ndarray
     return value
 
 
-def array_to_txt(value: Any) -> str:
+def array_to_txt(value: Any, threshold: int = None, max_line_width: int = None) -> str:
     import numpy as np
-    # import sys
-    # with np.printoptions(threshold=sys.maxsize):  # not a solution, can't display large data: too slow
-    return np.array2string(np.array(value), separator=',', suppress_small=True)  # this truncates data to 1000 elements
+    return np.array2string(np.array(value), separator=',', suppress_small=True,
+                           threshold=threshold, max_line_width=max_line_width)
 
 
 def dataframe_from_txt(value: str) -> Any:
@@ -82,11 +81,11 @@ def dataframe_from_txt(value: str) -> Any:
     return df
 
 
-def dataframe_to_txt(value: Any) -> str:
+def dataframe_to_txt(value: Any, threshold=1000) -> str:
     import pandas as pd
     if isinstance(value, str) and value == '':
         value = None
-    return pd.DataFrame(value).head(1000).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
+    return pd.DataFrame(value).head(threshold).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
 
 
 def openFile(filename: str):

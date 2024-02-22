@@ -210,7 +210,7 @@ class DataManager :
             self.importAction(filenames)
 
     def importAction(self, filenames):
-
+        dataset = None
         for i, filename in enumerate(filenames):
 
             try :
@@ -221,8 +221,8 @@ class DataManager :
                     print(f"Impossible to load data from {filename}: {error}", file=sys.stderr)
             else:
                 self.gui.setStatus(f"File {filename} loaded successfully",5000)
-
-        self.gui.figureManager.start(dataset)
+        if dataset is not None:
+            self.gui.figureManager.start(dataset)
 
         path = os.path.dirname(filename)
         paths.USER_LAST_CUSTOM_FOLDER = path
