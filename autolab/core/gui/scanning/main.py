@@ -84,9 +84,6 @@ class Scanner(QtWidgets.QMainWindow):
         """ Shows recipe combobox if multi recipes else hide """
         prev_index = self.selectRecipe_comboBox.currentIndex()
 
-        self.scan_recipe_comboBox.clear()
-        self.scan_recipe_comboBox.addItems(self.configManager.getRecipeActive())
-
         self.selectRecipe_comboBox.clear()
         self.selectRecipe_comboBox.addItems(self.configManager.recipeNameList())
 
@@ -95,10 +92,8 @@ class Scanner(QtWidgets.QMainWindow):
 
         dataSet_id = len(self.configManager.recipeNameList())
         if dataSet_id > 1:
-            self.scan_recipe_comboBox.show()
             self.selectRecipe_comboBox.show()
         else:
-            self.scan_recipe_comboBox.hide()
             self.selectRecipe_comboBox.hide()
 
     def _clearRecipe(self):

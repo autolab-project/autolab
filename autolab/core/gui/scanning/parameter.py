@@ -79,6 +79,7 @@ class ParameterManager:
 
         ### displayParameter button
         self.displayParameter = DisplayValues("Parameter", size=(250, 400))
+        self.displayParameter.setWindowIcon(QtGui.QIcon(icons['ndarray']))
         displayParameter_pushButton = QtWidgets.QPushButton("Parameter", frameParameter)
         displayParameter_pushButton.setMinimumSize(0, 23)
         displayParameter_pushButton.setMaximumSize(16777215, 23)

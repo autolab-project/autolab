@@ -54,7 +54,6 @@ class ScanManager:
 
     def start(self):
         """ Starts a scan """
-        self.gui.data_comboBox.setEnabled(False)
 
         try:
             self.gui.configManager.checkConfig()  #  raise error if config not valid
@@ -83,7 +82,7 @@ class ScanManager:
 
             self.thread.startStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'started'))
             self.thread.finishStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'finished'))
-            self.thread.recipeCompletedSignal.connect(lambda recipe_name:self.resetStepsProcessingState(recipe_name))
+            self.thread.recipeCompletedSignal.connect(lambda recipe_name: self.resetStepsProcessingState(recipe_name))
 
             self.thread.finished.connect(self.finished)
 
@@ -117,7 +116,6 @@ class ScanManager:
 
     def stop(self):
         """ Stops manually the scan """
-        self.gui.data_comboBox.setEnabled(True)
         self.disableContinuousMode()
         self.thread.stopFlag.set()
         self.resume()
@@ -133,7 +131,6 @@ class ScanManager:
         self.gui.start_pushButton.setText('Start')
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
-        self.gui.data_comboBox.setEnabled(True)
         self.gui.displayScanData_pushButton.setEnabled(True)
         self.gui.configManager.importAction.setEnabled(True)
         self.gui.configManager.updateUndoRedoButtons()
