@@ -113,6 +113,9 @@ class Slider(QtWidgets.QMainWindow):
 
         self.updateStep()
 
+        self.resize(self.minimumSizeHint())
+        self.show()
+
     def updateStep(self):
 
         slider_points = 1 + int(

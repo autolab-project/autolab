@@ -274,7 +274,7 @@ def check_plotter_config():
     for section_key in plotter_dict.keys():
         dic = plotter_dict[section_key]
         if section_key in plotter_config.sections():
-            conf = plotter_config[section_key]
+            conf = dict(plotter_config[section_key])
             for key in dic.keys():
                 if key not in conf.keys():
                     conf[key] = str(dic[key])

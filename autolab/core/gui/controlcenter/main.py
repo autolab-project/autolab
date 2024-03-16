@@ -328,7 +328,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
-        self.statusBar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)
 
     def clearStatus(self):
@@ -464,7 +464,11 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.scanner.close()
 
         if self.plotter is not None:
-            self.plotter.figureManager.fig.close()
+            self.plotter.figureManager.fig.deleteLater()
+            for children in self.plotter.findChildren(
+                    QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+                children.deleteLater()
+
             self.plotter.close()
 
         monitors = list(self.monitors.values())
@@ -483,8 +487,8 @@ class ControlCenter(QtWidgets.QMainWindow):
             sys.stdout = self.stdout._stream
             sys.stderr = self.stderr._stream
 
-        if hasattr(self, '_logger_dock'): self._logger_dock.close()
-        if hasattr(self, '_console_dock'): self._console_dock.close()
+        if hasattr(self, '_logger_dock'): self._logger_dock.deleteLater()
+        if hasattr(self, '_console_dock'): self._console_dock.deleteLater()
 
         try:
             import pyqtgraph as pg
@@ -497,3 +501,9 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         self.timerDevice.stop()
         self.timerQueue.stop()
+
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
+
+        super().closeEvent(event)

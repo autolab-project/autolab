@@ -306,10 +306,6 @@ class MyQTabWidget(QtWidgets.QTabWidget):
         """ Proxy to add parameter to config """
         self.gui.configManager.addParameter(self.recipe_name)
 
-    def removeParameter(self, param_name: str):
-        """ Proxy to remove parameter to config """
-        self.gui.configManager.removeParameter(self.recipe_name, param_name)
-
 
 class parameterQFrame(QtWidgets.QFrame):
     # customMimeType = "autolab/MyQTreeWidget-selectedItems"

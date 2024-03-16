@@ -8,7 +8,7 @@ import os
 import sys
 from collections import OrderedDict
 
-from qtpy import QtWidgets, uic, QtGui
+from qtpy import QtWidgets, QtCore, uic, QtGui
 
 from .config import ConfigManager
 from .figure import FigureManager
@@ -186,9 +186,15 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.figureManager.close()
 
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
+
+        super().closeEvent(event)
+
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modifies displayed message in status bar and adds error message to logger """
-        self.statusBar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)
 
     def setLineEditBackground(self, obj, state: str):

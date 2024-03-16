@@ -298,19 +298,21 @@ class ConfigManager:
 
     def addParameter(self, recipe_name: str):
         """ Adds a parameter to the recipe """
-        self._addDefaultParameter(recipe_name)
-        param_name = self.config[recipe_name]['parameter'][-1]['name']
-        self.gui._addParameter(recipe_name, param_name)
+        if not self.gui.scanManager.isStarted():
+            self._addDefaultParameter(recipe_name)
+            param_name = self.config[recipe_name]['parameter'][-1]['name']
+            self.gui._addParameter(recipe_name, param_name)
 
-        self.addNewConfig()
+            self.addNewConfig()
 
     def removeParameter(self, recipe_name: str, param_name: str):
         """ Removes the parameter from the recipe """
-        pos = self.getParameterPosition(recipe_name, param_name)
-        self.config[recipe_name]['parameter'].pop(pos)
-        self.gui._removeParameter(recipe_name, param_name)
+        if not self.gui.scanManager.isStarted():
+            pos = self.getParameterPosition(recipe_name, param_name)
+            self.config[recipe_name]['parameter'].pop(pos)
+            self.gui._removeParameter(recipe_name, param_name)
 
-        self.addNewConfig()
+            self.addNewConfig()
 
     def refreshParameterRange(self, recipe_name: str,
                               param_name: str, newName: str = None):
@@ -818,34 +820,63 @@ class ConfigManager:
     def importActionClicked(self):
         """ Prompts the user for a configuration filename,
         and import the current scan configuration from it """
-        main_dialog = QtWidgets.QDialog(self.gui)
-        main_dialog.setWindowTitle("Import AUTOLAB configuration file")
-        layout = QtWidgets.QVBoxLayout(main_dialog)
 
-        file_dialog = QtWidgets.QFileDialog(main_dialog, QtCore.Qt.Widget)
-        file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
-        file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
-        file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
-        file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "All Files (*)"])
-        layout.addWidget(file_dialog)
+        class ImportDialog(QtWidgets.QDialog):
 
-        appendCheck = QtWidgets.QCheckBox('Append', main_dialog)
-        appendCheck.setChecked(self._append)
-        layout.addWidget(appendCheck)
+            def __init__(self, parent: QtWidgets.QMainWindow, append: bool):
 
-        main_dialog.show()
+                super().__init__(parent)
+                self.setWindowTitle("Import AUTOLAB configuration file")
+                self.setWindowModality(QtCore.Qt.ApplicationModal)  # this block GUI interaction (easier than checking every interaction possible to avoid bugs if change recipe or have multiple dialogs)
+
+                self.append = append
+
+                layout = QtWidgets.QVBoxLayout(self)
+
+                file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
+                file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+                file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
+                file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
+                file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "All Files (*)"])
+                layout.addWidget(file_dialog)
+
+                appendCheck = QtWidgets.QCheckBox('Append', self)
+                appendCheck.setChecked(append)
+                appendCheck.stateChanged.connect(self.appendCheckChanged)
+                layout.addWidget(appendCheck)
+
+                self.show()
+
+                self.exec_ = file_dialog.exec_
+                self.selectedFiles = file_dialog.selectedFiles
+
+            def appendCheckChanged(self, event):
+                self.append = event
+
+            def closeEvent(self, event):
+                for children in self.findChildren(
+                        QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+                    children.deleteLater()
+
+                super().closeEvent(event)
+
+
+        main_dialog = ImportDialog(self.gui, self._append)
 
         once_or_append = True
         while once_or_append:
-            filenames = file_dialog.selectedFiles() if file_dialog.exec_() else []
+            if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                filenames = main_dialog.selectedFiles()
 
-            self._append = appendCheck.isChecked()
-            once_or_append = self._append and len(filenames) != 0
+                self._append = main_dialog.append
+                once_or_append = self._append and len(filenames) != 0
 
-            for filename in filenames:
-                if filename != '': self.import_configPars(filename, append=self._append)
+                for filename in filenames:
+                    if filename != '': self.import_configPars(filename, append=self._append)
+            else:
+                once_or_append = False
 
-        main_dialog.close()
+        main_dialog.deleteLater()
 
     def import_configPars(self, filename: str, append: bool = False):
         """ Import a scan configuration from file with filename name """

@@ -56,8 +56,8 @@ def boolean(value: Any) -> bool:
 def array_from_txt(string: str) -> Any:  # actually -> np.ndarray
     import re, ast
     import numpy as np
-    if "," in string: ls = re.sub('\s,+', ',', string)
-    else: ls = re.sub('\s+', ',', string)
+    if "," in string: ls = re.sub(r'\s,+', ',', string)
+    else: ls = re.sub(r'\s+', ',', string)
     test = ast.literal_eval(ls)
 
     try: value = np.array(test, ndmin=1, dtype=float)  # check validity of array
@@ -233,8 +233,8 @@ def pyqtgraph_image() -> Any: # actually -> pyqtgraph.imageview.ImageView.ImageV
                 self.plot.setData(d2[0])
 
         def close(self):
-            self.figLineROI.close()
-            pg.ImageView.close(self)
+            self.figLineROI.deleteLater()
+            super().close()
 
     imageView = myImageView()
 

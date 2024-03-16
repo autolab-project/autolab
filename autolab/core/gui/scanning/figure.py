@@ -225,6 +225,9 @@ class FigureManager:
         data_len = len(self.gui.dataManager.datasets)
         selectedData = data_len - data_id
 
+        if variable_x is None:
+            return None
+
         # Label update
         self.setLabel('x', variable_x)
         self.setLabel('y', variable_y)
@@ -371,5 +374,5 @@ class FigureManager:
     def close(self):
         """ Called by scanner on closing """
         self.displayScan.close()
-        self.fig.close()  # prevent crash without traceback when reopenning scanner multiple times
-        self.figMap.close()
+        self.fig.deleteLater()  # prevent crash without traceback when reopenning scanner multiple times
+        self.figMap.deleteLater()

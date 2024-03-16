@@ -461,14 +461,20 @@ class Plotter(QtWidgets.QMainWindow):
 
 
     def closeEvent(self,event):
-        """ This function does some steps before the window is really killed """
-
-        # Delete reference of this window in the control center
+        """ This function does some steps before the window is closed (not killed) """
         self.timer.stop()
         self.timerPlugin.stop()
         self.timerQueue.stop()
+
         self.mainGui.clearPlotter()
 
+    def close(self):
+        """ This function does some steps before the window is killed """
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
+
+        super().close()
 
     def setLineEditBackground(self,obj,state):
 
@@ -520,7 +526,7 @@ class Plotter(QtWidgets.QMainWindow):
 
         """ Modify the message displayed in the status bar and add error message to logger """
 
-        self.statusBar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)
 
 

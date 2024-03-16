@@ -198,8 +198,13 @@ class Monitor(QtWidgets.QMainWindow):
         self.monitorManager.close()
         self.timer.stop()
         self.item.clearMonitor()
-        self.figureManager.fig.close()  # maybe not useful for monitor but was source of crash in scanner if didn't close
-        self.figureManager.figMap.close()
+        self.figureManager.fig.deleteLater()  # maybe not useful for monitor but was source of crash in scanner if didn't close
+        self.figureManager.figMap.deleteLater()
+
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
+        super().closeEvent(event)
 
     def windowLengthChanged(self):
         """ This function start the update of the window length in the data manager
@@ -243,5 +248,5 @@ class Monitor(QtWidgets.QMainWindow):
 
     def setStatus(self, message: str, timeout: int  = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
-        self.statusBar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)

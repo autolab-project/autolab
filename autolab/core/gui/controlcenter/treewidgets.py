@@ -583,7 +583,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # If the slider is not already running, create one
         if id(self) not in self.gui.sliders.keys():
             self.gui.sliders[id(self)] = Slider(self)
-            self.gui.sliders[id(self)].show()
         # If the slider is already running, just make as the front window
         else:
             slider = self.gui.sliders[id(self)]

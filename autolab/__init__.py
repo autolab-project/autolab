@@ -31,7 +31,7 @@ del version_adapter
 
 # Load user config
 from .core import config as _config
-first: bool = _config.initialize_local_directory()
+first = _config.initialize_local_directory()
 _config.check_autolab_config()
 _config.check_plotter_config()
 _config.set_temp_folder()
