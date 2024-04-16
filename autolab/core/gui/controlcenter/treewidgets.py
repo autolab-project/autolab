@@ -15,12 +15,13 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from .slider import Slider
 from ..monitoring.main import Monitor
+from .. import variables
 from ..icons import icons
 from ... import paths, config
-from ...devices import close, DEVICES
+from ...devices import close
 from ...utilities import (qt_object_exists, SUPPORTED_EXTENSION,
-                          array_from_txt, array_to_txt,
-                          dataframe_to_txt, dataframe_from_txt)
+                          str_to_array, array_to_str,
+                          dataframe_to_str, str_to_dataframe)
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -170,11 +171,11 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                     10000, False)
         else:
             try:
-                value = self.checkVariable(value)
+                value = variables.eval_variable(value)
                 if self.action.type in [np.ndarray]:
-                    if type(value) is str: value = array_from_txt(value)
+                    if type(value) is str: value = str_to_array(value)
                 elif self.action.type in [pd.DataFrame]:
-                    if type(value) is str: value = dataframe_from_txt(value)
+                    if type(value) is str: value = str_to_dataframe(value)
                 else:
                     value = self.action.type(value)
                 return value
@@ -182,17 +183,6 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 self.gui.setStatus(
                     f"Action {self.action.name}: Impossible to convert {value} to {self.action.type.__name__}",
                     10000, False)
-
-    def checkVariable(self, value):
-        """ Try to execute the given command line (meant to contain device variables) and return the result """
-        if str(value).startswith("$eval:"):
-            value = str(value)[len("$eval:"): ]
-            try:
-                allowed_dict = {"np": np, "pd": pd}
-                allowed_dict.update(DEVICES)
-                value = eval(str(value), {}, allowed_dict)
-            except: pass
-        return value
 
     def execute(self):
         """ Start a new thread to execute the associated action """
@@ -220,7 +210,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     """ This class represents a variable in an item of the tree """
 
-    def __init__(self, itemParent, variable ,gui):
+    def __init__(self, itemParent, variable , gui):
 
         self.displayName = f'{variable.name}'
         if variable.unit is not None:
@@ -395,9 +385,9 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
                 if self.variable.writable or self.readButtonCheck.isChecked():
                     if self.variable.type in [np.ndarray]:
-                        self.valueWidget.setText(array_to_txt(value))
+                        self.valueWidget.setText(array_to_str(value))
                     if self.variable.type in [pd.DataFrame]:
-                        self.valueWidget.setText(dataframe_to_txt(value))
+                        self.valueWidget.setText(dataframe_to_str(value))
                 # else:
                 #     self.valueWidget.setText('')
 
@@ -415,11 +405,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     10000, False)
             else:
                 try:
-                    value = self.checkVariable(value)
+                    value = variables.eval_variable(value)
                     if self.variable.type in [np.ndarray]:
-                        if type(value) is str: value = array_from_txt(value)
+                        if type(value) is str: value = str_to_array(value)
                     elif self.variable.type in [pd.DataFrame]:
-                        if type(value) is str: value = dataframe_from_txt(value)
+                        if type(value) is str: value = str_to_dataframe(value)
                     else:
                         value = self.variable.type(value)
                     return value
@@ -435,17 +425,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             AllItems = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
             value = (AllItems, self.valueWidget.currentIndex())
             return value
-
-    def checkVariable(self, value):
-        """ Check if value is a device variable address and if is it, return its value """
-        if str(value).startswith("$eval:"):
-            value = str(value)[len("$eval:"): ]
-            try:
-                allowed_dict = {"np": np, "pd": pd}
-                allowed_dict.update(DEVICES)
-                value = eval(str(value), {}, allowed_dict)
-            except: pass
-        return value
 
     def setValueKnownState(self, state: bool):
         """ Turn the color of the indicator depending of the known state of the value """

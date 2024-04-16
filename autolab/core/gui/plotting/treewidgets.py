@@ -13,7 +13,7 @@ import numpy as np
 
 from qtpy import QtCore, QtWidgets
 
-from ...devices import DEVICES
+from .. import variables
 from ... import paths, config
 from ...utilities import qt_object_exists, SUPPORTED_EXTENSION
 
@@ -169,27 +169,11 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 self.gui.setStatus(f"Action {self.action.name} requires a value for its parameter",10000, False)
         else:
             try:
-                value = self.checkVariable(value)
+                value = variables.eval_variable(value)
                 value = self.action.type(value)
                 return value
             except:
                 self.gui.setStatus(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000, False)
-
-
-    def checkVariable(self, value):
-
-        """ Try to execute the given command line (meant to contain device variables) and return the result """
-
-        if str(value).startswith("$eval:"):
-            value = str(value)[len("$eval:"):]
-            try:
-                allowed_dict ={"np":np, "pd":pd}
-                allowed_dict.update(DEVICES)
-                value = eval(str(value), {}, allowed_dict)
-            except:
-                pass
-        return value
-
 
     def execute(self):
 
@@ -335,7 +319,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.gui.setStatus(f"Variable {self.variable.name} requires a value to be set",10000, False)
             else :
                 try :
-                    value = self.checkVariable(value)
+                    value = variables.eval_variable(value)
                     value = self.variable.type(value)
                     return value
                 except :
@@ -344,22 +328,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         elif self.variable.type in [bool] :
             value = self.valueWidget.isChecked()
             return value
-
-
-    def checkVariable(self, value):
-
-        """ Check if value is a device variable address and if is it, return its value """
-
-        if str(value).startswith("$eval:"):
-            value = str(value)[len("$eval:"):]
-            try:
-                allowed_dict ={"np":np, "pd":pd}
-                allowed_dict.update(DEVICES)
-                value = eval(str(value), {}, allowed_dict)
-            except:
-                pass
-        return value
-
 
     def setValueKnownState(self,state):
 

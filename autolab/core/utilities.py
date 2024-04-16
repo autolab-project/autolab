@@ -53,35 +53,59 @@ def boolean(value: Any) -> bool:
     return value
 
 
-def array_from_txt(string: str) -> Any:  # actually -> np.ndarray
-    import re, ast
+def str_to_value(s: str) -> Any:
+    try:
+        int_val = int(s)
+        if str(int_val) == s: return int_val
+    except ValueError: pass
+
+    try:
+        float_val = float(s)
+        return float_val
+    except ValueError: pass
+
+    if s.lower() in ('true', 'false'):
+        return s.lower() == 'true'
+
+    if s == 'None':
+        s = None
+    # If none of the above works, return the string itself
+    return s
+
+
+def create_array(value: Any) -> Any:  # actually -> np.ndarray
     import numpy as np
-    if "," in string: ls = re.sub(r'\s,+', ',', string)
-    else: ls = re.sub(r'\s+', ',', string)
+    try: array = np.array(value, ndmin=1, dtype=float)  # check validity of array
+    except ValueError as e: raise ValueError(e)
+    else: array = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
+    return array
+
+
+def str_to_array(s: str) -> Any:  # actually -> np.ndarray
+    import re, ast
+    if "," in s: ls = re.sub(r'\s,+', ',', s)
+    else: ls = re.sub(r'\s+', ',', s)
     test = ast.literal_eval(ls)
 
-    try: value = np.array(test, ndmin=1, dtype=float)  # check validity of array
-    except ValueError as e: raise ValueError(e)
-    else: value = np.array(test, ndmin=1)  # ndim=1 to avoid having float if 0D
-    return value
+    return create_array(test)
 
 
-def array_to_txt(value: Any, threshold: int = None, max_line_width: int = None) -> str:
+def array_to_str(value: Any, threshold: int = None, max_line_width: int = None) -> str:
     import numpy as np
     return np.array2string(np.array(value), separator=',', suppress_small=True,
                            threshold=threshold, max_line_width=max_line_width)
 
 
-def dataframe_from_txt(value: str) -> Any:
+def str_to_dataframe(s: str) -> Any:
     from io import StringIO
     import pandas as pd
-    value_io = StringIO(value)
+    value_io = StringIO(s)
     # TODO: find sep (use \t to be compatible with excel but not nice to write by hand)
     df = pd.read_csv(value_io, sep="\t")
     return df
 
 
-def dataframe_to_txt(value: Any, threshold=1000) -> str:
+def dataframe_to_str(value: Any, threshold=1000) -> str:
     import pandas as pd
     if isinstance(value, str) and value == '':
         value = None

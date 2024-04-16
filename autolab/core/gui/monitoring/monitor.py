@@ -29,7 +29,7 @@ class MonitorManager:
         """ This function is called when the errorSignal of the thread is raised.
         It update the pause button and displays the error in the GUI """
         self.gui.pauseButton.setText('Resume')
-        self.gui.setStatus(f'Error : {error} ', 10000, False)
+        self.gui.setStatus(f'Error: {error} ', 10000, False)
 
     def start(self):
         """ This function start the thread """

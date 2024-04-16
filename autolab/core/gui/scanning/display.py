@@ -49,11 +49,13 @@ class DisplayValues(QtWidgets.QWidget):
     def closeEvent(self, event):
         self.active = False
 
+    def close(self):
+
         for children in self.findChildren(
                 QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
             children.deleteLater()
 
-        super().closeEvent(event)
+        super().close()
 
 
 class TableModel(QtCore.QAbstractTableModel):

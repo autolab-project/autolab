@@ -10,10 +10,12 @@ import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
 from .customWidgets import MyQTreeWidget, MyQTabWidget
+from .. import variables
 from ..icons import icons
 from ... import config
-from ...utilities import (clean_string, array_from_txt, array_to_txt,
-                          dataframe_from_txt, dataframe_to_txt)
+from ...utilities import (clean_string, str_to_array, array_to_str,
+                          str_to_dataframe, dataframe_to_str)
+
 
 class RecipeManager:
     """ Manage a recipe from a scan """
@@ -149,11 +151,11 @@ class RecipeManager:
                     if step['element'].type in [bool, str, tuple]:
                         item.setText(4, f'{value}')
                     elif step['element'].type in [np.ndarray]:
-                        value = array_to_txt(
+                        value = array_to_str(
                             value, threshold=1000000, max_line_width=100)
                         item.setText(4, f'{value}')
                     elif step['element'].type in [pd.DataFrame]:
-                        value = dataframe_to_txt(value, threshold=1000000)
+                        value = dataframe_to_str(value, threshold=1000000)
                         item.setText(4, f'{value}')
                     else:
                        item.setText(4, f'{value:.{self.precision}g}')
@@ -272,29 +274,23 @@ class RecipeManager:
 
         # Default value displayed in the QInputDialog
         if element.type in [np.ndarray]:
-            defaultValue = array_to_txt(value, threshold=1000000, max_line_width=100)
+            defaultValue = array_to_str(value, threshold=1000000, max_line_width=100)
         elif element.type in [pd.DataFrame]:
-            defaultValue = dataframe_to_txt(value, threshold=1000000)
+            defaultValue = dataframe_to_str(value, threshold=1000000)
         else:
             try:
                 defaultValue = f'{value:.{self.precision}g}'
             except (ValueError, TypeError):
                 defaultValue = f'{value}'
 
-        dialog = QtWidgets.QInputDialog(self.gui)
-        dialog.setWindowTitle(name)
-        dialog.setLabelText(f"Set {name} value")
-        dialog.setInputMode(QtWidgets.QInputDialog.TextInput)
-        lineEdit = dialog.findChild(QtWidgets.QLineEdit)
-        lineEdit.setMaxLength(10000000)
-        dialog.setTextValue(defaultValue)
+        main_dialog = variables.VariablesDialog(self.gui, name, defaultValue)
 
-        if dialog.exec_() == QtWidgets.QInputDialog.Accepted:
-            value = dialog.textValue()
+        if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+            value = main_dialog.textValue()
 
             try:
                 try:
-                    assert self.checkVariable(value), "Need $eval: to evaluate the given string"
+                    assert variables.has_eval(value), "Need $eval: to evaluate the given string"
                 except:
                     # Type conversions
                     if element.type in [int]:
@@ -313,11 +309,11 @@ class RecipeManager:
                     #     pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
                     # OPTIMIZE: bad with large data (truncate), but nobody will use it for large data right?
                     elif element.type in [np.ndarray]:
-                        value = array_from_txt(value)
+                        value = str_to_array(value)
                     elif element.type in [pd.DataFrame]:
-                        value = dataframe_from_txt(value)
+                        value = str_to_dataframe(value)
                     else:
-                        assert self.checkVariable(value), "Need $eval: to evaluate the given string"
+                        assert variables.has_eval(value), "Need $eval: to evaluate the given string"
                 # Apply modification
                 self.gui.configManager.setRecipeStepValue(
                     self.recipe_name, name, value)
@@ -325,21 +321,7 @@ class RecipeManager:
                 self.gui.setStatus(f"Can't set step: {er}", 10000, False)
                 pass
 
-    ## OLD: this code was used to check if a given variable exists in a device.  Only work for one variable.
-    ## If someone think it could be usefull to check if variables exists,
-    ## You are welcome to implement a parsing system to check all the variables in the given string
-    # def checkVariable(self, value):
-
-    #     """ Check if value is a valid device variable address. For example value='dummy.amplitude' """
-    #     module_name, *submodules_name, variable_name = value.split(".")
-    #     module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
-    #     for submodule_name in submodules_name:
-    #         module = module.get_module(submodule_name)
-    #     module.get_variable(variable_name)
-
-    def checkVariable(self, value) -> bool:
-        """ Checks if value start with '$eval:'. Will not try to check if variables exists"""
-        return True if str(value).startswith("$eval:") else False
+        main_dialog.deleteLater()
 
     def itemDoubleClicked(self, item: QtWidgets.QTreeWidgetItem, column: int):
         """ Executes an action depending where the user double clicked """

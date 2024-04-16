@@ -250,7 +250,3 @@ def load_drivers_paths() -> dict:
 def update_drivers_paths():
     global DRIVERS_PATHS
     DRIVERS_PATHS = load_drivers_paths()
-
-
-# Loading the drivers informations at startup
-update_drivers_paths()

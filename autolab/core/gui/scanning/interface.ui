@@ -69,7 +69,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>368</width>
+                <width>513</width>
                 <height>553</height>
                </rect>
               </property>
@@ -138,6 +138,13 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_selectRecipeParameter">
+               <property name="text">
+                <string>Edit:</string>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QComboBox" name="selectRecipe_comboBox">

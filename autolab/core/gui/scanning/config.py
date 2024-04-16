@@ -14,11 +14,11 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 
-from ..icons import icons
-from ...utilities import (boolean, array_from_txt, array_to_txt,
-                          dataframe_from_txt, dataframe_to_txt)
+from .. import variables
+from ...utilities import (boolean, str_to_array, array_to_str,
+                          str_to_dataframe, dataframe_to_str, create_array)
 from ... import paths, devices, config
 from .... import __version__
 
@@ -74,43 +74,23 @@ class ConfigManager:
         scanner_config = config.get_scanner_config()
         self.precision = scanner_config['precision']
 
-        # Configuration menu
-        configMenu = self.gui.menuBar.addMenu('Configuration')
-        self.importAction = configMenu.addAction('Import configuration')
-        self.importAction.setIcon(QtGui.QIcon(icons['import']))
-        self.importAction.triggered.connect(self.importActionClicked)
-        exportAction = configMenu.addAction('Export current configuration')
-        exportAction.setIcon(QtGui.QIcon(icons['export']))
-        exportAction.triggered.connect(self.exportActionClicked)
-
-        # Edition menu
-        editMenu = self.gui.menuBar.addMenu('Edit')
-        self.undo = editMenu.addAction('Undo')
-        self.undo.setIcon(QtGui.QIcon(icons['undo']))
-        self.undo.triggered.connect(self.undoClicked)
-        self.undo.setEnabled(False)
-        self.redo = editMenu.addAction('Redo')
-        self.redo.setIcon(QtGui.QIcon(icons['redo']))
-        self.redo.triggered.connect(self.redoClicked)
-        self.redo.setEnabled(False)
-
         # Initializing configuration values
         self.config = OrderedDict()
 
         self.configHistory = ConfigHistory()
         self.configHistory.active = True
 
-        self._append = False  # option for import config
+        self._old_variables = []  # To update variable menu
 
     # NAMES
     ###########################################################################
 
     def getNames(self, recipe_name: str, option: str = None) -> List[str]:
         """ Returns a list of step names and parameter names of a recipe """
-        names = [step['name'] for step in self.config[recipe_name]['recipe']]
+        names = [step['name'] for step in self.stepList(recipe_name)]
 
         if option != 'recipe':
-            for parameter in self.config[recipe_name]['parameter']:
+            for parameter in self.parameterList(recipe_name):
                 names.append(parameter['name'])
 
         return names
@@ -141,8 +121,6 @@ class ConfigManager:
         name = basename
         names = []
 
-        names.append('recipe')  # don't want 'recipe' as name but only 'recipe_i'
-        names.append('autolab')  # don't want 'autolab' as name
         names += self.recipeNameList()
 
         compt = 0
@@ -157,13 +135,22 @@ class ConfigManager:
 
     # CONFIG MODIFICATIONS
     ###########################################################################
+    def updateVariableConfig(self, new_variables: List[Tuple[str, Any]] = None):
+        if new_variables is None:
+            new_variables = self.getConfigVariables()
+        remove_variables = list(set(self._old_variables) - set(new_variables))
+        variables.remove_from_config(remove_variables)
+        variables.update_from_config(new_variables)
+        self._old_variables = new_variables
 
     def addNewConfig(self):
         """ Adds new config to history list """
         if self.configHistory.active:
+            self.updateVariableConfig()  # before create_configPars
             self.configHistory.append(self.create_configPars())
-            self.undo.setEnabled(True)
-            self.redo.setEnabled(False)
+            self.gui.undo.setEnabled(True)
+            self.gui.redo.setEnabled(False)
+
 
     def addRecipe(self, recipe_name: str):
         """ Adds new recipe to config """
@@ -270,6 +257,18 @@ class ConfigManager:
 
         assert one_recipe_active, "Need at least one active recipe!"
 
+        # Replace closed devices by reopenned one
+        for recipe_name in self.recipeNameList():
+            for i, step in enumerate(self.config[recipe_name]['recipe']):
+                if (step['element']._parent.name in devices.DEVICES.keys()
+                        and not step['element']._parent in devices.DEVICES.values()):
+                    module_name = step['element']._parent.name
+                    module = self.gui.mainGui.tree.findItems(
+                        module_name, QtCore.Qt.MatchExactly)[0].module
+                    var = module.get_variable(
+                        self.config[recipe_name]['recipe'][i]['element'].name)
+                    self.config[recipe_name]['recipe'][i]['element'] = var
+
     def lastRecipeName(self) -> str:
         """ Returns last recipe name """
         return self.recipeNameList()[-1] if len(self.recipeNameList()) != 0 else ""
@@ -294,13 +293,13 @@ class ConfigManager:
                      'log': False,
                      }
 
-        self.config[recipe_name]['parameter'].append(parameter)
+        self.parameterList(recipe_name).append(parameter)
 
     def addParameter(self, recipe_name: str):
         """ Adds a parameter to the recipe """
         if not self.gui.scanManager.isStarted():
             self._addDefaultParameter(recipe_name)
-            param_name = self.config[recipe_name]['parameter'][-1]['name']
+            param_name = self.parameterList(recipe_name)[-1]['name']
             self.gui._addParameter(recipe_name, param_name)
 
             self.addNewConfig()
@@ -309,7 +308,7 @@ class ConfigManager:
         """ Removes the parameter from the recipe """
         if not self.gui.scanManager.isStarted():
             pos = self.getParameterPosition(recipe_name, param_name)
-            self.config[recipe_name]['parameter'].pop(pos)
+            self.parameterList(recipe_name).pop(pos)
             self.gui._removeParameter(recipe_name, param_name)
 
             self.addNewConfig()
@@ -336,11 +335,11 @@ class ConfigManager:
         """ Sets the element provided as the new parameter of the scan.
         Add a parameter is no existing parameter """
         if not self.gui.scanManager.isStarted():
-            if len(self.config[recipe_name]['parameter']) == 0:
+            if len(self.parameterList(recipe_name)) == 0:
                 self.configHistory.active = False
                 self.addParameter(recipe_name)
                 self.configHistory.active = True
-                param_name = self.config[recipe_name]['parameter'][-1]['name']
+                param_name = self.parameterList(recipe_name)[-1]['name']
 
             param = self.getParameter(recipe_name, param_name)
 
@@ -441,7 +440,7 @@ class ConfigManager:
         if not self.gui.scanManager.isStarted():
             param = self.getParameter(recipe_name, param_name)
 
-            if np.ndim(values) == 1:
+            if variables.has_eval(values) or np.ndim(values) == 1:
                 param['values'] = values
                 self.addNewConfig()
 
@@ -482,7 +481,7 @@ class ConfigManager:
                     elif element.type in [bool]: value = False
                 step['value'] = value
 
-            self.config[recipe_name]['recipe'].append(step)
+            self.stepList(recipe_name).append(step)
             self.refreshRecipe(recipe_name)
             self.addNewConfig()
 
@@ -493,7 +492,7 @@ class ConfigManager:
         """ Removes a step from the scan recipe """
         if not self.gui.scanManager.isStarted():
             pos = self.getRecipeStepPosition(recipe_name, name)
-            self.config[recipe_name]['recipe'].pop(pos)
+            self.stepList(recipe_name).pop(pos)
             self.refreshRecipe(recipe_name)
             self.addNewConfig()
 
@@ -503,7 +502,7 @@ class ConfigManager:
             if newName != name:
                 pos = self.getRecipeStepPosition(recipe_name, name)
                 newName = self.getUniqueName(recipe_name, newName)
-                self.config[recipe_name]['recipe'][pos]['name'] = newName
+                self.stepList(recipe_name)[pos]['name'] = newName
                 self.refreshRecipe(recipe_name)
                 self.addNewConfig()
 
@@ -511,8 +510,8 @@ class ConfigManager:
         """ Sets the value of a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
             pos = self.getRecipeStepPosition(recipe_name, name)
-            if value is not self.config[recipe_name]['recipe'][pos]['value']:
-                self.config[recipe_name]['recipe'][pos]['value'] = value
+            if value is not self.stepList(recipe_name)[pos]['value']:
+                self.stepList(recipe_name)[pos]['value'] = value
                 self.refreshRecipe(recipe_name)
                 self.addNewConfig()
 
@@ -521,7 +520,7 @@ class ConfigManager:
         if not self.gui.scanManager.isStarted():
             newOrder = [self.getRecipeStepPosition(
                 recipe_name, name) for name in stepOrder]
-            recipe = self.config[recipe_name]['recipe']
+            recipe = self.stepList(recipe_name)
             self.config[recipe_name]['recipe'] = [recipe[i] for i in newOrder]
             self.addNewConfig()
 
@@ -617,11 +616,11 @@ class ConfigManager:
     # get Param
     def getParameter(self, recipe_name: str, param_name: str) -> dict:
         pos = self.getParameterPosition(recipe_name, param_name)
-        return self.config[recipe_name]['parameter'][pos]
+        return self.parameterList(recipe_name)[pos]
 
     def getParameterPosition(self, recipe_name: str, param_name: str) -> int:
         """ Returns the position of a parameter """
-        return [i for i, param in enumerate(self.config[recipe_name]['parameter']) if param['name'] == param_name][0]
+        return [i for i, param in enumerate(self.parameterList(recipe_name)) if param['name'] == param_name][0]
 
     def parameterList(self, recipe_name: str) -> List[dict]:
         """ Returns the list of parameters in the recipe """
@@ -630,7 +629,7 @@ class ConfigManager:
     def parameterNameList(self, recipe_name: str) -> List[str]:
         """ Returns the list of parameter names in the recipe """
         if recipe_name in self.config:
-            return [param['name'] for param in self.config[recipe_name]['parameter']]
+            return [param['name'] for param in self.parameterList(recipe_name)]
         else:
             return []
 
@@ -690,53 +689,53 @@ class ConfigManager:
     def getRecipeStepElement(self, recipe_name: str, name: str) -> devices.Device:
         """ Returns the element of a recipe step """
         pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.config[recipe_name]['recipe'][pos]['element']
+        return self.stepList(recipe_name)[pos]['element']
 
     def getRecipeStepType(self, recipe_name: str, name: str) -> str:
         """ Returns the type a recipe step """
         pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.config[recipe_name]['recipe'][pos]['stepType']
+        return self.stepList(recipe_name)[pos]['stepType']
 
     def getRecipeStepValue(self, recipe_name: str, name: str) -> Any:
         """ Returns the value of a recipe step """
         pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.config[recipe_name]['recipe'][pos]['value']
+        return self.stepList(recipe_name)[pos]['value']
 
     def getRecipeStepPosition(self, recipe_name: str, name: str) -> int:
         """ Returns the position of a recipe step in the recipe """
-        return [i for i, step in enumerate(self.config[recipe_name]['recipe']) if step['name'] == name][0]
+        return [i for i, step in enumerate(self.stepList(recipe_name)) if step['name'] == name][0]
 
     def getParamDataFrame(self, recipe_name: str, param_name: str) -> pd.DataFrame:
         """ Returns a pd.DataFrame with 'id' and 'param_name'
         columns containing the parameter array """
         paramValues = self.getValues(recipe_name, param_name)
-
+        paramValues = variables.eval_variable(paramValues)
+        paramValues = create_array(paramValues)
+        assert isinstance(paramValues, np.ndarray)
         data = pd.DataFrame()
         data["id"] = 1 + np.arange(len(paramValues))
         data[param_name] = paramValues
 
         return data
 
+    def getConfigVariables(self) -> List[Tuple[str, Any]]:
+        """ Returns a (key, value) list of parameters and measured step """
+        listVariable = list()
+        listVariable.append(('ID', 1))
+
+        for recipe_name in reversed(self.recipeNameList()):
+            for param_name in self.parameterNameList(recipe_name):
+                values = self.getValues(recipe_name, param_name)
+                value = values if variables.has_eval(values) else values[0]
+                listVariable.append((param_name, value))
+            for step in self.stepList(recipe_name):
+                if step['stepType'] == 'measure':
+                    listVariable.append((step['name'], step['value']))
+
+        return listVariable
+
     # EXPORT IMPORT ACTIONS
     ###########################################################################
-
-    def exportActionClicked(self):
-        """ Prompts the user for a configuration file path,
-        and export the current scan configuration in it """
-        filename = QtWidgets.QFileDialog.getSaveFileName(
-            self.gui, "Export AUTOLAB configuration file",
-            os.path.join(paths.USER_LAST_CUSTOM_FOLDER, 'config.conf'),
-            "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
-
-        if filename != '':
-            path = os.path.dirname(filename)
-            paths.USER_LAST_CUSTOM_FOLDER = path
-
-            try:
-                self.export(filename)
-                self.gui.setStatus(f"Current configuration successfully saved at {filename}", 5000)
-            except Exception as e:
-                self.gui.setStatus(f"An error occured: {str(e)}", 10000, False)
 
     def export(self, filename: str):
         """ Exports the current scan configuration in the provided file """
@@ -751,10 +750,12 @@ class ConfigManager:
         configPars['autolab'] = {'version': __version__,
                                  'timestamp': str(datetime.datetime.now())}
 
-        for recipe_name in self.recipeNameList():
+        for recipe_num, recipe_name in enumerate(self.recipeNameList()):
             recipe_i = self.config[recipe_name]
             pars_recipe_i = {}
 
+            pars_recipe_i['name'] = str(recipe_name)
+            pars_recipe_i['active'] = str(bool(recipe_i['active']))
             pars_recipe_i['parameter'] = {}
 
             for i, param in enumerate(recipe_i['parameter']):
@@ -770,8 +771,11 @@ class ConfigManager:
                     param_pars['address'] = "None"
 
                 if 'values' in param:
-                    param_pars['values'] = array_to_txt(
-                        param['values'], threshold=1000000, max_line_width=9000000)
+                    if variables.has_eval(param['values']):
+                        param_pars['values'] = param['values']
+                    else:
+                        param_pars['values'] = array_to_str(
+                            param['values'], threshold=1000000, max_line_width=9000000)
                 else:
                     param_pars['nbpts'] = str(param['nbpts'])
                     param_pars['start_value'] = str(param['range'][0])
@@ -800,10 +804,10 @@ class ConfigManager:
                     value = config_step['value']
 
                     if config_step['element'].type in [np.ndarray]:
-                        valueStr = array_to_txt(
+                        valueStr = array_to_str(
                             value, threshold=1000000, max_line_width=9000000)
                     elif config_step['element'].type in [pd.DataFrame]:
-                        valueStr = dataframe_to_txt(value, threshold=1000000)
+                        valueStr = dataframe_to_str(value, threshold=1000000)
                     elif config_step['element'].type in [int, float, str]:
                         try:
                             valueStr = f'{value:.{self.precision}g}'
@@ -812,71 +816,33 @@ class ConfigManager:
 
                     pars_recipe_i['recipe'][f'{i+1}_value'] = valueStr
 
-            pars_recipe_i['active'] = str(bool(recipe_i['active']))
-            configPars[recipe_name] = pars_recipe_i
+            configPars[f"recipe_{recipe_num+1}"] = pars_recipe_i
+
+        # Add variables to config
+        name_var_config = [var[0] for var in self.getConfigVariables()]
+        names_var_user = list(variables.VARIABLES.keys())
+        names_var_to_save = list(set(names_var_user) - set(name_var_config))
+
+        var_to_save = dict()
+        for var_name in names_var_to_save:
+            var = variables.VARIABLES.get(var_name)
+            if var is not None:
+                value = var.raw if isinstance(var, variables.Variable) else var
+
+                if isinstance(value, np.ndarray): valueStr = array_to_str(
+                        value, threshold=1000000, max_line_width=9000000)
+                elif isinstance(value, pd.DataFrame): valueStr = dataframe_to_str(
+                        value, threshold=1000000)
+                elif isinstance(value, (int, float, str)):
+                    try: valueStr = f'{value:.{self.precision}g}'
+                    except: valueStr = f'{value}'
+
+                var_to_save[var_name] = valueStr
+
+        if len(var_to_save) != 0: configPars['variables'] = var_to_save
 
         return configPars
 
-    def importActionClicked(self):
-        """ Prompts the user for a configuration filename,
-        and import the current scan configuration from it """
-
-        class ImportDialog(QtWidgets.QDialog):
-
-            def __init__(self, parent: QtWidgets.QMainWindow, append: bool):
-
-                super().__init__(parent)
-                self.setWindowTitle("Import AUTOLAB configuration file")
-                self.setWindowModality(QtCore.Qt.ApplicationModal)  # this block GUI interaction (easier than checking every interaction possible to avoid bugs if change recipe or have multiple dialogs)
-
-                self.append = append
-
-                layout = QtWidgets.QVBoxLayout(self)
-
-                file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
-                file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
-                file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
-                file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
-                file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "All Files (*)"])
-                layout.addWidget(file_dialog)
-
-                appendCheck = QtWidgets.QCheckBox('Append', self)
-                appendCheck.setChecked(append)
-                appendCheck.stateChanged.connect(self.appendCheckChanged)
-                layout.addWidget(appendCheck)
-
-                self.show()
-
-                self.exec_ = file_dialog.exec_
-                self.selectedFiles = file_dialog.selectedFiles
-
-            def appendCheckChanged(self, event):
-                self.append = event
-
-            def closeEvent(self, event):
-                for children in self.findChildren(
-                        QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
-                    children.deleteLater()
-
-                super().closeEvent(event)
-
-
-        main_dialog = ImportDialog(self.gui, self._append)
-
-        once_or_append = True
-        while once_or_append:
-            if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
-                filenames = main_dialog.selectedFiles()
-
-                self._append = main_dialog.append
-                once_or_append = self._append and len(filenames) != 0
-
-                for filename in filenames:
-                    if filename != '': self.import_configPars(filename, append=self._append)
-            else:
-                once_or_append = False
-
-        main_dialog.deleteLater()
 
     def import_configPars(self, filename: str, append: bool = False):
         """ Import a scan configuration from file with filename name """
@@ -920,35 +886,55 @@ class ConfigManager:
                     new_configPars["autolab"] = configPars["autolab"]
 
                     if 'initrecipe' in configPars:
-                        new_configPars["init"] = {}
-                        new_configPars["init"]['parameter'] = {}
-                        new_configPars["init"]['parameter']["parameter_1"] = self._defaultParameterPars()
-                        new_configPars["init"]['parameter']["parameter_1"]['name'] = 'init'
-                        new_configPars["init"]['recipe'] = configPars['initrecipe']
+                        new_configPars["recipe_1"] = {}
+                        new_configPars["recipe_1"]['name'] = "init"
+                        new_configPars["recipe_1"]['active'] = "True"
+                        new_configPars["recipe_1"]['parameter'] = {}
+                        new_configPars["recipe_1"]['parameter']["parameter_1"] = self._defaultParameterPars()
+                        new_configPars["recipe_1"]['parameter']["parameter_1"]['name'] = 'init'
+                        new_configPars["recipe_1"]['recipe'] = configPars['initrecipe']
 
-                    new_configPars["recipe_1"] = {}
-                    new_configPars["recipe_1"]['parameter'] = {}
-                    new_configPars["recipe_1"]['parameter']["parameter_1"] = configPars['parameter']
-                    new_configPars["recipe_1"]['recipe'] = configPars['recipe']
+                    new_configPars["recipe_2"] = {}
+                    new_configPars["recipe_2"]['name'] = "recipe_1"
+                    new_configPars["recipe_2"]['active'] = "True"
+                    new_configPars["recipe_2"]['parameter'] = {}
+                    new_configPars["recipe_2"]['parameter']["parameter_1"] = configPars['parameter']
+                    new_configPars["recipe_2"]['recipe'] = configPars['recipe']
 
                     if 'endrecipe' in configPars:
-                        new_configPars["end"] = {}
-                        new_configPars["end"]['parameter'] = {}
-                        new_configPars["end"]['parameter']["parameter_1"] = self._defaultParameterPars()
-                        new_configPars["end"]['parameter']['name'] = 'end'
-                        new_configPars["end"]['recipe'] = configPars['endrecipe']
+                        new_configPars["recipe_3"] = {}
+                        new_configPars["recipe_3"]['name'] = "end"
+                        new_configPars["recipe_3"]['active'] = "True"
+                        new_configPars["recipe_3"]['parameter'] = {}
+                        new_configPars["recipe_3"]['parameter']["parameter_1"] = self._defaultParameterPars()
+                        new_configPars["recipe_3"]['parameter']['name'] = 'end'
+                        new_configPars["recipe_3"]['recipe'] = configPars['endrecipe']
 
                     configPars = new_configPars
             except: pass
 
             # Config
             config = OrderedDict()
-            recipeNameList = [i for i in list(configPars.keys()) if i != 'autolab']  # to remove 'autolab' from recipe list
+            recipeNameList = [i for i in list(configPars.keys()) if i != 'autolab' and i != 'variables']  # to remove 'autolab' from recipe list
 
-            for recipe_name in recipeNameList:
+            for recipe_num_name in recipeNameList:
+
+                pars_recipe_i = configPars[recipe_num_name]
+
+                if 'name' in pars_recipe_i:
+                    recipe_name = pars_recipe_i['name']
+                else:
+                    recipe_name = recipe_num_name  # LEGACY <= 2.0b1
+
                 config[recipe_name] = OrderedDict()
                 recipe_i = config[recipe_name]
-                pars_recipe_i = configPars[recipe_name]
+
+                recipe_i['name'] = recipe_name
+
+                if 'active' in pars_recipe_i:
+                    recipe_i['active'] = boolean(pars_recipe_i['active'])
+                else:
+                    recipe_i['active'] = True  # LEGACY <= 1.2.1
 
                 assert 'parameter' in pars_recipe_i, f'Missing parameter in {recipe_name}'
 
@@ -976,8 +962,12 @@ class ConfigManager:
                     param['element'] = element
 
                     if 'values' in param_pars:
-                        values = array_from_txt(param_pars['values'])
-                        assert np.ndim(values) == 1, f"Values must be one dimension array in parameter: {param['name']}"
+                        if variables.has_eval(param_pars['values']):
+                            values = param_pars['values']
+                        else:
+                            values = str_to_array(param_pars['values'])
+                        if not variables.has_eval(values):
+                            assert np.ndim(values) == 1, f"Values must be one dimension array in parameter: {param['name']}"
                         param['values'] = values
                     else:
                         for key in ['nbpts', 'start_value', 'end_value', 'log']:
@@ -1015,6 +1005,7 @@ class ConfigManager:
                         address = pars_recipe[f'{i}_address']
 
                         if step['stepType'] == 'recipe':
+                            assert step['stepType'] != 'recipe', "Removed the recipe in recipe feature!"
                             element = address
                         else:
                             element = devices.get_element_by_address(address)
@@ -1022,7 +1013,7 @@ class ConfigManager:
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
 
-                        if (step['stepType'] == 'set')  or (
+                        if (step['stepType'] == 'set') or (
                                 step['stepType'] == 'action' and element.type in [
                                     int, float, str, np.ndarray, pd.DataFrame]):
                             assert f'{i}_value' in pars_recipe, f"Missing value in step {i} ({name})."
@@ -1030,7 +1021,7 @@ class ConfigManager:
 
                             try:
                                 try:
-                                    assert self.checkVariable(value), "Need $eval: to evaluate the given string"
+                                    assert variables.has_eval(value), "Need $eval: to evaluate the given string"
                                 except:
                                     # Type conversions
                                     if element.type in [int]:
@@ -1042,11 +1033,11 @@ class ConfigManager:
                                     elif element.type in [bool]:
                                         value = boolean(value)
                                     elif element.type in [np.ndarray]:
-                                        value = array_from_txt(value)
+                                        value = str_to_array(value)
                                     elif element.type in [pd.DataFrame]:
-                                        value = dataframe_from_txt(value)
+                                        value = str_to_dataframe(value)
                                     else:
-                                        assert self.checkVariable(value), "Need $eval: to evaluate the given string"
+                                        assert variables.has_eval(value), "Need $eval: to evaluate the given string"
                             except:
                                 raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
 
@@ -1058,22 +1049,28 @@ class ConfigManager:
                     else:
                         break
 
-                if 'active' in pars_recipe_i:
-                    recipe_i['active'] = boolean(pars_recipe_i['active'])
-                else:
-                    recipe_i['active'] = True  # LEGACY <= 1.2.1
-
             if append:
-                for recipe_name in config.keys():
-
+                for conf in config.values():
+                    recipe_name = conf['name']
                     if recipe_name in self.recipeNameList():
                         new_recipe_name = self.getUniqueNameRecipe('recipe')
                     else:
                         new_recipe_name = recipe_name
 
-                    self.config[new_recipe_name] = config[recipe_name]
+                    self.config[new_recipe_name] = conf
             else:
                 self.config = config
+
+            if 'variables' in configPars:
+                var_dict = configPars['variables']
+
+                add_vars = list()
+                for var_name in var_dict.keys():
+                    raw_value = var_dict[var_name]
+                    raw_value = variables.convert_str_to_data(raw_value)
+                    add_vars.append((var_name, raw_value))
+
+                variables.update_from_config(add_vars)
 
         except Exception as error:
             self._got_error = True
@@ -1091,11 +1088,6 @@ class ConfigManager:
                     self.gui.mainGui.itemClicked(item)
 
         self.configHistory.active = True
-
-    def checkVariable(self, value: Any) -> bool:
-        """ Checks if value start with '$eval:'.
-            Will not try to check if variables exists """
-        return True if str(value).startswith("$eval:") else False
 
     # UNDO REDO ACTIONS
     ###########################################################################
@@ -1118,15 +1110,16 @@ class ConfigManager:
             self.load_configPars(configPars)
 
         self.updateUndoRedoButtons()
+        self.updateVariableConfig()
 
     def updateUndoRedoButtons(self):
         """ enables/disables undo/redo button depending on history """
         if self.configHistory.index == 0:
-            self.undo.setEnabled(False)
+            self.gui.undo.setEnabled(False)
         else:
-            self.undo.setEnabled(True)
+            self.gui.undo.setEnabled(True)
 
         if self.configHistory.index == len(self.configHistory)-1:
-            self.redo.setEnabled(False)
+            self.gui.redo.setEnabled(False)
         else:  # implicit <
-            self.redo.setEnabled(True)
+            self.gui.redo.setEnabled(True)

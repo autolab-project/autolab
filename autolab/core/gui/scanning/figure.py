@@ -14,6 +14,7 @@ import pyqtgraph.exporters
 from pyqtgraph.Qt import QtWidgets, QtGui
 
 from .display import DisplayValues
+from ..GUI_utilities import get_font_size, setLineEditBackground
 from ..icons import icons
 from ... import utilities
 
@@ -26,6 +27,8 @@ class FigureManager:
         self.gui = gui
         self.curves = []
 
+        self._font_size = get_font_size() + 1
+
         # Configure and initialize the figure in the GUI
         self.fig, self.ax = utilities.pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
@@ -33,15 +36,18 @@ class FigureManager:
         self.gui.graph.addWidget(widget)
         self.figMap.hide()
 
-        for axe in ['x', 'y']:
-            getattr(self.gui,f'variable_{axe}_comboBox').activated.connect(self.variableChanged)
+        getattr(self.gui, 'variable_x_comboBox').activated.connect(
+            self.variableChanged)
+        getattr(self.gui, 'variable_y_comboBox').activated.connect(
+            self.variableChanged)
 
         # Number of traces
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
-        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
-        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced')
+        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.gui.nbTraces_lineEdit,'edited', self._font_size))
+        setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         # Window to show scan data
         self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)

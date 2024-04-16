@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
 
-from ... import paths
+from .. import variables
 from ... import config as autolab_config
 from ... import utilities
 
@@ -38,13 +38,6 @@ class DataManager:
         self.timer = QtCore.QTimer(self.gui)
         self.timer.setInterval(33) #30fps
         self.timer.timeout.connect(self.sync)
-
-        # Save button configuration
-        self.gui.save_pushButton.clicked.connect(self.saveButtonClicked)
-        self.gui.save_pushButton.setEnabled(False)
-
-        # Clear button configuration
-        self.gui.clear_pushButton.clicked.connect(self.clear)
 
     def getData(self, nbDataset: int, varList: list,
                 selectedData: int = 0, data_name: str = "Scan"):
@@ -93,77 +86,6 @@ class DataManager:
         dataList.reverse()
         return dataList
 
-    def saveButtonClicked(self):
-        """ This function is called when the save button is clicked.
-        It asks a path and starts the procedure to save the data """
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self.gui,  caption="Save data",
-            directory=paths.USER_LAST_CUSTOM_FOLDER,
-            filter=utilities.SUPPORTED_EXTENSION)
-        path = os.path.dirname(filename)
-
-        if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
-            self.gui.setStatus('Saving data...', 5000)
-            datasets = self.getLastSelectedDataset()
-
-            for dataset_name in datasets.keys():
-                dataset = datasets[dataset_name]
-
-                if len(datasets) == 1:
-                    filename_recipe = filename
-                else:
-                    dataset_folder, extension = os.path.splitext(filename)
-                    filename_recipe = f'{dataset_folder}_{dataset_name}{extension}'
-                dataset.save(filename_recipe)
-
-            scanner_config = autolab_config.get_scanner_config()
-            save_config = utilities.boolean(scanner_config["save_config"])
-
-            if save_config:
-                dataset_folder, extension = os.path.splitext(filename)
-                new_configname = dataset_folder + ".conf"
-                config_name = os.path.join(os.path.dirname(dataset.tempFolderPath), 'config.conf')
-
-                if os.path.exists(config_name):
-                    shutil.copy(config_name, new_configname)
-                else:
-                    if datasets is not self.getLastDataset():
-                        print("Warning: Can't find config for this dataset, save latest config instead", file=sys.stderr)
-                    self.gui.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
-
-            if utilities.boolean(scanner_config["save_figure"]):
-                self.gui.figureManager.save(filename)
-
-            self.gui.setStatus(f'Last dataset successfully saved in {filename}',
-                               5000)
-
-    def clear(self):
-        """ This reset any recorded data, and the GUI accordingly """
-        self.datasets = list()
-        self.gui.figureManager.clearData()
-        self.gui.figureManager.clearMenuID()
-        self.gui.figureManager.figMap.hide()
-        self.gui.figureManager.fig.show()
-        self.gui.figureManager.setLabel("x", " ")
-        self.gui.figureManager.setLabel("y", " ")
-        self.gui.nbTraces_lineEdit.show()
-        self.gui.graph_nbTracesLabel.show()
-        self.gui.frame_axis.show()
-        self.gui.toolButton.hide()
-        self.gui.variable_x_comboBox.clear()
-        self.gui.variable_y_comboBox.clear()
-        self.gui.data_comboBox.clear()
-        self.gui.data_comboBox.hide()
-        self.gui.save_pushButton.setEnabled(False)
-        self.gui.progressBar.setValue(0)
-        self.gui.displayScanData_pushButton.hide()
-        self.gui.dataframe_comboBox.clear()
-        self.gui.dataframe_comboBox.addItems(["Scan"])
-        self.gui.dataframe_comboBox.hide()
-        self.gui.scan_recipe_comboBox.setCurrentIndex(0)
-        self.gui.scan_recipe_comboBox.hide()
-
     def getLastDataset(self) -> dict:
         """ This return the last created dataset """
         return self.datasets[-1] if len(self.datasets) > 0 else None
@@ -204,12 +126,18 @@ class DataManager:
                 nbpts = 1
                 for parameter in recipe['parameter']:
                     if 'values' in parameter:
-                        nbpts *= len(parameter['values'])
-                    else:
-                        nbpts *= parameter['nbpts']
+                        if variables.has_eval(parameter['values']):
+                            values = variables.eval_safely(parameter['values'])
+                            if isinstance(values, str):
+                                nbpts *= 11  # OPTIMIZE: can't know length in this case without doing eval (should not do eval here because can imagine recipe_2 with param set at end of recipe_1)
+                                self.gui.progressBar.setStyleSheet("""QProgressBar::chunk {background-color: orange;}""")
+                            else: nbpts *= len(values)
+                        else: nbpts *= len(parameter['values'])
+                    else: nbpts *= parameter['nbpts']
 
                 maximum += nbpts
 
+                # OBSOLETE: see if remove completely recipe in recipe
                 list_recipe_nbpts_new = [[recipe, nbpts]]
                 has_sub_recipe = True
 

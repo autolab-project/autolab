@@ -21,6 +21,7 @@ from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
+from ..variables import VARIABLES
 from ..icons import icons
 from ... import devices, web, paths, config, utilities
 
@@ -507,3 +508,5 @@ class ControlCenter(QtWidgets.QMainWindow):
             children.deleteLater()
 
         super().closeEvent(event)
+
+        VARIABLES.clear()  # reset variables defined in the GUI

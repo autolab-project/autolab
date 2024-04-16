@@ -73,5 +73,8 @@ if first:
     create_shortcut(ask=True)
 del first
 
+# Loading the drivers informations on startup
+_drivers.update_drivers_paths()
+
 # Used by os shell to start autolab
 from ._entry_script import main as _main

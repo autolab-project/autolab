@@ -9,7 +9,6 @@ from typing import List
 
 from qtpy import QtCore, QtWidgets, QtGui
 
-from . import main
 from ..icons import icons
 from ...devices import Device
 from ...utilities import clean_string

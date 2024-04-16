@@ -10,6 +10,7 @@ import numpy as np
 from qtpy import QtCore, QtWidgets, QtGui
 
 from ..icons import icons
+from ..GUI_utilities import get_font_size, setLineEditBackground
 from ... import config
 
 
@@ -27,14 +28,10 @@ class Slider(QtWidgets.QMainWindow):
         control_center_config = config.get_control_center_config()
         self.precision = int(control_center_config['precision'])
 
-        GUI_config = config.get_GUI_config()
-        if GUI_config['font_size'] != 'default':
-            self._font_size = int(GUI_config['font_size'])
-        else:
-            self._font_size = QtWidgets.QApplication.instance().font().pointSize()
+        self._font_size = get_font_size() + 1
 
         # Slider
-        self.slider_instantaneous = False
+        self.slider_instantaneous = True
         self.true_min = self.item.variable.type(0)
         self.true_max = self.item.variable.type(10)
         self.true_step = self.item.variable.type(1)
@@ -52,6 +49,7 @@ class Slider(QtWidgets.QMainWindow):
 
         self.instantCheckBox = QtWidgets.QCheckBox()
         self.instantCheckBox.setToolTip("True: Changes instantaneously the value.\nFalse: Changes the value when click released.")
+        self.instantCheckBox.setCheckState(QtCore.Qt.Checked)
         self.instantCheckBox.stateChanged.connect(self.instantChanged)
 
         layoutTopValue.addWidget(QtWidgets.QLabel("Instant"))
@@ -61,7 +59,7 @@ class Slider(QtWidgets.QMainWindow):
         self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
         self.valueWidget.setReadOnly(True)
         self.valueWidget.setText(f'{self.true_min}')
-        self.setLineEditBackground(self.valueWidget, 'edited')
+        setLineEditBackground(self.valueWidget, 'edited', self._font_size)
 
         layoutTopValue.addStretch()
         layoutTopValue.addWidget(QtWidgets.QLabel("Value"))
@@ -70,19 +68,29 @@ class Slider(QtWidgets.QMainWindow):
         layoutTopValue.addSpacing(40)
 
         self.sliderWidget = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        self.sliderWidget.setValue(self.item.variable.type(self.true_min))
+        self.sliderWidget.setValue(0)
         self.sliderWidget.setTickPosition(QtWidgets.QSlider.TicksBelow)
         self.sliderWidget.valueChanged.connect(self.valueChanged)
         self.sliderWidget.sliderReleased.connect(self.sliderReleased)
         self.sliderWidget.setStyle(ProxyStyle())
 
+        button_minus = QtWidgets.QToolButton()
+        button_minus.setArrowType(QtCore.Qt.LeftArrow)
+        button_minus.clicked.connect(self.minusClicked)
+
+        button_plus = QtWidgets.QToolButton()
+        button_plus.setArrowType(QtCore.Qt.RightArrow)
+        button_plus.clicked.connect(self.plusClicked)
+
+        layoutSlider.addWidget(button_minus)
         layoutSlider.addWidget(self.sliderWidget)
+        layoutSlider.addWidget(button_plus)
 
         self.minWidget = QtWidgets.QLineEdit()
         self.minWidget.setAlignment(QtCore.Qt.AlignLeft)
         self.minWidget.returnPressed.connect(self.minWidgetValueChanged)
-        self.minWidget.textEdited.connect(
-            lambda: self.setLineEditBackground(self.minWidget, 'edited'))
+        self.minWidget.textEdited.connect(lambda: setLineEditBackground(
+            self.minWidget, 'edited', self._font_size))
 
         layoutBottomValues.addWidget(QtWidgets.QLabel("Min"))
         layoutBottomValues.addWidget(self.minWidget)
@@ -92,8 +100,8 @@ class Slider(QtWidgets.QMainWindow):
         self.stepWidget = QtWidgets.QLineEdit()
         self.stepWidget.setAlignment(QtCore.Qt.AlignCenter)
         self.stepWidget.returnPressed.connect(self.stepWidgetValueChanged)
-        self.stepWidget.textEdited.connect(
-            lambda: self.setLineEditBackground(self.stepWidget, 'edited'))
+        self.stepWidget.textEdited.connect(lambda: setLineEditBackground(
+            self.stepWidget, 'edited', self._font_size))
 
         layoutBottomValues.addWidget(QtWidgets.QLabel("Step"))
         layoutBottomValues.addWidget(self.stepWidget)
@@ -103,8 +111,8 @@ class Slider(QtWidgets.QMainWindow):
         self.maxWidget = QtWidgets.QLineEdit()
         self.maxWidget.setAlignment(QtCore.Qt.AlignRight)
         self.maxWidget.returnPressed.connect(self.maxWidgetValueChanged)
-        self.maxWidget.textEdited.connect(
-            lambda: self.setLineEditBackground(self.maxWidget, 'edited'))
+        self.maxWidget.textEdited.connect(lambda: setLineEditBackground(
+            self.maxWidget, 'edited', self._font_size))
 
         layoutBottomValues.addWidget(QtWidgets.QLabel("Max"))
         layoutBottomValues.addWidget(self.maxWidget)
@@ -124,11 +132,11 @@ class Slider(QtWidgets.QMainWindow):
             self.true_step*(slider_points - 1) + self.true_min)
 
         self.minWidget.setText(f'{self.true_min}')
-        self.setLineEditBackground(self.minWidget, 'synced')
+        setLineEditBackground(self.minWidget, 'synced', self._font_size)
         self.maxWidget.setText(f'{self.true_max}')
-        self.setLineEditBackground(self.maxWidget, 'synced')
+        setLineEditBackground(self.maxWidget, 'synced', self._font_size)
         self.stepWidget.setText(f'{self.true_step}')
-        self.setLineEditBackground(self.stepWidget, 'synced')
+        setLineEditBackground(self.stepWidget, 'synced', self._font_size)
 
         temp = self.slider_instantaneous
         self.slider_instantaneous = False
@@ -157,7 +165,7 @@ class Slider(QtWidgets.QMainWindow):
         true_value = self.item.variable.type(
             new_cursor_step*self.true_step + self.true_min)
         self.valueWidget.setText(f'{true_value:.{self.precision}g}')
-        self.setLineEditBackground(self.valueWidget, 'edited')
+        setLineEditBackground(self.valueWidget, 'edited', self._font_size)
 
     def stepWidgetValueChanged(self):
 
@@ -203,7 +211,7 @@ class Slider(QtWidgets.QMainWindow):
         true_value = self.item.variable.type(
             value*self.true_step + self.true_min)
         self.valueWidget.setText(f'{true_value:.{self.precision}g}')
-        self.setLineEditBackground(self.valueWidget, 'synced')
+        setLineEditBackground(self.valueWidget, 'synced', self._font_size)
         self.item.gui.threadManager.start(
             self.item, 'write', value=true_value)
         self.updateStep()
@@ -214,29 +222,26 @@ class Slider(QtWidgets.QMainWindow):
             value*self.true_step + self.true_min)
         self.valueWidget.setText(f'{true_value:.{self.precision}g}')
         if self.slider_instantaneous:
-            self.setLineEditBackground(self.valueWidget, 'synced')
+            setLineEditBackground(self.valueWidget, 'synced', self._font_size)
             self.item.gui.threadManager.start(
                 self.item, 'write', value=true_value)
         else:
-            self.setLineEditBackground(self.valueWidget,'edited')
+            setLineEditBackground(self.valueWidget,'edited', self._font_size)
         # self.updateStep()  # Don't use it here, infinite loop leading to crash if set min > max
 
     def instantChanged(self, value):
         self.slider_instantaneous = self.instantCheckBox.isChecked()
 
+    def minusClicked(self):
+        self.sliderWidget.setSliderPosition(self.sliderWidget.value()-1)
+
+    def plusClicked(self):
+        self.sliderWidget.setSliderPosition(self.sliderWidget.value()+1)
+
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
         self.item.clearSlider()
 
-    def setLineEditBackground(self, obj, state):
-        """ Function used to set the background color of a QLineEdit widget,
-        based on its editing state """
-        if state == 'synced': color='#D2FFD2' # vert
-        if state == 'edited': color='#FFE5AE' # orange
-
-        obj.setStyleSheet(
-            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
-                color, self._font_size+1))
 
 
 class ProxyStyle(QtWidgets.QProxyStyle):

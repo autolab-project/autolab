@@ -15,7 +15,7 @@ from .figure import FigureManager
 from .monitor import MonitorManager
 from ..icons import icons
 from ... import paths
-from ... import config
+from ..GUI_utilities import get_font_size, setLineEditBackground
 from ...utilities import SUPPORTED_EXTENSION
 
 
@@ -26,11 +26,7 @@ class Monitor(QtWidgets.QMainWindow):
         self.item = item
         self.variable = item.variable
 
-        GUI_config = config.get_GUI_config()
-        if GUI_config['font_size'] != 'default':
-            self._font_size = int(GUI_config['font_size'])
-        else:
-            self._font_size = QtWidgets.QApplication.instance().font().pointSize()
+        self._font_size = get_font_size() + 1
 
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
@@ -49,10 +45,10 @@ class Monitor(QtWidgets.QMainWindow):
             self.xlabel = 'Time [s]'
             self.windowLength_lineEdit.setText('10')
             self.windowLength_lineEdit.returnPressed.connect(self.windowLengthChanged)
-            self.windowLength_lineEdit.textEdited.connect(
-                lambda: self.setLineEditBackground(self.windowLength_lineEdit,
-                                                   'edited'))
-            self.setLineEditBackground(self.windowLength_lineEdit, 'synced')
+            self.windowLength_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+                self.windowLength_lineEdit, 'edited', self._font_size))
+            setLineEditBackground(
+                self.windowLength_lineEdit, 'synced', self._font_size)
         else:
             self.xlabel = 'x'
             self.windowLength_lineEdit.hide()
@@ -67,9 +63,9 @@ class Monitor(QtWidgets.QMainWindow):
         # Delay
         self.delay_lineEdit.setText('0.01')
         self.delay_lineEdit.returnPressed.connect(self.delayChanged)
-        self.delay_lineEdit.textEdited.connect(
-            lambda: self.setLineEditBackground(self.delay_lineEdit, 'edited'))
-        self.setLineEditBackground(self.delay_lineEdit, 'synced')
+        self.delay_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.delay_lineEdit, 'edited', self._font_size))
+        setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
         # Pause
         self.pauseButton.clicked.connect(self.pauseButtonClicked)
@@ -99,14 +95,6 @@ class Monitor(QtWidgets.QMainWindow):
         self.delayChanged()
         self.monitorManager.start()
         self.timer.start()
-
-    def setLineEditBackground(self, obj: QtWidgets.QLineEdit, state: str):
-        """ Change color of QLineEdit to inform on edit state """
-        if state == 'synced': color='#D2FFD2' # vert
-        if state == 'edited': color='#FFE5AE' # orange
-        obj.setStyleSheet(
-            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
-                color, self._font_size+1))
 
     def sync(self):
         """ This function updates the data and then the figure.
@@ -237,14 +225,14 @@ class Monitor(QtWidgets.QMainWindow):
         manager, and then update the GUI """
         value = self.dataManager.getWindowLength()
         self.windowLength_lineEdit.setText(f'{value:g}')
-        self.setLineEditBackground(self.windowLength_lineEdit, 'synced')
+        setLineEditBackground(self.windowLength_lineEdit, 'synced', self._font_size)
 
     def updateDelayGui(self):
         """ This function ask the current value of the delay in the data
         manager, and then update the GUI """
         value = self.monitorManager.getDelay()
         self.delay_lineEdit.setText(f'{value:g}')
-        self.setLineEditBackground(self.delay_lineEdit, 'synced')
+        setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
     def setStatus(self, message: str, timeout: int  = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """

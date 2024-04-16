@@ -11,13 +11,12 @@ import threading
 from collections import OrderedDict
 from queue import Queue
 from itertools import product
-from typing import Any
 
 import numpy as np
-import pandas as pd
 from qtpy import QtCore, QtWidgets
 
-from ...devices import DEVICES
+from .. import variables
+from ...utilities import create_array
 
 
 class ScanManager:
@@ -83,6 +82,7 @@ class ScanManager:
             self.thread.startStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'started'))
             self.thread.finishStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'finished'))
             self.thread.recipeCompletedSignal.connect(lambda recipe_name: self.resetStepsProcessingState(recipe_name))
+            self.thread.scanCompletedSignal.connect(self.scanCompleted)
 
             self.thread.finished.connect(self.finished)
 
@@ -97,10 +97,21 @@ class ScanManager:
             self.gui.pause_pushButton.setEnabled(True)
             self.gui.clear_pushButton.setEnabled(False)
             self.gui.progressBar.setValue(0)
-            self.gui.configManager.importAction.setEnabled(False)
-            self.gui.configManager.undo.setEnabled(False)
-            self.gui.configManager.redo.setEnabled(False)
-            self.gui.setStatus('Scan started !', 5000)
+            self.gui.importAction.setEnabled(False)
+            self.gui.undo.setEnabled(False)
+            self.gui.redo.setEnabled(False)
+            self.gui.setStatus('Scan started!', 5000)
+
+    def scanCompleted(self):
+        self.gui.progressBar.setStyleSheet("")
+
+        if self.thread.stopFlag.is_set():
+            pass
+            # self.gui.setStatus('Scan stopped!', 5000)  # not good because hide error message
+        else:
+            self.gui.setStatus('Scan finished!', 5000)
+            self.gui.progressBar.setMaximum(1)
+            self.gui.progressBar.setValue(1)
 
     def setStepProcessingState(self, recipe_name: str, stepName: str, state: str):
         self.gui.recipeDict[recipe_name]['recipeManager'].setStepProcessingState(stepName, state)
@@ -132,7 +143,7 @@ class ScanManager:
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
         self.gui.displayScanData_pushButton.setEnabled(True)
-        self.gui.configManager.importAction.setEnabled(True)
+        self.gui.importAction.setEnabled(True)
         self.gui.configManager.updateUndoRedoButtons()
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
@@ -144,7 +155,7 @@ class ScanManager:
     def error(self, error: Exception):
         """ Called if an error occured during the scan.
         It displays it in the status bar """
-        self.gui.setStatus(f'Scan Error: {error}', 10000, False)
+        self.gui.setStatus(f'Scan error: {error}', 10000, False)
 
 
     # CONTINUOUS MODE
@@ -198,6 +209,7 @@ class ScanThread(QtCore.QThread):
     startStepSignal = QtCore.Signal(object, object)
     finishStepSignal = QtCore.Signal(object, object)
     recipeCompletedSignal = QtCore.Signal(object)
+    scanCompletedSignal = QtCore.Signal()
 
     def __init__(self, queue: Queue, config: dict):
         QtCore.QThread.__init__(self)
@@ -212,6 +224,8 @@ class ScanThread(QtCore.QThread):
         for recipe_name in self.config.keys():
             if self.config[recipe_name]['active']: self.execRecipe(recipe_name)
 
+        self.scanCompletedSignal.emit()
+
     def execRecipe(self, recipe_name: str,
                    initPoint: OrderedDict = None):
         """ Executes a recipe. initPoint is used to add parameters values
@@ -219,9 +233,14 @@ class ScanThread(QtCore.QThread):
 
         paramValues_list = []
 
+
         for parameter in self.config[recipe_name]['parameter']:
+            param_name = parameter['name']
+
             if 'values' in parameter:
                 paramValues = parameter['values']
+                paramValues = variables.eval_variable(paramValues)
+                paramValues = create_array(paramValues)
             else:
                 startValue, endValue = parameter['range']
                 nbpts = parameter['nbpts']
@@ -233,8 +252,10 @@ class ScanThread(QtCore.QThread):
                 else:
                     paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
 
+            variables.set_variable(param_name, paramValues[0])
             paramValues_list.append(paramValues)
 
+        ID = 0
         # iter over each parameter (do once if no parameter!)
         for i, paramValueList in enumerate(product(*paramValues_list)):
 
@@ -253,6 +274,10 @@ class ScanThread(QtCore.QThread):
                         self._source_of_error = parameter
                         element = parameter['element']
                         param_name = parameter['name']
+
+                        ID += 1
+                        variables.set_variable('ID', ID)
+                        variables.set_variable(param_name, paramValue)
 
                         # Set the parameter value
                         self.startParameterSignal.emit(recipe_name, param_name)
@@ -331,12 +356,14 @@ class ScanThread(QtCore.QThread):
 
         if stepType == 'measure':
             result = element()
+            variables.set_variable(stepInfos['name'], result)
+
         elif stepType == 'set':
-            value = self.checkVariable(stepInfos['value'])
+            value = variables.eval_variable(stepInfos['value'])
             element(value)
         elif stepType == 'action':
             if stepInfos['value'] is not None:
-                value = self.checkVariable(stepInfos['value'])
+                value = variables.eval_variable(stepInfos['value'])
                 element(value)
             else:
                 element()
@@ -345,16 +372,3 @@ class ScanThread(QtCore.QThread):
 
         self.finishStepSignal.emit(recipe_name, stepInfos['name'])
         return result
-
-    def checkVariable(self, value: Any):
-        """ Checks if value is a device variable address and if is it, return its value """
-        if str(value).startswith("$eval:"):
-            value = str(value)[len("$eval:"): ]
-
-            try:
-                allowed_dict ={"np": np, "pd": pd}
-                allowed_dict.update(DEVICES)
-                value = eval(str(value), {}, allowed_dict)
-            except: pass
-
-        return value
