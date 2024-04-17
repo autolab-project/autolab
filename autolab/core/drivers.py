@@ -64,9 +64,12 @@ def load_lib(lib_path: str) -> ModuleType:
 def load_driver_utilities_lib(driver_utilities_name: str) -> ModuleType:
     ''' Returns a driver library that contains Driver, Driver_XXX, Module_XXX '''
     # Loading preparation
-    driver_path = get_driver_path(driver_utilities_name.replace('_utilities', ''))
+    if os.path.exists(driver_utilities_name):
+        driver_path = get_driver_path(driver_utilities_name.replace('_utilities', ''))
+    else:
+        driver_path = os.path.join(paths.AUTOLAB_FOLDER, 'core', 'default_driver.py')
 
-    # Laod library
+    # Load library
     driver_lib = load_utilities_lib(driver_path)
 
     return driver_lib

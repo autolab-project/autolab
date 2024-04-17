@@ -104,7 +104,7 @@ class Variable():
 
 
 def set_variable(name: str, value: Any):
-    # for character in r'$*."/\[]:;|, ': name = name.replace(character, '')
+    for character in r'$*."/\[]:;|, ': name = name.replace(character, '')
     assert re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', name) is not None, f"Wrong format for variable '{name}'"
     var = Variable(value) if has_eval(value) else value
     VARIABLES[name] = var

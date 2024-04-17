@@ -234,9 +234,11 @@ class Slider(QtWidgets.QMainWindow):
 
     def minusClicked(self):
         self.sliderWidget.setSliderPosition(self.sliderWidget.value()-1)
+        if not self.slider_instantaneous: self.sliderReleased()
 
     def plusClicked(self):
         self.sliderWidget.setSliderPosition(self.sliderWidget.value()+1)
+        if not self.slider_instantaneous: self.sliderReleased()
 
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
