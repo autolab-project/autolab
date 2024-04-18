@@ -133,6 +133,9 @@ class FigureManager:
         else:
             self.gui.data_comboBox.hide()
 
+        # Change save button text to inform on scan that will be saved
+        self.gui.save_pushButton.setText('Save '+self.gui.data_comboBox.currentText().lower())
+
     def scan_recipe_comboBoxCurrentChanged(self):
         self.dataframe_comboBoxCurrentChanged()
 

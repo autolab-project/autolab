@@ -55,7 +55,8 @@ class ParameterManager:
         parameterName_lineEdit.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
         parameterName_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         parameterName_lineEdit.setToolTip('Name of the parameter, as it will displayed in the data')
-        parameterName_lineEdit.textEdited.connect(lambda : self.gui.setLineEditBackground(parameterName_lineEdit,'edited'))
+        parameterName_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            parameterName_lineEdit, 'edited', self._font_size))
         parameterName_lineEdit.returnPressed.connect(self.nameChanged)
         parameterName_lineEdit.setEnabled(False)
         self.parameterName_lineEdit = parameterName_lineEdit
@@ -624,12 +625,18 @@ class ParameterManager:
         """ Provides the menu when the user right click on a parameter """
         menu = QtWidgets.QMenu()
 
-        removeActions = menu.addAction(f"Remove {self.param_name}")
-        removeActions.setIcon(QtGui.QIcon(icons['remove']))
+
+        addAction = menu.addAction("Add parameter")
+        addAction.setIcon(QtGui.QIcon(icons['add']))
+
+        removeAction = menu.addAction(f"Remove {self.param_name}")
+        removeAction.setIcon(QtGui.QIcon(icons['remove']))
 
         choice = menu.exec_(self.mainFrame.mapToGlobal(position))
 
-        if choice == removeActions:
+        if choice == addAction:
+            self.gui.configManager.addParameter(self.recipe_name)
+        if choice == removeAction:
             self.gui.configManager.removeParameter(self.recipe_name, self.param_name)
 
     # PROCESSING STATE BACKGROUND

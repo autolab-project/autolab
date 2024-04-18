@@ -149,6 +149,7 @@ class Scanner(QtWidgets.QMainWindow):
         self.data_comboBox.clear()
         self.data_comboBox.hide()
         self.save_pushButton.setEnabled(False)
+        self.save_pushButton.setText('Save')
         self.progressBar.setValue(0)
         self.progressBar.setStyleSheet("")
         self.displayScanData_pushButton.hide()

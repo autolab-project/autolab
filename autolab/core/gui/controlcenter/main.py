@@ -7,7 +7,6 @@ quentin.chateiller@c2n.upsaclay.fr
 
 """
 
-import os
 import sys
 import queue
 import time

@@ -286,7 +286,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
                 keys[pos], keys[pos+1] = keys[pos+1], keys[pos]
                 self.gui.configManager.setRecipeOrder(keys)
             elif choice == addParameterAction:
-                self.addParameter()
+                self.gui.configManager.addParameter(self.recipe_name)
 
     def renameRecipe(self):
         """ Prompts the user for a new recipe name and apply it to the selected recipe """
@@ -300,10 +300,6 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             if newName != '':
                 self.gui.configManager.renameRecipe(
                     self.recipe_name, newName)
-
-    def addParameter(self):
-        """ Proxy to add parameter to config """
-        self.gui.configManager.addParameter(self.recipe_name)
 
 
 class parameterQFrame(QtWidgets.QFrame):
