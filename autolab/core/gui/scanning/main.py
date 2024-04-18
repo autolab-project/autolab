@@ -7,6 +7,7 @@ Created on Fri Sep 20 22:08:29 2019
 import os
 import sys
 import shutil
+from functools import partial
 from collections import OrderedDict
 
 from qtpy import QtWidgets, QtCore, uic, QtGui
@@ -49,9 +50,16 @@ class Scanner(QtWidgets.QMainWindow):
 
         # Configuration menu
         configMenu = self.menuBar.addMenu('Configuration')
+
         self.importAction = configMenu.addAction('Import configuration')
         self.importAction.setIcon(QtGui.QIcon(icons['import']))
         self.importAction.triggered.connect(self.importActionClicked)
+
+        self.openRecentMenu = configMenu.addMenu('Import recent configuration')
+        self.populateOpenRecent()
+
+        configMenu.addSeparator()
+
         exportAction = configMenu.addAction('Export current configuration')
         exportAction.setIcon(QtGui.QIcon(icons['export']))
         exportAction.triggered.connect(self.exportActionClicked)
@@ -83,6 +91,45 @@ class Scanner(QtWidgets.QMainWindow):
 
         # Clear button configuration
         self.clear_pushButton.clicked.connect(self.clear)
+
+    def populateOpenRecent(self):
+        """ https://realpython.com/python-menus-toolbars/#populating-python-menus-dynamically """
+        self.openRecentMenu.clear()
+
+        if os.path.exists(paths.HISTORY_CONFIG):
+            with open(paths.HISTORY_CONFIG, 'r') as f: filenames = f.readlines()
+            for filename in reversed(filenames):
+                filename = filename.rstrip('\n')
+                action = QtWidgets.QAction(filename, self)
+                action.triggered.connect(
+                    partial(self.configManager.import_configPars, filename))
+                self.openRecentMenu.addAction(action)
+
+        self.openRecentMenu.addSeparator()
+        action = QtWidgets.QAction('Clear list', self)
+        action.triggered.connect(self.clearOpenRecent)
+        self.openRecentMenu.addAction(action)
+
+    def addOpenRecent(self, filename: str):
+
+        if not os.path.exists(paths.HISTORY_CONFIG):
+            with open(paths.HISTORY_CONFIG, 'w') as f: f.write(filename + '\n')
+        else:
+            with open(paths.HISTORY_CONFIG, 'r') as f: lines = f.readlines()
+            lines.append(filename)
+            lines = [line.rstrip('\n')+'\n' for line in lines]
+            lines = list(reversed(dict.fromkeys(reversed(lines))))  # unique names
+            lines = lines[-10:]
+            with open(paths.HISTORY_CONFIG, 'w') as f: f.writelines(lines)
+
+        self.populateOpenRecent()
+
+    def clearOpenRecent(self):
+        if os.path.exists(paths.HISTORY_CONFIG):
+            try: os.remove(paths.HISTORY_CONFIG)
+            except: pass
+
+        self.populateOpenRecent()
 
     def clear(self):
         """ This reset any recorded data, and the GUI accordingly """
@@ -289,6 +336,8 @@ class Scanner(QtWidgets.QMainWindow):
                 self.setStatus(f"Current configuration successfully saved at {filename}", 5000)
             except Exception as e:
                 self.setStatus(f"An error occured: {str(e)}", 10000, False)
+            else:
+                self.addOpenRecent(filename)
 
     def saveButtonClicked(self):
         """ This function is called when the save button is clicked.
@@ -329,11 +378,14 @@ class Scanner(QtWidgets.QMainWindow):
                         print("Warning: Can't find config for this dataset, save latest config instead", file=sys.stderr)
                     self.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
 
+                self.addOpenRecent(new_configname)
+
             if utilities.boolean(scanner_config["save_figure"]):
                 self.figureManager.save(filename)
 
-            self.setStatus(f'Last dataset successfully saved in {filename}',
-                               5000)
+            self.setStatus(
+                f'Last dataset successfully saved in {filename}', 5000)
+
 
 
     def dropEvent(self, event):

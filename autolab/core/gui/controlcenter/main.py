@@ -164,6 +164,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
 
+        refreshAction = settingsMenu.addAction('Refresh devices')
+        refreshAction.triggered.connect(self.initialize)
+        refreshAction.setStatusTip('Reload devices setting')
+
         # Help menu
         helpMenu = self.menuBar.addMenu('Help')
 
@@ -319,6 +323,7 @@ class ControlCenter(QtWidgets.QMainWindow):
     def initialize(self):
         """ This function will create the first items in the tree, but will
         associate only the ones already loaded in autolab """
+        self.tree.clear()
         for devName in devices.list_devices():
             item = TreeWidgetItemModule(self.tree, devName, self)
 

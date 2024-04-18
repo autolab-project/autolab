@@ -17,6 +17,7 @@ USER_LAST_CUSTOM_FOLDER = os.path.expanduser('~')
 DEVICES_CONFIG = os.path.join(USER_FOLDER, 'devices_config.ini')
 AUTOLAB_CONFIG = os.path.join(USER_FOLDER, 'autolab_config.ini')
 PLOTTER_CONFIG = os.path.join(USER_FOLDER, 'plotter_config.ini')
+HISTORY_CONFIG = os.path.join(USER_FOLDER, '.history_config.txt')
 
 # Drivers locations
 DRIVERS = os.path.join(USER_FOLDER,'drivers')
