@@ -101,6 +101,7 @@ class Scanner(QtWidgets.QMainWindow):
             for filename in reversed(filenames):
                 filename = filename.rstrip('\n')
                 action = QtWidgets.QAction(filename, self)
+                action.setEnabled(os.path.exists(filename))
                 action.triggered.connect(
                     partial(self.configManager.import_configPars, filename))
                 self.openRecentMenu.addAction(action)

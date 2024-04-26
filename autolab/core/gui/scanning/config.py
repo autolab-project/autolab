@@ -843,30 +843,31 @@ class ConfigManager:
 
         return configPars
 
-
     def import_configPars(self, filename: str, append: bool = False):
         """ Import a scan configuration from file with filename name """
-        try:
-            legacy_configPars = configparser.ConfigParser()
-            legacy_configPars.read(filename)
-        except:
+        if os.path.exists(filename):
             try:
-                with open(filename, "r") as read_file:
-                    configPars = json.load(read_file)
-            except Exception as error:
-                self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
-                return None
+                legacy_configPars = configparser.ConfigParser()
+                legacy_configPars.read(filename)
+            except:
+                try:
+                    with open(filename, "r") as read_file:
+                        configPars = json.load(read_file)
+                except Exception as error:
+                    self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
+                    return None
+            else:
+                print("ConfigParser depreciated, now use json. Will convert this config to json if save it.")
+                configPars = {s: dict(legacy_configPars.items(s)) for s in legacy_configPars.sections()}
+
+            path = os.path.dirname(filename)
+            paths.USER_LAST_CUSTOM_FOLDER = path
+
+            self.load_configPars(configPars, append=append)
+
+            if not self._got_error: self.addNewConfig()
         else:
-            print("ConfigParser depreciated, now use json. Will convert this config to json if save it.")
-            configPars = {s: dict(legacy_configPars.items(s)) for s in legacy_configPars.sections()}
-
-        path = os.path.dirname(filename)
-        paths.USER_LAST_CUSTOM_FOLDER = path
-
-        self.load_configPars(configPars, append=append)
-
-        if not self._got_error:
-            self.addNewConfig()
+            self.gui.setStatus(f"Configuration file {filename} doesn't exists", 5000)
 
     def load_configPars(self, configPars: dict, append: bool = False):
         """ Creates a config representing a scan form a configPars """
