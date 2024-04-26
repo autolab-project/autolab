@@ -5,6 +5,7 @@ Created on Tue Oct  1 17:38:15 2019
 @author: qchat
 """
 import os
+import sys
 import inspect
 import importlib
 from typing import Type, List
@@ -53,7 +54,10 @@ def load_lib(lib_path: str) -> ModuleType:
     # Load the module
     spec = importlib.util.spec_from_file_location(lib_name, lib_path)
     lib = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(lib)
+    try:
+        spec.loader.exec_module(lib)
+    except Exception as e:
+        print(f"Can't load {lib}: {e}", file=sys.stderr)
 
     # Come back to previous working directory
     os.chdir(curr_dir)

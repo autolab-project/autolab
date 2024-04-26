@@ -295,21 +295,14 @@
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <layout class="QGridLayout" name="gridLayout_3">
-              <item row="0" column="3">
+              <item row="0" column="4">
                <widget class="QComboBox" name="variable_y_comboBox">
                 <property name="sizeAdjustPolicy">
                  <enum>QComboBox::AdjustToContents</enum>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QComboBox" name="variable_x_comboBox">
-                <property name="sizeAdjustPolicy">
-                 <enum>QComboBox::AdjustToContents</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="2">
+              <item row="0" column="3">
                <widget class="QLabel" name="label_7">
                 <property name="font">
                  <font>
@@ -322,6 +315,13 @@
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="variable_x_comboBox">
+                <property name="sizeAdjustPolicy">
+                 <enum>QComboBox::AdjustToContents</enum>
                 </property>
                </widget>
               </item>
@@ -340,6 +340,19 @@
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
+              </item>
+              <item row="0" column="2">
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </item>
