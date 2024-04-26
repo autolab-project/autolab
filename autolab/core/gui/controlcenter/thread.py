@@ -28,11 +28,14 @@ class ThreadManager:
         item.setDisabled(True)
 
         if hasattr(item, "execButton"):
-            item.execButton.setEnabled(False)
+            if qt_object_exists(item.execButton):
+                item.execButton.setEnabled(False)
         if hasattr(item, "readButton"):
-            item.readButton.setEnabled(False)
+            if qt_object_exists(item.readButton):
+                item.readButton.setEnabled(False)
         if hasattr(item, "valueWidget"):
-            item.valueWidget.setEnabled(False)
+            if qt_object_exists(item.valueWidget):
+                item.valueWidget.setEnabled(False)
 
         # disabling valueWidget deselect item and select next one, need to disable all items and reenable item
         list_item = self.gui.tree.selectedItems()

@@ -49,6 +49,14 @@ class DisplayValues(QtWidgets.QWidget):
     def closeEvent(self, event):
         self.active = False
 
+    def close(self):
+
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
+
+        super().close()
+
 
 class TableModel(QtCore.QAbstractTableModel):
     "From https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/"
@@ -57,7 +65,11 @@ class TableModel(QtCore.QAbstractTableModel):
         self._data = data
 
     def data(self, index, role):
-        if role == QtCore.Qt.ItemDataRole.DisplayRole:
+        if hasattr(QtCore.Qt.ItemDataRole, 'DisplayRole'):
+            role_check = QtCore.Qt.ItemDataRole.DisplayRole
+        else:
+            role_check = 0  # Compatibility py3.6
+        if role == role_check:
             value = self._data.iloc[index.row(), index.column()]
             return str(value)
 
@@ -69,9 +81,13 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.
-        if role == QtCore.Qt.ItemDataRole.DisplayRole:
-            if orientation == QtCore.Qt.Orientation.Horizontal:
+        if hasattr(QtCore.Qt.ItemDataRole, 'DisplayRole'):
+            role_check = QtCore.Qt.ItemDataRole.DisplayRole
+        else:
+            role_check = 0
+        if role == role_check:
+            if orientation == QtCore.Qt.Horizontal:
                 return str(self._data.columns[section])
 
-            if orientation == QtCore.Qt.Orientation.Vertical:
+            if orientation == QtCore.Qt.Vertical:
                 return str(self._data.index[section])

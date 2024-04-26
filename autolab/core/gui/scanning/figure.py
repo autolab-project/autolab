@@ -11,9 +11,11 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from pyqtgraph.Qt import QtWidgets
+from pyqtgraph.Qt import QtWidgets, QtGui
 
 from .display import DisplayValues
+from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..icons import icons
 from ... import utilities
 
 
@@ -25,39 +27,45 @@ class FigureManager:
         self.gui = gui
         self.curves = []
 
+        self._font_size = get_font_size() + 1
+
         # Configure and initialize the figure in the GUI
         self.fig, self.ax = utilities.pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
-        self.figMap = pg.ImageView()
-        self.gui.graph.addWidget(self.figMap)
+        self.figMap, widget = utilities.pyqtgraph_image()
+        self.gui.graph.addWidget(widget)
         self.figMap.hide()
 
-        for axe in ['x', 'y']:
-            getattr(self.gui,f'variable_{axe}_comboBox').activated.connect(self.variableChanged)
+        getattr(self.gui, 'variable_x_comboBox').activated.connect(
+            self.variableChanged)
+        getattr(self.gui, 'variable_y_comboBox').activated.connect(
+            self.variableChanged)
 
         # Number of traces
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
-        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'edited'))
-        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced')
+        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.gui.nbTraces_lineEdit,'edited', self._font_size))
+        setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         # Window to show scan data
         self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)
-        self.gui.displayScanData_pushButton.setEnabled(False)
+        self.gui.displayScanData_pushButton.hide()
         self.displayScan = DisplayValues("Scan", size=(500, 300))
+        self.displayScan.setWindowIcon(QtGui.QIcon(icons['DataFrame']))
 
         # comboBox with scan id
         self.gui.data_comboBox.activated.connect(self.data_comboBoxClicked)
+        self.gui.data_comboBox.hide()
 
         # Combobo to select the recipe to plot
         self.gui.scan_recipe_comboBox.activated.connect(self.scan_recipe_comboBoxCurrentChanged)
+        self.gui.scan_recipe_comboBox.hide()
 
         # Combobox to select datafram to plot
         self.gui.dataframe_comboBox.activated.connect(self.dataframe_comboBoxCurrentChanged)
-        self.gui.dataframe_comboBox.setEnabled(False)
-        self.gui.dataframe_comboBox.clear()
-        self.gui.dataframe_comboBox.addItems(["Scan"])
+        self.gui.dataframe_comboBox.addItem("Scan")
         self.gui.dataframe_comboBox.hide()
 
         self.gui.toolButton.hide()
@@ -67,6 +75,8 @@ class FigureManager:
         self.gui.toolButton.setText("Parameter")
         self.gui.toolButton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
         self.gui.toolButton.setMenu(QtWidgets.QMenu(self.gui.toolButton))
+
+        # TODO: add bool 'all' like in drivers
 
         self.menuBoolList = list()  # OPTIMIZE: edit: maybe not necessary <- when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
         self.menuWidgetList = list()
@@ -101,27 +111,38 @@ class FigureManager:
     def data_comboBoxClicked(self):
         """ This function select a dataset """
         if len(self.gui.dataManager.datasets) != 0:
-            self.resetCheckBoxMenuID()
-            self.updateDataframe_comboBox()
+            self.gui.data_comboBox.show()
+            dataset = self.gui.dataManager.getLastSelectedDataset()
+            index = self.gui.scan_recipe_comboBox.currentIndex()
+
+            resultNamesList = list(dataset.keys())
+            AllItems = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(self.gui.scan_recipe_comboBox.count())]
+
+            if AllItems != resultNamesList:
+                self.gui.scan_recipe_comboBox.clear()
+                self.gui.scan_recipe_comboBox.addItems(resultNamesList)
+                if (index + 1) > len(resultNamesList) or index == -1: index = 0
+                self.gui.scan_recipe_comboBox.setCurrentIndex(index)
+
+            if self.gui.scan_recipe_comboBox.count() > 1:
+                self.gui.scan_recipe_comboBox.show()
+            else:
+                self.gui.scan_recipe_comboBox.hide()
+
             self.dataframe_comboBoxCurrentChanged()
+        else:
+            self.gui.data_comboBox.hide()
 
-            self.reloadData()
-            self.gui.displayScanData_pushButton.setEnabled(True)
-
-            if self.displayScan.active:
-                dataset = self.gui.dataManager.getLastSelectedDataset()
-                recipe_name = self.gui.scan_recipe_comboBox.currentText()
-                sub_dataset = dataset[recipe_name]
-                self.displayScan.refresh(sub_dataset.data)
+        # Change save button text to inform on scan that will be saved
+        self.gui.save_pushButton.setText('Save '+self.gui.data_comboBox.currentText().lower())
 
     def scan_recipe_comboBoxCurrentChanged(self):
         self.dataframe_comboBoxCurrentChanged()
 
     def dataframe_comboBoxCurrentChanged(self):
 
-        if self.gui.scan_recipe_comboBox.count() != 1:
-            self.resetCheckBoxMenuID()
-            self.updateDataframe_comboBox()
+        self.updateDataframe_comboBox()
+        self.resetCheckBoxMenuID()
 
         self.gui.dataManager.updateDisplayableResults()
         self.reloadData()
@@ -134,11 +155,13 @@ class FigureManager:
            self.gui.toolButton.show()
 
     def updateDataframe_comboBox(self):
-
         # Executed each time the queue is read
         index = self.gui.dataframe_comboBox.currentIndex()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
         dataset = self.gui.dataManager.getLastSelectedDataset()
+
+        if dataset is None or recipe_name not in dataset: return None
+
         sub_dataset = dataset[recipe_name]
 
         resultNamesList = ["Scan"] + [
@@ -161,18 +184,22 @@ class FigureManager:
     def resetCheckBoxMenuID(self):
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
         dataset = self.gui.dataManager.getLastSelectedDataset()
-        sub_dataset = dataset[recipe_name]
-        listDataFrame = list(sub_dataset.dictListDataFrame.values())
-        if len(listDataFrame) != 0:
-            nb_id = 0
-            for dataframe in listDataFrame:
-                if len(dataframe) > nb_id:  # OPTIMIZE: should not be the same for all the dataframe of a recipe because length can be different (recipe in recipe gives different size)
-                    nb_id = len(dataframe)
+        data_name = self.gui.dataframe_comboBox.currentText()
 
-            self.clearMenuID()
+        if dataset is not None and recipe_name in dataset and data_name != "Scan":
+            sub_dataset = dataset[recipe_name]
 
-            for i in range(1, nb_id+1):
-                self.addCheckBox2MenuID(i)
+            dataframe = sub_dataset.dictListDataFrame[data_name]
+            nb_id = len(dataframe)
+            nb_bool = len(self.menuBoolList)
+
+            if nb_id != nb_bool:
+                if nb_id > nb_bool:
+                    for i in range(nb_bool+1, nb_id+1):
+                        self.addCheckBox2MenuID(i)
+                else:
+                    for i in range(nb_bool-nb_id):
+                        self.removeLastCheckBox2MenuID()
 
     # AXE LABEL
     ###########################################################################
@@ -207,6 +234,9 @@ class FigureManager:
         data_len = len(self.gui.dataManager.datasets)
         selectedData = data_len - data_id
 
+        if variable_x is None:
+            return None
+
         # Label update
         self.setLabel('x', variable_x)
         self.setLabel('y', variable_y)
@@ -220,24 +250,14 @@ class FigureManager:
             nbtraces_temp = 1  # decided to only show the last scan data for dataframes
             self.gui.nbTraces_lineEdit.hide()
             self.gui.graph_nbTracesLabel.hide()
+
         # Load the last results data
-        try:
-            data: pd.DataFrame = self.gui.dataManager.getData(
-                nbtraces_temp, [variable_x, variable_y],
-                selectedData=selectedData, data_name=data_name)
-        except:
-            data = None
+        data: pd.DataFrame = self.gui.dataManager.getData(
+            nbtraces_temp, [variable_x, variable_y],
+            selectedData=selectedData, data_name=data_name)
 
-        # Active plot view and update displayScan
-        self.gui.dataframe_comboBox.setEnabled(True)
-        self.gui.scan_recipe_comboBox.setEnabled(True)
-
-        self.gui.displayScanData_pushButton.setEnabled(True)
-        if self.displayScan.active:
-            dataset = self.gui.dataManager.getLastSelectedDataset()
-            recipe_name = self.gui.scan_recipe_comboBox.currentText()
-            sub_dataset = dataset[recipe_name]
-            self.displayScan.refresh(sub_dataset.data)
+        # update displayScan
+        self.refreshDisplayScanData()
 
         # Plot data
         if data is not None:
@@ -327,20 +347,27 @@ class FigureManager:
             pass
 
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
-        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
+        setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         if check is True and self.gui.variable_y_comboBox.currentIndex() != -1:
             self.reloadData()
 
     # Show data
     ###########################################################################
+    def refreshDisplayScanData(self):
+        self.gui.displayScanData_pushButton.show()
+        recipe_name = self.gui.scan_recipe_comboBox.currentText()
+        datasets = self.gui.dataManager.getLastSelectedDataset()
+        if datasets is not None and recipe_name in datasets:
+            name = f"Scan{self.gui.data_comboBox.currentIndex()+1}"
+            if self.gui.scan_recipe_comboBox.count() > 1:
+                name += f", {recipe_name}"
+            self.displayScan.setWindowTitle(name)
+            self.displayScan.refresh(datasets[recipe_name].data)
 
     def displayScanDataButtonClicked(self):
         """ This function opens a window showing the scan data for the displayed scan id """
-        if not self.displayScan.active:
-            recipe_name = self.gui.scan_recipe_comboBox.currentText()
-            self.displayScan.refresh(self.gui.dataManager.getLastSelectedDataset()[recipe_name].data)
-
+        self.refreshDisplayScanData()
         self.displayScan.show()
 
     # SAVE FIGURE
@@ -356,5 +383,5 @@ class FigureManager:
     def close(self):
         """ Called by scanner on closing """
         self.displayScan.close()
-        self.fig.close()  # prevent crash without traceback when reopenning scanner multiple times
-        self.figMap.close()
+        self.fig.deleteLater()  # prevent crash without traceback when reopenning scanner multiple times
+        self.figMap.deleteLater()

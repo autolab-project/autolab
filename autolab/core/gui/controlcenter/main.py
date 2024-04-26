@@ -7,7 +7,6 @@ quentin.chateiller@c2n.upsaclay.fr
 
 """
 
-import os
 import sys
 import queue
 import time
@@ -21,6 +20,7 @@ from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
+from ..variables import VARIABLES
 from ..icons import icons
 from ... import devices, web, paths, config, utilities
 
@@ -97,6 +97,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.tree.last_drag = None
         self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])
         self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
+        self.tree.header().setMinimumSectionSize(15)
         self.tree.header().resizeSection(0, 200)
         self.tree.header().resizeSection(4, 15)
         self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragOnly)
@@ -161,6 +162,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         devicesConfig.setIcon(QtGui.QIcon(icons['config']))
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
+
+        refreshAction = settingsMenu.addAction('Refresh devices')
+        refreshAction.triggered.connect(self.initialize)
+        refreshAction.setStatusTip('Reload devices setting')
 
         # Help menu
         helpMenu = self.menuBar.addMenu('Help')
@@ -231,7 +236,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             import pandas as pd
             import autolab  # OPTIMIZE: not good to import autolab?
             namespace = {'np': np, 'pd': pd, 'autolab': autolab}
-            text = """ Packages imported: autolab, numpy as np, pandas as pd. """
+            text = """ Packages imported: autolab, numpy as np, pandas as pd.\n"""
             area_2 = DockArea(self)
             self.splitter.addWidget(area_2)
 
@@ -317,6 +322,7 @@ class ControlCenter(QtWidgets.QMainWindow):
     def initialize(self):
         """ This function will create the first items in the tree, but will
         associate only the ones already loaded in autolab """
+        self.tree.clear()
         for devName in devices.list_devices():
             item = TreeWidgetItemModule(self.tree, devName, self)
 
@@ -327,7 +333,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
-        self.statusBar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)
 
     def clearStatus(self):
@@ -463,7 +469,11 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.scanner.close()
 
         if self.plotter is not None:
-            self.plotter.figureManager.fig.close()
+            self.plotter.figureManager.fig.deleteLater()
+            for children in self.plotter.findChildren(
+                    QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+                children.deleteLater()
+
             self.plotter.close()
 
         monitors = list(self.monitors.values())
@@ -482,8 +492,8 @@ class ControlCenter(QtWidgets.QMainWindow):
             sys.stdout = self.stdout._stream
             sys.stderr = self.stderr._stream
 
-        if hasattr(self, '_logger_dock'): self._logger_dock.close()
-        if hasattr(self, '_console_dock'): self._console_dock.close()
+        if hasattr(self, '_logger_dock'): self._logger_dock.deleteLater()
+        if hasattr(self, '_console_dock'): self._console_dock.deleteLater()
 
         try:
             import pyqtgraph as pg
@@ -496,3 +506,11 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         self.timerDevice.stop()
         self.timerQueue.stop()
+
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
+
+        super().closeEvent(event)
+
+        VARIABLES.clear()  # reset variables defined in the GUI

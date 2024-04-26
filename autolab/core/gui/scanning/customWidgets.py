@@ -9,7 +9,6 @@ from typing import List
 
 from qtpy import QtCore, QtWidgets, QtGui
 
-from . import main
 from ..icons import icons
 from ...devices import Device
 from ...utilities import clean_string
@@ -258,11 +257,6 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             addParameterAction = menu.addAction("Add parameter")
             addParameterAction.setIcon(QtGui.QIcon(icons['add']))
 
-            removeMenuActions = {}
-            for parameter in self.gui.configManager.parameterList(self.recipe_name):
-                removeMenuActions[parameter['name']] = menu.addAction(f"Remove {parameter['name']}")
-                removeMenuActions[parameter['name']] .setIcon(QtGui.QIcon(icons['remove']))
-
             menu.addSeparator()
 
             moveUpRecipeAction = menu.addAction("Move recipe up")
@@ -292,10 +286,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
                 keys[pos], keys[pos+1] = keys[pos+1], keys[pos]
                 self.gui.configManager.setRecipeOrder(keys)
             elif choice == addParameterAction:
-                self.addParameter()
-            elif choice in removeMenuActions.values():
-                param_name = list(removeMenuActions.keys())[list(removeMenuActions.values()).index(choice)]
-                self.removeParameter(param_name)
+                self.gui.configManager.addParameter(self.recipe_name)
 
     def renameRecipe(self):
         """ Prompts the user for a new recipe name and apply it to the selected recipe """
@@ -309,14 +300,6 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             if newName != '':
                 self.gui.configManager.renameRecipe(
                     self.recipe_name, newName)
-
-    def addParameter(self):
-        """ Proxy to add parameter to config """
-        self.gui.configManager.addParameter(self.recipe_name)
-
-    def removeParameter(self, param_name: str):
-        """ Proxy to remove parameter to config """
-        self.gui.configManager.removeParameter(self.recipe_name, param_name)
 
 
 class parameterQFrame(QtWidgets.QFrame):

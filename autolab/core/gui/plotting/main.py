@@ -20,6 +20,7 @@ from .treewidgets import TreeWidgetItemModule
 from ..icons import icons
 from ... import devices
 from ... import config
+from ..GUI_utilities import get_font_size, setLineEditBackground
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
@@ -33,9 +34,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         self.setAcceptDrops(True)
 
     def dropEvent(self, event):
-
         """ This function is used to add a plugin to the plotter """
-
         variable = event.source().last_drag
         if type(variable) == str:
             self.plotter.addPlugin(variable)
@@ -63,6 +62,8 @@ class Plotter(QtWidgets.QMainWindow):
         self.mainGui = mainGui
         self.all_plugin_list = list()
         self.active_plugin_dict = dict()
+
+        self._font_size = get_font_size() + 1
 
         # Configuration of the window
         QtWidgets.QMainWindow.__init__(self)
@@ -98,16 +99,20 @@ class Plotter(QtWidgets.QMainWindow):
         # Number of traces
         self.nbTraces_lineEdit.setText(f'{self.figureManager.nbtraces:g}')
         self.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
-        self.nbTraces_lineEdit.textEdited.connect(lambda : self.setLineEditBackground(self.nbTraces_lineEdit,'edited'))
-        self.setLineEditBackground(self.nbTraces_lineEdit,'synced')
+        self.nbTraces_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.nbTraces_lineEdit,'edited', self._font_size))
+        setLineEditBackground(self.nbTraces_lineEdit, 'synced', self._font_size)
 
-        for axe in ['x','y'] :
-            getattr(self,f'variable_{axe}_comboBox').currentIndexChanged.connect(self.variableChanged)
+        getattr(self, 'variable_x_comboBox').currentIndexChanged.connect(
+            self.variableChanged)
+        getattr(self, 'variable_y_comboBox').currentIndexChanged.connect(
+            self.variableChanged)
 
         self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
         self.device_lineEdit.returnPressed.connect(self.deviceChanged)
-        self.device_lineEdit.textEdited.connect(lambda : self.setLineEditBackground(self.device_lineEdit,'edited'))
-        self.setLineEditBackground(self.device_lineEdit,'synced')
+        self.device_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.device_lineEdit, 'edited', self._font_size))
+        setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
 
         # Plot button
         self.plotDataButton.clicked.connect(self.refreshPlotData)
@@ -124,8 +129,9 @@ class Plotter(QtWidgets.QMainWindow):
         # Delay
         self.delay_lineEdit.setText(str(self.timer_time))
         self.delay_lineEdit.returnPressed.connect(self.delayChanged)
-        self.delay_lineEdit.textEdited.connect(lambda : self.setLineEditBackground(self.delay_lineEdit,'edited'))
-        self.setLineEditBackground(self.delay_lineEdit,'synced')
+        self.delay_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.delay_lineEdit, 'edited', self._font_size))
+        setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
         self.setAcceptDrops(True)
 
@@ -193,9 +199,7 @@ class Plotter(QtWidgets.QMainWindow):
                             except: pass
 
     def timerAction(self):
-
         """ This function checks if a module has been loaded and put to the queue. If so, associate item and module """
-
         threadItemDictTemp = self.threadItemDict.copy()
         threadDeviceDictTemp = self.threadDeviceDict.copy()
 
@@ -213,22 +217,18 @@ class Plotter(QtWidgets.QMainWindow):
         if len(threadItemDictTemp) == 0:
             self.timerPlugin.stop()
 
-    def itemClicked(self,item):
-
+    def itemClicked(self, item):
         """ Function called when a normal click has been detected in the tree.
             Check the association if it is a main item """
-
         if item.parent() is None and item.loaded is False and id(item) not in self.threadItemDict.keys():
             self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
-            self.threadManager.start(item,'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
+            self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerPlugin.start()
 
-    def rightClick(self,position):
-
+    def rightClick(self, position):
         """ Function called when a right click has been detected in the tree """
-
         item = self.tree.itemAt(position)
-        if hasattr(item,'menu') :
+        if hasattr(item,'menu'):
             item.menu(position)
 
     def processPlugin(self):
@@ -239,7 +239,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         layout = QtWidgets.QVBoxLayout(self.frame)
 
-        label = QtWidgets.QLabel('Plugin:',self.frame)
+        label = QtWidgets.QLabel('Plugin:', self.frame)
         label.setToolTip("Drag and drop a device from the control panel to add a plugin to the plugin tree")
         layout.addWidget(label)
         font = QtGui.QFont()
@@ -273,7 +273,6 @@ class Plotter(QtWidgets.QMainWindow):
         else:
             self.splitter.setSizes([400,40])
             self.splitter_2.setSizes([200,80,80,80])
-
 
     def addPlugin(self, plugin_name, plugin_nickname=None):
 
@@ -310,17 +309,17 @@ class Plotter(QtWidgets.QMainWindow):
         except Exception:
             pass
 
-    def getUniqueName(self,basename):
+    def getUniqueName(self, basename: str):
         """ This function adds a number next to basename in case this basename is already taken """
         names = self.all_plugin_list
         name = basename
 
         compt = 0
-        while True :
-            if name in names :
+        while True:
+            if name in names:
                 compt += 1
                 name = basename+'_'+str(compt)
-            else :
+            else:
                 break
         return name
 
@@ -371,12 +370,10 @@ class Plotter(QtWidgets.QMainWindow):
 
     def overwriteDataChanged(self):
         """ Set overwrite name for data import """
-
         self.dataManager.setOverwriteData(self.overwriteDataButton.isChecked())
 
     def autoRefreshChanged(self):
         """ Set if auto refresh call for device data """
-
         if self.auto_plotDataButton.isChecked():
             self.timer.start()
         else:
@@ -389,7 +386,6 @@ class Plotter(QtWidgets.QMainWindow):
 
     def refreshPlotData(self):
         """ This function get the last dataset data and display it onto the Plotter GUI """
-
         deviceValue = self.dataManager.getDeviceValue()
 
         try:
@@ -397,14 +393,13 @@ class Plotter(QtWidgets.QMainWindow):
             dataset = self.dataManager.importDeviceData(deviceVariable)
             data_name = dataset.name
             self.figureManager.start(dataset)
-            self.setStatus(f"Display the data: '{data_name}'",5000)
+            self.setStatus(f"Display the data: '{data_name}'", 5000)
         except Exception as error:
-            self.setStatus(f"Can't refresh data: {error}",10000, False)
+            self.setStatus(f"Can't refresh data: {error}", 10000, False)
 
     def deviceChanged(self):
         """ This function start the update of the target value in the data manager
         when a changed has been detected """
-
         # Send the new value
         try:
             value = str(self.device_lineEdit.text())
@@ -418,15 +413,13 @@ class Plotter(QtWidgets.QMainWindow):
     def updateDeviceValueGui(self):
         """ This function ask the current value of the target value in the data
         manager, and then update the GUI """
-
         value = self.dataManager.getDeviceValue()
         self.device_lineEdit.setText(f'{value}')
-        self.setLineEditBackground(self.device_lineEdit,'synced')
+        setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
 
     def variableChanged(self,index):
         """ This function is called when the displayed result has been changed in
         the combo box. It proceeds to the change. """
-
         self.figureManager.clearData()
 
         if self.variable_x_comboBox.currentIndex() != -1 and self.variable_y_comboBox.currentIndex() != -1 :
@@ -435,7 +428,6 @@ class Plotter(QtWidgets.QMainWindow):
     def nbTracesChanged(self):
         """ This function is called when the number of traces displayed has been changed
         in the GUI. It proceeds to the change and update the plot. """
-
         value = self.nbTraces_lineEdit.text()
 
         check = False
@@ -448,55 +440,40 @@ class Plotter(QtWidgets.QMainWindow):
             pass
 
         self.nbTraces_lineEdit.setText(f'{self.figureManager.nbtraces:g}')
-        self.setLineEditBackground(self.nbTraces_lineEdit,'synced')
+        setLineEditBackground(self.nbTraces_lineEdit, 'synced', self._font_size)
 
-        if check is True and self.variable_y_comboBox.currentIndex() != -1 :
+        if check is True and self.variable_y_comboBox.currentIndex() != -1:
             self.figureManager.reloadData()
 
-
     def closeEvent(self,event):
-        """ This function does some steps before the window is really killed """
-
-        # Delete reference of this window in the control center
+        """ This function does some steps before the window is closed (not killed) """
         self.timer.stop()
         self.timerPlugin.stop()
         self.timerQueue.stop()
+
         self.mainGui.clearPlotter()
 
+    def close(self):
+        """ This function does some steps before the window is killed """
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
 
-    def setLineEditBackground(self,obj,state):
-
-        """ Function used to set the background color of a QLineEdit widget,
-        based on its editing state """
-
-        if state == 'synced' :
-            color='#D2FFD2' # vert
-        if state == 'edited' :
-            color='#FFE5AE' # orange
-
-        # if "QLineEdit".lower() in str(obj).lower():
-        obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}"%color)
-        # elif "QSpinBox".lower() in str(obj).lower():
-        #     obj.setStyleSheet("QSpinBox {background-color : %s}"%color)
-        # else:
-        #     print(str(obj), "Not implemented")
-
+        super().close()
 
     def delayChanged(self):
         """ This function start the update of the delay in the thread manager
         when a changed has been detected """
-
         # Send the new value
-        try :
+        try:
             value = float(self.delay_lineEdit.text())
             assert value >= 0
             self.timer_time = value
-        except :
+        except:
             pass
 
         # Rewrite the GUI with the current value
         self.updateDelayGui()
-
 
     def updateDelayGui(self):
         """ This function ask the current value of the delay in the data
@@ -505,19 +482,13 @@ class Plotter(QtWidgets.QMainWindow):
         value = self.timer_time
         self.delay_lineEdit.setText(f'{value:g}')
         self.timer.setInterval(int(value*1000))  # ms
-        self.setLineEditBackground(self.delay_lineEdit,'synced')
-
+        setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
     def setStatus(self,message, timeout=0, stdout=True):
-
         """ Modify the message displayed in the status bar and add error message to logger """
-
-        self.statusBar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)
 
-
     def clearStatus(self):
-
         """ Erase the message displayed in the status bar """
-
         self.setStatus('')

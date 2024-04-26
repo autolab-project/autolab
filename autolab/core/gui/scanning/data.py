@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
 
-from ... import paths
+from .. import variables
 from ... import config as autolab_config
 from ... import utilities
 
@@ -30,7 +30,6 @@ class DataManager:
         self.gui = gui
         self.datasets = list()
         self.queue = Queue()
-        self.initialized = False
 
         scanner_config = autolab_config.get_scanner_config()
         self.save_temp = utilities.boolean(scanner_config["save_temp"])
@@ -40,13 +39,6 @@ class DataManager:
         self.timer.setInterval(33) #30fps
         self.timer.timeout.connect(self.sync)
 
-        # Save button configuration
-        self.gui.save_pushButton.clicked.connect(self.saveButtonClicked)
-        self.gui.save_pushButton.setEnabled(False)
-
-        # Clear button configuration
-        self.gui.clear_pushButton.clicked.connect(self.clear)
-
     def getData(self, nbDataset: int, varList: list,
                 selectedData: int = 0, data_name: str = "Scan"):
         """ This function returns to the figure manager the required data """
@@ -55,15 +47,20 @@ class DataManager:
 
         for i in range(selectedData, nbDataset+selectedData):
             if i < len(self.datasets):
-                dataset = self.datasets[-(i+1)][recipe_name]
+                datasets = self.datasets[-(i+1)]
+                if recipe_name not in datasets: continue
+                dataset = datasets[recipe_name]
+                data = None
 
                 if data_name == "Scan":
                     try:
                         data = dataset.getData(varList, data_name=data_name)  # OPTIMIZE: Currently can't recover dataset if error before end of first recipe loop
+                    except KeyError:
+                        pass  # this occurs when plot variable from scani that is not in scanj
                     except Exception as e:
-                        data = None
-                        self.gui.setStatus(f"Error encountered for scan id {selectedData+1}: {e}",
-                                           10000, False)
+                        self.gui.setStatus(
+                            f"Scan warning: Can't plot Scan{len(self.datasets)-i}: {e}",
+                            10000, False)
                     dataList.append(data)
                 elif dataset.dictListDataFrame.get(data_name) is not None:
                     dataList2 = []
@@ -71,13 +68,14 @@ class DataManager:
 
                     for index in range(lenListDataFrame):
                         try:
-                            data = None
                             checkBoxChecked = self.gui.figureManager.menuBoolList[index]
                             if checkBoxChecked:
-                                data = dataset.getData(varList, data_name=data_name, dataID=index)
+                                data = dataset.getData(
+                                    varList, data_name=data_name, dataID=index)
                         except Exception as e:
-                            self.gui.setStatus(f"Error encountered for scan id {selectedData+1} and dataframe {data_name} with ID {index+1}: {e}",
-                                               10000, False)
+                            self.gui.setStatus(
+                                f"Scan warning: Can't plot Scan{len(self.datasets)-i} and dataframe {data_name} with ID {index+1}: {e}",
+                                10000, False)
                         dataList2.append(data)
 
                     dataList2.reverse()
@@ -88,85 +86,17 @@ class DataManager:
         dataList.reverse()
         return dataList
 
-    def saveButtonClicked(self):
-        """ This function is called when the save button is clicked.
-        It asks a path and starts the procedure to save the data """
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self.gui,  caption="Save data",
-            directory=paths.USER_LAST_CUSTOM_FOLDER,
-            filter=utilities.SUPPORTED_EXTENSION)
-        path = os.path.dirname(filename)
-
-        if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
-            self.gui.setStatus('Saving data...', 5000)
-            datasets = self.getLastSelectedDataset()
-
-            for dataset_name in datasets.keys():
-                dataset = datasets[dataset_name]
-
-                if len(datasets) == 1:
-                    filename_recipe = filename
-                else:
-                    dataset_folder, extension = os.path.splitext(filename)
-                    filename_recipe = f'{dataset_folder}_{dataset_name}{extension}'
-                dataset.save(filename_recipe)
-
-            scanner_config = autolab_config.get_scanner_config()
-            save_config = utilities.boolean(scanner_config["save_config"])
-
-            if save_config:
-                dataset_folder, extension = os.path.splitext(filename)
-                new_configname = dataset_folder + ".conf"
-                config_name = os.path.join(os.path.dirname(dataset.tempFolderPath), 'config.conf')
-
-                if os.path.exists(config_name):
-                    shutil.copy(config_name, new_configname)
-                else:
-                    if datasets is not self.getLastDataset():
-                        print("Warning: Can't find config for this dataset, save lastest config instead", file=sys.stderr)
-                    self.gui.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
-
-            if utilities.boolean(scanner_config["save_figure"]):
-                self.gui.figureManager.save(filename)
-
-            self.gui.setStatus(f'Last dataset successfully saved in {filename}',
-                               5000)
-
-    def clear(self):
-        """ This reset any recorded data, and the GUI accordingly """
-        self.datasets = list()
-        self.initialized = False
-        self.gui.figureManager.clearData()
-        self.gui.figureManager.clearMenuID()
-        self.gui.figureManager.figMap.hide()
-        self.gui.figureManager.fig.show()
-        self.gui.figureManager.setLabel("x", " ")
-        self.gui.figureManager.setLabel("y", " ")
-        self.gui.nbTraces_lineEdit.show()
-        self.gui.graph_nbTracesLabel.show()
-        self.gui.frame_axis.show()
-        self.gui.toolButton.hide()
-        self.gui.variable_x_comboBox.clear()
-        self.gui.variable_y_comboBox.clear()
-        self.gui.data_comboBox.clear()
-        self.gui.save_pushButton.setEnabled(False)
-        self.gui.progressBar.setValue(0)
-        self.gui.displayScanData_pushButton.setEnabled(False)
-        self.gui.dataframe_comboBox.clear()
-        self.gui.dataframe_comboBox.addItems(["Scan"])
-        self.gui.dataframe_comboBox.setEnabled(False)
-        self.gui.dataframe_comboBox.hide()
-        self.gui.scan_recipe_comboBox.setCurrentIndex(0)
-        self.gui.scan_recipe_comboBox.setEnabled(False)
-
     def getLastDataset(self) -> dict:
         """ This return the last created dataset """
         return self.datasets[-1] if len(self.datasets) > 0 else None
 
     def getLastSelectedDataset(self) -> List[dict]:
         """ This return the last selected dataset """
-        return self.datasets[self.gui.data_comboBox.currentIndex()]
+        index = self.gui.data_comboBox.currentIndex()
+        if index != -1 and index < len(self.datasets):
+            return self.datasets[index]
+        else:
+            return None
 
     def newDataset(self, config: dict):
         """ This function creates and returns a new empty dataset """
@@ -194,10 +124,20 @@ class DataManager:
 
                 # bellow just to know maximum point
                 nbpts = 1
-                for nbpts_i in [parameter['nbpts'] for parameter in recipe['parameter']]: nbpts *= nbpts_i
+                for parameter in recipe['parameter']:
+                    if 'values' in parameter:
+                        if variables.has_eval(parameter['values']):
+                            values = variables.eval_safely(parameter['values'])
+                            if isinstance(values, str):
+                                nbpts *= 11  # OPTIMIZE: can't know length in this case without doing eval (should not do eval here because can imagine recipe_2 with param set at end of recipe_1)
+                                self.gui.progressBar.setStyleSheet("""QProgressBar::chunk {background-color: orange;}""")
+                            else: nbpts *= len(values)
+                        else: nbpts *= len(parameter['values'])
+                    else: nbpts *= parameter['nbpts']
 
                 maximum += nbpts
 
+                # OBSOLETE: see if remove completely recipe in recipe
                 list_recipe_nbpts_new = [[recipe, nbpts]]
                 has_sub_recipe = True
 
@@ -213,7 +153,12 @@ class DataManager:
                                 has_sub_recipe = True
                                 other_recipe = config[step['element']]
                                 other_nbpts = 1
-                                for other_nbpts_i in [parameter['nbpts'] for parameter in other_recipe['parameter']]: other_nbpts *= other_nbpts_i
+
+                                for parameter in other_recipe['parameter']:
+                                    if 'values' in parameter:
+                                        other_nbpts *= len(parameter['values'])
+                                    else:
+                                        other_nbpts *= parameter['nbpts']
                                 sub_nbpts = nbpts * other_nbpts
                                 maximum += sub_nbpts
                                 list_recipe_nbpts_new.append([other_recipe, sub_nbpts])
@@ -230,6 +175,7 @@ class DataManager:
         datasets = self.getLastDataset()
         lenQueue = self.queue.qsize()
 
+        # Add scan data to dataset
         for i in range(lenQueue):
             try: point = self.queue.get()  # point is collections.OrderedDict{0:recipe_name, 'parameter_name':parameter_value, 'step1_name':step1_value, 'step2_name':step2_value, ...}
             except: break
@@ -249,46 +195,9 @@ class DataManager:
 
             self.gui.progressBar.setValue(progress)
 
-            # Update dataframe combobox and checkbox
-            listDataFrame = list(dataset.dictListDataFrame.values())
-            if len(listDataFrame) != 0:
-                nb_id = 0
-                for dataframe in listDataFrame:
-                    if len(dataframe) > nb_id:
-                        nb_id = len(dataframe)
+            self.gui.save_pushButton.setEnabled(True)
 
-                # not-oPTIMIZE: edit: not necessary if show only one scan <- values will not correspond to previous scan if start a new scan with a different range parameter
-                nb_total = 1
-                for nbpts_i in [parameter['nbpts'] for parameter in self.gui.configManager.parameterList(recipe_name)]: nb_total *= nbpts_i
-
-                while self.gui.figureManager.nbCheckBoxMenuID > nb_total:
-                    self.gui.figureManager.removeLastCheckBox2MenuID()
-
-                if self.gui.figureManager.nbCheckBoxMenuID >= nb_id:
-                    paramValue = nb_id
-                    self.gui.figureManager.menuWidgetList[nb_id-1].setText(str(paramValue))
-
-                prev_id = self.gui.figureManager.nbCheckBoxMenuID
-                while self.gui.figureManager.nbCheckBoxMenuID < nb_id:
-                    prev_id += 1
-                    paramValue = prev_id
-                    self.gui.figureManager.addCheckBox2MenuID(paramValue)
-
-                if self.gui.dataframe_comboBox.currentText() != "Scan":
-                    self.gui.figureManager.reloadData()
-
-            # Executed after the first start of a new config scan
-            if not self.initialized:
-                self.gui.scan_recipe_comboBox.setCurrentText(recipe_name)
-                self.updateDisplayableResults()
-                self.gui.save_pushButton.setEnabled(True)
-                self.initialized = True
-
-            # Executed after any dataset newly created and fed
-            if dataset.new:  # OBSOLETE: was used to add only new point to plot instead of resending everything. Removed it with the introdution of dataframe plot
-                # self.gui.figureManager.reloadData()
-                dataset.new = False
-
+            # Update plot
             self.gui.figureManager.data_comboBoxClicked()
 
     def updateDisplayableResults(self):
@@ -296,7 +205,11 @@ class DataManager:
         the results that can be plotted """
         data_name = self.gui.dataframe_comboBox.currentText()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        dataset = self.getLastSelectedDataset()[recipe_name]
+        datasets = self.getLastSelectedDataset()
+
+        if datasets is None or recipe_name not in datasets: return None
+
+        dataset = datasets[recipe_name]
 
         if data_name == "Scan":
             data = dataset.data

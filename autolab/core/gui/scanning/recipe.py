@@ -10,9 +10,12 @@ import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
 from .customWidgets import MyQTreeWidget, MyQTabWidget
+from .. import variables
 from ..icons import icons
 from ... import config
-from ...utilities import clean_string, array_from_txt, dataframe_from_txt
+from ...utilities import (clean_string, str_to_array, array_to_str,
+                          str_to_dataframe, dataframe_to_str)
+
 
 class RecipeManager:
     """ Manage a recipe from a scan """
@@ -34,10 +37,19 @@ class RecipeManager:
 
         # Tree configuration
         self.tree = MyQTreeWidget(frameRecipe, self.gui, self.recipe_name)
-        self.tree.setHeaderLabels(['Step name', 'Type', 'Element address', 'Value'])
-        self.tree.header().resizeSection(0, 100)
-        self.tree.header().resizeSection(1, 60)
-        self.tree.header().resizeSection(2, 150)
+        self.tree.setHeaderLabels(['Step name', 'Action', 'Element address', 'Type', 'Value', 'Unit'])
+        header = self.tree.header()
+        header.setMinimumSectionSize(20)
+        # header.resizeSections(QtWidgets.QHeaderView.ResizeToContents)
+        header.setStretchLastSection(False)
+        header.resizeSection(0, 95)
+        header.resizeSection(1, 55)
+        header.resizeSection(2, 115)
+        header.resizeSection(3, 35)
+        header.resizeSection(4, 110)
+        # header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
+        header.resizeSection(5, 32)
+        header.setMaximumSize(16777215, 16777215)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
         self.tree.reorderSignal.connect(self.orderChanged)
         self.tree.setDragDropMode(QtWidgets.QAbstractItemView.DragDrop)
@@ -99,6 +111,7 @@ class RecipeManager:
             # Column 1 : Step name
             item.setText(0, step['name'])
 
+            # OPTIMIZE: stepType is a bad name. Possible confusion with element type. stepType should be stepAction or just action
             # Column 2 : Step type
             if step['stepType'] == 'measure':
                 item.setText(1, 'Measure')
@@ -119,18 +132,7 @@ class RecipeManager:
             else:
                 item.setText(2, step['element'].address())
 
-            # Column 4 : Value if stepType is 'set'
-            value = step['value']
-            if value is not None:
-
-                try:
-                    if step['element'].type in [bool, str, tuple, np.ndarray, pd.DataFrame]:
-                       item.setText(3, f'{value}')
-                    else:
-                       item.setText(3, f'{value:.{self.precision}g}')
-                except ValueError:
-                    item.setText(3, f'{value}')
-
+            # Column 4 : Icon of element type
             etype = step['element'].type
             if etype is int: item.setIcon(3, QtGui.QIcon(icons['int']))
             elif etype is float: item.setIcon(3, QtGui.QIcon(icons['float']))
@@ -140,6 +142,35 @@ class RecipeManager:
             elif etype is tuple: item.setIcon(3, QtGui.QIcon(icons['tuple']))
             elif etype is np.ndarray: item.setIcon(3, QtGui.QIcon(icons['ndarray']))
             elif etype is pd.DataFrame: item.setIcon(3, QtGui.QIcon(icons['DataFrame']))
+
+            # Column 5 : Value if stepType is 'set'
+            value = step['value']
+            if value is not None:
+
+                try:
+                    if step['element'].type in [bool, str, tuple]:
+                        item.setText(4, f'{value}')
+                    elif step['element'].type in [np.ndarray]:
+                        value = array_to_str(
+                            value, threshold=1000000, max_line_width=100)
+                        item.setText(4, f'{value}')
+                    elif step['element'].type in [pd.DataFrame]:
+                        value = dataframe_to_str(value, threshold=1000000)
+                        item.setText(4, f'{value}')
+                    else:
+                       item.setText(4, f'{value:.{self.precision}g}')
+                except ValueError:
+                    item.setText(4, f'{value}')
+
+            # Column 6 : Unit of element
+            unit = step['element'].unit
+            if unit is not None:
+                item.setText(5, str(unit))
+
+            # set AlignTop to all columns
+            for i in range(item.columnCount()):
+                item.setTextAlignment(i, QtCore.Qt.AlignTop)
+                # OPTIMIZE: icon are not aligned with text: https://www.xingyulei.com/post/qt-button-alignment/index.html
 
             # Add item to the tree
             self.tree.addTopLevelItem(item)
@@ -242,18 +273,24 @@ class RecipeManager:
             self.recipe_name, name)
 
         # Default value displayed in the QInputDialog
-        try:
-            defaultValue = f'{value:.{self.precision}g}'
-        except (ValueError, TypeError):
-            defaultValue = f'{value}'
-        value, state = QtWidgets.QInputDialog.getText(
-            self.gui, name, f"Set {name} value",
-            QtWidgets.QLineEdit.Normal, defaultValue)
+        if element.type in [np.ndarray]:
+            defaultValue = array_to_str(value, threshold=1000000, max_line_width=100)
+        elif element.type in [pd.DataFrame]:
+            defaultValue = dataframe_to_str(value, threshold=1000000)
+        else:
+            try:
+                defaultValue = f'{value:.{self.precision}g}'
+            except (ValueError, TypeError):
+                defaultValue = f'{value}'
 
-        if value != '':
+        main_dialog = variables.VariablesDialog(self.gui, name, defaultValue)
+
+        if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+            value = main_dialog.textValue()
+
             try:
                 try:
-                    assert self.checkVariable(value), "Need $eval: to evaluate the given string"
+                    assert variables.has_eval(value), "Need $eval: to evaluate the given string"
                 except:
                     # Type conversions
                     if element.type in [int]:
@@ -270,13 +307,13 @@ class RecipeManager:
                         value = bool(value)
                     # elif element.type in [tuple]:
                     #     pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
-                    # BUG: bad with large data (truncate), better to stick with $eval: for now
-                    # elif element.type in [np.ndarray]:
-                    #     value = array_from_txt(value)
-                    # elif element.type in [pd.DataFrame]:
-                    #     value = dataframe_from_txt(value)
+                    # OPTIMIZE: bad with large data (truncate), but nobody will use it for large data right?
+                    elif element.type in [np.ndarray]:
+                        value = str_to_array(value)
+                    elif element.type in [pd.DataFrame]:
+                        value = str_to_dataframe(value)
                     else:
-                        assert self.checkVariable(value), "Need $eval: to evaluate the given string"
+                        assert variables.has_eval(value), "Need $eval: to evaluate the given string"
                 # Apply modification
                 self.gui.configManager.setRecipeStepValue(
                     self.recipe_name, name, value)
@@ -284,21 +321,7 @@ class RecipeManager:
                 self.gui.setStatus(f"Can't set step: {er}", 10000, False)
                 pass
 
-    ## OLD: this code was used to check if a given variable exists in a device.  Only work for one variable.
-    ## If someone think it could be usefull to check if variables exists,
-    ## You are welcome to implement a parsing system to check all the variables in the given string
-    # def checkVariable(self, value):
-
-    #     """ Check if value is a valid device variable address. For example value='dummy.amplitude' """
-    #     module_name, *submodules_name, variable_name = value.split(".")
-    #     module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
-    #     for submodule_name in submodules_name:
-    #         module = module.get_module(submodule_name)
-    #     module.get_variable(variable_name)
-
-    def checkVariable(self, value) -> bool:
-        """ Checks if value start with '$eval:'. Will not try to check if variables exists"""
-        return True if str(value).startswith("$eval:") else False
+        main_dialog.deleteLater()
 
     def itemDoubleClicked(self, item: QtWidgets.QTreeWidgetItem, column: int):
         """ Executes an action depending where the user double clicked """
@@ -309,7 +332,7 @@ class RecipeManager:
 
             if column == 0:
                 self.renameStep(name)
-            elif column == 3:
+            elif column == 4:
                 if stepType == 'set' or (stepType == 'action' and element.type in [
                         int, float, str, np.ndarray, pd.DataFrame]):
                     self.setStepValue(name)

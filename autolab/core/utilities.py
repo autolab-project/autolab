@@ -53,38 +53,63 @@ def boolean(value: Any) -> bool:
     return value
 
 
-def array_from_txt(string: str) -> Any:  # actually -> np.ndarray
-    import re, ast
+def str_to_value(s: str) -> Any:
+    try:
+        int_val = int(s)
+        if str(int_val) == s: return int_val
+    except ValueError: pass
+
+    try:
+        float_val = float(s)
+        return float_val
+    except ValueError: pass
+
+    if s.lower() in ('true', 'false'):
+        return s.lower() == 'true'
+
+    if s == 'None':
+        s = None
+    # If none of the above works, return the string itself
+    return s
+
+
+def create_array(value: Any) -> Any:  # actually -> np.ndarray
     import numpy as np
-    if "," in string: ls = re.sub('\s,+', ',', string)
-    else: ls = re.sub('\s+', ',', string)
+    try: array = np.array(value, ndmin=1, dtype=float)  # check validity of array
+    except ValueError as e: raise ValueError(e)
+    else: array = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
+    return array
+
+
+def str_to_array(s: str) -> Any:  # actually -> np.ndarray
+    import re, ast
+    if "," in s: ls = re.sub(r'\s,+', ',', s)
+    else: ls = re.sub(r'\s+', ',', s)
     test = ast.literal_eval(ls)
 
-    try: value = np.array(test, ndmin=1, dtype=float)  # check validity of array
-    except ValueError as e: raise ValueError(e)
-    else: value = np.array(test, ndmin=1)  # ndim=1 to avoid having float if 0D
-    return value
+    return create_array(test)
 
 
-def array_to_txt(value: Any) -> str:
+def array_to_str(value: Any, threshold: int = None, max_line_width: int = None) -> str:
     import numpy as np
-    # import sys
-    # with np.printoptions(threshold=sys.maxsize):  # not a solution, can't display large data: too slow
-    return np.array2string(value, separator=',', suppress_small=True)  # this truncates data to 1000 elements
+    return np.array2string(np.array(value), separator=',', suppress_small=True,
+                           threshold=threshold, max_line_width=max_line_width)
 
 
-def dataframe_from_txt(value: str) -> Any:
+def str_to_dataframe(s: str) -> Any:
     from io import StringIO
     import pandas as pd
-    value_io = StringIO(value)
+    value_io = StringIO(s)
     # TODO: find sep (use \t to be compatible with excel but not nice to write by hand)
     df = pd.read_csv(value_io, sep="\t")
     return df
 
 
-def dataframe_to_txt(value: Any) -> str:
+def dataframe_to_str(value: Any, threshold=1000) -> str:
     import pandas as pd
-    return pd.DataFrame(value).head(1000).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
+    if isinstance(value, str) and value == '':
+        value = None
+    return pd.DataFrame(value).head(threshold).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
 
 
 def openFile(filename: str):
@@ -121,6 +146,123 @@ def formatData(data: Any) -> Any: # actually -> pd.DataFrame but don't want to i
         data.insert(0, "0", range(data.shape[0]))
 
     return data
+
+
+def pyqtgraph_image() -> Any: # actually -> pyqtgraph.imageview.ImageView.ImageView but don't want to import it in file
+    import numpy as np
+    import pyqtgraph as pg
+    from qtpy import QtWidgets, QtCore
+
+    class myImageView(pg.ImageView):
+        def __init__(self, *args, **kwargs):
+            pg.ImageView.__init__(self, *args, **kwargs)
+
+            # update tick background on gradient change
+            self.ui.histogram.gradient.sigGradientChanged.connect(self.update_ticks)
+
+            self.figLineROI, self.axLineROI = pyqtgraph_fig_ax()
+            self.figLineROI.hide()
+            self.plot = self.axLineROI.plot([], [], pen='k')
+
+            self.lineROI = pg.LineSegmentROI([[0, 100], [100, 100]], pen='r')
+            self.lineROI.sigRegionChanged.connect(self.updateLineROI)
+            self.lineROI.hide()
+
+            self.addItem(self.lineROI)
+
+            # update slice when change frame number in scanner
+            self.timeLine.sigPositionChanged.connect(self.updateLineROI)
+
+            slice_pushButton = QtWidgets.QPushButton('Slice')
+            slice_pushButton.state = False
+            slice_pushButton.setMinimumSize(0, 23)
+            slice_pushButton.setMaximumSize(75, 23)
+            slice_pushButton.clicked.connect(self.slice_pushButtonClicked)
+            self.slice_pushButton = slice_pushButton
+
+            horizontalLayoutButton = QtWidgets.QHBoxLayout()
+            horizontalLayoutButton.setSpacing(0)
+            horizontalLayoutButton.setContentsMargins(0,0,0,0)
+            horizontalLayoutButton.addStretch()
+            horizontalLayoutButton.addWidget(self.slice_pushButton)
+
+            widgetButton = QtWidgets.QWidget()
+            widgetButton.setLayout(horizontalLayoutButton)
+
+            verticalLayoutImageButton = QtWidgets.QVBoxLayout()
+            verticalLayoutImageButton.setSpacing(0)
+            verticalLayoutImageButton.setContentsMargins(0,0,0,0)
+            verticalLayoutImageButton.addWidget(self)
+            verticalLayoutImageButton.addWidget(widgetButton)
+
+            widgetImageButton = QtWidgets.QWidget()
+            widgetImageButton.setLayout(verticalLayoutImageButton)
+
+            splitter = QtWidgets.QSplitter()
+            splitter.setOrientation(QtCore.Qt.Vertical)
+            splitter.addWidget(widgetImageButton)
+            splitter.addWidget(self.figLineROI)
+            splitter.setSizes([500,500])
+
+            verticalLayoutMain = QtWidgets.QVBoxLayout()
+            verticalLayoutMain.setSpacing(0)
+            verticalLayoutMain.setContentsMargins(0,0,0,0)
+            verticalLayoutMain.addWidget(splitter)
+
+            centralWidget = QtWidgets.QWidget()
+            centralWidget.setLayout(verticalLayoutMain)
+            self.centralWidget = centralWidget
+
+        def update_ticks(self):
+            for tick in self.ui.histogram.gradient.ticks:
+                tick.pen = pg.mkPen(pg.getConfigOption("foreground"))
+                tick.currentPen = tick.pen
+                tick.hoverPen = pg.mkPen(200, 120, 0)
+
+        def slice_pushButtonClicked(self):
+            self.slice_pushButton.state = not self.slice_pushButton.state
+            self.display_line()
+
+        def display_line(self):
+            if self.slice_pushButton.state:
+                self.figLineROI.show()
+                self.lineROI.show()
+                self.updateLineROI()
+            else:
+                self.figLineROI.hide()
+                self.lineROI.hide()
+
+        def show(self):
+            self.centralWidget.show()
+
+        def hide(self):
+            self.centralWidget.hide()
+
+        def roiChanged(self):
+            pg.ImageView.roiChanged(self)
+            for c in self.roiCurves:
+                c.setPen(pg.getConfigOption("foreground"))
+
+        def setImage(self, *args, **kwargs):
+            pg.ImageView.setImage(self, *args, **kwargs)
+            self.updateLineROI()
+
+        def updateLineROI(self):
+            if self.slice_pushButton.state:
+                img = self.image if self.image.ndim == 2 else self.image[self.currentIndex]
+                img = np.array([img])
+
+                x,y = (0, 1) if self.imageItem.axisOrder == 'col-major' else (1, 0)
+                d2 = self.lineROI.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
+                self.plot.setData(d2[0])
+
+        def close(self):
+            self.figLineROI.deleteLater()
+            super().close()
+
+    imageView = myImageView()
+
+    return imageView, imageView.centralWidget
 
 
 def pyqtgraph_fig_ax() -> Tuple[Any, Any]: # actually -> Tuple[pyqtgraph.widgets.PlotWidget.PlotWidget, pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem] but don't want to import it in file
@@ -173,7 +315,6 @@ def qt_object_exists(QtObject) -> bool:
     """ Return True if object exists (not deleted).
     Check if use pyqt5, pyqt6, pyside2 or pyside6 to use correct implementation
     """
-
     global CHECK_ONCE
     import os
     QT_API = os.environ.get("QT_API")
@@ -195,3 +336,24 @@ def qt_object_exists(QtObject) -> bool:
             print(f"Warning: {e}. Skip check if Qt Object not deleted.")
             CHECK_ONCE = False
         return True
+
+
+def input_wrap(*args):
+    """ Wrap input function to avoid crash with Spyder using Qtconsole=5.3 """
+    input_allowed = True
+    try:
+        import spyder_kernels
+        import qtconsole
+    except ModuleNotFoundError:
+        pass
+    else:
+        if hasattr(spyder_kernels, "console") and hasattr(qtconsole, "__version__"):
+            if qtconsole.__version__.startswith("5.3"):
+                print("Warning: Spyder crashes with input() if Qtconsole=5.3, skip user input.")
+                input_allowed = False
+    if input_allowed:
+        ans = input(*args)
+    else:
+        ans = "yes"
+
+    return ans

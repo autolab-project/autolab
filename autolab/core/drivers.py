@@ -5,6 +5,7 @@ Created on Tue Oct  1 17:38:15 2019
 @author: qchat
 """
 import os
+import sys
 import inspect
 import importlib
 from typing import Type, List
@@ -53,7 +54,10 @@ def load_lib(lib_path: str) -> ModuleType:
     # Load the module
     spec = importlib.util.spec_from_file_location(lib_name, lib_path)
     lib = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(lib)
+    try:
+        spec.loader.exec_module(lib)
+    except Exception as e:
+        print(f"Can't load {lib}: {e}", file=sys.stderr)
 
     # Come back to previous working directory
     os.chdir(curr_dir)
@@ -64,9 +68,12 @@ def load_lib(lib_path: str) -> ModuleType:
 def load_driver_utilities_lib(driver_utilities_name: str) -> ModuleType:
     ''' Returns a driver library that contains Driver, Driver_XXX, Module_XXX '''
     # Loading preparation
-    driver_path = get_driver_path(driver_utilities_name.replace('_utilities', ''))
+    if os.path.exists(driver_utilities_name):
+        driver_path = get_driver_path(driver_utilities_name.replace('_utilities', ''))
+    else:
+        driver_path = os.path.join(paths.AUTOLAB_FOLDER, 'core', 'default_driver.py')
 
-    # Laod library
+    # Load library
     driver_lib = load_utilities_lib(driver_path)
 
     return driver_lib
@@ -128,15 +135,18 @@ def get_connection_names(driver_lib: ModuleType) -> str:
 
 def get_driver_category(driver_name: str) -> str:
     ''' Returns the driver's category from class Driver '''
-    driver_utilities_path = os.path.join(
-        os.path.dirname(get_driver_path(driver_name)), f'{driver_name}_utilities.py')
-    category = 'Other'
+    for filename in ('', '_utilities'):
 
-    if os.path.exists(driver_utilities_path):
-        driver_utilities = load_lib(driver_utilities_path)
+        driver_utilities_path = os.path.join(
+            os.path.dirname(get_driver_path(driver_name)), f'{driver_name}{filename}.py')
+        category = 'Other'
 
-        if hasattr(driver_utilities, 'category'):
-            category = driver_utilities.category
+        if os.path.exists(driver_utilities_path):
+            driver_utilities = load_lib(driver_utilities_path)
+
+            if hasattr(driver_utilities, 'category'):
+                category = driver_utilities.category
+                break
 
     return category
 
@@ -247,7 +257,3 @@ def load_drivers_paths() -> dict:
 def update_drivers_paths():
     global DRIVERS_PATHS
     DRIVERS_PATHS = load_drivers_paths()
-
-
-# Loading the drivers informations at startup
-update_drivers_paths()

@@ -11,7 +11,7 @@ icons_folder = os.path.dirname(__file__)
 
 ACTION_ICON_NAME = os.path.join(icons_folder, 'action-icon.svg').replace("\\", "/")
 ADD_ICON_NAME = os.path.join(icons_folder, 'add-icon.svg').replace("\\", "/")
-AUTOLAB_ICON_NAME = os.path.join(icons_folder, 'autolab-icon.svg').replace("\\", "/")
+AUTOLAB_ICON_NAME = os.path.join(icons_folder, 'autolab-icon.ico').replace("\\", "/")
 CONFIG_ICON_NAME = os.path.join(icons_folder, 'config-icon.svg').replace("\\", "/")
 DISCONNECT_ICON_NAME = os.path.join(icons_folder, 'disconnect-icon.svg').replace("\\", "/")
 DOWN_ICON_NAME = os.path.join(icons_folder, 'down-icon.svg').replace("\\", "/")

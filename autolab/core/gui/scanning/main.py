@@ -6,9 +6,11 @@ Created on Fri Sep 20 22:08:29 2019
 """
 import os
 import sys
+import shutil
+from functools import partial
 from collections import OrderedDict
 
-from qtpy import QtWidgets, uic, QtGui
+from qtpy import QtWidgets, QtCore, uic, QtGui
 
 from .config import ConfigManager
 from .figure import FigureManager
@@ -16,7 +18,10 @@ from .parameter import ParameterManager
 from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
+from .. import variables
 from ..icons import icons
+from ... import paths, utilities
+from ... import config as autolab_config
 
 
 class Scanner(QtWidgets.QMainWindow):
@@ -34,12 +39,44 @@ class Scanner(QtWidgets.QMainWindow):
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
         self.setAcceptDrops(True)
         self.recipeDict = {}
+        self.variablesMenu = None
+        self._append = False  # option for import config
 
         # Loading of the different centers
         self.figureManager = FigureManager(self)
         self.scanManager = ScanManager(self)
         self.dataManager = DataManager(self)
         self.configManager = ConfigManager(self)
+
+        # Configuration menu
+        configMenu = self.menuBar.addMenu('Configuration')
+
+        self.importAction = configMenu.addAction('Import configuration')
+        self.importAction.setIcon(QtGui.QIcon(icons['import']))
+        self.importAction.triggered.connect(self.importActionClicked)
+
+        self.openRecentMenu = configMenu.addMenu('Import recent configuration')
+        self.populateOpenRecent()
+
+        configMenu.addSeparator()
+
+        exportAction = configMenu.addAction('Export current configuration')
+        exportAction.setIcon(QtGui.QIcon(icons['export']))
+        exportAction.triggered.connect(self.exportActionClicked)
+
+        # Edition menu
+        editMenu = self.menuBar.addMenu('Edit')
+        self.undo = editMenu.addAction('Undo')
+        self.undo.setIcon(QtGui.QIcon(icons['undo']))
+        self.undo.triggered.connect(self.configManager.undoClicked)
+        self.undo.setEnabled(False)
+        self.redo = editMenu.addAction('Redo')
+        self.redo.setIcon(QtGui.QIcon(icons['redo']))
+        self.redo.triggered.connect(self.configManager.redoClicked)
+        self.redo.setEnabled(False)
+
+        variablesMenuAction = self.menuBar.addAction('Variable')
+        variablesMenuAction.triggered.connect(self.openVariablesMenu)
 
         self.configManager.addRecipe("recipe")  # add one recipe by default
         self.configManager.undoClicked() # avoid false history
@@ -48,18 +85,98 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.selectRecipe_comboBox.activated.connect(self._updateSelectParameter)
 
+        # Save button configuration
+        self.save_pushButton.clicked.connect(self.saveButtonClicked)
+        self.save_pushButton.setEnabled(False)
+
+        # Clear button configuration
+        self.clear_pushButton.clicked.connect(self.clear)
+
+    def populateOpenRecent(self):
+        """ https://realpython.com/python-menus-toolbars/#populating-python-menus-dynamically """
+        self.openRecentMenu.clear()
+
+        if os.path.exists(paths.HISTORY_CONFIG):
+            with open(paths.HISTORY_CONFIG, 'r') as f: filenames = f.readlines()
+            for filename in reversed(filenames):
+                filename = filename.rstrip('\n')
+                action = QtWidgets.QAction(filename, self)
+                action.setEnabled(os.path.exists(filename))
+                action.triggered.connect(
+                    partial(self.configManager.import_configPars, filename))
+                self.openRecentMenu.addAction(action)
+
+        self.openRecentMenu.addSeparator()
+        action = QtWidgets.QAction('Clear list', self)
+        action.triggered.connect(self.clearOpenRecent)
+        self.openRecentMenu.addAction(action)
+
+    def addOpenRecent(self, filename: str):
+
+        if not os.path.exists(paths.HISTORY_CONFIG):
+            with open(paths.HISTORY_CONFIG, 'w') as f: f.write(filename + '\n')
+        else:
+            with open(paths.HISTORY_CONFIG, 'r') as f: lines = f.readlines()
+            lines.append(filename)
+            lines = [line.rstrip('\n')+'\n' for line in lines]
+            lines = list(reversed(dict.fromkeys(reversed(lines))))  # unique names
+            lines = lines[-10:]
+            with open(paths.HISTORY_CONFIG, 'w') as f: f.writelines(lines)
+
+        self.populateOpenRecent()
+
+    def clearOpenRecent(self):
+        if os.path.exists(paths.HISTORY_CONFIG):
+            try: os.remove(paths.HISTORY_CONFIG)
+            except: pass
+
+        self.populateOpenRecent()
+
+    def clear(self):
+        """ This reset any recorded data, and the GUI accordingly """
+        self.dataManager.datasets = list()
+        self.figureManager.clearData()
+        self.figureManager.clearMenuID()
+        self.figureManager.figMap.hide()
+        self.figureManager.fig.show()
+        self.figureManager.setLabel("x", " ")
+        self.figureManager.setLabel("y", " ")
+        self.nbTraces_lineEdit.show()
+        self.graph_nbTracesLabel.show()
+        self.frame_axis.show()
+        self.toolButton.hide()
+        self.variable_x_comboBox.clear()
+        self.variable_y_comboBox.clear()
+        self.data_comboBox.clear()
+        self.data_comboBox.hide()
+        self.save_pushButton.setEnabled(False)
+        self.save_pushButton.setText('Save')
+        self.progressBar.setValue(0)
+        self.progressBar.setStyleSheet("")
+        self.displayScanData_pushButton.hide()
+        self.dataframe_comboBox.clear()
+        self.dataframe_comboBox.addItems(["Scan"])
+        self.dataframe_comboBox.hide()
+        self.scan_recipe_comboBox.setCurrentIndex(0)
+        self.scan_recipe_comboBox.hide()
+
+    def openVariablesMenu(self):
+        if self.variablesMenu is None:
+            self.variablesMenu = variables.VariablesMenu(self)
+        else:
+            self.variablesMenu.refresh()
+
+    def clearVariablesMenu(self):
+        """ This clear the variables menu instance reference when quitted """
+        self.variablesMenu = None
+
     def _addRecipe(self, recipe_name: str):
         """ Adds recipe to managers. Called by configManager """
-        if self.configManager.config[recipe_name]['active']:
-            self.scan_recipe_comboBox.addItem(recipe_name)
-
-        self.selectRecipe_comboBox.addItem(recipe_name)
-        self.selectRecipe_comboBox.setCurrentIndex(self.selectRecipe_comboBox.count()-1)
-        self._show_recipe_combobox()
+        self._update_recipe_combobox()  # recreate all and display first index
+        self.selectRecipe_comboBox.setCurrentIndex(self.selectRecipe_comboBox.count()-1)  # display last index
 
         self.recipeDict[recipe_name] = {}  # order of creation matter
         self.recipeDict[recipe_name]['recipeManager'] = RecipeManager(self, recipe_name)
-
         self.recipeDict[recipe_name]['parameterManager'] = OrderedDict()
 
         for parameter in self.configManager.parameterList(recipe_name):
@@ -69,45 +186,37 @@ class Scanner(QtWidgets.QMainWindow):
         """ Removes recipe from managers. Called by configManager and self """
         test = self.recipeDict.pop(recipe_name)
         test['recipeManager']._removeWidget()
-
-        index = self.scan_recipe_comboBox.findText(recipe_name)  # assert no duplicate name
-        self.scan_recipe_comboBox.removeItem(index)
-        index = self.selectRecipe_comboBox.findText(recipe_name)  # assert no duplicate name
-        self.selectRecipe_comboBox.removeItem(index)
-        self._show_recipe_combobox()
+        self._update_recipe_combobox()
+        self._updateSelectParameter()
 
     def _activateRecipe(self, recipe_name: str, state: bool):
         """ Activates/Deactivates an existing recipe. Called by configManager and recipeManager """
         active = bool(state)
-        index = self.scan_recipe_comboBox.findText(recipe_name)
-
-        if active:
-            if index == -1:
-                self.scan_recipe_comboBox.addItem(recipe_name)
-        else:
-            self.scan_recipe_comboBox.removeItem(index)
-
+        self._update_recipe_combobox()
         self.recipeDict[recipe_name]['recipeManager']._activateTree(active)
 
-    def _show_recipe_combobox(self):
+    def _update_recipe_combobox(self):
         """ Shows recipe combobox if multi recipes else hide """
-        dataSet_id = len(self.configManager.config.keys())
+        prev_index = self.selectRecipe_comboBox.currentIndex()
+
+        self.selectRecipe_comboBox.clear()
+        self.selectRecipe_comboBox.addItems(self.configManager.recipeNameList())
+
+        new_index = min(prev_index, self.selectRecipe_comboBox.count()-1)
+        self.selectRecipe_comboBox.setCurrentIndex(new_index)
+
+        dataSet_id = len(self.configManager.recipeNameList())
         if dataSet_id > 1:
-            self.scan_recipe_comboBox.show()
             self.selectRecipe_comboBox.show()
+            self.label_selectRecipeParameter.show()
         else:
-            self.scan_recipe_comboBox.hide()
             self.selectRecipe_comboBox.hide()
+            self.label_selectRecipeParameter.hide()
 
     def _clearRecipe(self):
         """ Clears recipes from managers. Called by configManager """
         for recipe_name in list(self.recipeDict.keys()):
             self._removeRecipe(recipe_name)
-
-        self.recipeDict.clear()  # remove recipe from gui with __del__ in recipeManager
-        self.scan_recipe_comboBox.clear()
-        self.selectRecipe_comboBox.clear()
-        self.selectParameter_comboBox.clear()
 
     def _addParameter(self, recipe_name: str, param_name: str):
         """ Adds parameter to managers. Called by configManager and self """
@@ -135,22 +244,151 @@ class Scanner(QtWidgets.QMainWindow):
         if prev_index == -1: prev_index = 0
 
         self.selectParameter_comboBox.clear()
-        self.selectParameter_comboBox.addItems(self.configManager.parameterNameList(recipe_name))
-        self.selectParameter_comboBox.setCurrentIndex(prev_index)
+        if recipe_name != "":
+            self.selectParameter_comboBox.addItems(self.configManager.parameterNameList(recipe_name))
+            self.selectParameter_comboBox.setCurrentIndex(prev_index)
 
         if self.selectParameter_comboBox.currentText() == "":
             self.selectParameter_comboBox.setCurrentIndex(self.selectParameter_comboBox.count()-1)
 
-        self._show_parameter_combobox()
-
-    def _show_parameter_combobox(self):
-        """ Shows parameter combobox if multi parameters else hide """
-        recipe_name = self.selectRecipe_comboBox.currentText()
-
-        if len(self.configManager.parameterList(recipe_name)) > 1:
+        #Shows parameter combobox if multi parameters else hide
+        if recipe_name != "" and len(self.configManager.parameterList(recipe_name)) > 1:
             self.selectParameter_comboBox.show()
+            self.label_selectRecipeParameter.show()
         else:
             self.selectParameter_comboBox.hide()
+            if not self.selectRecipe_comboBox.isVisible():
+                self.label_selectRecipeParameter.hide()
+
+    def importActionClicked(self):
+        """ Prompts the user for a configuration filename,
+        and import the current scan configuration from it """
+
+        class ImportDialog(QtWidgets.QDialog):
+
+            def __init__(self, parent: QtWidgets.QMainWindow, append: bool):
+
+                super().__init__(parent)
+                self.setWindowTitle("Import AUTOLAB configuration file")
+                self.setWindowModality(QtCore.Qt.ApplicationModal)  # this block GUI interaction (easier than checking every interaction possible to avoid bugs if change recipe or have multiple dialogs)
+
+                self.append = append
+
+                layout = QtWidgets.QVBoxLayout(self)
+
+                file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
+                file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+                file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
+                file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
+                file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "All Files (*)"])
+                layout.addWidget(file_dialog)
+
+                appendCheck = QtWidgets.QCheckBox('Append', self)
+                appendCheck.setChecked(append)
+                appendCheck.stateChanged.connect(self.appendCheckChanged)
+                layout.addWidget(appendCheck)
+
+                self.show()
+
+                self.exec_ = file_dialog.exec_
+                self.selectedFiles = file_dialog.selectedFiles
+
+            def appendCheckChanged(self, event):
+                self.append = event
+
+            def closeEvent(self, event):
+                for children in self.findChildren(
+                        QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+                    children.deleteLater()
+
+                super().closeEvent(event)
+
+
+        main_dialog = ImportDialog(self, self._append)
+
+        once_or_append = True
+        while once_or_append:
+            if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                filenames = main_dialog.selectedFiles()
+
+                self._append = main_dialog.append
+                once_or_append = self._append and len(filenames) != 0
+
+                for filename in filenames:
+                    if filename != '': self.configManager.import_configPars(filename, append=self._append)
+            else:
+                once_or_append = False
+
+        main_dialog.deleteLater()
+
+    def exportActionClicked(self):
+        """ Prompts the user for a configuration file path,
+        and export the current scan configuration in it """
+        filename = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Export AUTOLAB configuration file",
+            os.path.join(paths.USER_LAST_CUSTOM_FOLDER, 'config.conf'),
+            "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
+
+        if filename != '':
+            path = os.path.dirname(filename)
+            paths.USER_LAST_CUSTOM_FOLDER = path
+
+            try:
+                self.configManager.export(filename)
+                self.setStatus(f"Current configuration successfully saved at {filename}", 5000)
+            except Exception as e:
+                self.setStatus(f"An error occured: {str(e)}", 10000, False)
+            else:
+                self.addOpenRecent(filename)
+
+    def saveButtonClicked(self):
+        """ This function is called when the save button is clicked.
+        It asks a path and starts the procedure to save the data """
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,  caption="Save data",
+            directory=paths.USER_LAST_CUSTOM_FOLDER,
+            filter=utilities.SUPPORTED_EXTENSION)
+        path = os.path.dirname(filename)
+
+        if path != '':
+            paths.USER_LAST_CUSTOM_FOLDER = path
+            self.setStatus('Saving data...', 5000)
+            datasets = self.dataManager.getLastSelectedDataset()
+
+            for dataset_name in datasets.keys():
+                dataset = datasets[dataset_name]
+
+                if len(datasets) == 1:
+                    filename_recipe = filename
+                else:
+                    dataset_folder, extension = os.path.splitext(filename)
+                    filename_recipe = f'{dataset_folder}_{dataset_name}{extension}'
+                dataset.save(filename_recipe)
+
+            scanner_config = autolab_config.get_scanner_config()
+            save_config = utilities.boolean(scanner_config["save_config"])
+
+            if save_config:
+                dataset_folder, extension = os.path.splitext(filename)
+                new_configname = dataset_folder + ".conf"
+                config_name = os.path.join(os.path.dirname(dataset.tempFolderPath), 'config.conf')
+
+                if os.path.exists(config_name):
+                    shutil.copy(config_name, new_configname)
+                else:
+                    if datasets is not self.dataManager.getLastDataset():
+                        print("Warning: Can't find config for this dataset, save latest config instead", file=sys.stderr)
+                    self.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
+
+                self.addOpenRecent(new_configname)
+
+            if utilities.boolean(scanner_config["save_figure"]):
+                self.figureManager.save(filename)
+
+            self.setStatus(
+                f'Last dataset successfully saved in {filename}', 5000)
+
+
 
     def dropEvent(self, event):
         """ Imports config file if event has url of a file """
@@ -198,14 +436,20 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.figureManager.close()
 
+        for children in self.findChildren(
+                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            children.deleteLater()
+
+        # Remove scan variables from VARIABLES
+        try: self.configManager.updateVariableConfig([])
+        except: pass
+
+        if self.variablesMenu is not None:
+            self.variablesMenu.close()
+
+        super().closeEvent(event)
+
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modifies displayed message in status bar and adds error message to logger """
-        self.statusBar.showMessage(message, msecs=timeout)
+        self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)
-
-    def setLineEditBackground(self, obj, state: str):
-        """ Sets background color of a QLineEdit widget based on its editing state """
-        if state == 'synced': color='#D2FFD2' # vert
-        if state == 'edited': color='#FFE5AE' # orange
-
-        obj.setStyleSheet("QLineEdit:enabled {background-color: %s; font-size: 9pt}" % color)

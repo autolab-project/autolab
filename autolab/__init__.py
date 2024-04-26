@@ -31,7 +31,7 @@ del version_adapter
 
 # Load user config
 from .core import config as _config
-_config.initialize_local_directory()
+first = _config.initialize_local_directory()
 _config.check_autolab_config()
 _config.check_plotter_config()
 _config.set_temp_folder()
@@ -66,9 +66,15 @@ _repository._check_empty_driver_folder()
 del numpy
 del socket
 
+from .core._create_shortcut import create_shortcut
+
+if first:
+    # Ask if create shortcut
+    create_shortcut(ask=True)
+del first
+
+# Loading the drivers informations on startup
+_drivers.update_drivers_paths()
+
 # Used by os shell to start autolab
 from ._entry_script import main as _main
-
-
-if __name__ == '__main__':
-    _main()

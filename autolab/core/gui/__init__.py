@@ -26,8 +26,8 @@ def start():
     import os
     from ..config import get_GUI_config
     GUI_config = get_GUI_config()
-    if GUI_config["QT_API"] != "default":
-        os.environ['QT_API'] = str(GUI_config["QT_API"])
+    if GUI_config['QT_API'] != 'default':
+        os.environ['QT_API'] = str(GUI_config['QT_API'])
     try:
         import pyqtgraph as pg
         from qtpy import QtWidgets
@@ -52,17 +52,19 @@ no PyQt6 anaconda version available
 conda install -c conda-forge pyside6
 """)
     else:
-        pg.setConfigOptions(background='w', foreground="k")
+        background = GUI_config['image_background']
+        foreground = GUI_config['image_foreground']
+        pg.setConfigOptions(background=background, foreground=foreground)
         pg.setConfigOption('imageAxisOrder', 'row-major')
-
-        # TODO: add size to config (maybe font also)
-        # from qtpy import QtGui
-        # font = QtGui.QFont('MS Shell Dlg 2', 10)
-        # QtWidgets.QApplication.setFont(font)
 
         app = QtWidgets.QApplication.instance()
         if app is None:
             app = QtWidgets.QApplication([])
+
+        if GUI_config['font_size'] != 'default':
+            font = app.font()
+            font.setPointSize(int(GUI_config['font_size']))
+            app.setFont(font)
 
         from .controlcenter.main import ControlCenter
         gui = ControlCenter()

@@ -30,8 +30,8 @@ class FigureManager:
         # Configure and initialize the figure in the GUI
         self.fig, self.ax = utilities.pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
-        self.figMap = pg.ImageView()
-        self.gui.graph.addWidget(self.figMap)
+        self.figMap, widget = utilities.pyqtgraph_image()
+        self.gui.graph.addWidget(widget)
         self.figMap.hide()
 
         self.setLabel('x', self.gui.xlabel)

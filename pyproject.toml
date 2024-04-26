@@ -24,7 +24,8 @@ dependencies = [
 	"pyqtgraph",
 	"qtpy",
 	"requests",
-	"tqdm"
+	"tqdm",
+	"comtypes",
 ]
 classifiers=["Programming Language :: Python :: 3",
                  "Programming Language :: Python :: 3 :: Only",
@@ -36,6 +37,14 @@ classifiers=["Programming Language :: Python :: 3",
 				"Programming Language :: Python :: 3.11",
 				"Programming Language :: Python :: 3.12",
                  "Operating System :: OS Independent"]
+
+[project.optional-dependencies]
+gui = ["PyQt5", "pillow"]
+
+[project.urls]
+Documentation = "https://autolab.readthedocs.io/en/latest/"
+Repository = "https://github.com/autolab-project/autolab.git"
+"Bug Tracker" = "https://github.com/autolab-project/autolab/issues"
 
 [project.scripts]
 autolab = "autolab:_main"
