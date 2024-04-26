@@ -347,7 +347,7 @@ class FigureManager:
             pass
 
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
-        self.gui.setLineEditBackground(self.gui.nbTraces_lineEdit,'synced')
+        setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         if check is True and self.gui.variable_y_comboBox.currentIndex() != -1:
             self.reloadData()
