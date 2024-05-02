@@ -825,17 +825,18 @@ class ConfigManager:
 
         var_to_save = {}
         for var_name in names_var_to_save:
-            if var is not None:
-                value = var.raw if isinstance(var, variables.Variable) else var
             var = variables.get_variable(var_name)
 
-                if isinstance(value, np.ndarray): valueStr = array_to_str(
+            if var is not None:
+                assert variables.is_Variable(var)
+                value_raw = var.raw
+                if isinstance(value_raw, np.ndarray): valueStr = array_to_str(
                         value, threshold=1000000, max_line_width=9000000)
-                elif isinstance(value, pd.DataFrame): valueStr = dataframe_to_str(
+                elif isinstance(value_raw, pd.DataFrame): valueStr = dataframe_to_str(
                         value, threshold=1000000)
-                elif isinstance(value, (int, float, str)):
-                    try: valueStr = f'{value:.{self.precision}g}'
-                    except: valueStr = f'{value}'
+                elif isinstance(value_raw, (int, float, str)):
+                    try: valueStr = f'{value_raw:.{self.precision}g}'
+                    except: valueStr = f'{value_raw}'
 
                 var_to_save[var_name] = valueStr
 
@@ -845,29 +846,30 @@ class ConfigManager:
 
     def import_configPars(self, filename: str, append: bool = False):
         """ Import a scan configuration from file with filename name """
-        if os.path.exists(filename):
-            try:
-                legacy_configPars = configparser.ConfigParser()
-                legacy_configPars.read(filename)
-            except:
+        if not self.gui.scanManager.isStarted():
+            if os.path.exists(filename):
                 try:
-                    with open(filename, "r") as read_file:
-                        configPars = json.load(read_file)
-                except Exception as error:
-                    self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
-                    return None
+                    legacy_configPars = configparser.ConfigParser()
+                    legacy_configPars.read(filename)
+                except:
+                    try:
+                        with open(filename, "r") as read_file:
+                            configPars = json.load(read_file)
+                    except Exception as error:
+                        self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
+                        return None
+                else:
+                    print("ConfigParser depreciated, now use json. Will convert this config to json if save it.")
+                    configPars = {s: dict(legacy_configPars.items(s)) for s in legacy_configPars.sections()}
+
+                path = os.path.dirname(filename)
+                paths.USER_LAST_CUSTOM_FOLDER = path
+
+                self.load_configPars(configPars, append=append)
+
+                if not self._got_error: self.addNewConfig()
             else:
-                print("ConfigParser depreciated, now use json. Will convert this config to json if save it.")
-                configPars = {s: dict(legacy_configPars.items(s)) for s in legacy_configPars.sections()}
-
-            path = os.path.dirname(filename)
-            paths.USER_LAST_CUSTOM_FOLDER = path
-
-            self.load_configPars(configPars, append=append)
-
-            if not self._got_error: self.addNewConfig()
-        else:
-            self.gui.setStatus(f"Configuration file {filename} doesn't exists", 5000)
+                self.gui.setStatus(f"Configuration file {filename} doesn't exists", 5000)
 
     def load_configPars(self, configPars: dict, append: bool = False):
         """ Creates a config representing a scan form a configPars """

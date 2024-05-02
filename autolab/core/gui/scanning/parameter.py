@@ -614,8 +614,9 @@ class ParameterManager:
                 values = raw_values
             elif not variables.has_variable(raw_values):
                 values = variables.eval_safely(raw_values)
-                values = create_array(values)
-                assert len(values) != 0, "Cannot have empty array"
+                if not isinstance(values, str):
+                    values = create_array(values)
+                    assert len(values) != 0, "Cannot have empty array"
 
             self.gui.configManager.setValues(self.recipe_name, self.param_name, raw_values)
         except Exception as e:

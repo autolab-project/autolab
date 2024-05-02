@@ -34,7 +34,7 @@ class Scanner(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
-        self.setWindowTitle("AUTOLAB Scanner")
+        self.setWindowTitle("AUTOLAB - Scanner")
         self.setWindowIcon(QtGui.QIcon(icons['scanner']))
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
         self.setAcceptDrops(True)
@@ -225,7 +225,7 @@ class Scanner(QtWidgets.QMainWindow):
         self.recipeDict[recipe_name]['parameterManager'][param_name] = new_ParameterManager
 
         layoutAll = self.recipeDict[recipe_name]['recipeManager']._layoutAll
-        layoutAll.insertWidget(len(layoutAll)-1, new_ParameterManager.mainFrame)
+        layoutAll.insertWidget(layoutAll.count()-1, new_ParameterManager.mainFrame)
 
         self._updateSelectParameter()
         self.selectParameter_comboBox.setCurrentIndex(self.selectParameter_comboBox.count()-1)

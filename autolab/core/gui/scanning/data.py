@@ -129,7 +129,9 @@ class DataManager:
                             if isinstance(values, str):
                                 nbpts *= 11  # OPTIMIZE: can't know length in this case without doing eval (should not do eval here because can imagine recipe_2 with param set at end of recipe_1)
                                 self.gui.progressBar.setStyleSheet("""QProgressBar::chunk {background-color: orange;}""")
-                            else: nbpts *= len(values)
+                            else:
+                                values = utilities.create_array(values)
+                                nbpts *= len(values)
                         else: nbpts *= len(parameter['values'])
                     else: nbpts *= parameter['nbpts']
 

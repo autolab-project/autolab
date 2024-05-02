@@ -15,11 +15,12 @@ import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
 from .GUI_utilities import setLineEditBackground
+from .icons import icons
 from ..devices import DEVICES
 from ..utilities import (str_to_array, str_to_dataframe, str_to_value,
                          array_to_str, dataframe_to_str)
 
-
+from .monitoring.main import Monitor
 
 # class AddVarSignal(QtCore.QObject):
 #     add = QtCore.Signal(object, object)
@@ -64,11 +65,15 @@ def update_allowed_dict() -> dict:
 
 allowed_dict = update_allowed_dict()
 
-
+# TODO: refresh menu display by looking if has eval (no -> can refresh)
 # TODO add read signal to update gui (seperate class for event and use it on itemwidget creation to change setText with new value)
 class Variable():
 
-    def __init__(self, var: Any):
+    def __init__(self, name: str, var: Any):
+
+        self.refresh(name, var)
+
+    def refresh(self, name: str, var: Any):
         if isinstance(var, Variable):
             self.raw = var.raw
             self.value = var.value
@@ -80,6 +85,10 @@ class Variable():
             try: self.value = self.evaluate()  # If no devices or variables found in name, can evaluate value safely
             except Exception as e: self.value = str(e)
 
+        self.name = name
+        self.unit = None
+        self.address = lambda: name
+
     def __call__(self) -> Any:
         return self.evaluate()
 
@@ -89,7 +98,7 @@ class Variable():
             call = eval(str(value), {}, allowed_dict)
             self.value = call
         else:
-            call = self.raw
+            call = self.value
 
         return call
 
@@ -103,11 +112,28 @@ class Variable():
         return raw_value_str
 
 
+def rename_variable(name, new_name):
+    var = remove_variable(name)
+    assert var is not None
+    set_variable(new_name, var)
+
+
 def set_variable(name: str, value: Any):
     ''' Create or modify a Variable with provided name and value '''
     for character in r'$*."/\[]:;|, ': name = name.replace(character, '')
     assert re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', name) is not None, f"Wrong format for variable '{name}'"
-    var = Variable(value) if has_eval(value) else value
+
+    if is_Variable(value):
+        var = value
+        var.refresh(name, value)
+    else:
+        var = get_variable(name)
+        if var is None:
+            var = Variable(name, value)
+        else:
+            assert is_Variable(var)
+            var.refresh(name, value)
+
     VARIABLES[name] = var
     update_allowed_dict()
 
@@ -115,10 +141,6 @@ def set_variable(name: str, value: Any):
 def get_variable(name: str) -> Union[Variable, None]:
     ''' Return Variable with provided name if exists else None '''
     return VARIABLES.get(name)
-
-
-def list_variable() -> List[str]:
-    return list(VARIABLES.keys())
 
 
 def remove_variable(name: str) -> Any:
@@ -156,9 +178,10 @@ def convert_str_to_data(raw_value: str) -> Any:
 def has_variable(value: str) -> bool:
     pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?'
 
-        if key in re.findall(pattern, str(value)): return True
-    else: return False
     for key in (list(DEVICES) + list(VARIABLES)):
+        if key in [var.split('.')[0] for var in re.findall(pattern, str(value))]:
+            return True
+    return False
 
 
 def has_eval(value: Any) -> bool:
@@ -174,15 +197,15 @@ def is_Variable(value: Any):
 def eval_variable(value: Any) -> Any:
     """ Evaluate the given python string. String can contain variables,
     devices, numpy arrays and pandas dataframes."""
-    if has_eval(value): value = Variable(value)
+    if has_eval(value): value = Variable('temp', value)
 
     if is_Variable(value): return value()
-    else: return value
+    return value
 
 
 def eval_safely(value: Any) -> Any:
     """ Same as eval_variable but do not evaluate if contains devices or variables """
-    if has_eval(value): value = Variable(value)
+    if has_eval(value): value = Variable('temp', value)
 
     if is_Variable(value): return value.value
     return value
@@ -301,6 +324,8 @@ class VariablesMenu(QtWidgets.QMainWindow):
         header.resizeSection(5, 100)
         self.variablesWidget.itemDoubleClicked.connect(self.variableActivated)
         self.variablesWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.variablesWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.variablesWidget.customContextMenuRequested.connect(self.rightClick)
 
         addButton = QtWidgets.QPushButton('Add')
         addButton.clicked.connect(self.addVariableAction)
@@ -353,6 +378,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.resize(550, 300)
         self.refresh()
 
+        self.monitors = {}
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(400) # ms
         # self.timer.timeout.connect(self.refresh_new)
@@ -362,6 +388,11 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
     def variableActivated(self, item: QtWidgets.QTreeWidgetItem):
         self.variableSignal.emit(item.name)
+
+    def rightClick(self, position: QtCore.QPoint):
+        """ Provides a menu where the user right clicked to manage a recipe """
+        item = self.variablesWidget.itemAt(position)
+        if hasattr(item, 'menu'): item.menu(position)
 
     def deviceActivated(self, item: QtWidgets.QTreeWidgetItem):
         if hasattr(item, 'name'): self.deviceSignal.emit(item.name)
@@ -392,7 +423,9 @@ class VariablesMenu(QtWidgets.QMainWindow):
                 break
 
         set_variable(name, 0)
-        MyQTreeWidgetItem(self.variablesWidget, name, self)  # not catched by VARIABLES signal
+
+        variable = get_variable(name)
+        MyQTreeWidgetItem(self.variablesWidget, name, variable, self)  # not catched by VARIABLES signal
 
     # def addVarSignalChanged(self, key, value):
     #     print('got add signal', key, value)
@@ -422,8 +455,9 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
     def refresh(self):
         self.variablesWidget.clear()
-            MyQTreeWidgetItem(self.variablesWidget, var_name, self)
         for var_name in VARIABLES:
+            variable = get_variable(var_name)
+            MyQTreeWidgetItem(self.variablesWidget, var_name, variable, self)
 
         self.devicesWidget.clear()
         for device_name in DEVICES:
@@ -447,6 +481,9 @@ class VariablesMenu(QtWidgets.QMainWindow):
         if self.gui is not None and hasattr(self.gui, 'clearVariablesMenu'):
             self.gui.clearVariablesMenu()
 
+        for monitor in list(self.monitors.values()):
+            monitor.close()
+
         for children in self.findChildren(
                 QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
             children.deleteLater()
@@ -456,16 +493,14 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
 class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
-    def __init__(self, itemParent, name, gui):
+    def __init__(self, itemParent, name, variable, gui):
 
         super().__init__(itemParent, ['', name])
 
         self.itemParent = itemParent
         self.gui = gui
         self.name = name
-
-        raw_value = get_variable(name)
-        self.raw_value = raw_value
+        self.variable = variable
 
         nameWidget = QtWidgets.QLineEdit()
         nameWidget.setText(name)
@@ -505,6 +540,36 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         self.refresh_rawValue()
         self.refresh_value()
 
+    def menu(self, position: QtCore.QPoint):
+        """ This function provides the menu when the user right click on an item """
+        menu = QtWidgets.QMenu()
+        monitoringAction = menu.addAction("Start monitoring")
+        monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
+        monitoringAction.setEnabled(has_eval(self.variable.raw) or isinstance(
+            self.variable.value, (int, float, np.ndarray, pd.DataFrame)))
+
+        choice = menu.exec_(self.gui.variablesWidget.viewport().mapToGlobal(position))
+        if choice == monitoringAction:
+            self.openMonitor()
+
+    def openMonitor(self):
+        """ This function open the monitor associated to this variable. """
+        # If the monitor is not already running, create one
+        if id(self) not in self.gui.monitors.keys():
+            self.gui.monitors[id(self)] = Monitor(self)
+            self.gui.monitors[id(self)].show()
+        # If the monitor is already running, just make as the front window
+        else:
+            monitor = self.gui.monitors[id(self)]
+            monitor.setWindowState(
+                monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            monitor.activateWindow()
+
+    def clearMonitor(self):
+        """ This clear monitor instances reference when quitted """
+        if id(self) in self.gui.monitors.keys():
+            self.gui.monitors.pop(id(self))
+
     def renameVariable(self):
         new_name = self.nameWidget.text()
         if new_name == self.name:
@@ -520,18 +585,17 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             new_name = new_name.replace(character, '')
 
         try:
-            set_variable(new_name, get_variable(self.name))
+            rename_variable(self.name, new_name)
         except Exception as e:
             self.gui.setStatus(f'Error: {e}', 10000, False)
         else:
-            remove_variable(self.name)
             self.name = new_name
             new_name = self.nameWidget.setText(self.name)
             setLineEditBackground(self.nameWidget, 'synced')
             self.gui.setStatus('')
 
     def refresh_rawValue(self):
-        raw_value = self.raw_value
+        raw_value = self.variable.raw
 
         if isinstance(raw_value, np.ndarray):
             raw_value_str = array_to_str(raw_value)
@@ -543,7 +607,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         self.rawValueWidget.setText(raw_value_str)
         setLineEditBackground(self.rawValueWidget, 'synced')
 
-        if isinstance(raw_value, Variable) and has_variable(raw_value):  # OPTIMIZE: use hide and show instead but doesn't hide on instantiation
+        if has_variable(self.variable):  # OPTIMIZE: use hide and show instead but doesn't hide on instantiation
             if self.actionButtonWidget is None:
                 actionButtonWidget = QtWidgets.QPushButton()
                 actionButtonWidget.setText('Update value')
@@ -557,9 +621,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             self.actionButtonWidget = None
 
     def refresh_value(self):
-        raw_value = self.raw_value
-
-        value = eval_safely(raw_value)
+        value = self.variable.value
 
         if isinstance(value, np.ndarray):
             value_str = array_to_str(value)
@@ -593,12 +655,11 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             except Exception as e:
                 self.gui.setStatus(f'Error: {e}', 10000)
             else:
-                self.raw_value = get_variable(name)
                 self.refresh_rawValue()
                 self.refresh_value()
 
     def convertVariableClicked(self):
-        try: value = eval_variable(self.raw_value)
+        try: value = eval_variable(self.variable)
         except Exception as e:
             self.gui.setStatus(f'Error: {e}', 10000, False)
         else:

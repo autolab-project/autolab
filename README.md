@@ -1,3 +1,6 @@
+[![PyPi](https://img.shields.io/pypi/v/autolab)](https://pypi.org/project/autolab/)
+[![Documentation Status](https://readthedocs.org/projects/autolab/badge/?version=latest)](https://autolab.readthedocs.io/en/latest/?badge=latest)
+
 # Autolab
 __Python package for scientific experiments automation__
 

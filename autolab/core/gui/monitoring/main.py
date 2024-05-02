@@ -32,7 +32,7 @@ class Monitor(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
-        self.setWindowTitle(f"AUTOLAB Monitor : Variable {self.variable.name}")
+        self.setWindowTitle(f"AUTOLAB - Monitor: Variable {self.variable.address()}")
         self.setWindowIcon(QtGui.QIcon(icons['monitor']))
         # Queue
         self.queue = queue.Queue()
@@ -41,20 +41,14 @@ class Monitor(QtWidgets.QMainWindow):
         self.timer.timeout.connect(self.sync)
 
         # Window length
-        if self.variable.type in [int, float]:
-            self.xlabel = 'Time [s]'
-            self.windowLength_lineEdit.setText('10')
-            self.windowLength_lineEdit.returnPressed.connect(self.windowLengthChanged)
-            self.windowLength_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-                self.windowLength_lineEdit, 'edited', self._font_size))
-            setLineEditBackground(
-                self.windowLength_lineEdit, 'synced', self._font_size)
-        else:
-            self.xlabel = 'x'
-            self.windowLength_lineEdit.hide()
-            self.windowLength_label.hide()
-            self.dataDisplay.hide()
+        self.windowLength_lineEdit.setText('10')
+        self.windowLength_lineEdit.returnPressed.connect(self.windowLengthChanged)
+        self.windowLength_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.windowLength_lineEdit, 'edited', self._font_size))
+        setLineEditBackground(
+            self.windowLength_lineEdit, 'synced', self._font_size)
 
+        self.xlabel = ''  # defined in data according to data type
         self.ylabel = f'{self.variable.address()}'  # OPTIMIZE: could depend on 1D or 2D
 
         if self.variable.unit is not None:

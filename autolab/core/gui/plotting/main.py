@@ -69,7 +69,7 @@ class Plotter(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
         uic.loadUi(ui_path,self)
-        self.setWindowTitle("AUTOLAB Plotter")
+        self.setWindowTitle("AUTOLAB - Plotter")
         self.setWindowIcon(QtGui.QIcon(icons['plotter']))
 
         # Loading of the different centers

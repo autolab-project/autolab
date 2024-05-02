@@ -46,6 +46,11 @@ class DataManager:
         """ This function either replace list by array or add point to list depending on datapoint type """
         y = point[1]
 
+        self.gui.figureManager.setLabel('x', 'x')
+        self.gui.windowLength_lineEdit.hide()
+        self.gui.windowLength_label.hide()
+        self.gui.dataDisplay.hide()
+
         if isinstance(y, np.ndarray):
             if len(y.T.shape) == 1 or y.T.shape[0] == 2:
                 self._addArray(y.T)
@@ -55,6 +60,11 @@ class DataManager:
             self._addArray(y.values.T)
         else:
             self._addPoint(point)
+
+            self.gui.figureManager.setLabel('x', 'Time [s]')
+            self.gui.windowLength_lineEdit.show()
+            self.gui.windowLength_label.show()
+            self.gui.dataDisplay.show()
 
     def _addImage(self, image: np.ndarray):
         """ Add image to ylist data as np.ndarray """
@@ -79,6 +89,8 @@ class DataManager:
 
     def _addPoint(self, point: Tuple[float, float]):
         """ This function append a datapoint [x,y] in the lists of data """
+        if not hasattr(self.xlist, 'append'): self.clear()  # avoid error when switching from array to point
+
         x, y = point
 
         # Append data

@@ -98,6 +98,7 @@ class ScanManager:
             self.gui.clear_pushButton.setEnabled(False)
             self.gui.progressBar.setValue(0)
             self.gui.importAction.setEnabled(False)
+            self.gui.openRecentMenu.setEnabled(False)
             self.gui.undo.setEnabled(False)
             self.gui.redo.setEnabled(False)
             self.gui.setStatus('Scan started!', 5000)
@@ -144,6 +145,7 @@ class ScanManager:
         self.gui.clear_pushButton.setEnabled(True)
         self.gui.displayScanData_pushButton.setEnabled(True)
         self.gui.importAction.setEnabled(True)
+        self.gui.openRecentMenu.setEnabled(True)
         self.gui.configManager.updateUndoRedoButtons()
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
@@ -239,8 +241,12 @@ class ScanThread(QtCore.QThread):
 
             if 'values' in parameter:
                 paramValues = parameter['values']
-                paramValues = variables.eval_variable(paramValues)
-                paramValues = create_array(paramValues)
+                try:
+                    paramValues = variables.eval_variable(paramValues)
+                    paramValues = create_array(paramValues)
+                except Exception as e:
+                    self.errorSignal.emit(e)
+                    self.stopFlag.set()
             else:
                 startValue, endValue = parameter['range']
                 nbpts = parameter['nbpts']
