@@ -17,16 +17,16 @@ def list_drivers(_print: bool = True) -> str:
     s = '\n'
     s += f'{len(drivers.DRIVERS_PATHS)} drivers found\n\n'
 
-    for i, source_name in enumerate(paths.DRIVER_SOURCES.keys()):
-        sub_driver_list = sorted([key for key in drivers.DRIVERS_PATHS.keys() if drivers.DRIVERS_PATHS[key]['source']==source_name])
-        s += f'Drivers in {paths.DRIVER_SOURCES[source_name]}:\n'
+    for i, (source_name, source) in enumerate(paths.DRIVER_SOURCES.items()):
+        sub_driver_list = sorted([key for key, val in drivers.DRIVERS_PATHS.items() if val['source']==source_name])
+        s += f'Drivers in {source}:\n'
         if len(sub_driver_list) > 0:
             txt_list = [[f'    - {driver_name}',
                          f'({drivers.get_driver_category(driver_name)})']
                             for driver_name in sub_driver_list]
             s += utilities.two_columns(txt_list) + '\n\n'
         else:
-            if i+1 == len(paths.DRIVER_SOURCES.keys()):
+            if (i + 1) == len(paths.DRIVER_SOURCES):
                 s += '    <No drivers>\n\n'
             else:
                 s += '    <No drivers> (or overwritten)\n\n'
@@ -34,7 +34,7 @@ def list_drivers(_print: bool = True) -> str:
     if _print:
         print(s)
         return None
-    else: return s
+    return s
 
 
 def list_devices(_print: bool = True) -> str:
@@ -54,7 +54,7 @@ def list_devices(_print: bool = True) -> str:
     if _print:
         print(s)
         return None
-    else: return s
+    return s
 
 
 def infos(_print: bool = True) -> str:
@@ -66,7 +66,7 @@ def infos(_print: bool = True) -> str:
     if _print:
         print(s)
         return None
-    else: return s
+    return s
 
 # =============================================================================
 # DRIVERS
@@ -109,7 +109,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     if hasattr(drivers.get_driver_class(driver_lib), 'slot_config'):
         mess += 'Available modules:\n'
         modules = drivers.get_module_names(driver_lib)
-        for module in modules :
+        for module in modules:
             moduleClass = drivers.get_module_class(driver_lib, module)
             mess += f' - {module}'
             if hasattr(moduleClass,'category'): mess += f' ({moduleClass.category})'
@@ -123,9 +123,9 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
         mess += f"\n   [my_{params['driver']}]\n"
         mess += f"   driver = {params['driver']}\n"
         mess += f"   connection = {conn}\n"
-        for arg,value in params['connection'][conn].items():
+        for arg, value in params['connection'][conn].items():
             mess += f"   {arg} = {value}\n"
-        for arg,value in params['other'].items():
+        for arg, value in params['other'].items():
             mess += f"   {arg} = {value}\n"
 
     # Example of get_driver
@@ -133,20 +133,20 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     for conn in params['connection'].keys():
         if not _parser:
             args_str = f"'{params['driver']}', connection='{conn}'"
-            for arg,value in params['connection'][conn].items():
+            for arg, value in params['connection'][conn].items():
                 args_str += f", {arg}='{value}'"
-            for arg,value in params['other'].items():
-                if type(value) is str:
+            for arg, value in params['other'].items():
+                if isinstance(value, str):
                     args_str += f", {arg}='{value}'"
                 else:
                     args_str += f", {arg}={value}"
             mess += f"   a = autolab.get_driver({args_str})\n"
-        else :
+        else:
             args_str = f"-D {params['driver']} -C {conn} "
             for arg,value in params['connection'][conn].items():
-                if arg == 'address' : args_str += f"-A {value} "
-                if arg == 'port' : args_str += f"-P {value} "
-            if len(params['other'])>0 : args_str += '-O '
+                if arg == 'address': args_str += f"-A {value} "
+                if arg == 'port': args_str += f"-P {value} "
+            if len(params['other'])>0: args_str += '-O '
             for arg,value in params['other'].items():
                 args_str += f"{arg}={value} "
             mess += f"   autolab driver {args_str} -m method(value) \n"
@@ -156,10 +156,10 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
         'Loading a Device configured in devices_config.ini:') + '\n\n'
     if not _parser:
         mess += f"   a = autolab.get_device('my_{params['driver']}')"
-    else :
+    else:
         mess += f"   autolab device -D my_{params['driver']} -e element -v value \n"
 
     if _print:
         print(mess)
         return None
-    else: return mess
+    return mess

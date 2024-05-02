@@ -181,7 +181,7 @@ def explore_driver(instance: Type, _print: bool = True) -> str:
     if _print:
         print(s)
         return None
-    else: return s
+    return s
 
 
 def get_instance_methods(instance: Type) -> Type:
@@ -189,7 +189,7 @@ def get_instance_methods(instance: Type) -> Type:
     methods = []
 
     # LEVEL 1
-    for name, obj in inspect.getmembers(instance, inspect.ismethod):
+    for name, _ in inspect.getmembers(instance, inspect.ismethod):
         if name != '__init__':
             attr = getattr(instance, name)
             args = list(inspect.signature(attr).parameters.keys())
@@ -198,10 +198,9 @@ def get_instance_methods(instance: Type) -> Type:
     # LEVEL 2
     instance_vars = vars(instance)
     for key in instance_vars.keys():
-        try:    # explicit to avoid visa and inspect.getmembers issue
-            name_obj = inspect.getmembers(instance_vars[key], inspect.ismethod)
-            if name_obj != '__init__' and name_obj and name != '__init__':
-                for name, obj in name_obj:
+        try:  # explicit to avoid visa and inspect.getmembers issue
+            for name, _ in inspect.getmembers(instance_vars[key], inspect.ismethod):
+                if name != '__init__':
                     attr = getattr(getattr(instance, key), name)
                     args = list(inspect.signature(attr).parameters.keys())
                     methods.append([f'{key}.{name}', args])
@@ -224,8 +223,8 @@ def get_class_args(clas: Type) -> dict:
 
 def get_driver_path(driver_name: str) -> str:
     ''' Returns the config associated with driver_name '''
-    assert type(driver_name) is str, "drive_name must be a string."
-    assert driver_name in DRIVERS_PATHS.keys(), f'Driver {driver_name} not found.'
+    assert isinstance(driver_name, str), "drive_name must be a string."
+    assert driver_name in DRIVERS_PATHS, f'Driver {driver_name} not found.'
     return DRIVERS_PATHS[driver_name]['path']
 
 
@@ -255,5 +254,6 @@ def load_drivers_paths() -> dict:
 
 
 def update_drivers_paths():
+    ''' Update list of available driver '''
     global DRIVERS_PATHS
     DRIVERS_PATHS = load_drivers_paths()

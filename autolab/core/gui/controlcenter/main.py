@@ -13,6 +13,8 @@ import time
 import uuid
 from typing import Any, Type
 
+import numpy as np
+import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtWidgets import QApplication
 
@@ -179,12 +181,12 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         helpAction = helpMenu.addAction('Documentation')
         helpAction.setIcon(QtGui.QIcon(icons['readthedocs']))
-        helpAction.triggered.connect(lambda : web.doc('default'))
+        helpAction.triggered.connect(lambda: web.doc('default'))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
 
         helpActionOffline = helpMenu.addAction('Documentation (Offline)')
         helpActionOffline.setIcon(QtGui.QIcon(icons['pdf']))
-        helpActionOffline.triggered.connect(lambda : web.doc(False))
+        helpActionOffline.triggered.connect(lambda: web.doc(False))
         helpActionOffline.setStatusTip('Open the pdf documentation form local file')
 
         # Timer for device instantiation
@@ -194,7 +196,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         # queue and timer to add/remove plot from driver
         self.queue_driver = queue.Queue()
-        self.dict_widget = dict()
+        self.dict_widget = {}
         self.timerQueue = QtCore.QTimer(self)
         self.timerQueue.setInterval(int(50)) # ms
         self.timerQueue.timeout.connect(self._queueDriverHandler)
@@ -232,8 +234,6 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         if console_active:
             from pyqtgraph.console import ConsoleWidget
-            import numpy as np
-            import pandas as pd
             import autolab  # OPTIMIZE: not good to import autolab?
             namespace = {'np': np, 'pd': pd, 'autolab': autolab}
             text = """ Packages imported: autolab, numpy as np, pandas as pd.\n"""
@@ -258,12 +258,11 @@ class ControlCenter(QtWidgets.QMainWindow):
             widget_created = self.dict_widget.get(unique_name)
 
             if widget_created: return widget_created
-            else:
-                time.sleep(0.01)
-                if (time.time() - start) > 1:
-                    print(f"Warning: Importation of {widget} too long, skip it",
-                          file=sys.stderr)
-                    return None
+            time.sleep(0.01)
+            if (time.time() - start) > 1:
+                print(f"Warning: Importation of {widget} too long, skip it",
+                      file=sys.stderr)
+                return None
 
     def removeWidget(self, widget: Type):
         """ Function used by a driver to remove a widget record from GUI """
@@ -410,15 +409,18 @@ class ControlCenter(QtWidgets.QMainWindow):
                 self.plotter.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.plotter.activateWindow()
 
-    def openAutolabConfig(self):
+    @staticmethod
+    def openAutolabConfig():
         """ Open the Autolab configuration file """
         utilities.openFile(paths.AUTOLAB_CONFIG)
 
-    def openDevicesConfig(self):
+    @staticmethod
+    def openDevicesConfig():
         """ Open the devices configuration file """
         utilities.openFile(paths.DEVICES_CONFIG)
 
-    def openPlotterConfig(self):
+    @staticmethod
+    def openPlotterConfig():
         """ Open the plotter configuration file """
         utilities.openFile(paths.PLOTTER_CONFIG)
 

@@ -14,30 +14,28 @@ import numpy as np
 from qtpy import QtCore, QtWidgets
 
 from .. import variables
+from ..GUI_utilities import qt_object_exists
 from ... import paths, config
-from ...utilities import qt_object_exists, SUPPORTED_EXTENSION
+from ...utilities import SUPPORTED_EXTENSION
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
-
     """ This class represents a module in an item of the tree """
 
-    def __init__(self,itemParent,name,nickname,gui):
+    def __init__(self, itemParent, name, nickname, gui):
 
-        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[nickname,'Module'])
-        self.setTextAlignment(1,QtCore.Qt.AlignHCenter)
+        QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [nickname, 'Module'])
+        self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
         self.name = name
         self.nickname = nickname
         self.module = None
         self.loaded = False
         self.gui = gui
 
-        self.is_not_submodule = type(gui.tree) is type(itemParent)
+        self.is_not_submodule = isinstance(gui.tree, type(itemParent))
 
-    def load(self,module):
-
+    def load(self, module):
         """ This function loads the entire module (submodules, variables, actions) """
-
         self.module = module
 
         # Submodules

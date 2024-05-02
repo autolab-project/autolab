@@ -122,7 +122,6 @@ class Slider(QtWidgets.QMainWindow):
         self.updateStep()
 
         self.resize(self.minimumSizeHint())
-        self.show()
 
     def updateStep(self):
 
@@ -177,9 +176,9 @@ class Slider(QtWidgets.QMainWindow):
         except Exception as e:
             self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
                                     10000, False)
-            return None
-        self.updateStep()
-        self.updateTrueValue(old_true_value)
+        else:
+            self.updateStep()
+            self.updateTrueValue(old_true_value)
 
     def minWidgetValueChanged(self):
 
@@ -189,9 +188,9 @@ class Slider(QtWidgets.QMainWindow):
         except Exception as e:
             self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
                                     10000, False)
-            return None
-        self.updateStep()
-        self.updateTrueValue(old_true_value)
+        else:
+            self.updateStep()
+            self.updateTrueValue(old_true_value)
 
     def maxWidgetValueChanged(self):
 
@@ -201,9 +200,9 @@ class Slider(QtWidgets.QMainWindow):
         except Exception as e:
             self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
                                     10000, False)
-            return None
-        self.updateStep()
-        self.updateTrueValue(old_true_value)
+        else:
+            self.updateStep()
+            self.updateTrueValue(old_true_value)
 
     def sliderReleased(self):
         """ Do something when the cursor is released """

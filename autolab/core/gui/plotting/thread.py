@@ -11,7 +11,7 @@ from qtpy import QtCore
 
 from ... import devices
 from ... import drivers
-from ...utilities import qt_object_exists
+from ..GUI_utilities import qt_object_exists
 
 
 class ThreadManager :

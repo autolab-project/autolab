@@ -10,13 +10,12 @@ import os
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-import pyqtgraph.exporters
-from pyqtgraph.Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 from .display import DisplayValues
-from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_utilities import (get_font_size, setLineEditBackground,
+                             pyqtgraph_fig_ax, pyqtgraph_image)
 from ..icons import icons
-from ... import utilities
 
 
 class FigureManager:
@@ -30,9 +29,9 @@ class FigureManager:
         self._font_size = get_font_size() + 1
 
         # Configure and initialize the figure in the GUI
-        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.fig, self.ax = pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
-        self.figMap, widget = utilities.pyqtgraph_image()
+        self.figMap, widget = pyqtgraph_image()
         self.gui.graph.addWidget(widget)
         self.figMap.hide()
 
@@ -78,9 +77,9 @@ class FigureManager:
 
         # TODO: add bool 'all' like in drivers
 
-        self.menuBoolList = list()  # OPTIMIZE: edit: maybe not necessary <- when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
-        self.menuWidgetList = list()
-        self.menuActionList = list()
+        self.menuBoolList = []  # OPTIMIZE: edit: maybe not necessary <- when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
+        self.menuWidgetList = []
+        self.menuActionList = []
         self.nbCheckBoxMenuID = 0
 
     def addCheckBox2MenuID(self, name_ID: int):
@@ -152,7 +151,7 @@ class FigureManager:
         if data_name == "Scan" or self.fig.isHidden():
             self.gui.toolButton.hide()
         else:
-           self.gui.toolButton.show()
+            self.gui.toolButton.show()
 
     def updateDataframe_comboBox(self):
         # Executed each time the queue is read
@@ -165,8 +164,8 @@ class FigureManager:
         sub_dataset = dataset[recipe_name]
 
         resultNamesList = ["Scan"] + [
-            i for i in sub_dataset.dictListDataFrame.keys() if type(
-                sub_dataset.dictListDataFrame[i][0]) not in (str, tuple)]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
+            i for i, val in sub_dataset.dictListDataFrame.items() if not isinstance(
+                val[0], (str, tuple))]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
 
         AllItems = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
 
@@ -267,7 +266,7 @@ class FigureManager:
                     if temp_data is not None: break
                 else: return None
 
-            if len(data) != 0 and type(data[0]) is np.ndarray:  # to avoid errors
+            if len(data) != 0 and isinstance(data[0], np.ndarray):  # to avoid errors
                 image_data = np.empty((len(data), *temp_data.shape))
 
             for i in range(len(data)):
@@ -276,16 +275,16 @@ class FigureManager:
 
                 if subdata is None: continue
 
-                if type(subdata) is str:  # Could think of someway to show text. Currently removed it from dataset directly
+                if isinstance(subdata, str):  # Could think of someway to show text. Currently removed it from dataset directly
                     print("Warning: Can't display text")
                     continue
-                elif type(subdata) is tuple:
+                if isinstance(subdata, tuple):
                     print("Warning: Can't display tuple")
                     continue
 
                 subdata = subdata.astype(float)
 
-                if type(subdata) is np.ndarray:  # is image
+                if isinstance(subdata, np.ndarray):  # is image
                     self.fig.hide()
                     self.figMap.show()
                     self.gui.frame_axis.hide()
@@ -318,6 +317,7 @@ class FigureManager:
                         alpha = (true_nbtraces - (len(data) - 1 - i)) / true_nbtraces
 
                     # Plot
+                    # OPTIMIZE: known issue but from pyqtgraph, error if use FFT on one point
                     curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
                     curve.setAlpha(alpha, False)
                     self.curves.append(curve)

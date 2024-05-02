@@ -9,7 +9,7 @@ import os
 import pyqtgraph as pg
 import pyqtgraph.exporters
 
-from ... import utilities
+from ..GUI_utilities import pyqtgraph_fig_ax
 
 
 class FigureManager:
@@ -20,7 +20,7 @@ class FigureManager:
         self.curves = []
 
         # Configure and initialize the figure in the GUI
-        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.fig, self.ax = pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
 
         # Number of traces

@@ -535,7 +535,7 @@ class ConfigManager:
     def getLinkedRecipe(self) -> Dict[str, list]:
         """ Returns a dict with recipe_name key and list of recipes linked to recipe_name recipe.
         Example: {'recipe_1': ['recipe_1', 'recipe_2', 'recipe_3', 'recipe_2'], 'recipe_3': ['recipe_3', 'recipe_2'], 'recipe_2': ['recipe_2']}"""
-        linkedRecipe = dict()
+        linkedRecipe = {}
 
         for recipe_name in self.recipeNameList():
             recipe = self.config[recipe_name]
@@ -573,7 +573,7 @@ class ConfigManager:
         """ Returns a list of unique recipe names for which recipes are linked to recipe_name
         Example: for 'recipe_1': ['recipe_1', 'recipe_2', 'recipe_3'] """
         linkedRecipe = self.getLinkedRecipe()
-        uniqueLinkedRecipe = list()
+        uniqueLinkedRecipe = []
 
         for key in linkedRecipe.keys():
             if recipe_name in linkedRecipe[key]:
@@ -720,7 +720,7 @@ class ConfigManager:
 
     def getConfigVariables(self) -> List[Tuple[str, Any]]:
         """ Returns a (key, value) list of parameters and measured step """
-        listVariable = list()
+        listVariable = []
         listVariable.append(('ID', 1))
 
         for recipe_name in reversed(self.recipeNameList()):
@@ -820,14 +820,14 @@ class ConfigManager:
 
         # Add variables to config
         name_var_config = [var[0] for var in self.getConfigVariables()]
-        names_var_user = list(variables.VARIABLES.keys())
+        names_var_user = list(variables.VARIABLES)
         names_var_to_save = list(set(names_var_user) - set(name_var_config))
 
-        var_to_save = dict()
+        var_to_save = {}
         for var_name in names_var_to_save:
-            var = variables.VARIABLES.get(var_name)
             if var is not None:
                 value = var.raw if isinstance(var, variables.Variable) else var
+            var = variables.get_variable(var_name)
 
                 if isinstance(value, np.ndarray): valueStr = array_to_str(
                         value, threshold=1000000, max_line_width=9000000)
@@ -1065,7 +1065,7 @@ class ConfigManager:
             if 'variables' in configPars:
                 var_dict = configPars['variables']
 
-                add_vars = list()
+                add_vars = []
                 for var_name in var_dict.keys():
                     raw_value = var_dict[var_name]
                     raw_value = variables.convert_str_to_data(raw_value)

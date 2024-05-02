@@ -12,8 +12,9 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 from qtpy import QtWidgets
 
+from ..GUI_utilities import pyqtgraph_fig_ax, pyqtgraph_image
 from ... import config
-from ... import utilities
+from ...utilities import boolean
 
 
 class FigureManager:
@@ -25,12 +26,12 @@ class FigureManager:
         # Import Autolab config
         monitor_config = config.get_monitor_config()
         self.precision = int(monitor_config['precision'])
-        self.do_save_figure = utilities.boolean(monitor_config['save_figure'])
+        self.do_save_figure = boolean(monitor_config['save_figure'])
 
         # Configure and initialize the figure in the GUI
-        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.fig, self.ax = pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
-        self.figMap, widget = utilities.pyqtgraph_image()
+        self.figMap, widget = pyqtgraph_image()
         self.gui.graph.addWidget(widget)
         self.figMap.hide()
 

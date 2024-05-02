@@ -11,6 +11,7 @@ import os
 import shutil
 import tempfile
 import sys
+import random
 from typing import List
 
 import numpy as np
@@ -28,7 +29,7 @@ class DataManager:
     def __init__(self, gui: QtWidgets.QMainWindow):
 
         self.gui = gui
-        self.datasets = list()
+        self.datasets = []
         self.queue = Queue()
 
         scanner_config = autolab_config.get_scanner_config()
@@ -95,24 +96,21 @@ class DataManager:
         index = self.gui.data_comboBox.currentIndex()
         if index != -1 and index < len(self.datasets):
             return self.datasets[index]
-        else:
-            return None
+        return None
 
     def newDataset(self, config: dict):
         """ This function creates and returns a new empty dataset """
         maximum = 0
-        datasets = dict()
+        datasets = {}
 
         if self.save_temp:
             temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
             tempFolderPath = tempfile.mkdtemp(dir=temp_folder) # Creates a temporary directory for this dataset
             self.gui.configManager.export(os.path.join(tempFolderPath, 'config.conf'))
         else:
-            import random
             tempFolderPath = str(random.random())
 
-        for recipe_name in list(config.keys()):
-            recipe = config[recipe_name]
+        for recipe_name, recipe in config.items():
 
             if recipe['active']:
                 sub_folder = os.path.join(tempFolderPath, recipe_name)
@@ -176,7 +174,7 @@ class DataManager:
         lenQueue = self.queue.qsize()
 
         # Add scan data to dataset
-        for i in range(lenQueue):
+        for _ in range(lenQueue):
             try: point = self.queue.get()  # point is collections.OrderedDict{0:recipe_name, 'parameter_name':parameter_value, 'step1_name':step1_value, 'step2_name':step2_value, ...}
             except: break
 
@@ -211,27 +209,25 @@ class DataManager:
 
         dataset = datasets[recipe_name]
 
-        if data_name == "Scan":
-            data = dataset.data
+        data = None
+        if data_name == "Scan": data = dataset.data
         else:
             if dataset.dictListDataFrame.get(data_name) is not None:
                 for data in dataset.dictListDataFrame[data_name]:  # used only to get columns name
-                    if data is not None:
-                        break
-            else:
-                return None
+                    if data is not None: break
+            else: return None
             # if text or if image of type ndarray return
-            if type(data) is str or (type(data) is np.ndarray and not (len(data.T.shape) == 1 or data.T.shape[0] == 2)):
+            if isinstance(data, str) or (
+                    isinstance(data, np.ndarray) and not (
+                        len(data.T.shape) == 1 or data.T.shape[0] == 2)):
                 self.gui.variable_x_comboBox.clear()
                 self.gui.variable_y_comboBox.clear()
                 return None
 
-            try:
-                data = utilities.formatData(data)
-            except AssertionError as e:  # if np.ndarray of string for example
+            try: data = utilities.formatData(data)
+            except AssertionError:  # if np.ndarray of string for example
                 self.gui.variable_x_comboBox.clear()
                 self.gui.variable_y_comboBox.clear()
-                # self.gui.setStatus(f"Error, can't plot data {data_name}: {e}", 10000, False)  # already catched by getData
                 return None
 
         resultNamesList = []
@@ -252,7 +248,8 @@ class DataManager:
         variable_x_index = self.gui.variable_x_comboBox.currentIndex()
         variable_y_index = self.gui.variable_y_comboBox.currentIndex()
 
-        AllItems = [self.gui.variable_x_comboBox.itemText(i) for i in range(self.gui.variable_x_comboBox.count())]
+        AllItems = [self.gui.variable_x_comboBox.itemText(i) for i in range(
+            self.gui.variable_x_comboBox.count())]
 
         if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
             self.gui.variable_x_comboBox.clear()
@@ -266,8 +263,11 @@ class DataManager:
             self.gui.variable_y_comboBox.addItems(resultNamesList)  # first numerical measure first
 
             if data_name == "Scan":
-                if variable_x_index != -1: self.gui.variable_x_comboBox.setCurrentIndex(variable_x_index)
-                if variable_y_index != -1: self.gui.variable_y_comboBox.setCurrentIndex(variable_y_index)
+                if variable_x_index != -1:
+                    self.gui.variable_x_comboBox.setCurrentIndex(variable_x_index)
+                if variable_y_index != -1:
+                    self.gui.variable_y_comboBox.setCurrentIndex(variable_y_index)
+        return None
 
 
 class Dataset():
@@ -275,10 +275,10 @@ class Dataset():
 
     def __init__(self, tempFolderPath: str, recipe_name: str, config: dict,
                  save_temp: bool = True):
-        self.all_data_temp = list()
+        self.all_data_temp = []
         self.recipe_name = recipe_name
-        self.list_array = list()
-        self.dictListDataFrame = dict()
+        self.list_array = []
+        self.dictListDataFrame = {}
         self.tempFolderPath = tempFolderPath
         self.new = True
         self.save_temp = save_temp
@@ -320,8 +320,8 @@ class Dataset():
         else:
             data = self.dictListDataFrame[data_name][dataID]
 
-            if ((data is not None)
-                    and (type(data) is not str)
+            if (data is not None
+                    and not isinstance(data, str)
                     and (len(data.T.shape) == 1 or data.T.shape[0] == 2)):
                 data = utilities.formatData(data)
             else:  # Image
@@ -330,12 +330,12 @@ class Dataset():
         if any(map(lambda v: v in varList, list(data.columns))):
             if varList[0] == varList[1]: return data.loc[:, [varList[0]]]
             else: return data.loc[:,varList]
-        else:
-            return None
+
+        return None
 
     def save(self, filename: str):
         """ This function saved the dataset in the provided path """
-        dataset_folder, extension = os.path.splitext(filename)
+        dataset_folder = os.path.splitext(filename)[0]
         data_name = os.path.join(self.tempFolderPath, 'data.txt')
 
         if os.path.exists(data_name):
@@ -361,14 +361,14 @@ class Dataset():
                         for i, value in enumerate(list_data):
                             path = os.path.join(dest_folder, f"{i+1}.txt")
 
-                            if type(value) in [int, float, bool, str, tuple]:
+                            if isinstance(value, (int, float, bool, str, tuple)):
                                 with open(path, 'w') as f: f.write(str(value))
-                            elif type(value) == bytes:
+                            elif isinstance(value, bytes):
                                 with open(path, 'wb') as f: f.write(value)
-                            elif type(value) == np.ndarray:
+                            elif isinstance(value, np.ndarray):
                                 df = pd.DataFrame(value)
                                 df.to_csv(path, index=False, header=None)  # faster and handle better different dtype than np.savetxt
-                            elif type(value) == pd.DataFrame:
+                            elif isinstance(value, pd.DataFrame):
                                 value.to_csv(path, index=False)
 
     def addPoint(self, dataPoint: OrderedDict):
@@ -377,20 +377,18 @@ class Dataset():
         simpledata = OrderedDict()
         simpledata['id'] = ID
 
-        for resultName in dataPoint.keys():
-            result = dataPoint[resultName]
+        for resultName, result in dataPoint.items():
 
-            if resultName == 0:  # skip first result which is recipe_name
-                continue
+            if resultName == 0: continue  # skip first result which is recipe_name
+
+            element_list = [step['element'] for step in self.list_param if step['name']==resultName]
+            if len(element_list) != 0:
+                element = element_list[0]
             else:
-                element_list = [step['element'] for step in self.list_param if step['name']==resultName]
+                element_list = [step['element'] for step in self.list_step if step['name']==resultName]
                 if len(element_list) != 0:
                     element = element_list[0]
-                else:
-                    element_list = [step['element'] for step in self.list_step if step['name']==resultName]
-                    if len(element_list) != 0:
-                        element = element_list[0]
-                # should always find element in lists above
+            # should always find element in lists above
 
             # If the result is displayable (numerical), keep it in memory
             if element is None or element.type in [int, float, bool]:
@@ -418,9 +416,13 @@ class Dataset():
 
         if self.save_temp:
             if ID == 1:
-                self.data.tail(1).to_csv(os.path.join(self.tempFolderPath, 'data.txt'), index=False, mode='a', header=self.header)
-            else :
-                self.data.tail(1).to_csv(os.path.join(self.tempFolderPath, 'data.txt'), index=False, mode='a', header=False)
+                self.data.tail(1).to_csv(
+                    os.path.join(self.tempFolderPath, 'data.txt'),
+                    index=False, mode='a', header=self.header)
+            else:
+                self.data.tail(1).to_csv(
+                    os.path.join(self.tempFolderPath, 'data.txt'),
+                    index=False, mode='a', header=False)
 
     def __len__(self):
         """ Returns the number of data point of this dataset """

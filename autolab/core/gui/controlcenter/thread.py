@@ -9,9 +9,9 @@ import inspect
 from typing import Any
 
 from qtpy import QtCore, QtWidgets
+from ..GUI_utilities import qt_object_exists
 from ... import devices
 from ... import drivers
-from ...utilities import qt_object_exists
 
 
 class ThreadManager:
@@ -57,8 +57,8 @@ class ThreadManager:
         tid = id(thread)
         self.threads[tid] = thread
         thread.endSignal.connect(
-            lambda error, x=tid : self.threadFinished(x, error))
-        thread.finished.connect(lambda x=tid : self.delete(x))
+            lambda error, x=tid: self.threadFinished(x, error))
+        thread.finished.connect(lambda x=tid: self.delete(x))
 
         # Starting thread
         thread.start()
@@ -142,7 +142,7 @@ class InteractionThread(QtCore.QThread):
         except Exception as e:
             error = e
             if self.intType == 'load':
-                error = f'An error occured when loading device {self.item.name} : {str(e)}'
+                error = f'An error occured when loading device {self.item.name}: {str(e)}'
                 if id(self.item) in self.item.gui.threadItemDict.keys():
                     self.item.gui.threadItemDict.pop(id(self.item))
 

@@ -134,7 +134,7 @@ class Scanner(QtWidgets.QMainWindow):
 
     def clear(self):
         """ This reset any recorded data, and the GUI accordingly """
-        self.dataManager.datasets = list()
+        self.dataManager.datasets = []
         self.figureManager.clearData()
         self.figureManager.clearMenuID()
         self.figureManager.figMap.hide()
@@ -163,6 +163,7 @@ class Scanner(QtWidgets.QMainWindow):
     def openVariablesMenu(self):
         if self.variablesMenu is None:
             self.variablesMenu = variables.VariablesMenu(self)
+            self.variablesMenu.show()
         else:
             self.variablesMenu.refresh()
 
@@ -215,7 +216,7 @@ class Scanner(QtWidgets.QMainWindow):
 
     def _clearRecipe(self):
         """ Clears recipes from managers. Called by configManager """
-        for recipe_name in list(self.recipeDict.keys()):
+        for recipe_name in list(self.recipeDict):
             self._removeRecipe(recipe_name)
 
     def _addParameter(self, recipe_name: str, param_name: str):
@@ -288,7 +289,6 @@ class Scanner(QtWidgets.QMainWindow):
                 appendCheck.stateChanged.connect(self.appendCheckChanged)
                 layout.addWidget(appendCheck)
 
-                self.show()
 
                 self.exec_ = file_dialog.exec_
                 self.selectedFiles = file_dialog.selectedFiles
@@ -305,6 +305,7 @@ class Scanner(QtWidgets.QMainWindow):
 
 
         main_dialog = ImportDialog(self, self._append)
+        main_dialog.show()
 
         once_or_append = True
         while once_or_append:

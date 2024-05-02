@@ -16,12 +16,11 @@ class DisplayValues(QtWidgets.QWidget):
         """ Create a QWidget displaying the dataFrame input to the refresh method.
         size is of type QtCore.QSize or tuple of int """
 
-        if type(size) in (tuple, list):
-           size = QtCore.QSize(*size)
+        if isinstance(size, (tuple, list)): size = QtCore.QSize(*size)
 
         self.active = False
 
-        QtWidgets.QWidget.__init__(self)
+        super().__init__()
 
         self.setWindowTitle(name)
         self.resize(size)
@@ -61,7 +60,7 @@ class DisplayValues(QtWidgets.QWidget):
 class TableModel(QtCore.QAbstractTableModel):
     "From https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/"
     def __init__(self, data: pd.DataFrame):
-        super(TableModel, self).__init__()
+        super().__init__()
         self._data = data
 
     def data(self, index, role):

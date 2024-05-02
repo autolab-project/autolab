@@ -31,7 +31,7 @@ del version_adapter
 
 # Load user config
 from .core import config as _config
-first = _config.initialize_local_directory()
+FIRST = _config.initialize_local_directory()
 _config.check_autolab_config()
 _config.check_plotter_config()
 _config.set_temp_folder()
@@ -68,10 +68,10 @@ del socket
 
 from .core._create_shortcut import create_shortcut
 
-if first:
+if FIRST:
     # Ask if create shortcut
     create_shortcut(ask=True)
-del first
+del FIRST
 
 # Loading the drivers informations on startup
 _drivers.update_drivers_paths()

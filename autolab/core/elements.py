@@ -10,6 +10,9 @@ import sys
 import inspect
 from typing import Type, Tuple, List, Any
 
+import numpy as np
+import pandas as pd
+
 from . import paths
 from .utilities import emphasize, clean_string, SUPPORTED_EXTENSION
 
@@ -28,7 +31,7 @@ class Element():
         <module.submodule.variable> """
         if self._parent is not None:
             return self._parent.address() + '.' + self.name
-        else: return self.name
+        return self.name
 
 
 class Variable(Element):
@@ -36,9 +39,6 @@ class Variable(Element):
     def __init__(self, parent: Type, config: dict):
 
         Element.__init__(self, parent, 'variable', config['name'])
-
-        import numpy as np
-        import pandas as pd
 
         # Type
         assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
@@ -56,7 +56,7 @@ class Variable(Element):
             assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
             if 'read_init' in config.keys():
-                assert type(config['read_init']) is bool, f"Variable {self.address()} configuration: read_init parameter must be a boolean"
+                assert isinstance(config['read_init'], bool), f"Variable {self.address()} configuration: read_init parameter must be a boolean"
                 self.read_init = bool(config['read_init'])
         # Write function
         self.write_function = None
@@ -88,9 +88,6 @@ class Variable(Element):
     def save(self, path: str, value: Any = None):
         """ This function measure the variable and saves its value in the provided path """
 
-        import pandas as pd
-        import numpy as np
-
         assert self.readable, f"The variable {self.name} is not configured to be measurable"
 
         if os.path.isdir(path):
@@ -114,7 +111,7 @@ class Variable(Element):
         """ This function prints informations for the user about the current variable """
         print(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ This function returns informations for the user about the current variable """
         display = '\n' + emphasize(f'Variable {self.name}') + '\n'
         if self._help is not None: display += f'Help: {self._help}\n'
@@ -136,7 +133,7 @@ class Variable(Element):
 
         return display
 
-    def __call__(self, value: Any = None):
+    def __call__(self, value: Any = None) -> Any:
         """ Measure or set the value of the variable """
         # GET FUNCTION
         if value is None:
@@ -146,15 +143,15 @@ class Variable(Element):
             return answer
 
         # SET FUNCTION
+        assert self.writable, f"The variable {self.name} is not writable"
+
+        if isinstance(value, np.ndarray):
+            value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
         else:
-            assert self.writable, f"The variable {self.name} is not writable"
-            import numpy as np
-            if isinstance(value, np.ndarray):
-                value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
-            else:
-                value = self.type(value)
-            self.write_function(value)
-            if self._write_signal is not None: self._write_signal.emit_write()
+            value = self.type(value)
+        self.write_function(value)
+        if self._write_signal is not None: self._write_signal.emit_write()
+        return None
 
 
 class Action(Element):
@@ -162,9 +159,6 @@ class Action(Element):
     def __init__(self, parent: Type, config: dict):
 
         Element.__init__(self, parent, 'action', config['name'])
-
-        import pandas as pd
-        import numpy as np
 
         # Do function
         assert 'do' in config.keys(), f"Action {self.address()}: Missing 'do' function"
@@ -192,7 +186,7 @@ class Action(Element):
         """ This function prints informations for the user about the current variable """
         print(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ This function returns informations for the user about the current variable """
         display = '\n' + emphasize(f'Action {self.name}') + '\n'
         if self._help is not None: display+=f'Help: {self._help}\n'
@@ -204,12 +198,12 @@ class Action(Element):
             display += f'Parameter: YES (type: {self.type.__name__})'
             if self.unit is not None: display += f'(unit: {self.unit})'
             display += '\n'
-        else :
+        else:
             display += 'Parameter: NO\n'
 
         return display
 
-    def __call__(self, value: Any = None):
+    def __call__(self, value: Any = None) -> Any:
         """ Executes the action """
         # DO FUNCTION
         assert self.function is not None, f"The action {self.name} is not configured to be actionable"
@@ -225,7 +219,7 @@ class Action(Element):
                     self.unit = 'open-file'
 
                 from qtpy import QtWidgets
-                app = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
+                _ = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
 
                 if self.unit == 'open-file':
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -340,13 +334,13 @@ class Module(Element):
         """ Returns the list of the names of all the elements of this module """
         return self.list_modules() + self.list_variables() + self.list_actions()
 
-    def __getattr__(self, attr) -> Element:
+    def __getattr__(self, attr: str) -> Element:
         if attr in self.list_variables(): return self.get_variable(attr)
-        elif attr in self.list_actions(): return self.get_action(attr)
-        elif attr in self.list_modules(): return self.get_module(attr)
-        else: raise AttributeError(f"'{attr}' not found in module '{self.name}'")
+        if attr in self.list_actions(): return self.get_action(attr)
+        if attr in self.list_modules(): return self.get_module(attr)
+        raise AttributeError(f"'{attr}' not found in module '{self.name}'")
 
-    def get_structure(self):
+    def get_structure(self) -> List[List[str]]:
         """ Returns the structure of the module as a list containing each element address associated with its type as
         [['address1', 'variable'], ['address2', 'action'],...] """
         structure = []
@@ -366,7 +360,7 @@ class Module(Element):
         '''
         h = []
 
-        from .devices import Device
+        from .devices import Device  # import here to avoid ImportError circular import
         if isinstance(self, Device): h.append([self.name, 'Device/Module', level])
         else: h.append([self.name, 'Module', level])
 

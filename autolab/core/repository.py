@@ -58,7 +58,7 @@ def _download_repo(url: str, output_dir: str):
                     progress_bar.update(len(data))
                     file.write(data)
 
-        if total_size != 0 and progress_bar.n != total_size:
+        if total_size not in (0, progress_bar.n):
             raise RuntimeError("Could not download file")
 
 
@@ -149,15 +149,15 @@ def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
 
     # create list of tuple with tuple being ('path to install', 'url to download')
     if len(repo_url) == 0:
-        list_repo_tuple = [(key, paths.DRIVER_REPOSITORY[key]) for key in paths.DRIVER_REPOSITORY.keys()]  # This variable can be modified in autolab_config.ini
+        list_repo_tuple = list(paths.DRIVER_REPOSITORY.items())  # This variable can be modified in autolab_config.ini
     else:
         list_repo_tuple = list(repo_url)
         for i, repo_url_tmp in enumerate(list_repo_tuple):
-            if type(repo_url_tmp) is str:
+            if isinstance(repo_url_tmp, str):
                 list_repo_tuple[i] = (official_folder, repo_url_tmp)
-            elif type(repo_url_tmp) is dict:
+            elif isinstance(repo_url_tmp, dict):
                 raise TypeError("Error: This option has been removed, use tuple instead with (folder, url)")
-            elif type(repo_url_tmp) is not tuple:
+            elif not isinstance(repo_url_tmp, tuple):
                 raise TypeError(f'repo_url must be str or tuple. Given {type(repo_url_tmp)}')
             assert len(list_repo_tuple[i]) == 2, "Expect (folder, url), got wrong length: {len(list_repo_tuple[i])} for {list_repo_tuple[i]}"
 
@@ -178,10 +178,10 @@ def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
             ans = input_wrap(f'Install drivers from {drivers_url} to {drivers_folder}? [default:yes] > ')
 
         if ans.strip().lower() == 'no': continue
-        else:
-            _download_repo(repo_zip_url, temp_repo_zip)
-            _unzip_repo(temp_repo_zip, drivers_folder)
-            os.remove(temp_repo_zip)
+
+        _download_repo(repo_zip_url, temp_repo_zip)
+        _unzip_repo(temp_repo_zip, drivers_folder)
+        os.remove(temp_repo_zip)
     os.rmdir(temp_repo_folder)
 
     # Update available drivers
@@ -252,7 +252,7 @@ def _install_drivers_custom(_print=True):
 
         if _print:
             print(f"Drivers will be downloaded to {official_folder}")
-        for i, driver_name in enumerate(list_driver):
+        for driver_name in list_driver:
             ans = input(f'Download {driver_name}? [default:yes] > ')  # didn't use input_wrap because don't want to say yes to download all drivers
             if ans.strip().lower() == 'stop':
                 break
@@ -326,7 +326,7 @@ def _install_drivers_custom(_print=True):
                 for checkBox in self.list_checkBox:
                     checkBox.setChecked(state)
 
-            def closeEvent(self,event):
+            def closeEvent(self, event):
                 """ This function does some steps before the window is really killed """
                 QtWidgets.QApplication.quit()  # close the interface
 

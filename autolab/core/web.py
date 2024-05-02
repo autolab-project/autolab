@@ -16,7 +16,7 @@ def report():
     webbrowser.open('https://github.com/autolab-project/autolab/issues')
 
 
-def doc(online="default"):
+def doc(online: bool = "default"):
     """ By default try to open the online doc and if no internet connection, open the local pdf documentation.
     Can open online or offline documentation by using True or False."""
 

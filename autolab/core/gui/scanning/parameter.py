@@ -510,7 +510,7 @@ class ParameterManager:
             xrange[1] = value
 
             self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange)
-        except :
+        except:
             self.refresh()
 
     def meanChanged(self):
@@ -647,7 +647,7 @@ class ParameterManager:
         if state == 'idle':
             self.parameterAddress_label.setStyleSheet(
                 f"font-size: {self._font_size+1}pt;")
-        else :
+        else:
             if state == 'started': color = '#ff8c1a'
             if state == 'finished': color = '#70db70'
             self.parameterAddress_label.setStyleSheet(

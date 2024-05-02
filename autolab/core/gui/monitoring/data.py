@@ -44,14 +44,14 @@ class DataManager:
 
     def addPoint(self, point: Tuple[Any, Any]):
         """ This function either replace list by array or add point to list depending on datapoint type """
-        x, y = point
+        y = point[1]
 
-        if type(y) is np.ndarray:
+        if isinstance(y, np.ndarray):
             if len(y.T.shape) == 1 or y.T.shape[0] == 2:
                 self._addArray(y.T)
             else:
                 self._addImage(y)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
-        elif type(y) is pd.DataFrame:
+        elif isinstance(y, pd.DataFrame):
             self._addArray(y.values.T)
         else:
             self._addPoint(point)

@@ -58,7 +58,7 @@ class ScanManager:
             self.gui.configManager.checkConfig()  #  raise error if config not valid
             config = self.gui.configManager.config
         except Exception as e:
-            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration : {str(e)}', 10000, False)
+            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration: {str(e)}', 10000, False)
         # Only if current config is valid to start a scan
         else:
             # Prepare a new dataset in the datacenter
@@ -221,7 +221,7 @@ class ScanThread(QtCore.QThread):
 
     def run(self):
         # Start the scan
-        for recipe_name in self.config.keys():
+        for recipe_name in self.config:
             if self.config[recipe_name]['active']: self.execRecipe(recipe_name)
 
         self.scanCompletedSignal.emit()

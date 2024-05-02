@@ -8,7 +8,7 @@ Created on Mon Mar  4 14:54:41 2024
 import sys
 import re
 # import ast
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -94,9 +94,9 @@ class Variable():
         return call
 
     def __repr__(self) -> str:
-        if type(self.raw) in [np.ndarray]:
+        if isinstance(self.raw, np.ndarray):
             raw_value_str = array_to_str(self.raw, threshold=1000000, max_line_width=9000000)
-        elif type(self.raw) in [pd.DataFrame]:
+        elif isinstance(self.raw, pd.DataFrame):
             raw_value_str = dataframe_to_str(self.raw, threshold=1000000)
         else:
             raw_value_str = str(self.raw)
@@ -104,6 +104,7 @@ class Variable():
 
 
 def set_variable(name: str, value: Any):
+    ''' Create or modify a Variable with provided name and value '''
     for character in r'$*."/\[]:;|, ': name = name.replace(character, '')
     assert re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', name) is not None, f"Wrong format for variable '{name}'"
     var = Variable(value) if has_eval(value) else value
@@ -111,7 +112,8 @@ def set_variable(name: str, value: Any):
     update_allowed_dict()
 
 
-def get_variable(name: str) -> Any:
+def get_variable(name: str) -> Union[Variable, None]:
+    ''' Return Variable with provided name if exists else None '''
     return VARIABLES.get(name)
 
 
@@ -154,9 +156,9 @@ def convert_str_to_data(raw_value: str) -> Any:
 def has_variable(value: str) -> bool:
     pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?'
 
-    for key in list(DEVICES.keys())+list(VARIABLES.keys()):
         if key in re.findall(pattern, str(value)): return True
     else: return False
+    for key in (list(DEVICES) + list(VARIABLES)):
 
 
 def has_eval(value: Any) -> bool:
@@ -183,7 +185,7 @@ def eval_safely(value: Any) -> Any:
     if has_eval(value): value = Variable(value)
 
     if is_Variable(value): return value.value
-    else: return value
+    return value
 
 
 class VariablesDialog(QtWidgets.QDialog):
@@ -223,8 +225,6 @@ class VariablesDialog(QtWidgets.QDialog):
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
 
-        self.show()
-
         self.exec_ = dialog.exec_
         self.textValue = dialog.textValue
         self.setTextValue = dialog.setTextValue
@@ -237,6 +237,7 @@ class VariablesDialog(QtWidgets.QDialog):
 
             self.variablesMenu.variableSignal.connect(self.toggleVariableName)
             self.variablesMenu.deviceSignal.connect(self.toggleDeviceName)
+            self.variablesMenu.show()
         else:
             self.variablesMenu.refresh()
 
@@ -351,7 +352,6 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
         self.resize(550, 300)
         self.refresh()
-        self.show()
 
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(400) # ms
@@ -364,8 +364,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.variableSignal.emit(item.name)
 
     def deviceActivated(self, item: QtWidgets.QTreeWidgetItem):
-        if hasattr(item, 'name'):
-            self.deviceSignal.emit(item.name)
+        if hasattr(item, 'name'): self.deviceSignal.emit(item.name)
 
     def removeVariableAction(self):
         for variableItem in self.variablesWidget.selectedItems():
@@ -382,7 +381,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
     def addVariableAction(self):
         basename = 'var'
         name = basename
-        names = list_variable()
+        names = list(VARIABLES)
 
         compt = 0
         while True:
@@ -423,11 +422,11 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
     def refresh(self):
         self.variablesWidget.clear()
-        for i, var_name in enumerate(list_variable()):
             MyQTreeWidgetItem(self.variablesWidget, var_name, self)
+        for var_name in VARIABLES:
 
         self.devicesWidget.clear()
-        for i, device_name in enumerate(DEVICES):
+        for device_name in DEVICES:
             device = DEVICES[device_name]
             deviceItem = QtWidgets.QTreeWidgetItem(
                 self.devicesWidget, [device_name])
@@ -512,7 +511,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             setLineEditBackground(self.nameWidget, 'synced')
             return None
 
-        if new_name in list_variable():
+        if new_name in VARIABLES:
             self.gui.setStatus(
                 f"Error: {new_name} already exist!", 10000, False)
             return None
@@ -534,9 +533,9 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
     def refresh_rawValue(self):
         raw_value = self.raw_value
 
-        if type(raw_value) in [np.ndarray]:
+        if isinstance(raw_value, np.ndarray):
             raw_value_str = array_to_str(raw_value)
-        elif type(raw_value) in [pd.DataFrame]:
+        elif isinstance(raw_value, pd.DataFrame):
             raw_value_str = dataframe_to_str(raw_value)
         else:
             raw_value_str = str(raw_value)
@@ -562,9 +561,9 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
         value = eval_safely(raw_value)
 
-        if type(value) in [np.ndarray]:
+        if isinstance(value, np.ndarray):
             value_str = array_to_str(value)
-        elif type(value) in [pd.DataFrame]:
+        elif isinstance(value, pd.DataFrame):
             value_str = dataframe_to_str(value)
         else:
             value_str = str(value)
@@ -603,9 +602,9 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         except Exception as e:
             self.gui.setStatus(f'Error: {e}', 10000, False)
         else:
-            if type(value) in [np.ndarray]:
+            if isinstance(value, np.ndarray):
                 value_str = array_to_str(value)
-            elif type(value) in [pd.DataFrame]:
+            elif isinstance(value, pd.DataFrame):
                 value_str = dataframe_to_str(value)
             else:
                 value_str = str(value)

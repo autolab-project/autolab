@@ -17,9 +17,10 @@ from .slider import Slider
 from ..monitoring.main import Monitor
 from .. import variables
 from ..icons import icons
+from ..GUI_utilities import qt_object_exists
 from ... import paths, config
 from ...devices import close
-from ...utilities import (qt_object_exists, SUPPORTED_EXTENSION,
+from ...utilities import (SUPPORTED_EXTENSION,
                           str_to_array, array_to_str,
                           dataframe_to_str, str_to_dataframe)
 
@@ -33,7 +34,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         self.module = None
         self.loaded = False
         self.gui = gui
-        self.is_not_submodule = type(gui.tree) is type(itemParent)
+        self.is_not_submodule = isinstance(gui.tree, type(itemParent))
 
         if self.is_not_submodule:
             QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Device'])
@@ -173,9 +174,9 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             try:
                 value = variables.eval_variable(value)
                 if self.action.type in [np.ndarray]:
-                    if type(value) is str: value = str_to_array(value)
+                    if isinstance(value, str): value = str_to_array(value)
                 elif self.action.type in [pd.DataFrame]:
-                    if type(value) is str: value = str_to_dataframe(value)
+                    if isinstance(value, str): value = str_to_dataframe(value)
                 else:
                     value = self.action.type(value)
                 return value
@@ -407,9 +408,9 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 try:
                     value = variables.eval_variable(value)
                     if self.variable.type in [np.ndarray]:
-                        if type(value) is str: value = str_to_array(value)
+                        if isinstance(value, str): value = str_to_array(value)
                     elif self.variable.type in [pd.DataFrame]:
-                        if type(value) is str: value = str_to_dataframe(value)
+                        if isinstance(value, str): value = str_to_dataframe(value)
                     else:
                         value = self.variable.type(value)
                     return value
@@ -562,6 +563,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # If the slider is not already running, create one
         if id(self) not in self.gui.sliders.keys():
             self.gui.sliders[id(self)] = Slider(self)
+            self.gui.sliders[id(self)].show()
         # If the slider is already running, just make as the front window
         else:
             slider = self.gui.sliders[id(self)]

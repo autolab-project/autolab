@@ -66,10 +66,10 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         stream = QtCore.QDataStream(encoded, QtCore.QIODevice.ReadOnly)
         while not stream.atEnd():
             nItems = stream.readInt32()
-            for i in range(nItems):
+            for _ in range(nItems):
                 path = stream.readInt32()
                 row = []
-                for j in range(path):
+                for _ in range(path):
                     row.append(stream.readInt32())
                 rows.append(row)
 
@@ -161,7 +161,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             self.setGraphicsEffect(shadow)
 
-        elif type(event.source()) == type(self):
+        elif isinstance(event.source(), type(self)):
             try:  # Refuse drop recipe in itself
                 if event.mimeData().hasFormat(MyQTreeWidget.customMimeType):
                     encoded = event.mimeData().data(MyQTreeWidget.customMimeType)
@@ -326,7 +326,6 @@ class parameterQFrame(QtWidgets.QFrame):
         # OPTIMIZE: create mimedata like for recipe if want to drag/drop parameter to recipe or parap to param
         if (hasattr(event.source(), "last_drag") and (hasattr(event.source().last_drag, "parameter_allowed") and event.source().last_drag.parameter_allowed)):
             event.accept()
-
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             self.setGraphicsEffect(shadow)
         else:

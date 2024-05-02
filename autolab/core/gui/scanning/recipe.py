@@ -284,6 +284,7 @@ class RecipeManager:
                 defaultValue = f'{value}'
 
         main_dialog = variables.VariablesDialog(self.gui, name, defaultValue)
+        main_dialog.show()
 
         if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
             value = main_dialog.textValue()

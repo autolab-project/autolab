@@ -36,14 +36,14 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
     def dropEvent(self, event):
         """ This function is used to add a plugin to the plotter """
         variable = event.source().last_drag
-        if type(variable) == str:
+        if isinstance(variable, str):
             self.plotter.addPlugin(variable)
         self.setGraphicsEffect(None)
 
     def dragEnterEvent(self, event):
 
         if (event.source() is self) or (
-                hasattr(event.source(), "last_drag") and type(event.source().last_drag) is str):
+                hasattr(event.source(), "last_drag") and isinstance(event.source().last_drag, str)):
             event.accept()
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             self.setGraphicsEffect(shadow)
@@ -60,8 +60,8 @@ class Plotter(QtWidgets.QMainWindow):
 
         self.active = False
         self.mainGui = mainGui
-        self.all_plugin_list = list()
-        self.active_plugin_dict = dict()
+        self.all_plugin_list = []
+        self.active_plugin_dict = {}
 
         self._font_size = get_font_size() + 1
 
@@ -142,7 +142,7 @@ class Plotter(QtWidgets.QMainWindow):
 
         # queue and timer to add/remove plot from plugin
         self.queue_driver = queue.Queue()
-        self.dict_widget = dict()
+        self.dict_widget = {}
         self.timerQueue = QtCore.QTimer(self)
         self.timerQueue.setInterval(int(50)) # ms
         self.timerQueue.timeout.connect(self._queueDriverHandler)
@@ -161,11 +161,12 @@ class Plotter(QtWidgets.QMainWindow):
             widget_created = self.dict_widget.get(unique_name)
 
             if widget_created: return widget_created
-            else:
-                time.sleep(0.01)
-                if (time.time() - start) > 1:
-                    print(f"Warning: Importation of {widget} too long, skip it", file=sys.stderr)
-                    return None
+
+            time.sleep(0.01)
+            if (time.time() - start) > 1:
+                print(f"Warning: Importation of {widget} too long, skip it",
+                      file=sys.stderr)
+                return None
 
     def removeWidget(self, widget: Type):
         """ Function used by a driver to remove a widget record from GUI """
