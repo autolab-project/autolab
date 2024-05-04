@@ -269,7 +269,7 @@ def _install_drivers_custom(_print=True):
                 self.list_driver = list_driver
                 self.OUTPUT_DIR = OUTPUT_DIR
 
-                QtWidgets.QMainWindow.__init__(self)
+                super().__init__()
 
                 self.setWindowTitle("Autolab Driver Installer")
                 self.setFocus()

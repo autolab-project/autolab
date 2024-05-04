@@ -18,7 +18,7 @@ class Slider(QtWidgets.QMainWindow):
 
     def __init__(self, item: QtWidgets.QTreeWidgetItem):
         """ https://stackoverflow.com/questions/61717896/pyqt5-qslider-is-off-by-one-depending-on-which-direction-the-slider-is-moved """
-        QtWidgets.QMainWindow.__init__(self)
+        super().__init__()
         self.item = item
         self.resize(self.minimumSizeHint())
         self.setWindowTitle(self.item.variable.address())

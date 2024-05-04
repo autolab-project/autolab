@@ -7,7 +7,7 @@ Python package for scientific experiments automation
 The purpose of this package it to provide easy and efficient tools to deal with your scientific instruments, and to run automated experiments with them, by command line instructions or through a graphical user interface (GUI).
 
 Created by Quentin Chateiller, Python drivers originally from Quentin Chateiller and Bruno Garbin, for the C2N-CNRS (Center for Nanosciences and Nanotechnologies, Palaiseau, France) ToniQ team.
-Project continued by Jonathan Peltier, for the C2N-CNRS, Minaphot team.
+Project continued by Jonathan Peltier, for the C2N-CNRS Minaphot team and Mathieu Jeannin, for the C2N-CNRS Odin team.
 
 Project hosted at https://github.com/autolab-project/autolab
 

@@ -106,14 +106,11 @@ class InteractionThread(QtCore.QThread):
 
     endSignal = QtCore.Signal(object)
 
-
-    def __init__(self,item,intType,value):
-        QtCore.QThread.__init__(self)
+    def __init__(self, item, intType, value):
+        super().__init__()
         self.item = item
         self.intType = intType
         self.value = value
-
-
 
     def run(self):
 

@@ -93,7 +93,7 @@ class InteractionThread(QtCore.QThread):
     endSignal = QtCore.Signal(object)
 
     def __init__(self, item: QtWidgets.QTreeWidgetItem, intType: str, value: Any):
-        QtCore.QThread.__init__(self)
+        super().__init__()
         self.item = item
         self.intType = intType
         self.value = value

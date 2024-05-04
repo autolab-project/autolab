@@ -69,7 +69,7 @@ class MonitorThread(QtCore.QThread):
 
     def __init__(self, variable: Device, queue: Queue):
 
-        QtCore.QThread.__init__(self)
+        super().__init__()
         self.variable = variable
         self.queue = queue
 

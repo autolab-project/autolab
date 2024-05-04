@@ -37,9 +37,9 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         self.is_not_submodule = isinstance(gui.tree, type(itemParent))
 
         if self.is_not_submodule:
-            QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Device'])
+            super().__init__(itemParent, [name, 'Device'])
         else:
-            QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Module'])
+            super().__init__(itemParent, [name, 'Module'])
 
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
@@ -99,7 +99,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         if action.unit is not None:
             displayName += f' ({action.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [displayName, 'Action'])
+        super().__init__(itemParent, [displayName, 'Action'])
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
         self.gui = gui
@@ -291,10 +291,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
                 def __init__(self, parent):
                     self.parent = parent
-                    QtWidgets.QCheckBox.__init__(self)
+                    super().__init__()
 
                 def mouseReleaseEvent(self, event):
-                    super(MyQCheckBox, self).mouseReleaseEvent(event)
+                    super().mouseReleaseEvent(event)
                     self.parent.valueEdited()
                     self.parent.write()
 
@@ -319,22 +319,22 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
             class MyQComboBox(QtWidgets.QComboBox):
                 def __init__(self):
-                    QtWidgets.QComboBox.__init__(self)
+                    super().__init__()
                     self.readonly = False
                     self.wheel = True
                     self.key = True
 
                 def mousePressEvent(self, event):
                     if not self.readonly:
-                        QtWidgets.QComboBox.mousePressEvent(self, event)
+                        super().mousePressEvent(event)
 
                 def keyPressEvent(self, event):
                     if not self.readonly and self.key:
-                        QtWidgets.QComboBox.keyPressEvent(self, event)
+                        super().keyPressEvent(event)
 
                 def wheelEvent(self, event):
                     if not self.readonly and self.wheel:
-                        QtWidgets.QComboBox.wheelEvent(self, event)
+                        super().wheelEvent(event)
 
             if self.variable.writable:
                 self.valueWidget = MyQComboBox()

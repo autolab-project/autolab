@@ -11,9 +11,14 @@ import os
 import inspect
 
 
+project_url = 'https://github.com/autolab-project/autolab'
+drivers_url = 'https://github.com/autolab-project/autolab-drivers'
+doc_url = 'https://autolab.readthedocs.io'
+
+
 def report():
     """ Open the github link to open an issue: https://github.com/autolab-project/autolab/issues """
-    webbrowser.open('https://github.com/autolab-project/autolab/issues')
+    webbrowser.open(project_url+'/issues')
 
 
 def doc(online: bool = "default"):
@@ -21,11 +26,11 @@ def doc(online: bool = "default"):
     Can open online or offline documentation by using True or False."""
 
     if online == "default":
-        if has_internet(): webbrowser.open('https://autolab.readthedocs.io')
+        if has_internet(): webbrowser.open(doc_url)
         else:
             print("No internet connection found. Open local pdf documentation instead")
             doc_offline()
-    elif online: webbrowser.open('https://autolab.readthedocs.io')
+    elif online: webbrowser.open(doc_url)
     elif not online: doc_offline()
 
 

@@ -27,9 +27,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
     reorderSignal = QtCore.Signal(object)
 
-    def __init__(self,parent, plotter):
+    def __init__(self, parent, plotter):
         self.plotter = plotter
-        QtWidgets.QTreeWidget.__init__(self,parent)
+        super().__init__(parent)
 
         self.setAcceptDrops(True)
 
@@ -56,7 +56,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
 class Plotter(QtWidgets.QMainWindow):
 
-    def __init__(self,mainGui):
+    def __init__(self, mainGui):
 
         self.active = False
         self.mainGui = mainGui
@@ -66,9 +66,9 @@ class Plotter(QtWidgets.QMainWindow):
         self._font_size = get_font_size() + 1
 
         # Configuration of the window
-        QtWidgets.QMainWindow.__init__(self)
-        ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
-        uic.loadUi(ui_path,self)
+        super().__init__()
+        ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
+        uic.loadUi(ui_path, self)
         self.setWindowTitle("AUTOLAB - Plotter")
         self.setWindowIcon(QtGui.QIcon(icons['plotter']))
 

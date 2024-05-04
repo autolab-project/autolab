@@ -29,7 +29,7 @@ class Monitor(QtWidgets.QMainWindow):
         self._font_size = get_font_size() + 1
 
         # Configuration of the window
-        QtWidgets.QMainWindow.__init__(self)
+        super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
         self.setWindowTitle(f"AUTOLAB - Monitor: Variable {self.variable.address()}")

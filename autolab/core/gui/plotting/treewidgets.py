@@ -24,7 +24,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
     def __init__(self, itemParent, name, nickname, gui):
 
-        QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [nickname, 'Module'])
+        super().__init__(itemParent, [nickname, 'Module'])
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
         self.name = name
         self.nickname = nickname
@@ -89,17 +89,16 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
-
     """ This class represents an action in an item of the tree """
 
-    def __init__(self,itemParent,action,gui) :
+    def __init__(self, itemParent, action, gui):
 
         displayName = f'{action.name}'
-        if action.unit is not None :
+        if action.unit is not None:
             displayName += f' ({action.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[displayName,'Action'])
-        self.setTextAlignment(1,QtCore.Qt.AlignHCenter)
+        super().__init__(itemParent, [displayName, 'Action'])
+        self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
         self.gui = gui
         self.action = action
@@ -188,18 +187,16 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
 
 class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
-
     """ This class represents a variable in an item of the tree """
 
-    def __init__(self,itemParent,variable,gui) :
-
+    def __init__(self, itemParent, variable, gui):
 
         self.displayName = f'{variable.name}'
-        if variable.unit is not None :
+        if variable.unit is not None:
             self.displayName += f' ({variable.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(self,itemParent,[self.displayName,'Variable'])
-        self.setTextAlignment(1,QtCore.Qt.AlignHCenter)
+        super().__init__(itemParent, [self.displayName, 'Variable'])
+        self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
         self.gui = gui
 
@@ -247,16 +244,16 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
 
         ## QCheckbox for boolean variables
-        elif self.variable.type in [bool] :
+        elif self.variable.type in [bool]:
 
             class MyQCheckBox(QtWidgets.QCheckBox):
 
                 def __init__(self, parent):
                     self.parent = parent
-                    QtWidgets.QCheckBox.__init__(self)
+                    super().__init__()
 
                 def mouseReleaseEvent(self, event):
-                    super(MyQCheckBox, self).mouseReleaseEvent(event)
+                    super().mouseReleaseEvent(event)
                     self.parent.valueEdited()
                     self.parent.write()
 

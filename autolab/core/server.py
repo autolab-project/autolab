@@ -39,7 +39,7 @@ class Driver_SOCKET():
 class ClientThread(threading.Thread, Driver_SOCKET):
 
     def __init__(self, client_socket, server):
-        threading.Thread.__init__(self)
+        super().__init__()
         self.socket = client_socket
         self.server = server
         self.stop_flag = threading.Event()

@@ -30,8 +30,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'Autolab'
-copyright = '2024, Quentin Chateiller & Bruno Garbin & Jonathan Peltier, (C2N-CNRS)'
-author = 'Quentin Chateiller & Bruno Garbin & Jonathan Peltier'
+copyright = '2024, Quentin Chateiller & Bruno Garbin & Jonathan Peltier & Mathieu Jeannin, (C2N-CNRS)'
+author = 'Quentin Chateiller & Bruno Garbin & Jonathan Peltier & Mathieu Jeannin'
 
 # The full version, including alpha/beta/rc tags
 release = version

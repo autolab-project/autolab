@@ -7,6 +7,7 @@ quentin.chateiller@c2n.upsaclay.fr
 
 """
 
+import platform
 import sys
 import queue
 import time
@@ -15,8 +16,10 @@ from typing import Any, Type
 
 import numpy as np
 import pandas as pd
+import qtpy
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtWidgets import QApplication
+import pyqtgraph as pg
 
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
@@ -25,6 +28,8 @@ from ..plotting.main import Plotter
 from ..variables import VARIABLES
 from ..icons import icons
 from ... import devices, web, paths, config, utilities
+from .... import __version__
+from ...web import project_url, drivers_url, doc_url
 
 
 class OutputWrapper(QtCore.QObject):
@@ -69,7 +74,7 @@ class ControlCenter(QtWidgets.QMainWindow):
     def __init__(self):
 
         # Set up the user interface.
-        QtWidgets.QMainWindow.__init__(self)
+        super().__init__()
 
         # Window configuration
         self.setWindowTitle("AUTOLAB - Control Panel")
@@ -85,7 +90,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
             def __init__(self, gui, parent=None):
                 self.gui = gui
-                QtWidgets.QTreeWidget.__init__(self, parent)
+                super().__init__(parent)
 
             def startDrag(self, event):
 
@@ -132,6 +137,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         # Scanner / Monitors
         self.scanner = None
         self.plotter = None
+        self.about = None
         self.monitors = {}
         self.sliders = {}
         self.threadDeviceDict = {}
@@ -188,6 +194,13 @@ class ControlCenter(QtWidgets.QMainWindow):
         helpActionOffline.setIcon(QtGui.QIcon(icons['pdf']))
         helpActionOffline.triggered.connect(lambda: web.doc(False))
         helpActionOffline.setStatusTip('Open the pdf documentation form local file')
+
+        helpMenu.addSeparator()
+
+        aboutAction = helpMenu.addAction('About Autolab')
+        aboutAction.setIcon(QtGui.QIcon(icons['autolab']))
+        aboutAction.triggered.connect(self.openAbout)
+        aboutAction.setStatusTip('Information about Autolab')
 
         # Timer for device instantiation
         self.timerDevice = QtCore.QTimer(self)
@@ -380,7 +393,7 @@ class ControlCenter(QtWidgets.QMainWindow):
                                10000, False)
 
     def openScanner(self):
-        """ This function open the scanner associated to this variable. """
+        """ This function open the scanner. """
         # If the scanner is not already running, create one
         if self.scanner is None:
             self.scanner = Scanner(self)
@@ -394,7 +407,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.scanner.activateWindow()
 
     def openPlotter(self):
-        """ This function open the plotter associated to this variable. """
+        """ This function open the plotter. """
         # If the plotter is not already running, create one
         if self.plotter is None:
             self.plotter = Plotter(self)
@@ -408,6 +421,20 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.plotter.setWindowState(
                 self.plotter.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.plotter.activateWindow()
+
+    def openAbout(self):
+        """ This function open the about window. """
+        # If the about window is not already running, create one
+        if self.about is None:
+            self.about = AboutWindow(self)
+            self.about.show()
+            self.about.activateWindow()
+            self.activateWindow() # Put main window back to the front
+        # If the scanner is already running, just make as the front window
+        else:
+            self.about.setWindowState(
+                self.about.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.about.activateWindow()
 
     @staticmethod
     def openAutolabConfig():
@@ -465,6 +492,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         if self.plotter is not None:
             self.plotter.active = False  # don't want to close plotter because want to keep data
 
+    def clearAbout(self):
+        """ This clear the about instance reference when quitted """
+        self.about = None
+
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
         if self.scanner is not None:
@@ -477,6 +508,9 @@ class ControlCenter(QtWidgets.QMainWindow):
                 children.deleteLater()
 
             self.plotter.close()
+
+        if self.about is not None:
+            self.about.close()
 
         monitors = list(self.monitors.values())
         for monitor in monitors:
@@ -498,7 +532,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         if hasattr(self, '_console_dock'): self._console_dock.deleteLater()
 
         try:
-            import pyqtgraph as pg
             # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
             for view in pg.ViewBox.AllViews.copy().keys():
                 pg.ViewBox.forgetView(id(view), view)
@@ -516,3 +549,126 @@ class ControlCenter(QtWidgets.QMainWindow):
         super().closeEvent(event)
 
         VARIABLES.clear()  # reset variables defined in the GUI
+
+
+class AboutWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, parent: QtWidgets.QMainWindow = None):
+
+        super().__init__(parent)
+        self.mainGui = parent
+        self.setWindowTitle('Autolab - About')
+
+        versions = get_versions()
+
+        # Main layout creation
+        layoutWindow = QtWidgets.QVBoxLayout()
+        layoutTab = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(layoutTab)
+
+        centralWidget = QtWidgets.QWidget()
+        centralWidget.setLayout(layoutWindow)
+        self.setCentralWidget(centralWidget)
+
+        frameOverview = QtWidgets.QFrame()
+        layoutOverview = QtWidgets.QVBoxLayout(frameOverview)
+
+        frameLegal = QtWidgets.QFrame()
+        layoutLegal = QtWidgets.QVBoxLayout(frameLegal)
+
+        tab = QtWidgets.QTabWidget(self)
+        tab.addTab(frameOverview, 'Overview')
+        tab.addTab(frameLegal, 'Legal')
+
+        label_pic = QtWidgets.QLabel()
+        label_pic.setPixmap(QtGui.QPixmap(icons['autolab']))
+
+        label_autolab = QtWidgets.QLabel(f"<h2>Autolab {versions['autolab']}</h2>")
+        label_autolab.setAlignment(QtCore.Qt.AlignCenter)
+
+        frameIcon = QtWidgets.QFrame()
+        layoutIcon = QtWidgets.QVBoxLayout(frameIcon)
+        layoutIcon.addWidget(label_pic)
+        layoutIcon.addWidget(label_autolab)
+        layoutIcon.addStretch()
+
+        layoutTab.addWidget(frameIcon)
+        layoutTab.addWidget(tab)
+
+        label_versions = QtWidgets.QLabel(
+            f"""
+            <h1>Autolab</h1>
+
+            <h3>Python package for scientific experiments automation</h3>
+
+            <p>
+            {versions['system']} {versions['release']}
+            <br>
+            Python {versions['python']} - {versions['bitness']}-bit
+            <br>
+            {versions['qt_api']} {versions['qt_api_ver']} |
+            PyQtGraph {versions['pyqtgraph']} |
+            Numpy {versions['numpy']} |
+            Pandas {versions['pandas']}
+            </p>
+
+            <p>
+            <a href="{project_url}">Project</a> |
+            <a href="{drivers_url}">Drivers</a> |
+            <a href="{doc_url}"> Documentation</a>
+            </p>
+            """
+        )
+        label_versions.setOpenExternalLinks(True)
+        label_versions.setWordWrap(True)
+
+        layoutOverview.addWidget(label_versions)
+
+        label_legal = QtWidgets.QLabel(
+            f"""
+            <p>
+            Created by <b>Quentin Chateiller</b>, Python drivers originally from
+            Quentin Chateiller and <b>Bruno Garbin</b>, for the C2N-CNRS
+            (Center for Nanosciences and Nanotechnologies, Palaiseau, France)
+            ToniQ team.
+            <br>
+            Project continued by <b>Jonathan Peltier</b>, for the C2N-CNRS
+            Minaphot team and <b>Mathieu Jeannin</b>, for the C2N-CNRS
+            Odin team.
+            <br>
+            <br>
+            Distributed under the terms of the
+            <a href="{project_url}/blob/master/LICENSE">GPL-3.0 licence</a>
+            </p>"""
+        )
+        label_legal.setOpenExternalLinks(True)
+        label_legal.setWordWrap(True)
+        layoutLegal.addWidget(label_legal)
+
+    def closeEvent(self, event):
+        """ Does some steps before the window is really killed """
+        # Delete reference of this window in the control center
+        self.mainGui.clearAbout()
+
+
+def get_versions() -> dict:
+    """Information about Autolab versions """
+
+    # Based on Spyder about.py (https://github.com/spyder-ide/spyder/blob/3ce32d6307302a93957594569176bc84d9c1612e/spyder/plugins/application/widgets/about.py#L40)
+    versions = {
+        'autolab': __version__,
+        'python': platform.python_version(),  # "2.7.3"
+        'bitness': 64 if sys.maxsize > 2**32 else 32,
+        'qt_api': qtpy.API_NAME,      # PyQt5
+        'qt_api_ver': (qtpy.PYSIDE_VERSION if 'pyside' in qtpy.API
+                       else qtpy.PYQT_VERSION),
+        'system': platform.system(),   # Linux, Windows, ...
+        'release': platform.release(),  # XP, 10.6, 2.2.0, etc.
+        'pyqtgraph': pg.__version__,
+        'numpy': np.__version__,
+        'pandas': pd.__version__,
+    }
+    if sys.platform == 'darwin':
+        versions.update(system='macOS', release=platform.mac_ver()[0])
+
+    return versions

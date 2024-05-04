@@ -38,7 +38,7 @@ class Variable(Element):
 
     def __init__(self, parent: Type, config: dict):
 
-        Element.__init__(self, parent, 'variable', config['name'])
+        super().__init__(parent, 'variable', config['name'])
 
         # Type
         assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
@@ -158,7 +158,7 @@ class Action(Element):
 
     def __init__(self, parent: Type, config: dict):
 
-        Element.__init__(self, parent, 'action', config['name'])
+        super().__init__(parent, 'action', config['name'])
 
         # Do function
         assert 'do' in config.keys(), f"Action {self.address()}: Missing 'do' function"
@@ -249,7 +249,7 @@ class Module(Element):
 
     def __init__(self, parent: Type, config: dict):
 
-        Element.__init__(self, parent, 'module', config['name'])
+        super().__init__(parent, 'module', config['name'])
 
         self._mod = {}
         self._var = {}

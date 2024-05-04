@@ -214,7 +214,7 @@ class ScanThread(QtCore.QThread):
     scanCompletedSignal = QtCore.Signal()
 
     def __init__(self, queue: Queue, config: dict):
-        QtCore.QThread.__init__(self)
+        super().__init__()
         self.config = config
         self.queue = queue
 

@@ -31,7 +31,7 @@ class Scanner(QtWidgets.QMainWindow):
         self.mainGui = mainGui
 
         # Configuration of the window
-        QtWidgets.QMainWindow.__init__(self)
+        super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
         self.setWindowTitle("AUTOLAB - Scanner")

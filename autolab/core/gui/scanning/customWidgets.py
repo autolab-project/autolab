@@ -24,7 +24,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
         self.recipe_name = recipe_name
         self.scanner = gui
-        QtWidgets.QTreeWidget.__init__(self, parent)
+        super().__init__(parent)
         self.setAcceptDrops(True)
 
     def mimeTypes(self) -> QtWidgets.QTreeWidget.mimeTypes:
@@ -211,7 +211,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
 
         self.recipe_name = recipe_name
         self.gui = gui
-        QtWidgets.QTabWidget.__init__(self)
+        super().__init__()
 
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.menu)
@@ -308,7 +308,7 @@ class parameterQFrame(QtWidgets.QFrame):
     def __init__(self, parent: QtWidgets.QMainWindow, recipe_name: str, param_name: str):
         self.recipe_name = recipe_name
         self.param_name = param_name
-        QtWidgets.QFrame.__init__(self, parent)
+        super().__init__(parent)
         self.setAcceptDrops(True)
 
     def dropEvent(self, event):
