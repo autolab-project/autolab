@@ -223,12 +223,12 @@ class Action(Element):
 
                 if self.unit == 'open-file':
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                        caption="Open file",
+                        caption=f"Open file - {self.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
                 elif self.unit == 'save-file':
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                        caption="Save file",
+                        caption=f"Save file - {self.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
 
@@ -237,7 +237,19 @@ class Action(Element):
                     paths.USER_LAST_CUSTOM_FOLDER = path
                     self.function(filename)
                 else:
-                    print("Filename prompt cancelled")
+                    print(f"Action '{self.name}' cancel filename selection")
+
+            elif self.unit == "user-input":
+
+                from qtpy import QtWidgets
+                _ = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
+                # OPTIMIZE: dialog closes on instantiation inside Spyder
+                response, _ = QtWidgets.QInputDialog.getText(
+                    None, self.name, f"Set {self.name} value",
+                    QtWidgets.QLineEdit.Normal)
+
+                if response != '':
+                    self.function(response)
             else:
                 assert value is not None, f"The action {self.name} requires an argument"
         else:

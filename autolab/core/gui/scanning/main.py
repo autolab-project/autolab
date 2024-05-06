@@ -289,7 +289,6 @@ class Scanner(QtWidgets.QMainWindow):
                 appendCheck.stateChanged.connect(self.appendCheckChanged)
                 layout.addWidget(appendCheck)
 
-
                 self.exec_ = file_dialog.exec_
                 self.selectedFiles = file_dialog.selectedFiles
 
@@ -297,12 +296,10 @@ class Scanner(QtWidgets.QMainWindow):
                 self.append = event
 
             def closeEvent(self, event):
-                for children in self.findChildren(
-                        QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+                for children in self.findChildren(QtWidgets.QWidget):
                     children.deleteLater()
 
                 super().closeEvent(event)
-
 
         main_dialog = ImportDialog(self, self._append)
         main_dialog.show()
@@ -437,8 +434,7 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.figureManager.close()
 
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         # Remove scan variables from VARIABLES

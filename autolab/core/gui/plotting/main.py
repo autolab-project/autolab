@@ -456,8 +456,7 @@ class Plotter(QtWidgets.QMainWindow):
 
     def close(self):
         """ This function does some steps before the window is killed """
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         super().close()

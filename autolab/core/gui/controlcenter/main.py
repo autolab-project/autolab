@@ -503,8 +503,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         if self.plotter is not None:
             self.plotter.figureManager.fig.deleteLater()
-            for children in self.plotter.findChildren(
-                    QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+            for children in self.plotter.findChildren(QtWidgets.QWidget):
                 children.deleteLater()
 
             self.plotter.close()
@@ -542,8 +541,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.timerDevice.stop()
         self.timerQueue.stop()
 
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         super().closeEvent(event)

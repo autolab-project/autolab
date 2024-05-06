@@ -183,8 +183,7 @@ class Monitor(QtWidgets.QMainWindow):
         self.figureManager.fig.deleteLater()  # maybe not useful for monitor but was source of crash in scanner if didn't close
         self.figureManager.figMap.deleteLater()
 
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
         super().closeEvent(event)
 

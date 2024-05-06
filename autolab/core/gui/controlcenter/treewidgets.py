@@ -141,7 +141,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         if value == '':
             if self.action.unit in ('open-file', 'save-file', 'filename'):
-                if self.action.unit == "filename":  # LEGACY (may be removed later)
+                if self.action.unit == "filename":  # TODO: LEGACY (to remove later)
                     self.gui.setStatus("Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
                                        f"\nUpdate driver {self.action.name} to remove this warning",
                                        10000, False)
@@ -149,12 +149,12 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
                 if self.action.unit == "open-file":
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                        self.gui, caption="Open file",
+                        self.gui, caption=f"Open file - {self.action.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
                 elif self.action.unit == "save-file":
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                        self.gui, caption="Save file",
+                        self.gui, caption=f"Save file - {self.action.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
 
@@ -165,6 +165,17 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 else:
                     self.gui.setStatus(
                         f"Action {self.action.name} cancel filename selection",
+                        10000)
+            elif self.action.unit == "user-input":
+                response, _ = QtWidgets.QInputDialog.getText(
+                    self.gui, self.action.name, f"Set {self.action.name} value",
+                    QtWidgets.QLineEdit.Normal)
+
+                if response != '':
+                    return response
+                else:
+                    self.gui.setStatus(
+                        f"Action {self.action.name} cancel user input",
                         10000)
             else:
                 self.gui.setStatus(
@@ -211,14 +222,13 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     """ This class represents a variable in an item of the tree """
 
-    def __init__(self, itemParent, variable , gui):
+    def __init__(self, itemParent, variable, gui):
 
-        self.displayName = f'{variable.name}'
+        displayName = f'{variable.name}'
         if variable.unit is not None:
-            self.displayName += f' ({variable.unit})'
+            displayName += f' ({variable.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(
-            self, itemParent, [self.displayName, 'Variable'])
+        super().__init__(itemParent, [displayName, 'Variable'])
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
         self.gui = gui

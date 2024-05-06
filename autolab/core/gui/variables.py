@@ -287,8 +287,7 @@ class VariablesDialog(QtWidgets.QDialog):
         self.toggleVariableName(name)
 
     def closeEvent(self, event):
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
         super().closeEvent(event)
 
@@ -390,7 +389,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.variableSignal.emit(item.name)
 
     def rightClick(self, position: QtCore.QPoint):
-        """ Provides a menu where the user right clicked to manage a recipe """
+        """ Provides a menu where the user right clicked to manage a variable """
         item = self.variablesWidget.itemAt(position)
         if hasattr(item, 'menu'): item.menu(position)
 
@@ -484,8 +483,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         for monitor in list(self.monitors.values()):
             monitor.close()
 
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         super().closeEvent(event)

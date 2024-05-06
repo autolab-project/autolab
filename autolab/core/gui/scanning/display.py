@@ -49,9 +49,7 @@ class DisplayValues(QtWidgets.QWidget):
         self.active = False
 
     def close(self):
-
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         super().close()
