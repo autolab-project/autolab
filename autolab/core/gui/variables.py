@@ -21,6 +21,8 @@ from ..utilities import (str_to_array, str_to_dataframe, str_to_value,
                          array_to_str, dataframe_to_str)
 
 from .monitoring.main import Monitor
+from .slider import Slider
+
 
 # class AddVarSignal(QtCore.QObject):
 #     add = QtCore.Signal(object, object)
@@ -65,6 +67,8 @@ def update_allowed_dict() -> dict:
 
 allowed_dict = update_allowed_dict()
 
+# TODO: replace refresh by (value)?
+# OPTIMIZE: Variable becomes closer and closer to core.elements.Variable, could envision a merge
 # TODO: refresh menu display by looking if has eval (no -> can refresh)
 # TODO add read signal to update gui (seperate class for event and use it on itemwidget creation to change setText with new value)
 class Variable():
@@ -88,9 +92,15 @@ class Variable():
         self.name = name
         self.unit = None
         self.address = lambda: name
+        self.type = type(self.raw)  # For slider
 
-    def __call__(self) -> Any:
-        return self.evaluate()
+    def __call__(self, value: Any = None) -> Any:
+        if value is None:
+            return self.evaluate()
+
+        self.refresh(self.name, value)
+        return None
+
 
     def evaluate(self):
         if has_eval(self.raw):
@@ -157,7 +167,6 @@ def remove_from_config(listVariable: List[Tuple[str, Any]]):
 def update_from_config(listVariable: List[Tuple[str, Any]]):
     for var in listVariable:
         set_variable(var[0], var[1])
-
 
 
 def convert_str_to_data(raw_value: str) -> Any:
@@ -378,6 +387,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.refresh()
 
         self.monitors = {}
+        self.sliders = {}
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(400) # ms
         # self.timer.timeout.connect(self.refresh_new)
@@ -483,6 +493,9 @@ class VariablesMenu(QtWidgets.QMainWindow):
         for monitor in list(self.monitors.values()):
             monitor.close()
 
+        for slider in list(self.sliders.values()):
+            slider.close()
+
         for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
@@ -546,14 +559,19 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         monitoringAction.setEnabled(has_eval(self.variable.raw) or isinstance(
             self.variable.value, (int, float, np.ndarray, pd.DataFrame)))
 
+        menu.addSeparator()
+        sliderAction = menu.addAction("Create a slider")
+        sliderAction.setIcon(QtGui.QIcon(icons['slider']))
+        sliderAction.setEnabled(self.variable.type in (int, float))
+
         choice = menu.exec_(self.gui.variablesWidget.viewport().mapToGlobal(position))
-        if choice == monitoringAction:
-            self.openMonitor()
+        if choice == monitoringAction: self.openMonitor()
+        elif choice == sliderAction: self.openSlider()
 
     def openMonitor(self):
         """ This function open the monitor associated to this variable. """
         # If the monitor is not already running, create one
-        if id(self) not in self.gui.monitors.keys():
+        if id(self) not in self.gui.monitors:
             self.gui.monitors[id(self)] = Monitor(self)
             self.gui.monitors[id(self)].show()
         # If the monitor is already running, just make as the front window
@@ -563,10 +581,28 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
                 monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             monitor.activateWindow()
 
+    def openSlider(self):
+        """ This function open the slider associated to this variable. """
+        # If the slider is not already running, create one
+        if id(self) not in self.gui.sliders:
+            self.gui.sliders[id(self)] = Slider(self)
+            self.gui.sliders[id(self)].show()
+        # If the slider is already running, just make as the front window
+        else:
+            slider = self.gui.sliders[id(self)]
+            slider.setWindowState(
+                slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            slider.activateWindow()
+
     def clearMonitor(self):
         """ This clear monitor instances reference when quitted """
-        if id(self) in self.gui.monitors.keys():
+        if id(self) in self.gui.monitors:
             self.gui.monitors.pop(id(self))
+
+    def clearSlider(self):
+        """ This clear the slider instances reference when quitted """
+        if id(self) in self.gui.sliders:
+            self.gui.sliders.pop(id(self))
 
     def renameVariable(self):
         new_name = self.nameWidget.text()

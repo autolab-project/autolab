@@ -142,7 +142,7 @@ def check_autolab_config():
         if section_key in autolab_config.sections():
             conf = dict(autolab_config[section_key])
             for key, dic in section_dic.items():
-                if key not in conf.keys():
+                if key not in conf:
                     conf[key] = str(dic)
         else:
             conf = section_dic
@@ -274,7 +274,7 @@ def check_plotter_config():
         if section_key in plotter_config.sections():
             conf = dict(plotter_config[section_key])
             for key, dic in section_dic.items():
-                if key not in conf.keys():
+                if key not in conf:
                     conf[key] = str(dic)
         else:
             conf = section_dic

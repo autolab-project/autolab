@@ -163,14 +163,14 @@ def driver_parser(args_list: List[str]):
 
     # Instantiation of driver.py and driver_utilities.py
     global driver_instance
-    assert 'connection' in config.keys(), f"Must provide a connection for the driver using -C connection with connection being for this driver among {autolab._drivers.get_connection_names(autolab._drivers.load_driver_lib(driver_name))}"
+    assert 'connection' in config, f"Must provide a connection for the driver using -C connection with connection being for this driver among {autolab._drivers.get_connection_names(autolab._drivers.load_driver_lib(driver_name))}"
     driver_instance = autolab.get_driver(driver_name, **config)
 
     if driver_name in autolab._config.list_all_devices_configs():
         # Load config object
         config = dict(autolab._config.get_device_config(driver_name))
         # Check if driver provided
-        assert 'driver' in config.keys(), f"Driver name not found in driver config '{driver_name}'"
+        assert 'driver' in config, f"Driver name not found in driver config '{driver_name}'"
         driver_name = config['driver']
 
     driver_utilities = autolab._drivers.load_driver_utilities_lib(driver_name + '_utilities')

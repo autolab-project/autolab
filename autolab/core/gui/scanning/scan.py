@@ -348,7 +348,7 @@ class ScanThread(QtCore.QThread):
 
     def execRecipe(self, recipe_name: str,
                    initPoint: OrderedDict = None):
-        """ Executes a recipe. initPoint is used to add parameters values
+        """ Executes a recipe. initPoint is obsolete, was used to add parameters values
         and master-recipe name to a sub-recipe """
 
         paramValues_list = []
@@ -385,7 +385,7 @@ class ScanThread(QtCore.QThread):
 
             if not self.stopFlag.is_set():
 
-                if initPoint is None:
+                if initPoint is None:  # OBSOLETE
                     initPoint = OrderedDict()
                     initPoint[0] = recipe_name
 
@@ -401,7 +401,8 @@ class ScanThread(QtCore.QThread):
 
                         ID += 1
                         variables.set_variable('ID', ID)
-                        variables.set_variable(param_name, paramValue)
+                        variables.set_variable(param_name, element.type(
+                                paramValue) if element is not None else paramValue)
 
                         # Set the parameter value
                         self.startParameterSignal.emit(recipe_name, param_name)

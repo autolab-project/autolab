@@ -114,7 +114,7 @@ class FigureManager:
             dataset = self.gui.dataManager.getLastSelectedDataset()
             index = self.gui.scan_recipe_comboBox.currentIndex()
 
-            resultNamesList = list(dataset.keys())
+            resultNamesList = list(dataset)
             AllItems = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(self.gui.scan_recipe_comboBox.count())]
 
             if AllItems != resultNamesList:

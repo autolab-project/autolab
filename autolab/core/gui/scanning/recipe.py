@@ -207,11 +207,11 @@ class RecipeManager:
 
                 choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 
-                if 'rename' in menuActions.keys() and choice == menuActions['rename']:
+                if 'rename' in menuActions and choice == menuActions['rename']:
                     self.renameStep(name)
-                elif 'remove' in menuActions.keys() and choice == menuActions['remove']:
+                elif 'remove' in menuActions and choice == menuActions['remove']:
                     self.gui.configManager.delRecipeStep(self.recipe_name, name)
-                elif 'setvalue' in menuActions.keys() and choice == menuActions['setvalue']:
+                elif 'setvalue' in menuActions and choice == menuActions['setvalue']:
                     self.setStepValue(name)
             # else:  # TODO: disabled this feature has it is not good in its current state
             #     config = self.gui.configManager.config

@@ -5,7 +5,7 @@ Created on Thu Jun 13 10:25:49 2019
 @author: quentin.chateiller
 """
 
-from typing import List
+from typing import List, Union
 
 from . import drivers
 from . import config
@@ -70,12 +70,12 @@ def get_final_device_config(device_name: str, **kwargs) -> dict:
         device_config[key] = value
 
     # And the argument connection has to be provided
-    assert 'driver' in device_config.keys(), f"Missing driver name for device '{device_name}'"
+    assert 'driver' in device_config, f"Missing driver name for device '{device_name}'"
 
     if device_config['driver'] == 'autolab_server':
         device_config['connection'] = 'USELESS_ENTRY'
 
-    assert 'connection' in device_config.keys(), f"Missing connection type for device '{device_name}'"
+    assert 'connection' in device_config, f"Missing connection type for device '{device_name}'"
 
     return device_config
 
@@ -103,7 +103,7 @@ def get_device(device_name: str, **kwargs) -> Device:
 
 def list_loaded_devices() -> List[str]:
     ''' Returns the list of the loaded devices '''
-    return list(DEVICES.keys())
+    return list(DEVICES)
 
 
 def list_devices() -> List[str]:
@@ -124,7 +124,7 @@ def get_devices_status() -> dict:
 # CLOSE DEVICES
 # =============================================================================
 
-def close(device: Device = "all"):
+def close(device: Union[str, Device] = "all"):
     """ Close a device by providing its name or its instance. Use 'all' to close all openned devices. """
 
     if str(device) == "all":

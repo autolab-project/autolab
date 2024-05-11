@@ -299,7 +299,7 @@ class ControlCenter(QtWidgets.QMainWindow):
                 if widget is not None:
                     widget_pos = list(d.values()).index(widget)
                     if widget_pos is not None:
-                        widget_name = list(d.keys())[widget_pos]
+                        widget_name = list(d)[widget_pos]
                         widget = d.get(widget_name)
                         if widget is not None: d.pop(widget_name)
 
@@ -315,9 +315,8 @@ class ControlCenter(QtWidgets.QMainWindow):
         threadItemDictTemp = self.threadItemDict.copy()
         threadDeviceDictTemp = self.threadDeviceDict.copy()
 
-        for item_id in threadDeviceDictTemp.keys():
+        for item_id, module in threadDeviceDictTemp.items():
             item = threadItemDictTemp[item_id]
-            module = threadDeviceDictTemp[item_id]
 
             self.associate(item, module)
             item.setExpanded(True)
@@ -515,8 +514,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         for monitor in monitors:
             monitor.close()
 
-        sliders = list(self.sliders.values())
-        for slider in sliders:
+        for slider in list(self.sliders.values()):
             slider.close()
 
         devices.close()  # close all devices

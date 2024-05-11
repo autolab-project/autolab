@@ -110,7 +110,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                         self.scanner.configManager.configHistory.active = True
                         self.scanner.configManager.addRecipeStep(self.recipe_name, stepType, stepElement, name, stepValue)
 
-                        try: self.scanner.configManager.getAllowedRecipe(self.recipe_name)
+                        try: self.scanner.configManager.getAllowedRecipe(self.recipe_name)  # OBSOLETE
                         except ValueError:
                             self.scanner.setStatus('ERROR cycle between recipes detected! change cancelled', 10000, False)
                             self.scanner.configManager.configHistory.active = False
@@ -265,7 +265,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             moveDownRecipeAction.setIcon(QtGui.QIcon(icons['down']))
 
             config = self.gui.configManager.config
-            keys = list(config.keys())
+            keys = list(config)
             pos = keys.index(self.recipe_name)
 
             if pos == 0: moveUpRecipeAction.setEnabled(False)

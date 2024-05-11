@@ -9,9 +9,9 @@ from typing import Any
 import numpy as np
 from qtpy import QtCore, QtWidgets, QtGui
 
-from ..icons import icons
-from ..GUI_utilities import get_font_size, setLineEditBackground
-from ... import config
+from .icons import icons
+from .GUI_utilities import get_font_size, setLineEditBackground
+from .. import config
 
 
 class Slider(QtWidgets.QMainWindow):
@@ -32,6 +32,7 @@ class Slider(QtWidgets.QMainWindow):
 
         # Slider
         self.slider_instantaneous = True
+
         self.true_min = self.item.variable.type(0)
         self.true_max = self.item.variable.type(10)
         self.true_step = self.item.variable.type(1)
@@ -125,108 +126,128 @@ class Slider(QtWidgets.QMainWindow):
 
     def updateStep(self):
 
-        slider_points = 1 + int(
-            np.floor((self.true_max - self.true_min) / self.true_step))
-        self.true_max = self.item.variable.type(
-            self.true_step*(slider_points - 1) + self.true_min)
+        if self.item.variable.type in (int, float):
+            slider_points = 1 + int(
+                np.floor((self.true_max - self.true_min) / self.true_step))
+            self.true_max = self.item.variable.type(
+                self.true_step*(slider_points - 1) + self.true_min)
 
-        self.minWidget.setText(f'{self.true_min}')
-        setLineEditBackground(self.minWidget, 'synced', self._font_size)
-        self.maxWidget.setText(f'{self.true_max}')
-        setLineEditBackground(self.maxWidget, 'synced', self._font_size)
-        self.stepWidget.setText(f'{self.true_step}')
-        setLineEditBackground(self.stepWidget, 'synced', self._font_size)
+            self.minWidget.setText(f'{self.true_min}')
+            setLineEditBackground(self.minWidget, 'synced', self._font_size)
+            self.maxWidget.setText(f'{self.true_max}')
+            setLineEditBackground(self.maxWidget, 'synced', self._font_size)
+            self.stepWidget.setText(f'{self.true_step}')
+            setLineEditBackground(self.stepWidget, 'synced', self._font_size)
 
-        temp = self.slider_instantaneous
-        self.slider_instantaneous = False
-        self.sliderWidget.setMinimum(0)
-        self.sliderWidget.setSingleStep(1)
-        self.sliderWidget.setTickInterval(1)
-        self.sliderWidget.setMaximum(slider_points - 1)
-        self.slider_instantaneous = temp
+            temp = self.slider_instantaneous
+            self.slider_instantaneous = False
+            self.sliderWidget.setMinimum(0)
+            self.sliderWidget.setSingleStep(1)
+            self.sliderWidget.setTickInterval(1)
+            self.sliderWidget.setMaximum(slider_points - 1)
+            self.slider_instantaneous = temp
+        else: self.badType()
 
     def updateTrueValue(self, old_true_value: Any):
 
-        new_cursor_step = round(
-            (old_true_value - self.true_min) / self.true_step)
-        slider_points = 1 + int(
-            np.floor((self.true_max - self.true_min) / self.true_step))
-        if new_cursor_step > (slider_points - 1):
-            new_cursor_step = slider_points - 1
-        elif new_cursor_step < 0:
-            new_cursor_step = 0
+        if self.item.variable.type in (int, float):
+            new_cursor_step = round(
+                (old_true_value - self.true_min) / self.true_step)
+            slider_points = 1 + int(
+                np.floor((self.true_max - self.true_min) / self.true_step))
+            if new_cursor_step > (slider_points - 1):
+                new_cursor_step = slider_points - 1
+            elif new_cursor_step < 0:
+                new_cursor_step = 0
 
-        temp = self.slider_instantaneous
-        self.slider_instantaneous = False
-        self.sliderWidget.setSliderPosition(new_cursor_step)
-        self.slider_instantaneous = temp
+            temp = self.slider_instantaneous
+            self.slider_instantaneous = False
+            self.sliderWidget.setSliderPosition(new_cursor_step)
+            self.slider_instantaneous = temp
 
-        true_value = self.item.variable.type(
-            new_cursor_step*self.true_step + self.true_min)
-        self.valueWidget.setText(f'{true_value:.{self.precision}g}')
-        setLineEditBackground(self.valueWidget, 'edited', self._font_size)
+            true_value = self.item.variable.type(
+                new_cursor_step*self.true_step + self.true_min)
+            self.valueWidget.setText(f'{true_value:.{self.precision}g}')
+            setLineEditBackground(self.valueWidget, 'edited', self._font_size)
+        else: self.badType()
 
     def stepWidgetValueChanged(self):
 
-        old_true_value = self.item.variable.type(self.valueWidget.text())
-        try:
-            true_step = self.item.variable.type(self.stepWidget.text())
-            assert true_step != 0, "Can't have step=0"
-            self.true_step = true_step
-        except Exception as e:
-            self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
-                                    10000, False)
-        else:
-            self.updateStep()
-            self.updateTrueValue(old_true_value)
+        if self.item.variable.type in (int, float):
+            old_true_value = self.item.variable.type(self.valueWidget.text())
+            try:
+                true_step = self.item.variable.type(self.stepWidget.text())
+                assert true_step != 0, "Can't have step=0"
+                self.true_step = true_step
+            except Exception as e:
+                self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
+                                        10000, False)
+            else:
+                self.updateStep()
+                self.updateTrueValue(old_true_value)
+        else: self.badType()
 
     def minWidgetValueChanged(self):
 
-        old_true_value = self.item.variable.type(self.valueWidget.text())
-        try:
-            self.true_min = self.item.variable.type(self.minWidget.text())
-        except Exception as e:
-            self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
-                                    10000, False)
-        else:
-            self.updateStep()
-            self.updateTrueValue(old_true_value)
+        if self.item.variable.type in (int, float):
+            old_true_value = self.item.variable.type(self.valueWidget.text())
+            try:
+                self.true_min = self.item.variable.type(self.minWidget.text())
+            except Exception as e:
+                self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
+                                        10000, False)
+            else:
+                self.updateStep()
+                self.updateTrueValue(old_true_value)
+        else: self.badType()
 
     def maxWidgetValueChanged(self):
 
-        old_true_value = self.item.variable.type(self.valueWidget.text())
-        try:
-            self.true_max = self.item.variable.type(self.maxWidget.text())
-        except Exception as e:
-            self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
-                                    10000, False)
-        else:
-            self.updateStep()
-            self.updateTrueValue(old_true_value)
+        if self.item.variable.type in (int, float):
+            old_true_value = self.item.variable.type(self.valueWidget.text())
+            try:
+                self.true_max = self.item.variable.type(self.maxWidget.text())
+            except Exception as e:
+                self.item.gui.setStatus(f"Variable {self.item.variable.name}: {e}",
+                                        10000, False)
+            else:
+                self.updateStep()
+                self.updateTrueValue(old_true_value)
+        else: self.badType()
 
     def sliderReleased(self):
         """ Do something when the cursor is released """
-        value = self.sliderWidget.value()
-        true_value = self.item.variable.type(
-            value*self.true_step + self.true_min)
-        self.valueWidget.setText(f'{true_value:.{self.precision}g}')
-        setLineEditBackground(self.valueWidget, 'synced', self._font_size)
-        self.item.gui.threadManager.start(
-            self.item, 'write', value=true_value)
-        self.updateStep()
+        if self.item.variable.type in (int, float):
+            value = self.sliderWidget.value()
+            true_value = self.item.variable.type(
+                value*self.true_step + self.true_min)
+            self.valueWidget.setText(f'{true_value:.{self.precision}g}')
+            setLineEditBackground(self.valueWidget, 'synced', self._font_size)
+            if hasattr(self.item.gui, 'threadManager'):
+                self.item.gui.threadManager.start(
+                    self.item, 'write', value=true_value)
+            else:
+                self.item.variable(true_value)
+            self.updateStep()
+        else: self.badType()
 
     def valueChanged(self, value: Any):
         """ Do something with the slider value when the cursor is moved """
-        true_value = self.item.variable.type(
-            value*self.true_step + self.true_min)
-        self.valueWidget.setText(f'{true_value:.{self.precision}g}')
-        if self.slider_instantaneous:
-            setLineEditBackground(self.valueWidget, 'synced', self._font_size)
-            self.item.gui.threadManager.start(
-                self.item, 'write', value=true_value)
-        else:
-            setLineEditBackground(self.valueWidget,'edited', self._font_size)
-        # self.updateStep()  # Don't use it here, infinite loop leading to crash if set min > max
+        if self.item.variable.type in (int, float):
+            true_value = self.item.variable.type(
+                value*self.true_step + self.true_min)
+            self.valueWidget.setText(f'{true_value:.{self.precision}g}')
+            if self.slider_instantaneous:
+                setLineEditBackground(self.valueWidget, 'synced', self._font_size)
+                if hasattr(self.item.gui, 'threadManager'):
+                    self.item.gui.threadManager.start(
+                        self.item, 'write', value=true_value)
+                else:
+                    self.item.variable(true_value)
+            else:
+                setLineEditBackground(self.valueWidget, 'edited', self._font_size)
+            # self.updateStep()  # Don't use it here, infinite loop leading to crash if set min > max
+        else: self.badType()
 
     def instantChanged(self, value):
         self.slider_instantaneous = self.instantCheckBox.isChecked()
@@ -238,6 +259,12 @@ class Slider(QtWidgets.QMainWindow):
     def plusClicked(self):
         self.sliderWidget.setSliderPosition(self.sliderWidget.value()+1)
         if not self.slider_instantaneous: self.sliderReleased()
+
+    def badType(self):
+        setLineEditBackground(self.valueWidget, 'edited', self._font_size)
+        setLineEditBackground(self.minWidget, 'edited', self._font_size)
+        setLineEditBackground(self.stepWidget, 'edited', self._font_size)
+        setLineEditBackground(self.maxWidget, 'edited', self._font_size)
 
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """

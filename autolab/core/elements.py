@@ -41,37 +41,38 @@ class Variable(Element):
         super().__init__(parent, 'variable', config['name'])
 
         # Type
-        assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
+        assert 'type' in config, f"Variable {self.address()}: Missing variable type"
         assert config['type'] in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame], f"Variable {self.address()} configuration: Variable type not supported in autolab"
         self.type = config['type']
 
         # Read and write function
-        assert 'read' in config.keys() or 'write' in config.keys(), f"Variable {self.address()} configuration: no 'read' nor 'write' functions provided"
+        assert 'read' in config or 'write' in config, f"Variable {self.address()} configuration: no 'read' nor 'write' functions provided"
 
         # Read function
         self.read_function = None
         self.read_init = False
-        if config['type'] in [tuple]: assert 'read' in config.keys(), f"Variable {self.address()} configuration: Must provide a read function"
-        if 'read' in config.keys():
+        if config['type'] in [tuple]: assert 'read' in config, f"Variable {self.address()} configuration: Must provide a read function"
+        if 'read' in config:
             assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
-            if 'read_init' in config.keys():
+            if 'read_init' in config:
                 assert isinstance(config['read_init'], bool), f"Variable {self.address()} configuration: read_init parameter must be a boolean"
                 self.read_init = bool(config['read_init'])
+
         # Write function
         self.write_function = None
-        if 'write' in config.keys():
+        if 'write' in config:
             assert inspect.ismethod(config['write']), f"Variable {self.address()} configuration: Write parameter must be a function"
             self.write_function = config['write']
 
         # Unit
         self.unit = None
-        if 'unit' in config.keys():
+        if 'unit' in config:
             assert isinstance(config['unit'], str), f"Variable {self.address()} configuration: Unit parameter must be a string"
             self.unit = config['unit']
 
         # Help
-        if 'help' in config.keys():
+        if 'help' in config:
             assert isinstance(config['help'], str), f"Variable {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
 
@@ -161,22 +162,22 @@ class Action(Element):
         super().__init__(parent, 'action', config['name'])
 
         # Do function
-        assert 'do' in config.keys(), f"Action {self.address()}: Missing 'do' function"
+        assert 'do' in config, f"Action {self.address()}: Missing 'do' function"
         assert inspect.ismethod(config['do']), f"Action {self.address()} configuration: Do parameter must be a function"
         self.function = config['do']
 
         # Argument
         self.type = None
         self.unit = None
-        if 'param_type' in config.keys():
+        if 'param_type' in config:
             assert config['param_type'] in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame], f"Action {self.address()} configuration: Argument type not supported in autolab"
             self.type = config['param_type']
-            if 'param_unit' in config.keys():
+            if 'param_unit' in config:
                 assert isinstance(config['param_unit'], str), f"Action {self.address()} configuration: Argument unit parameter must be a string"
                 self.unit = config['param_unit']
 
         # Help
-        if 'help' in config.keys():
+        if 'help' in config:
             assert isinstance(config['help'], str), f"Action {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
 
@@ -269,11 +270,11 @@ class Module(Element):
         self._read_init_list = []
 
         # Object - instance
-        assert 'object' in config.keys(), f"Module {self.name}: missing module object"
+        assert 'object' in config, f"Module {self.name}: missing module object"
         self.instance = config['object']
 
         # Help
-        if 'help' in config.keys():
+        if 'help' in config:
             assert isinstance(config['help'], str), f"Module {self.address()} configuration: Help parameter must be a string"
             self._help = config['help']
 
@@ -287,13 +288,13 @@ class Module(Element):
             assert isinstance(config_line, dict), f"Module {self.name} configuration: 'get_driver_model' output must be a list of dictionnaries"
 
             # Name check
-            assert 'name' in config_line.keys(), f"Module {self.name} configuration: missing 'name' key in one dictionnary"
+            assert 'name' in config_line, f"Module {self.name} configuration: missing 'name' key in one dictionnary"
             assert isinstance(config_line['name'], str), f"Module {self.name} configuration: elements names must be a string"
             name = clean_string(config_line['name'])
             assert name != '', f"Module {self.name}: elements names cannot be empty"
 
             # Element type check
-            assert 'element' in config_line.keys(), f"Module {self.name}, Element {name} configuration: missing 'element' key in the dictionnary"
+            assert 'element' in config_line, f"Module {self.name}, Element {name} configuration: missing 'element' key in the dictionnary"
             assert isinstance(config_line['element'], str), f"Module {self.name}, Element {name} configuration: element type must be a string"
             element_type = config_line['element']
             assert element_type in ['module', 'variable', 'action'], f"Module {self.name}, Element {name} configuration: Element type has to be either 'module','variable' or 'action'"
@@ -322,7 +323,7 @@ class Module(Element):
 
     def list_modules(self) -> List[str]:
         """ Returns a list with the names of all existing submodules """
-        return list(self._mod.keys())
+        return list(self._mod)
 
     def get_variable(self, name: str) -> Variable:
         """ Returns the variable with the given name """
@@ -331,7 +332,7 @@ class Module(Element):
 
     def list_variables(self) -> List[str]:
         """ Returns a list with the names of all existing variables attached to this module """
-        return list(self._var.keys())
+        return list(self._var)
 
     def get_action(self, name) -> Action:
         """ Returns the action with the given name """
@@ -340,7 +341,7 @@ class Module(Element):
 
     def list_actions(self) -> List[str]:
         """ Returns a list with the names of all existing actions attached to this module """
-        return list(self._act.keys())
+        return list(self._act)
 
     def get_names(self) -> List[str]:
         """ Returns the list of the names of all the elements of this module """

@@ -101,7 +101,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     c_option=''
     if _parser: c_option='(-C option)'
     mess += f'\nAvailable connections types {c_option}:\n'
-    for connection in params['connection'].keys():
+    for connection in params['connection']:
         mess += f' - {connection}\n'
     mess += '\n'
 
@@ -117,9 +117,9 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
         mess += '\n'
 
     # Example of a devices_config.ini section
-    mess += '\n\n' + utilities.underline(
+    mess += '\n' + utilities.underline(
         'Saving a Device configuration in devices_config.ini:') + '\n'
-    for conn in params['connection'].keys():
+    for conn in params['connection']:
         mess += f"\n   [my_{params['driver']}]\n"
         mess += f"   driver = {params['driver']}\n"
         mess += f"   connection = {conn}\n"
@@ -130,7 +130,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
 
     # Example of get_driver
     mess += '\n' + utilities.underline('Loading a Driver:') + '\n\n'
-    for conn in params['connection'].keys():
+    for conn in params['connection']:
         if not _parser:
             args_str = f"'{params['driver']}', connection='{conn}'"
             for arg, value in params['connection'][conn].items():
@@ -146,7 +146,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
             for arg,value in params['connection'][conn].items():
                 if arg == 'address': args_str += f"-A {value} "
                 if arg == 'port': args_str += f"-P {value} "
-            if len(params['other'])>0: args_str += '-O '
+            if len(params['other']) > 0: args_str += '-O '
             for arg,value in params['other'].items():
                 args_str += f"{arg}={value} "
             mess += f"   autolab driver {args_str} -m method(value) \n"

@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 from qtpy import QtCore, QtWidgets, QtGui
 
-from .slider import Slider
+from ..slider import Slider
 from ..monitoring.main import Monitor
 from .. import variables
 from ..icons import icons

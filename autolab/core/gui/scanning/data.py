@@ -12,7 +12,7 @@ import shutil
 import tempfile
 import sys
 import random
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -87,11 +87,11 @@ class DataManager:
         dataList.reverse()
         return dataList
 
-    def getLastDataset(self) -> dict:
+    def getLastDataset(self) -> Union[dict, None]:
         """ This return the last created dataset """
         return self.datasets[-1] if len(self.datasets) > 0 else None
 
-    def getLastSelectedDataset(self) -> List[dict]:
+    def getLastSelectedDataset(self) -> Union[dict, None]:
         """ This return the last selected dataset """
         index = self.gui.data_comboBox.currentIndex()
         if index != -1 and index < len(self.datasets):

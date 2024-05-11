@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 17 15:04:04 2019
-
 Python package for scientific experiments automation
 
 The purpose of this package it to provide easy and efficient tools to deal with your scientific instruments, and to run automated experiments with them, by command line instructions or through a graphical user interface (GUI).

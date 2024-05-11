@@ -353,7 +353,7 @@ class Scanner(QtWidgets.QMainWindow):
             self.setStatus('Saving data...', 5000)
             datasets = self.dataManager.getLastSelectedDataset()
 
-            for dataset_name in datasets.keys():
+            for dataset_name in datasets:
                 dataset = datasets[dataset_name]
 
                 if len(datasets) == 1:

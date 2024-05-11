@@ -210,7 +210,7 @@ class ConfigManager:
             old_config = self.config
             new_config = {}
 
-            for recipe_name in old_config.keys():
+            for recipe_name in old_config:
                 if recipe_name == existing_recipe_name:
                     new_config[new_recipe_name] = old_config[recipe_name]
                 else:
@@ -260,7 +260,7 @@ class ConfigManager:
         # Replace closed devices by reopenned one
         for recipe_name in self.recipeNameList():
             for i, step in enumerate(self.config[recipe_name]['recipe']):
-                if (step['element']._parent.name in devices.DEVICES.keys()
+                if (step['element']._parent.name in devices.DEVICES
                         and not step['element']._parent in devices.DEVICES.values()):
                     module_name = step['element']._parent.name
                     module = self.gui.mainGui.tree.findItems(
@@ -569,37 +569,37 @@ class ConfigManager:
 
         return linkedRecipe
 
-    def getRecipeLink(self, recipe_name: str) -> List[str]:
+    def getRecipeLink(self, recipe_name: str) -> List[str]:  # OBSOLETE
         """ Returns a list of unique recipe names for which recipes are linked to recipe_name
         Example: for 'recipe_1': ['recipe_1', 'recipe_2', 'recipe_3'] """
         linkedRecipe = self.getLinkedRecipe()
         uniqueLinkedRecipe = []
 
-        for key in linkedRecipe.keys():
-            if recipe_name in linkedRecipe[key]:
-                uniqueLinkedRecipe.append(linkedRecipe[key])
+        for key, val in linkedRecipe.items():
+            if recipe_name in val:
+                uniqueLinkedRecipe.append(val)
 
         return list(set(sum(uniqueLinkedRecipe, [])))
 
-    def getAllowedRecipe(self, recipe_name: str) -> List[str]:
+    def getAllowedRecipe(self, recipe_name: str) -> List[str]:  # OBSOLETE
         """ Returns a list of recipe that can be added to recipe_name without
         risk of cycle or twice same recipe """
         recipe_name_list = self.recipeNameList()
         linked_recipes = self.getLinkedRecipe()
 
-        for recipe_name_i in linked_recipes.keys():
+        for recipe_name_i, recipe_i in linked_recipes.items():
             # remove recipe that are in recipe_name
             if recipe_name_i in linked_recipes[recipe_name]:
                 if recipe_name_i in recipe_name_list:
                     recipe_name_list.remove(recipe_name_i)
 
             # remove recipe that contains recipe_name
-            if recipe_name in linked_recipes[recipe_name_i]:
+            if recipe_name in recipe_i:
                 if recipe_name_i in recipe_name_list:
                     recipe_name_list.remove(recipe_name_i)
 
                 # remove all recipes that are in recipe_name_i
-                for recipe_name_j in linked_recipes[recipe_name_i]:
+                for recipe_name_j in recipe_i:
                     if recipe_name_j in recipe_name_list:
                         recipe_name_list.remove(recipe_name_j)
 
@@ -726,7 +726,7 @@ class ConfigManager:
         for recipe_name in reversed(self.recipeNameList()):
             for param_name in self.parameterNameList(recipe_name):
                 values = self.getValues(recipe_name, param_name)
-                value = values if variables.has_eval(values) else values[0]
+                value = values if variables.has_eval(values) else float(values[0])
                 listVariable.append((param_name, value))
             for step in self.stepList(recipe_name):
                 if step['stepType'] == 'measure':
@@ -831,9 +831,9 @@ class ConfigManager:
                 assert variables.is_Variable(var)
                 value_raw = var.raw
                 if isinstance(value_raw, np.ndarray): valueStr = array_to_str(
-                        value, threshold=1000000, max_line_width=9000000)
+                        value_raw, threshold=1000000, max_line_width=9000000)
                 elif isinstance(value_raw, pd.DataFrame): valueStr = dataframe_to_str(
-                        value, threshold=1000000)
+                        value_raw, threshold=1000000)
                 elif isinstance(value_raw, (int, float, str)):
                     try: valueStr = f'{value_raw:.{self.precision}g}'
                     except: valueStr = f'{value_raw}'
@@ -918,7 +918,7 @@ class ConfigManager:
 
             # Config
             config = OrderedDict()
-            recipeNameList = [i for i in list(configPars.keys()) if i != 'autolab' and i != 'variables']  # to remove 'autolab' from recipe list
+            recipeNameList = [i for i in list(configPars) if i != 'autolab' and i != 'variables']  # to remove 'autolab' from recipe list
 
             for recipe_num_name in recipeNameList:
 
@@ -1068,8 +1068,7 @@ class ConfigManager:
                 var_dict = configPars['variables']
 
                 add_vars = []
-                for var_name in var_dict.keys():
-                    raw_value = var_dict[var_name]
+                for var_name, raw_value in var_dict.items():
                     raw_value = variables.convert_str_to_data(raw_value)
                     add_vars.append((var_name, raw_value))
 

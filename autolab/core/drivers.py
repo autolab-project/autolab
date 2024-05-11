@@ -110,7 +110,7 @@ def list_drivers() -> List[str]:
     ''' Returns the list of available drivers '''
     # To be sure that the list is up to date
     update_drivers_paths()
-    return sorted(list(DRIVERS_PATHS.keys()))
+    return sorted(list(DRIVERS_PATHS))
 
 
 # =============================================================================
@@ -192,17 +192,16 @@ def get_instance_methods(instance: Type) -> Type:
     for name, _ in inspect.getmembers(instance, inspect.ismethod):
         if name != '__init__':
             attr = getattr(instance, name)
-            args = list(inspect.signature(attr).parameters.keys())
+            args = list(inspect.signature(attr).parameters)
             methods.append([name, args])
 
     # LEVEL 2
-    instance_vars = vars(instance)
-    for key in instance_vars.keys():
+    for key, val in vars(instance).items():
         try:  # explicit to avoid visa and inspect.getmembers issue
-            for name, _ in inspect.getmembers(instance_vars[key], inspect.ismethod):
+            for name, _ in inspect.getmembers(val, inspect.ismethod):
                 if name != '__init__':
                     attr = getattr(getattr(instance, key), name)
-                    args = list(inspect.signature(attr).parameters.keys())
+                    args = list(inspect.signature(attr).parameters)
                     methods.append([f'{key}.{name}', args])
         except: pass
 
