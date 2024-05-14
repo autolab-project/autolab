@@ -525,8 +525,9 @@ class ParameterManager:
             xrange_new = xrange.copy()
             xrange_new[0] = value - (xrange[1] - xrange[0])/2
             xrange_new[1] = value + (xrange[1] - xrange[0])/2
-            assert xrange_new[0] > 0
-            assert xrange_new[1] > 0
+            if log:
+                assert xrange_new[0] > 0
+                assert xrange_new[1] > 0
 
             self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange_new)
         except:
@@ -544,8 +545,9 @@ class ParameterManager:
             xrange_new = xrange.copy()
             xrange_new[0] = (xrange[1]+xrange[0])/2 - value/2
             xrange_new[1] = (xrange[1]+xrange[0])/2 + value/2
-            assert xrange_new[0] > 0
-            assert xrange_new[1] > 0
+            if log:
+                assert xrange_new[0] > 0
+                assert xrange_new[1] > 0
 
             self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange_new)
         except:

@@ -98,9 +98,8 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     mess += utilities.emphasize(submess, sign='=') + '\n'
 
     # Connections types
-    c_option=''
-    if _parser: c_option='(-C option)'
-    mess += f'\nAvailable connections types {c_option}:\n'
+    c_option=' (-C option)' if _parser else ''
+    mess += f'\nAvailable connections types{c_option}:\n'
     for connection in params['connection']:
         mess += f' - {connection}\n'
     mess += '\n'
@@ -112,7 +111,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
         for module in modules:
             moduleClass = drivers.get_module_class(driver_lib, module)
             mess += f' - {module}'
-            if hasattr(moduleClass,'category'): mess += f' ({moduleClass.category})'
+            if hasattr(moduleClass, 'category'): mess += f' ({moduleClass.category})'
             mess += '\n'
         mess += '\n'
 

@@ -353,7 +353,7 @@ class Module(Element):
         if attr in self.list_modules(): return self.get_module(attr)
         raise AttributeError(f"'{attr}' not found in module '{self.name}'")
 
-    def get_structure(self) -> List[List[str]]:
+    def get_structure(self) -> List[Tuple[str, str]]:
         """ Returns the structure of the module as a list containing each element address associated with its type as
         [['address1', 'variable'], ['address2', 'action'],...] """
         structure = []
@@ -361,9 +361,9 @@ class Module(Element):
         for mod in self.list_modules():
             structure += self.get_module(mod).get_structure()
         for var in self.list_variables():
-            structure.append([self.get_variable(var).address(), 'variable'])
+            structure.append((self.get_variable(var).address(), 'variable'))
         for act in self.list_actions():
-            structure.append([self.get_action(act).address(), 'action'])
+            structure.append((self.get_action(act).address(), 'action'))
 
         return structure
 
@@ -374,15 +374,15 @@ class Module(Element):
         h = []
 
         from .devices import Device  # import here to avoid ImportError circular import
-        if isinstance(self, Device): h.append([self.name, 'Device/Module', level])
-        else: h.append([self.name, 'Module', level])
+        if isinstance(self, Device): h.append((self.name, 'Device/Module', level))
+        else: h.append((self.name, 'Module', level))
 
         for mod in self.list_modules():
             h += self.get_module(mod).sub_hierarchy(level+1)
         for var in self.list_variables():
-            h.append([var, 'Variable', level+1])
+            h.append((var, 'Variable', level+1))
         for act in self.list_actions():
-            h.append([act, 'Action', level+1])
+            h.append((act, 'Action', level+1))
 
         return h
 

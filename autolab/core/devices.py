@@ -46,8 +46,8 @@ class Device(Module):
 # DEVICE GET FUNCTION
 # =============================================================================
 
-def get_element_by_address(address: str) -> Device:
-    """ Returns the Element located at the provided address """
+def get_device_by_address(address: str) -> Union[Device, None]:
+    """ Returns the Device located at the provided address if exists """
     address = address.split('.')
     try:
         element = get_device(address[0])

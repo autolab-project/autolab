@@ -261,6 +261,36 @@ class Scanner(QtWidgets.QMainWindow):
             if not self.selectRecipe_comboBox.isVisible():
                 self.label_selectRecipeParameter.hide()
 
+    def _refreshParameterRange(self, recipe_name: str, param_name: str,
+                               newName: str = None):
+        """ Updates parameterManager with new parameter name """
+        recipeDictParam = self.recipeDict[recipe_name]['parameterManager']
+
+        if newName is None:
+            recipeDictParam[param_name].refresh()
+        else:
+            if param_name in recipeDictParam:
+                recipeDictParam[newName] = recipeDictParam.pop(param_name)
+                recipeDictParam[newName].changeName(newName)
+                recipeDictParam[newName].refresh()
+            else:
+                print(f"Error: Can't refresh parameter '{param_name}', not found in recipeDictParam '{recipeDictParam}'")
+
+        self._updateSelectParameter()
+
+    def _refreshRecipe(self, recipe_name: str):
+        self.recipeDict[recipe_name]['recipeManager'].refresh()
+
+    def _resetRecipe(self):
+        """ Resets recipe """
+        self._clearRecipe()  # before everything to have access to recipe and del it
+
+        for recipe_name in self.configManager.recipeNameList():
+            self._addRecipe(recipe_name)
+            for parameterManager in self.recipeDict[recipe_name]['parameterManager'].values():
+                parameterManager.refresh()
+            self._refreshRecipe(recipe_name)
+
     def importActionClicked(self):
         """ Prompts the user for a configuration filename,
         and import the current scan configuration from it """
