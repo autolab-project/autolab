@@ -74,20 +74,30 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
-        if self.is_not_submodule and self.loaded:
-            menu = QtWidgets.QMenu()
-            disconnectDevice = menu.addAction(f"Disconnect {self.name}")
-            disconnectDevice.setIcon(QtGui.QIcon(icons['disconnect']))
+        if self.is_not_submodule:
+            if self.loaded:
+                menu = QtWidgets.QMenu()
+                disconnectDevice = menu.addAction(f"Disconnect {self.name}")
+                disconnectDevice.setIcon(QtGui.QIcon(icons['disconnect']))
 
-            choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+                choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
-            if choice == disconnectDevice:
-                close(self.name)
+                if choice == disconnectDevice:
+                    close(self.name)
 
-                for i in range(self.childCount()):
-                    self.removeChild(self.child(0))
+                    for i in range(self.childCount()):
+                        self.removeChild(self.child(0))
 
-                self.loaded = False
+                    self.loaded = False
+            elif id(self) in self.gui.threadManager.threads:
+                menu = QtWidgets.QMenu()
+                cancelDevice = menu.addAction(f"Cancel loading")
+                cancelDevice.setIcon(QtGui.QIcon(icons['disconnect']))
+
+                choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+
+                if choice == cancelDevice:
+                    self.gui.itemCanceled(self)
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):

@@ -53,8 +53,9 @@ class ThreadManager:
         self.gui.setStatus(status)
 
         # Thread configuration
+        tid = id(item)
+        assert tid not in self.threads
         thread = InteractionThread(item, intType, value)
-        tid = id(thread)
         self.threads[tid] = thread
         thread.endSignal.connect(
             lambda error, x=tid: self.threadFinished(x, error))
@@ -65,9 +66,14 @@ class ThreadManager:
 
     def threadFinished(self, tid: int, error: Exception):
         """ This function is called when a thread has finished its job, with an error or not
-        It updates the status bar of the GUI in consequence and enabled back the correspondig item """
-        if error is None: self.gui.clearStatus()
-        else: self.gui.setStatus(str(error), 10000, False)
+        It updates the status bar of the GUI in consequence and enabled back the corresponding item """
+        if error:
+            self.gui.setStatus(str(error), 10000, False)
+
+            if tid in self.gui.threadItemDict:
+                self.gui.threadItemDict.pop(tid)
+        else:
+            self.gui.clearStatus()
 
         item = self.threads[tid].item
         item.setDisabled(False)
@@ -143,7 +149,5 @@ class InteractionThread(QtCore.QThread):
             error = e
             if self.intType == 'load':
                 error = f'An error occured when loading device {self.item.name}: {str(e)}'
-                if id(self.item) in self.item.gui.threadItemDict.keys():
-                    self.item.gui.threadItemDict.pop(id(self.item))
 
         self.endSignal.emit(error)

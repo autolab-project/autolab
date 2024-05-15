@@ -365,6 +365,12 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerDevice.start()
 
+    def itemCanceled(self, item):
+        """ Cancel the device openning. Can be used to avoid GUI blocking for devices with infinite loading issue """
+        if id(item) in self.threadManager.threads:
+            self.threadManager.threads[id(item)].endSignal.emit(f'Cancel loading device {item.name}')
+            self.threadManager.threads[id(item)].terminate()
+
     def itemPressed(self, item: QtWidgets.QTreeWidgetItem):
         """ Function called when a click (not released) has been detected in the tree.
             Store last dragged variable in tree so scanner can know it when it is dropped there.
