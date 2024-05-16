@@ -50,17 +50,19 @@ class FigureManager:
     # PLOT DATA
     ###########################################################################
 
-    def update(self, xlist: list, ylist: list):
+    def update(self, xlist: list, ylist: list) -> None:
         """ This function update the figure in the GUI """
         if xlist is None: # image
-            self.fig.hide()
-            self.gui.min_checkBox.hide()
-            self.gui.mean_checkBox.hide()
-            self.gui.max_checkBox.hide()
-            self.figMap.show()
+            if self.fig.isVisible():
+                self.fig.hide()
+                self.gui.min_checkBox.hide()
+                self.gui.mean_checkBox.hide()
+                self.gui.max_checkBox.hide()
+                self.figMap.show()
             self.figMap.setImage(ylist)
             return None
-        else:
+
+        if not self.fig.isVisible():
             self.fig.show()
             self.gui.min_checkBox.show()
             self.gui.mean_checkBox.show()
@@ -68,7 +70,13 @@ class FigureManager:
             self.figMap.hide()
 
         # Data retrieval
-        self.plot.setData(xlist, ylist)
+        try:
+            self.plot.setData(xlist, ylist)
+        except Exception as e:
+            self.gui.setStatus(f'Error: {e}', 10000, False)
+            if not self.gui.monitorManager.isPaused():
+                self.gui.pauseButtonClicked()
+            return None
 
         xlist, ylist = self.plot.getData()
 

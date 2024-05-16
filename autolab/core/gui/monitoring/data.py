@@ -46,25 +46,28 @@ class DataManager:
         """ This function either replace list by array or add point to list depending on datapoint type """
         y = point[1]
 
-        self.gui.figureManager.setLabel('x', 'x')
-        self.gui.windowLength_lineEdit.hide()
-        self.gui.windowLength_label.hide()
-        self.gui.dataDisplay.hide()
+        if isinstance(y, (np.ndarray, pd.DataFrame)):
+            if self.gui.windowLength_lineEdit.isVisible():
+                self.gui.figureManager.setLabel('x', 'x')
+                self.gui.windowLength_lineEdit.hide()
+                self.gui.windowLength_label.hide()
+                self.gui.dataDisplay.hide()
 
-        if isinstance(y, np.ndarray):
-            if len(y.T.shape) == 1 or y.T.shape[0] == 2:
-                self._addArray(y.T)
-            else:
-                self._addImage(y)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
-        elif isinstance(y, pd.DataFrame):
-            self._addArray(y.values.T)
+            if isinstance(y, np.ndarray):
+                if len(y.T.shape) in (0, 1) or y.T.shape[0] == 2:
+                    self._addArray(y.T)
+                else:
+                    self._addImage(y)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+            elif isinstance(y, pd.DataFrame):
+                self._addArray(y.values.T)
         else:
-            self._addPoint(point)
+            if not self.gui.windowLength_lineEdit.isVisible():
+                self.gui.figureManager.setLabel('x', 'Time [s]')
+                self.gui.windowLength_lineEdit.show()
+                self.gui.windowLength_label.show()
+                self.gui.dataDisplay.show()
 
-            self.gui.figureManager.setLabel('x', 'Time [s]')
-            self.gui.windowLength_lineEdit.show()
-            self.gui.windowLength_label.show()
-            self.gui.dataDisplay.show()
+            self._addPoint(point)
 
     def _addImage(self, image: np.ndarray):
         """ Add image to ylist data as np.ndarray """
@@ -72,9 +75,12 @@ class DataManager:
         self.ylist = image
 
     def _addArray(self, array: np.ndarray):
-        """ This function replace an dataset [x,y] x is time y is array"""
-
-        if len(array.shape) == 1:
+        """ This function replace an dataset [x,y] x is time y is array """
+        if len(array.shape) == 0:
+            y_array = array
+            self.xlist = np.array([0])
+            self.ylist = np.array([y_array])
+        elif len(array.shape) == 1:
             y_array = array
             # Replace data
             self.xlist = np.arange(len(y_array))
@@ -98,7 +104,7 @@ class DataManager:
         self.ylist.append(y)
 
         # Remove too old data (regarding the window length)
-        while max(self.xlist)-min(self.xlist) > self.windowLength:
+        while (max(self.xlist) - min(self.xlist)) > self.windowLength:
             self.xlist.pop(0)
             self.ylist.pop(0)
 

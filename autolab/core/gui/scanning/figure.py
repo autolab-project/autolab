@@ -240,15 +240,16 @@ class FigureManager:
         self.setLabel('x', variable_x)
         self.setLabel('y', variable_y)
 
-        self.gui.frame_axis.show()
         if data_name == "Scan":
             nbtraces_temp  = self.nbtraces
-            self.gui.nbTraces_lineEdit.show()
-            self.gui.graph_nbTracesLabel.show()
+            if not self.gui.nbTraces_lineEdit.isVisible():
+                self.gui.nbTraces_lineEdit.show()
+                self.gui.graph_nbTracesLabel.show()
         else:
             nbtraces_temp = 1  # decided to only show the last scan data for dataframes
-            self.gui.nbTraces_lineEdit.hide()
-            self.gui.graph_nbTracesLabel.hide()
+            if self.gui.nbTraces_lineEdit.isVisible():
+                self.gui.nbTraces_lineEdit.hide()
+                self.gui.graph_nbTracesLabel.hide()
 
         # Load the last results data
         data: pd.DataFrame = self.gui.dataManager.getData(
@@ -285,9 +286,11 @@ class FigureManager:
                 subdata = subdata.astype(float)
 
                 if isinstance(subdata, np.ndarray):  # is image
-                    self.fig.hide()
-                    self.figMap.show()
-                    self.gui.frame_axis.hide()
+                    if self.fig.isVisible():
+                        self.fig.hide()
+                        self.figMap.show()
+                    if self.gui.frame_axis.isVisible():
+                        self.gui.frame_axis.hide()
                     image_data[i] = subdata
                     if i == len(data)-1:
                         if image_data.ndim == 3:
@@ -299,8 +302,11 @@ class FigureManager:
                         self.figMap.setCurrentIndex(len(self.figMap.tVals))
 
                 else: # not an image (is pd.DataFrame)
-                    self.figMap.hide()
-                    self.fig.show()
+                    if not self.fig.isVisible():
+                        self.fig.show()
+                        self.figMap.hide()
+                    if not self.gui.frame_axis.isVisible():
+                        self.gui.frame_axis.show()
                     x = subdata.loc[:,variable_x]
                     y = subdata.loc[:,variable_y]
                     if isinstance(x, pd.DataFrame):
