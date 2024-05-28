@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 
 from . import config
 from . import drivers
@@ -79,7 +80,11 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     except:
         pass
     # Load list of all parameters
-    driver_lib = drivers.load_driver_lib(driver_name)
+    try:
+        driver_lib = drivers.load_driver_lib(driver_name)
+    except Exception as e:
+        print(f"Can't load {driver_name}: {e}", file=sys.stderr)
+        return None
     params = {}
     params['driver'] = driver_name
     params['connection'] = {}

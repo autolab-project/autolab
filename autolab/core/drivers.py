@@ -54,13 +54,11 @@ def load_lib(lib_path: str) -> ModuleType:
     # Load the module
     spec = importlib.util.spec_from_file_location(lib_name, lib_path)
     lib = importlib.util.module_from_spec(spec)
-    try:
-        spec.loader.exec_module(lib)
-    except Exception as e:
-        print(f"Can't load {lib}: {e}", file=sys.stderr)
 
     # Come back to previous working directory
     os.chdir(curr_dir)
+
+    spec.loader.exec_module(lib)
 
     return lib
 
@@ -142,11 +140,14 @@ def get_driver_category(driver_name: str) -> str:
         category = 'Other'
 
         if os.path.exists(driver_utilities_path):
-            driver_utilities = load_lib(driver_utilities_path)
-
-            if hasattr(driver_utilities, 'category'):
-                category = driver_utilities.category
-                break
+            try:
+                driver_utilities = load_lib(driver_utilities_path)
+            except Exception as e:
+                print(f"Can't load {driver_name}: {e}", file=sys.stderr)
+            else:
+                if hasattr(driver_utilities, 'category'):
+                    category = driver_utilities.category
+                    break
 
     return category
 

@@ -26,8 +26,9 @@ from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
 from ..variables import VARIABLES
+from ..GUI_utilities import get_font_size, setLineEditBackground
 from ..icons import icons
-from ... import devices, web, paths, config, utilities
+from ... import devices, drivers, web, paths, config, utilities
 from .... import __version__
 from ...web import project_url, drivers_url, doc_url
 
@@ -138,6 +139,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.scanner = None
         self.plotter = None
         self.about = None
+        self.addDevice = None
         self.monitors = {}
         self.sliders = {}
         self.threadDeviceDict = {}
@@ -170,6 +172,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         devicesConfig.setIcon(QtGui.QIcon(icons['config']))
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
+
+        addDeviceAction = settingsMenu.addAction('Add new device')
+        addDeviceAction.setIcon(QtGui.QIcon(icons['add']))
+        addDeviceAction.triggered.connect(self.openAddDevice)
+        addDeviceAction.setStatusTip("Open the utility to add a device")
 
         refreshAction = settingsMenu.addAction('Refresh devices')
         refreshAction.triggered.connect(self.initialize)
@@ -334,13 +341,18 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function will create the first items in the tree, but will
         associate only the ones already loaded in autolab """
         self.tree.clear()
-        for devName in devices.list_devices():
-            item = TreeWidgetItemModule(self.tree, devName, self)
+        try:
+            list_devices = devices.list_devices()
+        except Exception as e:
+            self.setStatus(f'Error {e}', 10000, False)
+        else:
+            for devName in list_devices:
+                item = TreeWidgetItemModule(self.tree, devName, self)
 
-            for i in range(5):
-                item.setBackground(i, QtGui.QColor('#9EB7F5'))  # blue
+                for i in range(5):
+                    item.setBackground(i, QtGui.QColor('#9EB7F5'))  # blue
 
-            if devName in devices.list_loaded_devices(): self.itemClicked(item)
+                if devName in devices.list_loaded_devices(): self.itemClicked(item)
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
@@ -355,6 +367,18 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Function called when a right click has been detected in the tree """
         item = self.tree.itemAt(position)
         if hasattr(item, 'menu'): item.menu(position)
+        elif item is None: self.addDeviceMenu(position)
+
+    def addDeviceMenu(self, position: QtCore.QPoint):
+        """ Open menu to ask if want to add new device """
+        menu = QtWidgets.QMenu()
+        addDeviceChoice = menu.addAction('Add new device')
+        addDeviceChoice.setIcon(QtGui.QIcon(icons['add']))
+
+        choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
+
+        if choice == addDeviceChoice:
+            self.openAddDevice()
 
     def itemClicked(self, item: QtWidgets.QTreeWidgetItem):
         """ Function called when a normal click has been detected in the tree.
@@ -434,12 +458,24 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.about = AboutWindow(self)
             self.about.show()
             self.about.activateWindow()
-            self.activateWindow() # Put main window back to the front
-        # If the scanner is already running, just make as the front window
+        # If the about window is already running, just make as the front window
         else:
             self.about.setWindowState(
                 self.about.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.about.activateWindow()
+
+    def openAddDevice(self):
+        """ This function open the add device window. """
+        # If the add device window is not already running, create one
+        if self.addDevice is None:
+            self.addDevice = addDeviceWindow(self)
+            self.addDevice.show()
+            self.addDevice.activateWindow()
+        # If the add device window is already running, just make as the front window
+        else:
+            self.addDevice.setWindowState(
+                self.addDevice.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.addDevice.activateWindow()
 
     @staticmethod
     def openAutolabConfig():
@@ -501,6 +537,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This clear the about instance reference when quitted """
         self.about = None
 
+    def clearAddDevice(self):
+        """ This clear the addDevice instance reference when quitted """
+        self.addDevice = None
+
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
         if self.scanner is not None:
@@ -515,6 +555,9 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         if self.about is not None:
             self.about.close()
+
+        if self.addDevice is not None:
+            self.addDevice.close()
 
         monitors = list(self.monitors.values())
         for monitor in monitors:
@@ -551,6 +594,270 @@ class ControlCenter(QtWidgets.QMainWindow):
         super().closeEvent(event)
 
         VARIABLES.clear()  # reset variables defined in the GUI
+
+
+class addDeviceWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, parent: QtWidgets.QMainWindow = None):
+
+        super().__init__(parent)
+        self.mainGui = parent
+        self.setWindowTitle('Autolab - Add device')
+
+        self.statusBar = self.statusBar()
+
+        self._prev_name = ''
+        self._prev_conn = ''
+
+        self._font_size = get_font_size() + 1
+
+        # Main layout creation
+        layoutWindow = QtWidgets.QVBoxLayout()
+        layoutWindow.setAlignment(QtCore.Qt.AlignTop)
+
+        centralWidget = QtWidgets.QWidget()
+        centralWidget.setLayout(layoutWindow)
+        self.setCentralWidget(centralWidget)
+
+        # Device nickname
+        layoutDeviceNickname = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(layoutDeviceNickname)
+
+        label = QtWidgets.QLabel('Device')
+        label.setMinimumSize(60, 23)
+        label.setMaximumSize(60, 23)
+
+        self.deviceNickname = QtWidgets.QLineEdit()
+        self.deviceNickname.setText('my_device')
+
+        layoutDeviceNickname.addWidget(label)
+        layoutDeviceNickname.addWidget(self.deviceNickname)
+
+        # Driver name
+        layoutDriverName = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(layoutDriverName)
+
+        label = QtWidgets.QLabel('Driver')
+        label.setMinimumSize(60, 23)
+        label.setMaximumSize(60, 23)
+
+        self.driversComboBox = QtWidgets.QComboBox()
+        self.driversComboBox.addItems(drivers.list_drivers())
+        self.driversComboBox.activated.connect(self.driverChanged)
+
+        layoutDriverName.addWidget(label)
+        layoutDriverName.addWidget(self.driversComboBox)
+
+        # Driver connection
+        layoutDriverConnection = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(layoutDriverConnection)
+
+        label = QtWidgets.QLabel('Connection')
+        label.setMinimumSize(60, 23)
+        label.setMaximumSize(60, 23)
+
+        self.connectionComboBox = QtWidgets.QComboBox()
+        self.connectionComboBox.activated.connect(self.connectionChanged)
+
+        layoutDriverConnection.addWidget(label)
+        layoutDriverConnection.addWidget(self.connectionComboBox)
+
+        # Driver arguments
+        self.layoutDriverArgs = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(self.layoutDriverArgs)
+
+        self.layoutDriverOtherArgs = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(self.layoutDriverOtherArgs)
+
+        # layout for optional args
+        self.layoutOptionalArg = QtWidgets.QVBoxLayout()
+        layoutWindow.addLayout(self.layoutOptionalArg)
+
+        # Add argument
+        layoutButtonArg = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(layoutButtonArg)
+
+        addOptionalArg = QtWidgets.QPushButton('Add argument')
+        addOptionalArg.setMinimumSize(0, 23)
+        addOptionalArg.setMaximumSize(100, 23)
+        addOptionalArg.setIcon(QtGui.QIcon(icons['add']))
+        addOptionalArg.clicked.connect(lambda state: self.addOptionalArgClicked())
+
+        layoutButtonArg.addWidget(addOptionalArg)
+        layoutButtonArg.setAlignment(QtCore.Qt.AlignLeft)
+
+        # Add device
+        layoutButton = QtWidgets.QHBoxLayout()
+        layoutWindow.addLayout(layoutButton)
+
+        addButton = QtWidgets.QPushButton('Add device')
+        addButton.clicked.connect(self.addButtonClicked)
+
+        layoutButton.addWidget(addButton)
+
+        # update driver name combobox
+        self.driverChanged()
+
+    def addOptionalArgClicked(self, key: str = None, val: str = None):
+        """ Add new layout for optional argument """
+        layout = QtWidgets.QHBoxLayout()
+        self.layoutOptionalArg.addLayout(layout)
+
+        widget = QtWidgets.QLineEdit()
+        widget.setText(key)
+        layout.addWidget(widget)
+        widget = QtWidgets.QLineEdit()
+        widget.setText(val)
+        layout.addWidget(widget)
+        widget = QtWidgets.QPushButton()
+        widget.setIcon(QtGui.QIcon(icons['remove']))
+        widget.clicked.connect(lambda state, layout=layout: self.removeOptionalArgClicked(layout))
+        layout.addWidget(widget)
+
+    def removeOptionalArgClicked(self, layout):
+        """ Remove optional argument layout """
+        for j in reversed(range(3)):
+            layout.itemAt(j).widget().setParent(None)
+        layout.setParent(None)
+
+    def addButtonClicked(self):
+        """ Add the device to the config file """
+        device_name = self.deviceNickname.text()
+        driver_name = self.driversComboBox.currentText()
+        conn = self.connectionComboBox.currentText()
+
+        device_dict = {}
+        device_dict['driver'] = driver_name
+        device_dict['connection'] = conn
+
+        for layout in (self.layoutDriverArgs, self.layoutDriverOtherArgs):
+            for i in range(0, layout.count(), 2):
+                key = layout.itemAt(i).widget().text()
+                val = layout.itemAt(i+1).widget().text()
+                device_dict[key] = val
+
+        for i in range(self.layoutOptionalArg.count()):
+            layout = self.layoutOptionalArg.itemAt(i).layout()
+            key = layout.itemAt(0).widget().text()
+            val = layout.itemAt(1).widget().text()
+            device_dict[key] = val
+
+        # Update devices config
+        device_config = config.get_all_devices_configs()
+        new_device = {device_name: device_dict}
+        device_config.update(new_device)
+        config.save_config('devices', device_config)
+
+        self.mainGui.initialize()
+
+        self.close()
+
+    def driverChanged(self):
+        """ Update driver information """
+        driver_name = self.driversComboBox.currentText()
+
+        if driver_name == self._prev_name: return None
+        self._prev_name = driver_name
+
+        try:
+            driver_lib = drivers.load_driver_lib(driver_name)
+        except Exception as e:
+            # If error with driver remove all layouts
+            self.setStatus(f"Can't load {driver_name}: {e}", 10000, False)
+
+            self.connectionComboBox.clear()
+
+            for layout in (self.layoutDriverArgs, self.layoutDriverOtherArgs):
+                for i in reversed(range(layout.count())):
+                    layout.itemAt(i).widget().setParent(None)
+
+            for i in reversed(range(self.layoutOptionalArg.count())):
+                layout = self.layoutOptionalArg.itemAt(i).layout()
+                for j in reversed(range(3)):
+                    layout.itemAt(j).widget().setParent(None)
+                layout.setParent(None)
+
+            return None
+
+        self.setStatus('')
+
+        # Update available connections
+        connections = drivers.get_connection_names(driver_lib)
+        self.connectionComboBox.clear()
+        self.connectionComboBox.addItems(connections)
+
+        # update selected connection information
+        self._prev_conn = ''
+        self.connectionChanged()
+
+        # reset layoutDriverOtherArgs
+        for i in reversed(range(self.layoutDriverOtherArgs.count())):
+            self.layoutDriverOtherArgs.itemAt(i).widget().setParent(None)
+
+        # used to skip doublon key
+        conn = self.connectionComboBox.currentText()
+        connection_args = drivers.get_class_args(
+            drivers.get_connection_class(driver_lib, conn))
+
+        # populate layoutDriverOtherArgs
+        other_args = drivers.get_class_args(drivers.get_driver_class(driver_lib))
+        for key, val in other_args.items():
+            if key in connection_args: continue
+            widget = QtWidgets.QLabel()
+            widget.setText(key)
+            self.layoutDriverOtherArgs.addWidget(widget)
+            widget = QtWidgets.QLineEdit()
+            widget.setText(str(val))
+            self.layoutDriverOtherArgs.addWidget(widget)
+
+        # reset layoutOptionalArg
+        for i in reversed(range(self.layoutOptionalArg.count())):
+            layout = self.layoutOptionalArg.itemAt(i).layout()
+            for j in reversed(range(3)):
+                layout.itemAt(j).widget().setParent(None)
+            layout.setParent(None)
+
+        # populate layoutOptionalArg
+        if hasattr(drivers.get_driver_class(driver_lib), 'slot_config'):
+            self.addOptionalArgClicked('slot1', f'{drivers.get_driver_class(driver_lib).slot_config}')
+            self.addOptionalArgClicked('slot1_name', 'my_<MODULE_NAME>')
+
+    def connectionChanged(self):
+        """ Update connection information """
+        conn = self.connectionComboBox.currentText()
+
+        if conn == self._prev_conn: return None
+        self._prev_conn = conn
+
+        driver_name = self.driversComboBox.currentText()
+        driver_lib = drivers.load_driver_lib(driver_name)
+
+        connection_args = drivers.get_class_args(
+            drivers.get_connection_class(driver_lib, conn))
+
+        # reset layoutDriverArgs
+        for i in reversed(range(self.layoutDriverArgs.count())):
+            self.layoutDriverArgs.itemAt(i).widget().setParent(None)
+
+        # populate layoutDriverArgs
+        for key, val in connection_args.items():
+            widget = QtWidgets.QLabel()
+            widget.setText(key)
+            self.layoutDriverArgs.addWidget(widget)
+
+            widget = QtWidgets.QLineEdit()
+            widget.setText(str(val))
+            self.layoutDriverArgs.addWidget(widget)
+
+    def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
+        """ Modify the message displayed in the status bar and add error message to logger """
+        self.statusBar.showMessage(message, timeout)
+        if not stdout: print(message, file=sys.stderr)
+
+    def closeEvent(self, event):
+        """ Does some steps before the window is really killed """
+        # Delete reference of this window in the control center
+        self.mainGui.clearAddDevice()
 
 
 class AboutWindow(QtWidgets.QMainWindow):

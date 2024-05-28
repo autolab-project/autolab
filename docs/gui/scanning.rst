@@ -30,7 +30,7 @@ It is possible to set a custom array by right cliking on the parameter frame and
 Parameter range
 ---------------
 
-The second step is to configure the range of the values that will be applied to the parameter during the scan. The user can set the start value, the end value, the mean value, the range width, the number of points of the scan or the step between two values. The user can also space the points following a log scale by checking the **Log** check box.
+The second step is to configure the range of the values that will be applied to the parameter during the scan. The user can set the start value, the end value, the mean value, the range width, the number of points of the scan or the step between two values. The user can also space the points following a log scale by selecting the **Log** option. It is also possible to use a custom array for the parameter using the **Custom** option.
 
 Steps
 -----
@@ -56,6 +56,7 @@ Once the configuration of a scan is finished, the user can save it locally in a 
 
 To load a previously exported scan configuration, open the menu **Configuration** and select **Import configuration**. The user will be prompted for the path of the configuration file.
 Use the **Append** option to append the selected configuration as an extra recipe to the existing scan.
+Alternatively, recently opened configuration files can be accessed via the **Import recent configuration** menu.
 
 Scan execution
 ##############

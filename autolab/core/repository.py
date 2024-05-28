@@ -122,8 +122,8 @@ def _check_empty_driver_folder():
         install_drivers()
 
 
-def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
-                    experimental_feature=False):
+def install_drivers(*repo_url: Union[None, str, Tuple[str, str]],
+                    skip_input=False, experimental_feature=False):
     """ Ask if want to install drivers from repo url.
     repo_url: can be url or tuple ('path to install', 'url to download').
     If no argument passed, download official drivers to official driver folder.
@@ -131,7 +131,7 @@ def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
     Also install mandatory drivers (system, dummy, plotter) from official repo."""
     if experimental_feature:
         _install_drivers_custom()
-        return
+        return None
 
     # Download mandatory drivers
     official_folder = paths.DRIVER_SOURCES['official']

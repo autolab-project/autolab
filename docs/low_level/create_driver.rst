@@ -450,7 +450,7 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
 *Action*:
     - 'do': class attribute (argument type: function)
     - 'param_type': python type, exclusively in: int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame, optional
-    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit "filename" to open a open file dialog)
+    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit 'open-file' to open a open file dialog, 'save-file' to open a save file dialog and 'user-input' to open an input dialog)
 
 
 
@@ -463,7 +463,7 @@ Example code:
         model.append({'name':'line1', 'element':'module', 'object':self.slot1, 'help':'Simple help for line1 module'})
         model.append({'name':'amplitude', 'element':'variable', 'type':float, 'read':self.get_amplitude, 'write':self.set_amplitude, 'unit':'V', 'help':'Simple help for amplitude variable'}
         model.append({'name':'go_home', 'element':'action', 'do':self.home, 'help':'Simple help for go_home action'})
-        model.append({'name':'open', 'element':'action', 'do':self.open, 'param_type':str, 'param_unit':'filename', 'help':'Open data with the provided filename'})
+        model.append({'name':'open', 'element':'action', 'do':self.open, 'param_type':str, 'param_unit':'open-file', 'help':'Open data with the provided filename'})
     return model
 
 .. _name_driver_utilities.py:
@@ -471,7 +471,7 @@ Example code:
 Driver utilities structure (*\<manufacturer\>_\<MODEL\>_utilities.py* file)
 ###########################################################################
 
-This file should be present in the driver directory (*\<manufacturer\>_\<MODEL\>.py*).
+This optional file can be added to the driver directory (*\<manufacturer\>_\<MODEL\>.py*).
 
 Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py*, further explained bellow:
 

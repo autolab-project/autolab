@@ -372,10 +372,10 @@ class Scanner(QtWidgets.QMainWindow):
     def saveButtonClicked(self):
         """ This function is called when the save button is clicked.
         It asks a path and starts the procedure to save the data """
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+        filename = QtWidgets.QFileDialog.getSaveFileName(
             self,  caption="Save data",
             directory=paths.USER_LAST_CUSTOM_FOLDER,
-            filter=utilities.SUPPORTED_EXTENSION)
+            filter=utilities.SUPPORTED_EXTENSION)[0]
         path = os.path.dirname(filename)
 
         if path != '':
