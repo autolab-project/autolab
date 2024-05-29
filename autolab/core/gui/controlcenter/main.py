@@ -609,6 +609,12 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         self._prev_name = ''
         self._prev_conn = ''
 
+        try:
+            import pyvisa as visa
+            self.rm = visa.ResourceManager()
+        except:
+            self.rm = None
+
         self._font_size = get_font_size() + 1
 
         # Main layout creation
@@ -773,7 +779,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
 
             for i in reversed(range(self.layoutOptionalArg.count())):
                 layout = self.layoutOptionalArg.itemAt(i).layout()
-                for j in reversed(range(3)):
+                for j in reversed(range(layout.count())):
                     layout.itemAt(j).widget().setParent(None)
                 layout.setParent(None)
 
@@ -813,7 +819,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         # reset layoutOptionalArg
         for i in reversed(range(self.layoutOptionalArg.count())):
             layout = self.layoutOptionalArg.itemAt(i).layout()
-            for j in reversed(range(3)):
+            for j in reversed(range(layout.count())):
                 layout.itemAt(j).widget().setParent(None)
             layout.setParent(None)
 
@@ -848,6 +854,20 @@ class addDeviceWindow(QtWidgets.QMainWindow):
             widget = QtWidgets.QLineEdit()
             widget.setText(str(val))
             self.layoutDriverArgs.addWidget(widget)
+
+            if key == 'address':
+                conn_widget = widget
+
+        if self.rm is not None and conn == 'VISA':
+            widget = QtWidgets.QComboBox()
+            widget.clear()
+            conn_list = ('Available connections',) + tuple(self.rm.list_resources())
+            widget.addItems(conn_list)
+            widget.activated.connect(
+                lambda item, conn_widget=conn_widget: conn_widget.setText(
+                    widget.currentText()) if widget.currentText() != 'Available connections' else conn_widget.text())
+            self.layoutDriverArgs.addWidget(widget)
+
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """

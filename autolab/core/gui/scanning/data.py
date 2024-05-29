@@ -41,7 +41,7 @@ class DataManager:
         self.timer.timeout.connect(self.sync)
 
     def getData(self, nbDataset: int, varList: list,
-                selectedData: int = 0, data_name: str = "Scan"):
+                selectedData: int = 0, data_name: str = "Scan") -> List[pd.DataFrame]:
         """ This function returns to the figure manager the required data """
         dataList = []
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
