@@ -103,9 +103,9 @@ class Plotter(QtWidgets.QMainWindow):
             self.nbTraces_lineEdit,'edited', self._font_size))
         setLineEditBackground(self.nbTraces_lineEdit, 'synced', self._font_size)
 
-        getattr(self, 'variable_x_comboBox').currentIndexChanged.connect(
+        self.variable_x_comboBox.currentIndexChanged.connect(
             self.variableChanged)
-        getattr(self, 'variable_y_comboBox').currentIndexChanged.connect(
+        self.variable_y_comboBox.currentIndexChanged.connect(
             self.variableChanged)
 
         self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')

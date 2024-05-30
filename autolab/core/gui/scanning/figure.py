@@ -35,11 +35,14 @@ class FigureManager:
         self.gui.graph.addWidget(widget)
         self.figMap.hide()
 
-        getattr(self.gui, 'variable_x_comboBox').activated.connect(
+        self.gui.variable_x_comboBox.activated.connect(
             self.variableChanged)
-        getattr(self.gui, 'variable_y_comboBox').activated.connect(
+        self.gui.variable_x2_comboBox.activated.connect(
+            self.variableChanged)
+        self.gui.variable_y_comboBox.activated.connect(
             self.variableChanged)
 
+        self.gui.variable_x2_checkBox.stateChanged.connect(self.reloadData)
         # Number of traces
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
@@ -218,6 +221,7 @@ class FigureManager:
             try: self.ax.removeItem(curve)  # try because curve=None if close before end of scan
             except: pass
         self.curves = []
+        self.figMap.clear()
 
     def reloadData(self):
         ''' This function removes any plotted curves and reload all required curves from
@@ -228,6 +232,7 @@ class FigureManager:
         # Get current displayed result
         data_name = self.gui.dataframe_comboBox.currentText()
         variable_x = self.gui.variable_x_comboBox.currentText()
+        variable_x2 = self.gui.variable_x2_comboBox.currentText()
         variable_y = self.gui.variable_y_comboBox.currentText()
         data_id = int(self.gui.data_comboBox.currentIndex()) + 1
         data_len = len(self.gui.dataManager.datasets)
@@ -240,32 +245,132 @@ class FigureManager:
         self.setLabel('x', variable_x)
         self.setLabel('y', variable_y)
 
-        if data_name == "Scan":
+        self.displayed_as_image = self.gui.variable_x2_checkBox.isChecked()
+
+        if data_name == "Scan" and not self.displayed_as_image:
             nbtraces_temp  = self.nbtraces
             if not self.gui.nbTraces_lineEdit.isVisible():
                 self.gui.nbTraces_lineEdit.show()
                 self.gui.graph_nbTracesLabel.show()
         else:
-            nbtraces_temp = 1  # decided to only show the last scan data for dataframes
+            # decided to only show the last scan data for dataframes and scan displayed as image
+            nbtraces_temp = 1
             if self.gui.nbTraces_lineEdit.isVisible():
                 self.gui.nbTraces_lineEdit.hide()
                 self.gui.graph_nbTracesLabel.hide()
 
         # Load the last results data
-        data: pd.DataFrame = self.gui.dataManager.getData(
-            nbtraces_temp, [variable_x, variable_y],
-            selectedData=selectedData, data_name=data_name)
+        if self.displayed_as_image:
+            var_to_display = [variable_x, variable_x2, variable_y]
+        else:
+            var_to_display = [variable_x, variable_y]
 
-        # update displayScan
-        self.refreshDisplayScanData()
+        data: pd.DataFrame = self.gui.dataManager.getData(
+            nbtraces_temp, var_to_display,
+            selectedData=selectedData, data_name=data_name)
 
         # Plot data
         if data is not None:
             true_nbtraces = max(nbtraces_temp, len(data))  # not good but avoid error
+
             if len(data) != 0:
+                # update displayScan
+                self.refreshDisplayScanData()
+                if not self.gui.displayScanData_pushButton.isVisible():
+                    self.gui.displayScanData_pushButton.show()
+
                 for temp_data in data:
                     if temp_data is not None: break
                 else: return None
+
+            if data_name == "Scan" and self.displayed_as_image:
+
+                if not self.gui.variable_x2_comboBox.isVisible():
+                    self.gui.variable_x2_comboBox.show()
+                    self.gui.label_scan_2D.show()
+
+                if not self.figMap.isVisible():
+                    self.figMap.show()
+                    self.fig.hide()
+
+                # Data
+                if len(data) == 0: return None
+                subdata: pd.DataFrame = data[-1]  # Only plot last scan
+
+                if subdata is None: return None
+
+                subdata = subdata.astype(float)
+
+                x = subdata.loc[:,variable_x].values
+                x2 = subdata.loc[:,variable_x2].values
+                y = subdata.loc[:,variable_y].values
+
+                # # Attempt with interpolation
+                # unique_x = np.sort(np.unique(x))
+                # unique_x2 = np.sort(np.unique(x2))
+
+                # from scipy.interpolate import griddata
+                # xgrid, x2grid = np.meshgrid(unique_x,
+                #                             unique_x2)
+
+                # shape_x = np.unique(x).shape[0]
+                # shape_x2 = np.unique(x2).shape[0]
+
+                # img = np.empty(shape_x*shape_x2)
+                # img[:] = np.nan
+
+                # if len(y) < len(img):
+                #     img[: len(y)] = y
+                # else:
+                #     img = y
+
+                # shape_img = np.shape(img)[0]
+
+                # if shape_x*shape_x2 == shape_img:
+
+                # # give too much errors
+                # ygrid = griddata((x, x2), y, (xgrid, x2grid))
+
+                # pw = pg.PlotWidget()
+                # img = pg.ImageItem(ygrid)
+                # self.fig.addItem(img)
+                # self.fig.show()
+                # self.figMap.hide()
+
+                # self.fig.setImage(img)
+                # return None
+
+                # Attempt without x and y values. Currently display the wrong img if label x and y are not in the creation order (plotting y, x vs z instead of x, y vs z)
+                shape_x = np.unique(x).shape[0]
+                shape_x2 = np.unique(x2).shape[0]
+
+                # Define img using x and x2 shape and set nan where no data exists yet, to have rectangular grid
+                img = np.empty(shape_x*shape_x2)
+                img[:] = np.nan
+
+                if len(y) < len(img):
+                    img[: len(y)] = y
+                else:
+                    img = y
+
+                shape_img = np.shape(img)[0]
+
+                if shape_x*shape_x2 == shape_img:
+                    img = np.reshape(img, (shape_x, shape_x2))
+                    img = np.rot90(img)
+
+                    if self.gui.variable_x_comboBox.currentIndex() > self.gui.variable_x2_comboBox.currentIndex():
+                        print('Not in correct order!')
+
+                    self.figMap.setImage(img)
+                else:
+                    self.figMap.clear()
+
+                return None
+
+            if self.gui.variable_x2_comboBox.isVisible():
+                self.gui.variable_x2_comboBox.hide()
+                self.gui.label_scan_2D.hide()
 
             if len(data) != 0 and isinstance(data[0], np.ndarray):  # to avoid errors
                 image_data = np.empty((len(data), *temp_data.shape))
@@ -307,8 +412,10 @@ class FigureManager:
                         self.figMap.hide()
                     if not self.gui.frame_axis.isVisible():
                         self.gui.frame_axis.show()
+
                     x = subdata.loc[:,variable_x]
                     y = subdata.loc[:,variable_y]
+
                     if isinstance(x, pd.DataFrame):
                         print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_x}!")
                     if isinstance(y, pd.DataFrame):
@@ -361,7 +468,6 @@ class FigureManager:
     # Show data
     ###########################################################################
     def refreshDisplayScanData(self):
-        self.gui.displayScanData_pushButton.show()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
         datasets = self.gui.dataManager.getLastSelectedDataset()
         if datasets is not None and recipe_name in datasets:

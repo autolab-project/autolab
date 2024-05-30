@@ -223,12 +223,14 @@ class DataManager:
                     isinstance(data, np.ndarray) and not (
                         len(data.T.shape) == 1 or data.T.shape[0] == 2)):
                 self.gui.variable_x_comboBox.clear()
+                self.gui.variable_x2_comboBox.clear()
                 self.gui.variable_y_comboBox.clear()
                 return None
 
             try: data = utilities.formatData(data)
             except AssertionError:  # if np.ndarray of string for example
                 self.gui.variable_x_comboBox.clear()
+                self.gui.variable_x2_comboBox.clear()
                 self.gui.variable_y_comboBox.clear()
                 return None
 
@@ -255,8 +257,9 @@ class DataManager:
 
         if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
             self.gui.variable_x_comboBox.clear()
+            self.gui.variable_x2_comboBox.clear()
             self.gui.variable_x_comboBox.addItems(resultNamesList)  # parameter first
-
+            self.gui.variable_x2_comboBox.addItems(resultNamesList)
             if resultNamesList:
                 name = resultNamesList.pop(0)
                 resultNamesList.append(name)
@@ -267,6 +270,7 @@ class DataManager:
             if data_name == "Scan":
                 if variable_x_index != -1:
                     self.gui.variable_x_comboBox.setCurrentIndex(variable_x_index)
+                    self.gui.variable_x2_comboBox.setCurrentIndex(variable_x_index)
                 if variable_y_index != -1:
                     self.gui.variable_y_comboBox.setCurrentIndex(variable_y_index)
         return None
@@ -330,8 +334,9 @@ class Dataset():
                 return data
 
         if any(map(lambda v: v in varList, list(data.columns))):
-            if varList[0] == varList[1]: return data.loc[:, [varList[0]]]
-            else: return data.loc[:,varList]
+            data2 = data.loc[:,~data.columns.duplicated()].copy()  # unique data column
+            unique_varList = list(dict.fromkeys(varList))  # unique varList
+            return data2.loc[:,unique_varList]
 
         return None
 
