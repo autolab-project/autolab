@@ -206,11 +206,12 @@ class FigureManager:
     # AXE LABEL
     ###########################################################################
 
-    def setLabel(self, axe: str, value: str):
+    def setLabel(self, axe: str, value: str, ax=None):
         """ This function changes the label of the given axis """
+        if ax is None: ax = self.ax
         axes = {'x':'bottom', 'y':'left'}
         if value == '': value = ' '
-        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
+        ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
 
     # PLOT DATA
     ###########################################################################
@@ -222,6 +223,7 @@ class FigureManager:
             except: pass
         self.curves = []
         self.figMap.clear()
+        self.fig.img.hide()  # OPTIMIZE: would be better to erase data
 
     def reloadData(self):
         ''' This function removes any plotted curves and reload all required curves from
@@ -283,94 +285,68 @@ class FigureManager:
                     if temp_data is not None: break
                 else: return None
 
+            # If plot scan as image
             if data_name == "Scan" and self.displayed_as_image:
 
                 if not self.gui.variable_x2_comboBox.isVisible():
                     self.gui.variable_x2_comboBox.show()
                     self.gui.label_scan_2D.show()
+                    self.gui.label_y_axis.setText('Z axis')
 
-                if not self.figMap.isVisible():
-                    self.figMap.show()
-                    self.fig.hide()
+                if not self.fig.isVisible():
+                    self.figMap.hide()
+                    self.fig.show()
+
+                if self.ax.isVisible():
+                    self.fig.colorbar.show()
+                    self.fig.ax_img.show()
+                    self.ax.hide()
+
+                self.setLabel('x', variable_x, ax=self.fig.ax_img)
+                self.setLabel('y', variable_x2, ax=self.fig.ax_img)
+
+                if variable_x == variable_x2:
+                    self.fig.img.hide()
+                    return None
 
                 # Data
-                if len(data) == 0: return None
+                if len(data) == 0:
+                    self.fig.img.hide()
+                    return None
+
                 subdata: pd.DataFrame = data[-1]  # Only plot last scan
 
-                if subdata is None: return None
+                if subdata is None:
+                    self.fig.img.hide()
+                    return None
 
                 subdata = subdata.astype(float)
 
-                x = subdata.loc[:,variable_x].values
-                x2 = subdata.loc[:,variable_x2].values
-                y = subdata.loc[:,variable_y].values
+                pivot_table = subdata.pivot(
+                    index=variable_x, columns=variable_x2, values=variable_y)
 
-                # # Attempt with interpolation
-                # unique_x = np.sort(np.unique(x))
-                # unique_x2 = np.sort(np.unique(x2))
+                # Extract data for plotting
+                x = np.array(pivot_table.columns)
+                y = np.array(pivot_table.index)
+                z = np.array(pivot_table)
 
-                # from scipy.interpolate import griddata
-                # xgrid, x2grid = np.meshgrid(unique_x,
-                #                             unique_x2)
+                self.fig.update_img(x, y, z)
 
-                # shape_x = np.unique(x).shape[0]
-                # shape_x2 = np.unique(x2).shape[0]
-
-                # img = np.empty(shape_x*shape_x2)
-                # img[:] = np.nan
-
-                # if len(y) < len(img):
-                #     img[: len(y)] = y
-                # else:
-                #     img = y
-
-                # shape_img = np.shape(img)[0]
-
-                # if shape_x*shape_x2 == shape_img:
-
-                # # give too much errors
-                # ygrid = griddata((x, x2), y, (xgrid, x2grid))
-
-                # pw = pg.PlotWidget()
-                # img = pg.ImageItem(ygrid)
-                # self.fig.addItem(img)
-                # self.fig.show()
-                # self.figMap.hide()
-
-                # self.fig.setImage(img)
-                # return None
-
-                # Attempt without x and y values. Currently display the wrong img if label x and y are not in the creation order (plotting y, x vs z instead of x, y vs z)
-                shape_x = np.unique(x).shape[0]
-                shape_x2 = np.unique(x2).shape[0]
-
-                # Define img using x and x2 shape and set nan where no data exists yet, to have rectangular grid
-                img = np.empty(shape_x*shape_x2)
-                img[:] = np.nan
-
-                if len(y) < len(img):
-                    img[: len(y)] = y
-                else:
-                    img = y
-
-                shape_img = np.shape(img)[0]
-
-                if shape_x*shape_x2 == shape_img:
-                    img = np.reshape(img, (shape_x, shape_x2))
-                    img = np.rot90(img)
-
-                    if self.gui.variable_x_comboBox.currentIndex() > self.gui.variable_x2_comboBox.currentIndex():
-                        print('Not in correct order!')
-
-                    self.figMap.setImage(img)
-                else:
-                    self.figMap.clear()
+                if not self.fig.img.isVisible():
+                    self.fig.img.show()
 
                 return None
 
+            # If plot scan or array
             if self.gui.variable_x2_comboBox.isVisible():
                 self.gui.variable_x2_comboBox.hide()
                 self.gui.label_scan_2D.hide()
+                self.gui.label_y_axis.setText('Y axis')
+
+            if not self.ax.isVisible():
+                self.fig.colorbar.hide()
+                self.fig.ax_img.hide()
+                self.ax.show()
 
             if len(data) != 0 and isinstance(data[0], np.ndarray):  # to avoid errors
                 image_data = np.empty((len(data), *temp_data.shape))
