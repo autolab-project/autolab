@@ -6,6 +6,7 @@ Created on Sun Sep 29 18:12:24 2019
 """
 
 import os
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -42,7 +43,16 @@ class FigureManager:
         self.gui.variable_y_comboBox.activated.connect(
             self.variableChanged)
 
-        self.gui.variable_x2_checkBox.stateChanged.connect(self.reloadData)
+        pgv = pg.__version__.split('.')
+        if int(pgv[0]) == 0 and int(pgv[1]) < 12:
+            self.gui.variable_x2_checkBox.setEnabled(False)
+            self.gui.variable_x2_checkBox.setToolTip("Can't use 2D plot for scan, need pyqtgraph >= 0.13.2")
+            self.gui.setStatus(
+                "Can't use 2D plot for scan, need pyqtgraph >= 0.13.2", 10000, False)
+        else:
+            self.fig.activate_img()
+            self.gui.variable_x2_checkBox.stateChanged.connect(self.reloadData)
+
         # Number of traces
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
@@ -153,8 +163,10 @@ class FigureManager:
 
         if data_name == "Scan" or self.fig.isHidden():
             self.gui.toolButton.hide()
+            self.gui.variable_x2_checkBox.show()
         else:
             self.gui.toolButton.show()
+            self.gui.variable_x2_checkBox.hide()
 
     def updateDataframe_comboBox(self):
         # Executed each time the queue is read
@@ -206,12 +218,11 @@ class FigureManager:
     # AXE LABEL
     ###########################################################################
 
-    def setLabel(self, axe: str, value: str, ax=None):
+    def setLabel(self, axe: str, value: str):
         """ This function changes the label of the given axis """
-        if ax is None: ax = self.ax
         axes = {'x':'bottom', 'y':'left'}
         if value == '': value = ' '
-        ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
+        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
 
     # PLOT DATA
     ###########################################################################
@@ -223,7 +234,10 @@ class FigureManager:
             except: pass
         self.curves = []
         self.figMap.clear()
-        self.fig.img.hide()  # OPTIMIZE: would be better to erase data
+
+        if self.fig.img_active:
+            if self.fig.img.isVisible():
+                self.fig.img.hide() # OPTIMIZE: would be better to erase data
 
     def reloadData(self):
         ''' This function removes any plotted curves and reload all required curves from
@@ -267,7 +281,7 @@ class FigureManager:
         else:
             var_to_display = [variable_x, variable_y]
 
-        data: pd.DataFrame = self.gui.dataManager.getData(
+        data: List[pd.DataFrame] = self.gui.dataManager.getData(
             nbtraces_temp, var_to_display,
             selectedData=selectedData, data_name=data_name)
 
@@ -297,33 +311,41 @@ class FigureManager:
                     self.figMap.hide()
                     self.fig.show()
 
-                if self.ax.isVisible():
+                if not self.fig.colorbar.isVisible():
                     self.fig.colorbar.show()
-                    self.fig.ax_img.show()
-                    self.ax.hide()
 
-                self.setLabel('x', variable_x, ax=self.fig.ax_img)
-                self.setLabel('y', variable_x2, ax=self.fig.ax_img)
+                self.setLabel('x', variable_x)
+                self.setLabel('y', variable_x2)
 
                 if variable_x == variable_x2:
-                    self.fig.img.hide()
                     return None
 
                 # Data
                 if len(data) == 0:
-                    self.fig.img.hide()
                     return None
 
                 subdata: pd.DataFrame = data[-1]  # Only plot last scan
 
                 if subdata is None:
-                    self.fig.img.hide()
                     return None
 
                 subdata = subdata.astype(float)
 
-                pivot_table = subdata.pivot(
-                    index=variable_x, columns=variable_x2, values=variable_y)
+                try:
+                    pivot_table = subdata.pivot(
+                        index=variable_x, columns=variable_x2, values=variable_y)
+                except ValueError:  # if more than 2 parameters
+                    ## TODO: Solution is to set all the other parameters to a constant value
+                    # data = self.gui.dataManager.getData(
+                    #     nbtraces_temp, var_to_display+['parameter_test',],
+                    #     selectedData=selectedData, data_name=data_name)
+
+                    # subdata: pd.DataFrame = data[-1]
+                    # subdata = subdata[subdata['parameter_test'] == 0]
+                    # pivot_table = subdata.pivot(
+                    #     index=variable_x, columns=variable_x2, values=variable_y)
+                    # self.clearData()
+                    return None
 
                 # Extract data for plotting
                 x = np.array(pivot_table.columns)
@@ -343,10 +365,12 @@ class FigureManager:
                 self.gui.label_scan_2D.hide()
                 self.gui.label_y_axis.setText('Y axis')
 
-            if not self.ax.isVisible():
-                self.fig.colorbar.hide()
-                self.fig.ax_img.hide()
-                self.ax.show()
+            if self.fig.img_active:
+                if self.fig.colorbar.isVisible():
+                    self.fig.colorbar.hide()
+
+                if self.fig.img.isVisible():
+                    self.fig.img.hide()
 
             if len(data) != 0 and isinstance(data[0], np.ndarray):  # to avoid errors
                 image_data = np.empty((len(data), *temp_data.shape))
@@ -465,7 +489,7 @@ class FigureManager:
         """ This function save the figure with the provided filename """
         raw_name, extension = os.path.splitext(filename)
         new_filename = raw_name + ".png"
-        exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+        exporter = pg.exporters.ImageExporter(self.ax)
         exporter.export(new_filename)
 
     def close(self):

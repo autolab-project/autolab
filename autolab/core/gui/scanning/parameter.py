@@ -328,7 +328,7 @@ class ParameterManager:
             address = element.address()
             unit = element.unit
         else:
-            address = 'None'
+            address = self.param_name
             unit = ''
 
         self.parameterName_lineEdit.setEnabled(True)

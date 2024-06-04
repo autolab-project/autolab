@@ -140,7 +140,7 @@ class FigureManager:
             new_filename = raw_name+".png"
 
             if not self.fig.isHidden():
-                exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+                exporter = pg.exporters.ImageExporter(self.ax)
                 exporter.export(new_filename)
             else:
                 self.figMap.export(new_filename)

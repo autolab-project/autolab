@@ -179,5 +179,5 @@ class FigureManager:
 
         raw_name, extension = os.path.splitext(filename)
         new_filename = raw_name+".png"
-        exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+        exporter = pg.exporters.ImageExporter(self.ax)
         exporter.export(new_filename)
