@@ -26,11 +26,12 @@ from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
 from ..variables import VARIABLES
-from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_utilities import get_font_size
 from ..icons import icons
 from ... import devices, drivers, web, paths, config, utilities
-from .... import __version__
+from ...repository import _install_drivers_custom
 from ...web import project_url, drivers_url, doc_url
+from .... import __version__
 
 
 class OutputWrapper(QtCore.QObject):
@@ -173,10 +174,15 @@ class ControlCenter(QtWidgets.QMainWindow):
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
 
-        addDeviceAction = settingsMenu.addAction('Add new device')
+        addDeviceAction = settingsMenu.addAction('Add device')
         addDeviceAction.setIcon(QtGui.QIcon(icons['add']))
         addDeviceAction.triggered.connect(self.openAddDevice)
         addDeviceAction.setStatusTip("Open the utility to add a device")
+
+        downloadDriverAction = settingsMenu.addAction('Download drivers')
+        downloadDriverAction.setIcon(QtGui.QIcon(icons['add']))
+        downloadDriverAction.triggered.connect(self.downloadDriver)
+        downloadDriverAction.setStatusTip("Open the utility to download drivers")
 
         refreshAction = settingsMenu.addAction('Refresh devices')
         refreshAction.triggered.connect(self.initialize)
@@ -476,6 +482,10 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.addDevice.setWindowState(
                 self.addDevice.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.addDevice.activateWindow()
+
+    def downloadDriver(self):
+        """ This function open the download driver window. """
+        _install_drivers_custom(parent=self)
 
     @staticmethod
     def openAutolabConfig():

@@ -229,10 +229,14 @@ def _download_driver(url, driver_name, output_dir, _print=True):
         # 'HTTP Error 403: rate limit exceeded' due to too much download if don't have github account
         download(driver_url, output_dir=output_dir, _print=_print)
     except:  # if use Exception, crash python when having error
-        print(f"Error when downloading driver '{driver_name}'", file=sys.stderr)
+        e = f"Error when downloading driver '{driver_name}'"
+        if _print:
+            print(e, file=sys.stderr)
+        else:
+            return e
 
 
-def _install_drivers_custom(_print=True):
+def _install_drivers_custom(_print=True, parent=None):
     """ Ask the user which driver to install from the official autolab driver github repo.
     If qtpy is install, open a GUI to select the driver.
     Else, prompt the user to install individual drivers. """
@@ -243,7 +247,7 @@ def _install_drivers_custom(_print=True):
         list_driver = _get_drivers_list_from_github(official_url)
     except:
         print(f'Cannot access {official_url}, skip installation')
-        return
+        return None
 
     try:
         from qtpy import QtWidgets, QtGui
@@ -262,18 +266,21 @@ def _install_drivers_custom(_print=True):
 
         class DriverInstaller(QtWidgets.QMainWindow):
 
-            def __init__(self, url, list_driver, OUTPUT_DIR):
+            def __init__(self, url, list_driver, OUTPUT_DIR, parent=None):
                 """ GUI to select which driver to install from the official github repo """
 
+                self.gui = parent
                 self.url = url
                 self.list_driver = list_driver
                 self.OUTPUT_DIR = OUTPUT_DIR
 
-                super().__init__()
+                super().__init__(parent)
 
-                self.setWindowTitle("Autolab Driver Installer")
+                self.setWindowTitle("Autolab - Driver Installer")
                 self.setFocus()
                 self.activateWindow()
+
+                self.statusBar = self.statusBar()
 
                 centralWidget = QtWidgets.QWidget()
                 self.setCentralWidget(centralWidget)
@@ -299,8 +306,10 @@ def _install_drivers_custom(_print=True):
                 tab.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
                 tab.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
                 tab.setAlternatingRowColors(True)
-                tab.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-                tab.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+                tab.horizontalHeader().setSectionResizeMode(
+                    0, QtWidgets.QHeaderView.ResizeToContents)
+                tab.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                  QtWidgets.QSizePolicy.Expanding)
                 tab.setSizeAdjustPolicy(tab.AdjustToContents)
 
                 # Init checkBox
@@ -326,27 +335,43 @@ def _install_drivers_custom(_print=True):
                 for checkBox in self.list_checkBox:
                     checkBox.setChecked(state)
 
-            def closeEvent(self, event):
-                """ This function does some steps before the window is really killed """
-                QtWidgets.QApplication.quit()  # close the interface
-
             def installListDriver(self):
                 """ Install all the drivers for which the corresponding checkBox has been checked """
+                list_bool = [
+                    checkBox.isChecked() for checkBox in self.list_checkBox]
+                list_driver_to_download = [
+                    driver_name for (driver_name, driver_bool) in zip(
+                        self.list_driver, list_bool) if driver_bool]
 
-                list_bool = [checkBox.isChecked() for checkBox in self.list_checkBox]
-                list_driver_to_download = [driver_name for (driver_name, driver_bool) in zip(self.list_driver, list_bool) if driver_bool]
+                if all(list_bool):  # Better for all drivers
+                    install_drivers(skip_input=True, experimental_feature=False)
+                    self.close()
+                elif any(list_bool):  # Better for couple drivers
+                    for driver_name in list_driver_to_download:
+                        if _print:
+                            print(f"Downloading {driver_name}")
+                            # self.setStatus(f"Downloading {driver_name}", 5000)  # OPTIMIZE: currently thread blocked by installer so don't show anything until the end
+                        e = _download_driver(self.url, driver_name,
+                                             self.OUTPUT_DIR, _print=False)
+                        if e is not None:
+                            print(e, file=sys.stderr)
+                            # self.setStatus(e, 10000, False)
+                    self.setStatus('Finished!', 5000)
 
-                for driver in list_driver_to_download:
-                    _download_driver(self.url, driver, self.OUTPUT_DIR, _print=_print)
-                print('Done!')
+            def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
+                """ Modify the message displayed in the status bar and add error message to logger """
+                self.statusBar.showMessage(message, timeout)
+                if not stdout: print(message, file=sys.stderr)
 
-        if _print: print("Open driver installer")
-        app = QtWidgets.QApplication.instance()
-        if app is None: app = QtWidgets.QApplication([])
+        if parent is None:
+            if  _print: print("Open driver installer")
+            app = QtWidgets.QApplication.instance()
+            if app is None: app = QtWidgets.QApplication([])
 
-        driverInstaller = DriverInstaller(official_url, list_driver, official_folder)
+        driverInstaller = DriverInstaller(
+            official_url, list_driver, official_folder, parent=parent)
         driverInstaller.show()
-        app.exec_()
+        if parent is None: app.exec()
 
     # Update available drivers
     drivers.update_drivers_paths()

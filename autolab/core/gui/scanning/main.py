@@ -92,6 +92,9 @@ class Scanner(QtWidgets.QMainWindow):
         # Clear button configuration
         self.clear_pushButton.clicked.connect(self.clear)
 
+        self.variable_x2_comboBox.hide()
+        self.label_scan_2D.hide()
+
     def populateOpenRecent(self):
         """ https://realpython.com/python-menus-toolbars/#populating-python-menus-dynamically """
         self.openRecentMenu.clear()
@@ -119,7 +122,7 @@ class Scanner(QtWidgets.QMainWindow):
             with open(paths.HISTORY_CONFIG, 'r') as f: lines = f.readlines()
             lines.append(filename)
             lines = [line.rstrip('\n')+'\n' for line in lines]
-            lines = list(reversed(dict.fromkeys(reversed(lines))))  # unique names
+            lines = list(reversed(list(dict.fromkeys(reversed(lines)))))  # unique names
             lines = lines[-10:]
             with open(paths.HISTORY_CONFIG, 'w') as f: f.writelines(lines)
 
@@ -141,12 +144,12 @@ class Scanner(QtWidgets.QMainWindow):
         self.figureManager.fig.show()
         self.figureManager.setLabel("x", " ")
         self.figureManager.setLabel("y", " ")
-        self.nbTraces_lineEdit.show()
-        self.graph_nbTracesLabel.show()
         self.frame_axis.show()
         self.toolButton.hide()
         self.variable_x_comboBox.clear()
+        self.variable_x2_comboBox.clear()
         self.variable_y_comboBox.clear()
+        self.variable_x2_checkBox.show()
         self.data_comboBox.clear()
         self.data_comboBox.hide()
         self.save_pushButton.setEnabled(False)

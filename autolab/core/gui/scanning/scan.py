@@ -393,14 +393,15 @@ class ScanThread(QtCore.QThread):
 
                 try:
                     self._source_of_error = None
+                    ID += 1
+                    variables.set_variable('ID', ID)
+
                     for parameter, paramValue in zip(
                             self.config[recipe_name]['parameter'], paramValueList):
                         self._source_of_error = parameter
                         element = parameter['element']
                         param_name = parameter['name']
 
-                        ID += 1
-                        variables.set_variable('ID', ID)
                         variables.set_variable(param_name, element.type(
                                 paramValue) if element is not None else paramValue)
 

@@ -7,6 +7,7 @@ Created on Thu Apr 11 20:13:46 2024
 
 from typing import Tuple
 import os
+import sys
 
 import numpy as np
 from qtpy import QtWidgets, QtCore, QtGui
@@ -14,6 +15,7 @@ import pyqtgraph as pg
 
 from ..config import get_GUI_config
 
+ONCE = False
 
 def get_font_size() -> int:
     GUI_config = get_GUI_config()
@@ -68,45 +70,129 @@ def qt_object_exists(QtObject) -> bool:
         return True
 
 
-def pyqtgraph_fig_ax() -> Tuple[pg.PlotWidget, pg.PlotItem]:
-    """ Return a formated fig and ax pyqtgraph for a basic plot """
+class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
+    # OPTIMIZE: could merge with myImageView to only have one class handling both lines and images
 
-    # Configure and initialize the figure in the GUI
-    fig = pg.PlotWidget()
-    ax = fig.getPlotItem()
+    def __init__(self):
+        super().__init__()
 
-    ax.setLabel("bottom", ' ', **{'color':0.4, 'font-size': '12pt'})
-    ax.setLabel("left", ' ', **{'color':0.4, 'font-size': '12pt'})
+        self.img_active = False
 
-    # Set your custom font for both axes
-    my_font = QtGui.QFont('Arial', 12)
-    my_font_tick = QtGui.QFont('Arial', 10)
-    ax.getAxis("bottom").label.setFont(my_font)
-    ax.getAxis("left").label.setFont(my_font)
-    ax.getAxis("bottom").setTickFont(my_font_tick)
-    ax.getAxis("left").setTickFont(my_font_tick)
-    ax.showGrid(x=True, y=True)
-    ax.setContentsMargins(10., 10., 10., 10.)
+        # for plotting 1D
+        ax = self.addPlot()
+        self.ax = ax
 
-    vb = ax.getViewBox()
-    vb.enableAutoRange(enable=True)
-    vb.setBorder(pg.mkPen(color=0.4))
+        ax.setLabel("bottom", ' ', **{'color':0.4, 'font-size': '12pt'})
+        ax.setLabel("left", ' ', **{'color':0.4, 'font-size': '12pt'})
 
-    ## Text label for the data coordinates of the mouse pointer
-    dataLabel = pg.LabelItem(color='k', parent=ax.getAxis('bottom'))
-    dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
+        # Set your custom font for both axes
+        my_font = QtGui.QFont('Arial', 12)
+        my_font_tick = QtGui.QFont('Arial', 10)
+        ax.getAxis("bottom").label.setFont(my_font)
+        ax.getAxis("left").label.setFont(my_font)
+        ax.getAxis("bottom").setTickFont(my_font_tick)
+        ax.getAxis("left").setTickFont(my_font_tick)
+        ax.showGrid(x=True, y=True)
+        ax.setContentsMargins(10., 10., 10., 10.)
 
-    def mouseMoved(point):
-        """ This function marks the position of the cursor in data coordinates"""
         vb = ax.getViewBox()
-        mousePoint = vb.mapSceneToView(point)
-        l = f'x = {mousePoint.x():g},  y = {mousePoint.y():g}'
-        dataLabel.setText(l)
+        vb.enableAutoRange(enable=True)
+        vb.setBorder(pg.mkPen(color=0.4))
 
-    # data reader signal connection
-    ax.scene().sigMouseMoved.connect(mouseMoved)
+        ## Text label for the data coordinates of the mouse pointer
+        dataLabel = pg.LabelItem(color='k', parent=ax.getAxis('bottom'))
+        dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
 
-    return fig, ax
+        def mouseMoved(point):
+            """ This function marks the position of the cursor in data coordinates"""
+            vb = ax.getViewBox()
+            mousePoint = vb.mapSceneToView(point)
+            l = f'x = {mousePoint.x():g},  y = {mousePoint.y():g}'
+            dataLabel.setText(l)
+
+        # data reader signal connection
+        ax.scene().sigMouseMoved.connect(mouseMoved)
+
+    def activate_img(self):
+        """ Enable image feature """
+        global ONCE
+        # (py 3.6 -> pg 0.11.1, py 3.7 -> 0.12.4, py 3.8 -> 0.13.3, py 3.9 -> 0.13.7 (latest))
+        # Disabled 2D plot if don't have pyqtgraph > 0.11
+        pgv = pg.__version__.split('.')
+        if int(pgv[0]) == 0 and int(pgv[1]) < 12:
+            ONCE = True
+            print("Can't use 2D plot for scan, need pyqtgraph >= 0.13.2", file=sys.stderr)
+            # OPTIMIZE: could use ImageView instead?
+            return None
+
+        if not self.img_active:
+            self.img_active = True
+
+            # for plotting 2D
+            img = pg.PColorMeshItem()
+            self.ax.addItem(img)
+            self.img = img
+
+            # for plotting 2D colorbar
+            if hasattr(self.ax, 'addColorBar') and hasattr(img, 'setLevels'):
+                self.colorbar = self.ax.addColorBar(img, colorMap='viridis')  # pg 0.12.4
+            else:
+                if hasattr(pg, 'ColorBarItem'):
+                    self.colorbar = pg.ColorBarItem(colorMap='viridis')  # pg 0.12.2
+                else:
+                    self.colorbar = pg.HistogramLUTItem()  # pg 0.11.0 (disabled)
+                self.addItem(self.colorbar)
+
+                if not ONCE:
+                    ONCE = True
+                    print('Skip colorbar update, need pyqtgraph >= 0.13.2', file=sys.stderr)
+
+            self.colorbar.hide()
+
+    def update_img(self, x, y, z):
+        """ Update pcolormesh image """
+        global ONCE
+        z_no_nan = z[~np.isnan(z)]
+        z[np.isnan(z)] = z_no_nan.min()-1e99  # OPTIMIZE: nan gives error, would prefer not to display empty values
+
+        # Expand x and y arrays to define edges of the grid
+        if len(x) == 1:
+            x = np.append(x, x[-1]+1e-99)  # OPTIMIZE: first line too small and not visible if autoscale disabled, could use next x value instead but figure should not be aware of scan
+        else:
+            x = np.append(x, x[-1] + (x[-1] - x[-2]))
+
+        if len(y) == 1:
+            y = np.append(y, y[-1]+1e-99)
+        else:
+            y = np.append(y, y[-1] + (y[-1] - y[-2]))
+
+        xv, yv = np.meshgrid(y, x)
+
+        img = pg.PColorMeshItem()
+        img.edgecolors = None
+        img.setData(xv, yv, z.T)
+        # OPTIMIZE: Changing log scale doesn't display correct axes
+        if hasattr(img, 'setLevels'):  # pg 0.13.2 introduces setLevels in PColorMeshItem (py 3.8)
+            self.colorbar.setImageItem(img)
+        else:
+            if not ONCE:
+                ONCE = True
+                print('Skip colorbar update, need pyqtgraph >= 0.13.2', file=sys.stderr)
+
+        if isinstance(self.colorbar, pg.HistogramLUTItem):  # old
+            self.colorbar.setLevels(z_no_nan.min(), z_no_nan.max())
+        else:  # new
+            self.colorbar.setLevels((z_no_nan.min(), z_no_nan.max()))
+
+        # remove previous img and add new one (can't just refresh -> error if setData with nan and diff shape)
+        self.ax.removeItem(self.img)
+        self.img = img
+        self.ax.addItem(self.img)
+
+def pyqtgraph_fig_ax() -> Tuple[MyGraphicsLayoutWidget, pg.PlotItem]:
+    """ Return a formated fig and ax pyqtgraph for a basic plot """
+    fig = MyGraphicsLayoutWidget()
+    return fig, fig.ax
 
 
 class myImageView(pg.ImageView):
@@ -220,7 +306,6 @@ class myImageView(pg.ImageView):
 
 
 def pyqtgraph_image() -> Tuple[myImageView, QtWidgets.QWidget]:
-
+    """ Return a formated ImageView and pyqtgraph widget for image plotting """
     imageView = myImageView()
-
     return imageView, imageView.centralWidget
