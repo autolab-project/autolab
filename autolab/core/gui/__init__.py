@@ -20,8 +20,18 @@ quentin.chateiller@c2n.upsaclay.fr
 #        t.start()
 
 
-def start():
+def gui():
     """ Open the Autolab GUI """
+    _start('main')
+
+
+def plotter():
+    """ Open the Autolab Plotter """
+    _start('plotter')
+
+
+def _start(gui: str = 'main'):
+    """ Open the Autolab GUI if gui='main' or the Autolab Plotter if gui='plotter' """
 
     import os
     from ..config import get_GUI_config
@@ -66,9 +76,15 @@ conda install -c conda-forge pyside6
             font.setPointSize(int(GUI_config['font_size']))
             app.setFont(font)
 
-        from .controlcenter.main import ControlCenter
-        gui = ControlCenter()
-        gui.initialize()
+        if gui == 'main':
+            from .controlcenter.main import ControlCenter
+            gui = ControlCenter()
+            gui.initialize()
+        elif gui == 'plotter':
+            from .plotting.main import Plotter
+            gui = Plotter(None)
+        else:
+            raise ValueError(f"gui accept either 'main' or 'plotter', given {gui}")
         gui.show()
         app.exec()
 

@@ -21,6 +21,7 @@ def print_help():
     print()
     print('Commands:')
     print('  gui                   Start the Graphical User Interface')
+    print('  plotter               Start the Plotter')
     print('  install_drivers       Install drivers from GitHub')
     print('  driver                Driver interface')
     print('  device                Device interface')
@@ -54,6 +55,8 @@ def main():
             autolab.report()
         elif command == 'gui':           # GUI
             autolab.gui()
+        elif command == 'plotter':           # Plotter
+            autolab.plotter()
         elif command == 'infos':
             autolab.infos()
         elif command == 'install_drivers':

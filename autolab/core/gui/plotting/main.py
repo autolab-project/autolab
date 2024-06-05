@@ -108,30 +108,34 @@ class Plotter(QtWidgets.QMainWindow):
         self.variable_y_comboBox.currentIndexChanged.connect(
             self.variableChanged)
 
-        self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
-        self.device_lineEdit.returnPressed.connect(self.deviceChanged)
-        self.device_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            self.device_lineEdit, 'edited', self._font_size))
-        setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
+        if self.mainGui is not None:
+            self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
+            self.device_lineEdit.returnPressed.connect(self.deviceChanged)
+            self.device_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+                self.device_lineEdit, 'edited', self._font_size))
+            setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
 
-        # Plot button
-        self.plotDataButton.clicked.connect(self.refreshPlotData)
+            # Plot button
+            self.plotDataButton.clicked.connect(self.refreshPlotData)
 
-        # Timer
-        self.timer_time = 0.5  # This plotter is not meant for fast plotting like the monitor, be aware it may crash with too high refreshing rate
-        self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(int(self.timer_time*1000)) # ms
-        self.timer.timeout.connect(self.autoRefreshPlotData)
+            # Timer
+            self.timer_time = 0.5  # This plotter is not meant for fast plotting like the monitor, be aware it may crash with too high refreshing rate
+            self.timer = QtCore.QTimer(self)
+            self.timer.setInterval(int(self.timer_time*1000)) # ms
+            self.timer.timeout.connect(self.autoRefreshPlotData)
 
-        self.auto_plotDataButton.clicked.connect(self.autoRefreshChanged)
+            self.auto_plotDataButton.clicked.connect(self.autoRefreshChanged)
+
+            # Delay
+            self.delay_lineEdit.setText(str(self.timer_time))
+            self.delay_lineEdit.returnPressed.connect(self.delayChanged)
+            self.delay_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+                self.delay_lineEdit, 'edited', self._font_size))
+            setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
+        else:
+            self.frame_device.hide()
+
         self.overwriteDataButton.clicked.connect(self.overwriteDataChanged)
-
-        # Delay
-        self.delay_lineEdit.setText(str(self.timer_time))
-        self.delay_lineEdit.returnPressed.connect(self.delayChanged)
-        self.delay_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            self.delay_lineEdit, 'edited', self._font_size))
-        setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
         self.setAcceptDrops(True)
 
@@ -185,8 +189,8 @@ class Plotter(QtWidgets.QMainWindow):
             if action == 'create':
                 widget = widget(*args, **kwargs)
                 self.dict_widget[widget_name] = widget
-                try: self.figureManager.fig.addItem(widget)
-                except: pass
+                try: self.figureManager.ax.addItem(widget)
+                except Exception as e: self.setStatus(str(e), 10000, False)
             elif action == "remove":
                 d = self.dict_widget
                 if widget is not None:
@@ -196,8 +200,8 @@ class Plotter(QtWidgets.QMainWindow):
                         widget = d.get(widget_name)
                         if widget is not None:
                             widget = d.pop(widget_name)
-                            try: self.figureManager.fig.removeItem(widget)
-                            except: pass
+                            try: self.figureManager.ax.removeItem(widget)
+                            except Exception as e: self.setStatus(str(e), 10000, False)
 
     def timerAction(self):
         """ This function checks if a module has been loaded and put to the queue. If so, associate item and module """
@@ -448,11 +452,17 @@ class Plotter(QtWidgets.QMainWindow):
 
     def closeEvent(self,event):
         """ This function does some steps before the window is closed (not killed) """
-        self.timer.stop()
+        if hasattr(self, 'timer'): self.timer.stop()
         self.timerPlugin.stop()
         self.timerQueue.stop()
 
-        self.mainGui.clearPlotter()
+        if hasattr(self.mainGui, 'clearPlotter'):
+            self.mainGui.clearPlotter()
+
+        super().closeEvent(event)
+
+        if self.mainGui is None:
+            QtWidgets.QApplication.quit()  # close the plotter app
 
     def close(self):
         """ This function does some steps before the window is killed """

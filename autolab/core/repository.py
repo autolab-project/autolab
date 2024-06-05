@@ -358,6 +358,13 @@ def _install_drivers_custom(_print=True, parent=None):
                             # self.setStatus(e, 10000, False)
                     self.setStatus('Finished!', 5000)
 
+            def closeEvent(self, event):
+                """ This function does some steps before the window is really killed """
+                super().closeEvent(event)
+
+                if self.gui is None:
+                    QtWidgets.QApplication.quit()  # close the app
+
             def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
                 """ Modify the message displayed in the status bar and add error message to logger """
                 self.statusBar.showMessage(message, timeout)

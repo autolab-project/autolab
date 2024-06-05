@@ -54,7 +54,8 @@ from .core.web import report, doc
 from .core.server import Server as server
 
 # GUI
-from .core.gui import start as gui
+from .core.gui import gui
+from .core.gui import plotter
 
 # Repository
 from .core.repository import install_drivers

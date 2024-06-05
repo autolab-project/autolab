@@ -18,7 +18,6 @@ import numpy as np
 import pandas as pd
 import qtpy
 from qtpy import QtCore, QtWidgets, QtGui
-from qtpy.QtWidgets import QApplication
 import pyqtgraph as pg
 
 from .thread import ThreadManager
@@ -578,7 +577,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         devices.close()  # close all devices
 
-        QApplication.quit()  # close the control center interface
+        QtWidgets.QApplication.quit()  # close the control center interface
 
         if hasattr(self, 'stdout'):
             sys.stdout = self.stdout._stream
