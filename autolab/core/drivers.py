@@ -14,6 +14,8 @@ from types import ModuleType
 from . import paths, server
 
 
+known_connections = ['DEFAULT', 'VISA', 'GPIB', 'USB', 'SOCKET']
+
 # =============================================================================
 # DRIVERS INSTANTIATION
 # =============================================================================
@@ -161,8 +163,150 @@ def get_driver_class(driver_lib: ModuleType) -> Type:
 
 def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
     ''' Returns the class Driver_XXX of the provided driver library and connection type '''
-    assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
-    return getattr(driver_lib, f'Driver_{connection}')
+    if connection in get_connection_names(driver_lib):
+        return getattr(driver_lib, f'Driver_{connection}')
+    elif connection in known_connections:
+        print(f'Warning, {connection} not find in {driver_lib.__name__} but will try to connect using default connection')
+        return create_default_driver_conn(driver_lib, connection)
+    else:
+        assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
+
+
+def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
+    """ Create a default connection class when not provided in Driver.
+    Will be used to try to connect to an instrument. """
+    Driver = getattr(driver_lib, f'Driver')
+
+    if connection == 'DEFAULT':
+        class Driver_DEFAULT(Driver):
+            def __init__(self):
+                Driver.__init__(self)
+
+        return Driver_DEFAULT
+
+    if connection == 'VISA':
+        class Driver_VISA(Driver):
+            def __init__(self, address='GPIB0::2::INSTR', **kwargs):
+                import pyvisa as visa
+
+                self.TIMEOUT = 15000  # ms
+
+                rm = visa.ResourceManager()
+                self.controller = rm.open_resource(address)
+                self.controller.timeout = self.TIMEOUT
+
+                Driver.__init__(self)
+
+            def close(self):
+                try: self.controller.close()
+                except: pass
+
+            def query(self, command):
+                result = self.controller.query(command)
+                result = result.strip('\n')
+                return result
+
+            def write(self, command):
+                self.controller.write(command)
+
+            def read(self):
+                return self.controller.read()
+
+        return Driver_VISA
+
+    if connection == 'GPIB':
+        class Driver_GPIB(Driver):
+            def __init__(self, address=23, board_index=0, **kwargs):
+                import Gpib
+
+                self.inst = Gpib.Gpib(int(board_index), int(address))
+                Driver.__init__(self)
+
+            def query(self, query):
+                self.write(query)
+                return self.read()
+
+            def write(self, query):
+                self.inst.write(query)
+
+            def read(self, length=1000000000):
+                return self.inst.read().decode().strip('\n')
+
+            def close(self):
+                """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
+                #Gpib.gpib.close(self.inst.id)
+                pass
+
+        return Driver_USB
+
+    if connection == 'USB':
+        class Driver_USB(Driver):
+            def __init__(self, **kwargs):
+                import usb
+                import usb.core
+                import usb.util
+
+                dev = usb.core.find(idVendor=0x104d, idProduct=0x100a)
+                dev.reset()
+                dev.set_configuration()
+                interface = 0
+                if dev.is_kernel_driver_active(interface) is True:
+                    dev.detach_kernel_driver(interface)  # tell the kernel to detach
+                    usb.util.claim_interface(dev, interface)  # claim the device
+
+                cfg = dev.get_active_configuration()
+                intf = cfg[(0,0)]
+                self.ep_out = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+                self.ep_in = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
+
+                assert self.ep_out is not None
+                assert self.ep_in is not None
+
+                Driver.__init__(self)
+
+            def write(self, query):
+                self.string = query + '\r\n'
+                self.ep_out.write(self.string)
+
+            def read(self):
+                rep = self.ep_in.read(64)
+                const = ''.join(chr(i) for i in rep)
+                const = const[:const.find('\r\n')]
+                return const
+
+        return Driver_USB
+
+    if connection == 'SOCKET':
+        class Driver_SOCKET(Driver):
+
+            def __init__(self, address='192.168.0.8', **kwargs):
+
+                import socket
+
+                self.ADDRESS = address
+                self.PORT = 5005
+                self.BUFFER_SIZE = 40000
+
+                self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.controller.connect((self.ADDRESS,int(self.PORT)))
+
+                Driver.__init__(self)
+
+            def write(self, command):
+                self.controller.send(command.encode())
+                self.controller.recv(self.BUFFER_SIZE)
+
+            def query(self, command):
+                self.controller.send(command.encode())
+                data = self.controller.recv(self.BUFFER_SIZE)
+                return data.decode()
+
+            def close(self):
+                try: self.controller.close()
+                except: pass
+                self.controller = None
+
+        return Driver_SOCKET
 
 
 def get_module_class(driver_lib: ModuleType, module_name: str):
