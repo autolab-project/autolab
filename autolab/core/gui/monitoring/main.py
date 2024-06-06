@@ -22,7 +22,7 @@ from ...utilities import SUPPORTED_EXTENSION
 class Monitor(QtWidgets.QMainWindow):
 
     def __init__(self, item: QtWidgets.QTreeWidgetItem):
-
+        self.gui = item if isinstance(item, QtWidgets.QTreeWidgetItem) else None
         self.item = item
         self.variable = item.variable
 
@@ -179,13 +179,26 @@ class Monitor(QtWidgets.QMainWindow):
         """ This function does some steps before the window is really killed """
         self.monitorManager.close()
         self.timer.stop()
-        self.item.clearMonitor()
+        if hasattr(self.item, 'clearMonitor'): self.item.clearMonitor()
         self.figureManager.fig.deleteLater()  # maybe not useful for monitor but was source of crash in scanner if didn't close
         self.figureManager.figMap.deleteLater()
+
+        if self.gui is None:
+            import pyqtgraph as pg
+            try:
+                # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
+                for view in pg.ViewBox.AllViews.copy().keys():
+                    pg.ViewBox.forgetView(id(view), view)
+                    # OPTIMIZE: forget only view used in monitor/gui
+                pg.ViewBox.quit()
+            except: pass
 
         for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
         super().closeEvent(event)
+
+        if self.gui is None:
+            QtWidgets.QApplication.quit()  # close the monitor app
 
     def windowLengthChanged(self):
         """ This function start the update of the window length in the data manager

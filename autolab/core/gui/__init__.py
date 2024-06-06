@@ -30,8 +30,20 @@ def plotter():
     _start('plotter')
 
 
-def _start(gui: str = 'main'):
-    """ Open the Autolab GUI if gui='main' or the Autolab Plotter if gui='plotter' """
+def monitor(var):
+    """ Open the Autolab Monitor for variable var """
+    from .variables import Variable
+
+    class temp: pass
+    name = var.name if isinstance(var, Variable) else 'Variable'
+    item = temp()
+    item.variable = Variable(name, var)
+    _start('monitor', item=item)
+
+
+def _start(gui: str, **kwargs):
+    """ Open the Autolab GUI if gui='main', the Plotter if gui='plotter'
+    or the Monitor if gui='monitor' """
 
     import os
     from ..config import get_GUI_config
@@ -83,8 +95,12 @@ conda install -c conda-forge pyside6
         elif gui == 'plotter':
             from .plotting.main import Plotter
             gui = Plotter(None)
+        elif gui == 'monitor':
+            from .monitoring.main import Monitor
+            item = kwargs.get('item')
+            gui = Monitor(item)
         else:
-            raise ValueError(f"gui accept either 'main' or 'plotter', given {gui}")
+            raise ValueError(f"gui accept either 'main', 'plotter' or 'monitor', given {gui}")
         gui.show()
         app.exec()
 

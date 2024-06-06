@@ -165,11 +165,12 @@ def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
     ''' Returns the class Driver_XXX of the provided driver library and connection type '''
     if connection in get_connection_names(driver_lib):
         return getattr(driver_lib, f'Driver_{connection}')
-    elif connection in known_connections:
+
+    if connection in known_connections:
         print(f'Warning, {connection} not find in {driver_lib.__name__} but will try to connect using default connection')
         return create_default_driver_conn(driver_lib, connection)
-    else:
-        assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
+
+    assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
 
 
 def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
@@ -288,7 +289,7 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
                 self.BUFFER_SIZE = 40000
 
                 self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.controller.connect((self.ADDRESS,int(self.PORT)))
+                self.controller.connect((self.ADDRESS, int(self.PORT)))
 
                 Driver.__init__(self)
 

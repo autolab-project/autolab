@@ -377,7 +377,7 @@ class ControlCenter(QtWidgets.QMainWindow):
     def addDeviceMenu(self, position: QtCore.QPoint):
         """ Open menu to ask if want to add new device """
         menu = QtWidgets.QMenu()
-        addDeviceChoice = menu.addAction('Add new device')
+        addDeviceChoice = menu.addAction('Add device')
         addDeviceChoice.setIcon(QtGui.QIcon(icons['add']))
 
         choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
