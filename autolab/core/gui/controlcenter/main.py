@@ -746,7 +746,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         device_dict['connection'] = conn
 
         for layout in (self.layoutDriverArgs, self.layoutDriverOtherArgs):
-            for i in range(0, layout.count(), 2):
+            for i in range(0, (layout.count()//2)*2, 2):
                 key = layout.itemAt(i).widget().text()
                 val = layout.itemAt(i+1).widget().text()
                 device_dict[key] = val
@@ -763,7 +763,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         device_config.update(new_device)
         config.save_config('devices', device_config)
 
-        self.mainGui.initialize()
+        if hasattr(self.mainGui, 'initialize'): self.mainGui.initialize()
 
         self.close()
 
@@ -886,7 +886,10 @@ class addDeviceWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         """ Does some steps before the window is really killed """
         # Delete reference of this window in the control center
-        self.mainGui.clearAddDevice()
+        if hasattr(self.mainGui, 'clearAddDevice'): self.mainGui.clearAddDevice()
+
+        if self.mainGui is None:
+            QtWidgets.QApplication.quit()  # close the monitor app
 
 
 class AboutWindow(QtWidgets.QMainWindow):

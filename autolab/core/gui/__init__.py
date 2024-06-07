@@ -41,6 +41,11 @@ def monitor(var):
     _start('monitor', item=item)
 
 
+def  add_device():
+    """ Open the utility to add a device """
+    _start('add_device')
+
+
 def _start(gui: str, **kwargs):
     """ Open the Autolab GUI if gui='main', the Plotter if gui='plotter'
     or the Monitor if gui='monitor' """
@@ -99,8 +104,11 @@ conda install -c conda-forge pyside6
             from .monitoring.main import Monitor
             item = kwargs.get('item')
             gui = Monitor(item)
+        elif gui == 'add_device':
+            from .controlcenter.main import addDeviceWindow
+            gui = addDeviceWindow()
         else:
-            raise ValueError(f"gui accept either 'main', 'plotter' or 'monitor', given {gui}")
+            raise ValueError(f"gui accept either 'main', 'plotter', 'monitor' or 'add_device', given {gui}")
         gui.show()
         app.exec()
 

@@ -54,7 +54,7 @@ from .core.web import report, doc
 from .core.server import Server as server
 
 # GUI
-from .core.gui import gui, plotter, monitor
+from .core.gui import gui, plotter, monitor, add_device
 
 # Repository
 from .core.repository import install_drivers
