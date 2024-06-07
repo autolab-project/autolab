@@ -98,7 +98,15 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
                 if choice == cancelDevice:
                     self.gui.itemCanceled(self)
+            else:
+                menu = QtWidgets.QMenu()
+                modifyDeviceChoice = menu.addAction('Modify device')
+                modifyDeviceChoice.setIcon(QtGui.QIcon(icons['rename']))
 
+                choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+
+                if choice == modifyDeviceChoice:
+                    self.gui.openAddDevice(self)
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
     """ This class represents an action in an item of the tree """

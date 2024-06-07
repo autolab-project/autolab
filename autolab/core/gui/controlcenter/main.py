@@ -175,7 +175,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         addDeviceAction = settingsMenu.addAction('Add device')
         addDeviceAction.setIcon(QtGui.QIcon(icons['add']))
-        addDeviceAction.triggered.connect(self.openAddDevice)
+        addDeviceAction.triggered.connect(lambda state: self.openAddDevice())
         addDeviceAction.setStatusTip("Open the utility to add a device")
 
         downloadDriverAction = settingsMenu.addAction('Download drivers')
@@ -469,7 +469,7 @@ class ControlCenter(QtWidgets.QMainWindow):
                 self.about.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.about.activateWindow()
 
-    def openAddDevice(self):
+    def openAddDevice(self, item: QtWidgets.QTreeWidgetItem = None):
         """ This function open the add device window. """
         # If the add device window is not already running, create one
         if self.addDevice is None:
@@ -481,6 +481,12 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.addDevice.setWindowState(
                 self.addDevice.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.addDevice.activateWindow()
+
+        # Modify existing device
+        if item is not None:
+            name = item.name
+            conf = devices.get_final_device_config(item.name)
+            self.addDevice.modify(name, conf)
 
     def downloadDriver(self):
         """ This function open the download driver window. """
@@ -705,10 +711,10 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         layoutButton = QtWidgets.QHBoxLayout()
         layoutWindow.addLayout(layoutButton)
 
-        addButton = QtWidgets.QPushButton('Add device')
-        addButton.clicked.connect(self.addButtonClicked)
+        self.addButton = QtWidgets.QPushButton('Add device')
+        self.addButton.clicked.connect(self.addButtonClicked)
 
-        layoutButton.addWidget(addButton)
+        layoutButton.addWidget(self.addButton)
 
         # update driver name combobox
         self.driverChanged()
@@ -766,6 +772,41 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         if hasattr(self.mainGui, 'initialize'): self.mainGui.initialize()
 
         self.close()
+
+    def modify(self, nickname: str, conf: dict):
+        """ Modify existing driver (not optimized) """
+
+        self.setWindowTitle(f'Autolab - Modify device {nickname}')
+        self.addButton.setText('Modify device')
+
+        self.deviceNickname.setText(nickname)
+        self.deviceNickname.setEnabled(False)
+        driv = conf.pop('driver')
+        conn = conf.pop('connection')
+        index = self.driversComboBox.findText(driv)
+        self.driversComboBox.setCurrentIndex(index)
+        self.driverChanged()
+        index = self.connectionComboBox.findText(conn)
+        self.connectionComboBox.setCurrentIndex(index)
+        self.connectionChanged()
+
+        for layout in (self.layoutDriverArgs, self.layoutDriverOtherArgs):
+            for i in range(0, (layout.count()//2)*2, 2):
+                key = layout.itemAt(i).widget().text()
+                if key in conf:
+                    layout.itemAt(i+1).widget().setText(conf[key])
+                    conf.pop(key)
+
+        # OPTIMIZE: Calling driverChanged will add slot1 even if not in config (same for optional args)
+        for i in range(self.layoutOptionalArg.count()):
+            layout = self.layoutOptionalArg.itemAt(i).layout()
+            key = layout.itemAt(0).widget().text()
+            if key in conf:
+                layout.itemAt(1).widget().setText(conf[key])
+                conf.pop(key)
+
+        for key, val in conf.items():
+            self.addOptionalArgClicked(key, val)
 
     def driverChanged(self):
         """ Update driver information """

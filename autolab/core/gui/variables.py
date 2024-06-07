@@ -18,7 +18,7 @@ from .GUI_utilities import setLineEditBackground
 from .icons import icons
 from ..devices import DEVICES
 from ..utilities import (str_to_array, str_to_dataframe, str_to_value,
-                         array_to_str, dataframe_to_str)
+                         array_to_str, dataframe_to_str, clean_string)
 
 from .monitoring.main import Monitor
 from .slider import Slider
@@ -130,8 +130,7 @@ def rename_variable(name, new_name):
 
 def set_variable(name: str, value: Any):
     ''' Create or modify a Variable with provided name and value '''
-    for character in r'$*."/\[]:;|, ': name = name.replace(character, '')
-    assert re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', name) is not None, f"Wrong format for variable '{name}'"
+    name = clean_string(name)
 
     if is_Variable(value):
         var = value
