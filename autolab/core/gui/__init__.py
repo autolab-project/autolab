@@ -20,9 +20,24 @@ quentin.chateiller@c2n.upsaclay.fr
 #        t.start()
 
 
+def _create_item(var):
+    from .variables import Variable
+    from ..elements import Variable as Variable_og
+
+    class temp:
+        gui = None
+
+    item = temp()
+    if isinstance(var, (Variable, Variable_og)):
+        item.variable = var
+    else:
+        item.variable = Variable('Variable', var)
+    return item
+
+
 def gui():
     """ Open the Autolab GUI """
-    _start('main')
+    _start('gui')
 
 
 def plotter():
@@ -32,22 +47,32 @@ def plotter():
 
 def monitor(var):
     """ Open the Autolab Monitor for variable var """
-    from .variables import Variable
-
-    class temp: pass
-    name = var.name if isinstance(var, Variable) else 'Variable'
-    item = temp()
-    item.variable = Variable(name, var)
+    item = _create_item(var)
     _start('monitor', item=item)
 
 
-def  add_device():
+def slider(var):
+    item = _create_item(var)
+    _start('slider', item=item)
+
+
+def add_device():
     """ Open the utility to add a device """
     _start('add_device')
 
 
+def about():
+    """ Open the about window """
+    _start('about')
+
+
+def variables_menu():
+    """ Open the variables menu """
+    _start('variables_menu')
+
+
 def _start(gui: str, **kwargs):
-    """ Open the Autolab GUI if gui='main', the Plotter if gui='plotter'
+    """ Open the Autolab GUI if gui='gui', the Plotter if gui='plotter'
     or the Monitor if gui='monitor' """
 
     import os
@@ -93,7 +118,7 @@ conda install -c conda-forge pyside6
             font.setPointSize(int(GUI_config['font_size']))
             app.setFont(font)
 
-        if gui == 'main':
+        if gui == 'gui':
             from .controlcenter.main import ControlCenter
             gui = ControlCenter()
             gui.initialize()
@@ -104,11 +129,23 @@ conda install -c conda-forge pyside6
             from .monitoring.main import Monitor
             item = kwargs.get('item')
             gui = Monitor(item)
+        elif gui == 'slider':
+            from .slider import Slider
+            item = kwargs.get('item')
+            gui = Slider(item)
         elif gui == 'add_device':
             from .controlcenter.main import addDeviceWindow
             gui = addDeviceWindow()
+        elif gui == 'about':
+            from .controlcenter.main import AboutWindow
+            gui = AboutWindow()
+        elif gui == 'variables_menu':
+            from .variables import VariablesMenu
+            gui = VariablesMenu()
         else:
-            raise ValueError(f"gui accept either 'main', 'plotter', 'monitor' or 'add_device', given {gui}")
+            raise ValueError("gui accept either 'main', 'plotter', 'monitor'," \
+                             "'slider, add_device', 'about' or 'variables_menu'" \
+                             f". Given {gui}")
         gui.show()
         app.exec()
 

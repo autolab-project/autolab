@@ -485,8 +485,12 @@ class ControlCenter(QtWidgets.QMainWindow):
         # Modify existing device
         if item is not None:
             name = item.name
-            conf = devices.get_final_device_config(item.name)
-            self.addDevice.modify(name, conf)
+            try:
+                conf = devices.get_final_device_config(item.name)
+            except Exception as e:
+                self.setStatus(str(e), 10000, False)
+            else:
+                self.addDevice.modify(name, conf)
 
     def downloadDriver(self):
         """ This function open the download driver window. """
@@ -618,6 +622,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.mainGui = parent
         self.setWindowTitle('Autolab - Add device')
+        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
 
         self.statusBar = self.statusBar()
 
@@ -776,20 +781,31 @@ class addDeviceWindow(QtWidgets.QMainWindow):
     def modify(self, nickname: str, conf: dict):
         """ Modify existing driver (not optimized) """
 
-        self.setWindowTitle(f'Autolab - Modify device {nickname}')
+        self.setWindowTitle('Autolab - Modify device')
         self.addButton.setText('Modify device')
 
         self.deviceNickname.setText(nickname)
         self.deviceNickname.setEnabled(False)
-        driv = conf.pop('driver')
+        driver_name = conf.pop('driver')
         conn = conf.pop('connection')
-        index = self.driversComboBox.findText(driv)
+        index = self.driversComboBox.findText(driver_name)
         self.driversComboBox.setCurrentIndex(index)
         self.driverChanged()
         index = self.connectionComboBox.findText(conn)
         self.connectionComboBox.setCurrentIndex(index)
         self.connectionChanged()
 
+        # Used to remove default value
+        try:
+            driver_lib = drivers.load_driver_lib(driver_name)
+            driver_class = drivers.get_driver_class(driver_lib)
+            assert hasattr(driver_class, 'slot_config')
+        except:
+            slot_config = '<MODULE_NAME>'
+        else:
+            slot_config = f'{driver_class.slot_config}'
+
+        # Update args
         for layout in (self.layoutDriverArgs, self.layoutDriverOtherArgs):
             for i in range(0, (layout.count()//2)*2, 2):
                 key = layout.itemAt(i).widget().text()
@@ -797,14 +813,22 @@ class addDeviceWindow(QtWidgets.QMainWindow):
                     layout.itemAt(i+1).widget().setText(conf[key])
                     conf.pop(key)
 
-        # OPTIMIZE: Calling driverChanged will add slot1 even if not in config (same for optional args)
-        for i in range(self.layoutOptionalArg.count()):
+        # Update optional args
+        for i in reversed(range(self.layoutOptionalArg.count())):
             layout = self.layoutOptionalArg.itemAt(i).layout()
             key = layout.itemAt(0).widget().text()
-            if key in conf:
+            val_tmp = layout.itemAt(1).widget().text()
+            # Remove default value
+            if ((key == 'slot1' and val_tmp == slot_config)
+                    or (key == 'slot1_name' and val_tmp == 'my_<MODULE_NAME>')):
+                for j in reversed(range(layout.count())):
+                    layout.itemAt(j).widget().setParent(None)
+                layout.setParent(None)
+            elif key in conf:
                 layout.itemAt(1).widget().setText(conf[key])
                 conf.pop(key)
 
+        # Add remaining optional args from config
         for key, val in conf.items():
             self.addOptionalArgClicked(key, val)
 
@@ -856,7 +880,8 @@ class addDeviceWindow(QtWidgets.QMainWindow):
             drivers.get_connection_class(driver_lib, conn))
 
         # populate layoutDriverOtherArgs
-        other_args = drivers.get_class_args(drivers.get_driver_class(driver_lib))
+        driver_class = drivers.get_driver_class(driver_lib)
+        other_args = drivers.get_class_args(driver_class)
         for key, val in other_args.items():
             if key in connection_args: continue
             widget = QtWidgets.QLabel()
@@ -874,8 +899,8 @@ class addDeviceWindow(QtWidgets.QMainWindow):
             layout.setParent(None)
 
         # populate layoutOptionalArg
-        if hasattr(drivers.get_driver_class(driver_lib), 'slot_config'):
-            self.addOptionalArgClicked('slot1', f'{drivers.get_driver_class(driver_lib).slot_config}')
+        if hasattr(driver_class, 'slot_config'):
+            self.addOptionalArgClicked('slot1', f'{driver_class.slot_config}')
             self.addOptionalArgClicked('slot1_name', 'my_<MODULE_NAME>')
 
     def connectionChanged(self):
@@ -895,6 +920,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         for i in reversed(range(self.layoutDriverArgs.count())):
             self.layoutDriverArgs.itemAt(i).widget().setParent(None)
 
+        conn_widget = None
         # populate layoutDriverArgs
         for key, val in connection_args.items():
             widget = QtWidgets.QLabel()
@@ -913,11 +939,12 @@ class addDeviceWindow(QtWidgets.QMainWindow):
             widget.clear()
             conn_list = ('Available connections',) + tuple(self.rm.list_resources())
             widget.addItems(conn_list)
-            widget.activated.connect(
-                lambda item, conn_widget=conn_widget: conn_widget.setText(
-                    widget.currentText()) if widget.currentText() != 'Available connections' else conn_widget.text())
+            if conn_widget is not None:
+                widget.activated.connect(
+                    lambda item, conn_widget=conn_widget: conn_widget.setText(
+                        widget.currentText()) if widget.currentText(
+                            ) != 'Available connections' else conn_widget.text())
             self.layoutDriverArgs.addWidget(widget)
-
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
@@ -940,6 +967,7 @@ class AboutWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.mainGui = parent
         self.setWindowTitle('Autolab - About')
+        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
 
         versions = get_versions()
 
@@ -1030,7 +1058,10 @@ class AboutWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         """ Does some steps before the window is really killed """
         # Delete reference of this window in the control center
-        self.mainGui.clearAbout()
+        if hasattr(self.mainGui, 'clearAbout'): self.mainGui.clearAbout()
+
+        if self.mainGui is None:
+            QtWidgets.QApplication.quit()  # close the about app
 
 
 def get_versions() -> dict:

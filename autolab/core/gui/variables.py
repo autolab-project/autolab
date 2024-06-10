@@ -72,9 +72,10 @@ allowed_dict = update_allowed_dict()
 # TODO: refresh menu display by looking if has eval (no -> can refresh)
 # TODO add read signal to update gui (seperate class for event and use it on itemwidget creation to change setText with new value)
 class Variable():
+    """ Class used to control basic variable """
 
     def __init__(self, name: str, var: Any):
-
+        """ name: name of the variable, var: value of the variable """
         self.refresh(name, var)
 
     def refresh(self, name: str, var: Any):
@@ -310,6 +311,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.gui = parent
         self.setWindowTitle('Variables manager')
+        if self.gui is None: self.setWindowIcon(QtGui.QIcon(icons['autolab']))
 
         self.statusBar = self.statusBar()
 
@@ -486,7 +488,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         # self.timer.stop()
-        if self.gui is not None and hasattr(self.gui, 'clearVariablesMenu'):
+        if hasattr(self.gui, 'clearVariablesMenu'):
             self.gui.clearVariablesMenu()
 
         for monitor in list(self.monitors.values()):
@@ -500,6 +502,8 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
         super().closeEvent(event)
 
+        if self.gui is None:
+            QtWidgets.QApplication.quit()  # close the variable app
 
 class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 

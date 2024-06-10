@@ -18,6 +18,8 @@ class Slider(QtWidgets.QMainWindow):
 
     def __init__(self, item: QtWidgets.QTreeWidgetItem):
         """ https://stackoverflow.com/questions/61717896/pyqt5-qslider-is-off-by-one-depending-on-which-direction-the-slider-is-moved """
+
+        self.gui = item if isinstance(item, QtWidgets.QTreeWidgetItem) else None
         super().__init__()
         self.item = item
         self.resize(self.minimumSizeHint())
@@ -268,8 +270,10 @@ class Slider(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
-        self.item.clearSlider()
+        if hasattr(self.item, 'clearSlider'): self.item.clearSlider()
 
+        if self.gui is None:
+            QtWidgets.QApplication.quit()  # close the slider app
 
 
 class ProxyStyle(QtWidgets.QProxyStyle):
