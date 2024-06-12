@@ -139,7 +139,7 @@ def get_driver_category(driver_name: str) -> str:
 
         driver_utilities_path = os.path.join(
             os.path.dirname(get_driver_path(driver_name)), f'{driver_name}{filename}.py')
-        category = 'Other'
+        category = 'Unknown'
 
         if os.path.exists(driver_utilities_path):
             try:

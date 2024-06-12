@@ -930,7 +930,7 @@ class ConfigManager:
                     assert 'address' in param_pars, f"Missing address to {param_pars}"
                     if param_pars['address'] == "None": element = None
                     else:
-                        element = devices.get_device_by_address(param_pars['address'])
+                        element = devices.get_element_by_address(param_pars['address'])
                         assert element is not None, f"Parameter {param_pars['address']} not found."
 
                     param['element'] = element
@@ -982,7 +982,7 @@ class ConfigManager:
                             assert step['stepType'] != 'recipe', "Removed the recipe in recipe feature!"
                             element = address
                         else:
-                            element = devices.get_device_by_address(address)
+                            element = devices.get_element_by_address(address)
 
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element

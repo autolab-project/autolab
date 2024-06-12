@@ -89,7 +89,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                         self.removeChild(self.child(0))
 
                     self.loaded = False
-            elif id(self) in self.gui.threadManager.threads:
+            elif id(self) in self.gui.threadManager.threads_conn:
                 menu = QtWidgets.QMenu()
                 cancelDevice = menu.addAction(f"Cancel loading")
                 cancelDevice.setIcon(QtGui.QIcon(icons['disconnect']))

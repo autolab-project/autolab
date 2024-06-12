@@ -65,3 +65,9 @@ Save the configuration file, and go back to Autolab. You don't need to restart A
 .. code-block:: python
 
 	>>> laserSource = autolab.get_device('my_tunics')
+
+You can also use Autolab's ``add_device`` function to open up a minimalist graphical interface, allowing you to configure an instrument in a more user-friendly way.
+
+.. code-block:: python
+
+	>>> laserSource = autolab.add_device()

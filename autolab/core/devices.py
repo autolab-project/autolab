@@ -9,7 +9,7 @@ from typing import List, Union
 
 from . import drivers
 from . import config
-from .elements import Module
+from .elements import Module, Element
 
 # Storage of the devices
 DEVICES = {}
@@ -32,8 +32,20 @@ class Device(Module):
 
     def close(self):
         """ This function close the connection of the current physical device """
+        # Remove read and write signals from gui
+        try:
+            # condition avoid reopenning connection if use close twice
+            if self.name in DEVICES:
+                for struc in self.get_structure():
+                    element = get_element_by_address(struc[0])
+                    if struc[1] == 'variable':
+                        element._read_signal = None
+                        element._write_signal = None
+        except: pass
+
         try: self.instance.close()
         except: pass
+
         del DEVICES[self.name]
 
     def __dir__(self):
@@ -46,8 +58,8 @@ class Device(Module):
 # DEVICE GET FUNCTION
 # =============================================================================
 
-def get_device_by_address(address: str) -> Union[Device, None]:
-    """ Returns the Device located at the provided address if exists """
+def get_element_by_address(address: str) -> Union[Element, None]:
+    """ Returns the Element located at the provided address if exists """
     address = address.split('.')
     try:
         element = get_device(address[0])

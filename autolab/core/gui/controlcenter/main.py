@@ -389,16 +389,17 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Function called when a normal click has been detected in the tree.
             Check the association if it is a main item """
         if (item.parent() is None and not item.loaded
-                and id(item) not in self.threadItemDict.keys()):
+                and id(item) not in self.threadItemDict):
             self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
             self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerDevice.start()
 
     def itemCanceled(self, item):
         """ Cancel the device openning. Can be used to avoid GUI blocking for devices with infinite loading issue """
-        if id(item) in self.threadManager.threads:
-            self.threadManager.threads[id(item)].endSignal.emit(f'Cancel loading device {item.name}')
-            self.threadManager.threads[id(item)].terminate()
+        if id(item) in self.threadManager.threads_conn:
+            tid = self.threadManager.threads_conn[id(item)]
+            self.threadManager.threads[tid].endSignal.emit(f'Cancel loading device {item.name}')
+            self.threadManager.threads[tid].terminate()
 
     def itemPressed(self, item: QtWidgets.QTreeWidgetItem):
         """ Function called when a click (not released) has been detected in the tree.

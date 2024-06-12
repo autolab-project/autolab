@@ -52,6 +52,7 @@ def monitor(var):
 
 
 def slider(var):
+    """ Open a slider for variable var """
     item = _create_item(var)
     _start('slider', item=item)
 

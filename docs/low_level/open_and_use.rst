@@ -67,7 +67,7 @@ You can get the list of the available functions by calling the function ``autola
 Script example
 --------------
 
-With all these commands, you can now create your own Python script. Here is an example of a script that sweep the wavelength of a light source, and measure a power of a power meter:
+With all these commands, you can now create your own Python script. Here is an example of a script that sweep the wavelength of a light source, and measure the power of a power meter:
 
 .. code-block:: python
 

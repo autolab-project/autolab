@@ -5,6 +5,7 @@ Created on Sun Sep 29 18:26:32 2019
 @author: qchat
 """
 
+import sys
 import inspect
 from typing import Any
 
@@ -20,6 +21,7 @@ class ThreadManager:
     def __init__(self, gui: QtWidgets.QMainWindow):
         self.gui = gui
         self.threads = {}
+        self.threads_conn = {}
 
     def start(self, item: QtWidgets.QTreeWidgetItem, intType: str, value = None):
         """ This function is called when a new thread is requested,
@@ -53,10 +55,14 @@ class ThreadManager:
         self.gui.setStatus(status)
 
         # Thread configuration
-        tid = id(item)
-        assert tid not in self.threads
+        if intType == 'load':
+            assert id(item) not in self.threads_conn
         thread = InteractionThread(item, intType, value)
+        tid = id(thread)
         self.threads[tid] = thread
+        if intType == 'load':
+            self.threads_conn[id(item)] = tid
+
         thread.endSignal.connect(
             lambda error, x=tid: self.threadFinished(x, error))
         thread.finished.connect(lambda x=tid: self.delete(x))
@@ -68,15 +74,22 @@ class ThreadManager:
         """ This function is called when a thread has finished its job, with an error or not
         It updates the status bar of the GUI in consequence and enabled back the corresponding item """
         if error:
-            self.gui.setStatus(str(error), 10000, False)
+            if qt_object_exists(self.gui.statusBar):
+                self.gui.setStatus(str(error), 10000, False)
+            else:
+                print(str(error), file=sys.stderr)
 
-            if tid in self.gui.threadItemDict:
-                self.gui.threadItemDict.pop(tid)
+            if tid in self.threads_conn.values():
+                item_id = list(self.threads_conn)[list(self.threads_conn.values()).index(tid)]
+                if item_id in self.gui.threadItemDict:
+                    self.gui.threadItemDict.pop(item_id)
         else:
-            self.gui.clearStatus()
+            if qt_object_exists(self.gui.statusBar):
+                self.gui.clearStatus()
 
         item = self.threads[tid].item
-        item.setDisabled(False)
+        if qt_object_exists(item):
+            item.setDisabled(False)
 
         if hasattr(item, "execButton"):
             if qt_object_exists(item.execButton):
@@ -91,6 +104,9 @@ class ThreadManager:
     def delete(self, tid: int):
         """ This function is called when a thread is about to be deleted.
         This removes it from the dictionnary self.threads, for a complete deletion """
+        if self.threads[tid].intType == 'load':
+            item_id = list(self.threads_conn)[list(self.threads_conn.values()).index(tid)]
+            self.threads_conn.pop(item_id)
         self.threads.pop(tid)
 
 
