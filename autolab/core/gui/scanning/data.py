@@ -41,7 +41,8 @@ class DataManager:
         self.timer.timeout.connect(self.sync)
 
     def getData(self, nbDataset: int, varList: list,
-                selectedData: int = 0, data_name: str = "Scan") -> List[pd.DataFrame]:
+                selectedData: int = 0, data_name: str = "Scan",
+                filter_condition: List[dict] = []) -> List[pd.DataFrame]:
         """ This function returns to the figure manager the required data """
         dataList = []
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
@@ -55,7 +56,8 @@ class DataManager:
 
                 if data_name == "Scan":
                     try:
-                        data = dataset.getData(varList, data_name=data_name)  # OPTIMIZE: Currently can't recover dataset if error before end of first recipe loop
+                        data = dataset.getData(varList, data_name=data_name,
+                                               filter_condition=filter_condition)  # OPTIMIZE: Currently can't recover dataset if error before end of first recipe loop
                     except KeyError:
                         pass  # this occurs when plot variable from scani that is not in scanj
                     except Exception as e:
@@ -318,7 +320,7 @@ class Dataset():
         self.data = pd.DataFrame(columns=self.header)
 
     def getData(self, varList: list, data_name: str = "Scan",
-                dataID: int = 0) -> pd.DataFrame:
+                dataID: int = 0, filter_condition: List[dict] = []) -> pd.DataFrame:
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
         if data_name == "Scan":
@@ -333,10 +335,25 @@ class Dataset():
             else:  # Image
                 return data
 
+        # Add var for filtering
+        for var_filter in filter_condition:
+            if var_filter['enable'] and var_filter['name'] not in varList and var_filter['name'] != '':
+                varList.append(var_filter['name'])
+
         if any(map(lambda v: v in varList, list(data.columns))):
-            data2 = data.loc[:,~data.columns.duplicated()].copy()  # unique data column
+            data = data.loc[:,~data.columns.duplicated()].copy()  # unique data column
             unique_varList = list(dict.fromkeys(varList))  # unique varList
-            return data2.loc[:,unique_varList]
+            # Filter data
+            for var_filter in filter_condition:
+                if var_filter['enable'] and var_filter['name'] in data:
+                    # Alternative could be: data.query('3 > var_x > 1')
+                    filter_cond = var_filter['condition']
+                    filter_name = var_filter['name']
+                    filter_value = var_filter['value']
+                    mask = filter_cond(data[filter_name], filter_value)
+                    data = data[mask]
+
+            return data.loc[:,unique_varList]
 
         return None
 

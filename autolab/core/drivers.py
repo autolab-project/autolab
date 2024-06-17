@@ -14,8 +14,6 @@ from types import ModuleType
 from . import paths, server
 
 
-known_connections = ['DEFAULT', 'VISA', 'GPIB', 'USB', 'SOCKET']
-
 # =============================================================================
 # DRIVERS INSTANTIATION
 # =============================================================================
@@ -117,7 +115,7 @@ def list_drivers() -> List[str]:
 # DRIVERS INSPECTION
 # =============================================================================
 
-def get_module_names(driver_lib: ModuleType) -> str:
+def get_module_names(driver_lib: ModuleType) -> List[str]:
     ''' Returns the list of the driver's Module(s) name(s) (classes Module_XXX) '''
     return [name.split('_')[1]
             for name, obj in inspect.getmembers(driver_lib, inspect.isclass)
@@ -125,7 +123,7 @@ def get_module_names(driver_lib: ModuleType) -> str:
             and name.startswith('Module_')]
 
 
-def get_connection_names(driver_lib: ModuleType) -> str:
+def get_connection_names(driver_lib: ModuleType) -> List[str]:
     ''' Returns the list of the driver's connection types (classes Driver_XXX) '''
     return [name.split('_')[1]
             for name, obj in inspect.getmembers(driver_lib, inspect.isclass)
@@ -166,9 +164,10 @@ def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
     if connection in get_connection_names(driver_lib):
         return getattr(driver_lib, f'Driver_{connection}')
 
-    if connection in known_connections:
+    driver_instance = create_default_driver_conn(driver_lib, connection)
+    if driver_instance is not None:
         print(f'Warning, {connection} not find in {driver_lib.__name__} but will try to connect using default connection')
-        return create_default_driver_conn(driver_lib, connection)
+        return driver_instance
 
     assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
 
@@ -309,8 +308,34 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
 
         return Driver_SOCKET
 
+    if connection == 'TEST':
+        class Controller: pass
+        class Driver_TEST(Driver):
+            def __init__(self, *args, **kwargs):
+                try:
+                    Driver.__init__(self)
+                except:
+                    Driver.__init__(self, *args, **kwargs)
 
-def get_module_class(driver_lib: ModuleType, module_name: str):
+                self.controller = Controller()
+                self.controller.timeout = 5000
+
+            def write(self, value):
+                pass
+            def read(self):
+                return '1'
+            def read_raw(self):
+                return b'1'
+            def query(self, value):
+                self.write(value)
+                return self.read()
+
+        return Driver_TEST
+
+    return None
+
+
+def get_module_class(driver_lib: ModuleType, module_name: str) -> Type:
     ''' Returns the class Module_XXX of the provided driver library and module_name'''
     assert module_name in get_module_names(driver_lib)
     return getattr(driver_lib, f'Module_{module_name}')

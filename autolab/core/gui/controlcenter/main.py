@@ -743,7 +743,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
 
     def removeOptionalArgClicked(self, layout):
         """ Remove optional argument layout """
-        for j in reversed(range(3)):
+        for j in reversed(range(layout.count())):
             layout.itemAt(j).widget().setParent(None)
         layout.setParent(None)
 
@@ -792,6 +792,20 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         index = self.driversComboBox.findText(driver_name)
         self.driversComboBox.setCurrentIndex(index)
         self.driverChanged()
+
+        try:
+            driver_lib = drivers.load_driver_lib(driver_name)
+        except: pass
+        else:
+            list_conn = drivers.get_connection_names(driver_lib)
+            if conn not in list_conn:
+                if list_conn:
+                    self.setStatus(f"Connection {conn} not found, switch to {list_conn[0]}", 10000, False)
+                    conn = list_conn[0]
+                else:
+                    self.setStatus(f"No connections available for driver '{driver_name}'", 10000, False)
+                    conn =  ''
+
         index = self.connectionComboBox.findText(conn)
         self.connectionComboBox.setCurrentIndex(index)
         self.connectionChanged()
@@ -877,8 +891,12 @@ class addDeviceWindow(QtWidgets.QMainWindow):
 
         # used to skip doublon key
         conn = self.connectionComboBox.currentText()
-        connection_args = drivers.get_class_args(
-            drivers.get_connection_class(driver_lib, conn))
+        try:
+            driver_instance = drivers.get_connection_class(driver_lib, conn)
+        except:
+            connection_args = {}
+        else:
+            connection_args = drivers.get_class_args(driver_instance)
 
         # populate layoutDriverOtherArgs
         driver_class = drivers.get_driver_class(driver_lib)

@@ -11,7 +11,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from qtpy import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui, QtCore
 
 from .display import DisplayValues
 from ..GUI_utilities import (get_font_size, setLineEditBackground,
@@ -26,6 +26,7 @@ class FigureManager:
 
         self.gui = gui
         self.curves = []
+        self.filter_condition = []
 
         self._font_size = get_font_size() + 1
 
@@ -82,6 +83,105 @@ class FigureManager:
 
         self.gui.toolButton.hide()
         self.clearMenuID()
+
+        # Filter widgets
+        self.gui.frameFilter.hide()
+        self.gui.checkBoxFilter.stateChanged.connect(self.checkBoxFilterChanged)
+        self.gui.addFilterPushButton.clicked.connect(self.addFilterClicked)
+        self.gui.splitterGraph.setSizes([9000, 1000])  # fixe wrong proportion
+
+    def refreshFilters(self):
+        """ Apply filters to data """
+        self.filter_condition.clear()
+
+        if self.gui.checkBoxFilter.isChecked():
+            for i in range(self.gui.layoutFilter.count()-1):  # last is buttons
+                layout = self.gui.layoutFilter.itemAt(i).layout()
+
+                enable = bool(layout.itemAt(0).widget().isChecked())
+                name = layout.itemAt(1).widget().currentText()
+                condition_raw = layout.itemAt(2).widget().currentText()
+                value = float(layout.itemAt(3).widget().text())
+
+                convert_condition = {
+                    '==': np.equal, '!=': np.not_equal,
+                    '<': np.less, '<=': np.less_equal,
+                    '>=': np.greater_equal, '>': np.greater
+                    }
+                condition = convert_condition[condition_raw]
+
+                filter_i = {'name': name, 'condition': condition, 'value': value, 'enable': enable}
+
+                self.filter_condition.append(filter_i)
+
+        self.reloadData()
+
+        if self.gui.layoutFilter.count() <= 3:
+            min_size = 65 + self.gui.layoutFilter.count()*25
+        else:
+            min_size = 65 + 3*25
+        self.gui.frame_axis.setMinimumSize(0, min_size)
+
+    def addFilterClicked(self):
+        """ Add filter condition """
+        conditionLayout = QtWidgets.QHBoxLayout()
+
+        filterCheckBox = QtWidgets.QCheckBox()
+        filterCheckBox.setMinimumSize(0, 21)
+        filterCheckBox.setToolTip('Toggle filter')
+        filterCheckBox.setCheckState(QtCore.Qt.Checked)
+        filterCheckBox.stateChanged.connect(self.refreshFilters)
+        conditionLayout.addWidget(filterCheckBox)
+
+        VariablecomboBox = QtWidgets.QComboBox()
+        VariablecomboBox.setMinimumSize(0, 21)
+        AllItems = [self.gui.variable_x_comboBox.itemText(i) for i in range(self.gui.variable_x_comboBox.count())]
+        VariablecomboBox.addItems(AllItems)
+        VariablecomboBox.activated.connect(self.refreshFilters)
+        conditionLayout.addWidget(VariablecomboBox)
+
+        FiltercomboBox = QtWidgets.QComboBox()
+        FiltercomboBox.setMinimumSize(0, 21)
+        AllItems = ['==', '!=', '<', '<=', '>=', '>']
+        FiltercomboBox.addItems(AllItems)
+        FiltercomboBox.activated.connect(self.refreshFilters)
+        conditionLayout.addWidget(FiltercomboBox)
+
+        # OPTIMIZE: would be nice to have a slider for value
+        valueWidget = QtWidgets.QLineEdit()
+        valueWidget.setMinimumSize(0, 21)
+        valueWidget.setText('0')
+        valueWidget.returnPressed.connect(self.refreshFilters)
+        conditionLayout.addWidget(valueWidget)
+
+        removePushButton = QtWidgets.QPushButton()
+        removePushButton.setMinimumSize(0, 21)
+        removePushButton.setIcon(QtGui.QIcon(icons['remove']))
+        removePushButton.clicked.connect(
+            lambda state, layout=conditionLayout: self.removeFilter(layout))
+        conditionLayout.addWidget(removePushButton)
+
+        self.gui.layoutFilter.insertLayout(
+            self.gui.layoutFilter.count()-1, conditionLayout)
+        self.refreshFilters()
+
+    def removeFilter(self, layout):
+        """ Remove filter condition """
+        for j in reversed(range(layout.count())):
+            layout.itemAt(j).widget().setParent(None)
+        layout.setParent(None)
+        self.refreshFilters()
+
+    def checkBoxFilterChanged(self):
+        """ Show/hide filters frame and refresh filters """
+        if self.gui.checkBoxFilter.isChecked():
+            if not self.gui.frameFilter.isVisible():
+                self.gui.frameFilter.show()
+        else:
+            if self.gui.frameFilter.isVisible():
+                self.gui.frameFilter.hide()
+
+        self.refreshFilters()
 
     def clearMenuID(self):
         self.gui.toolButton.setText("Parameter")
@@ -283,7 +383,8 @@ class FigureManager:
 
         data: List[pd.DataFrame] = self.gui.dataManager.getData(
             nbtraces_temp, var_to_display,
-            selectedData=selectedData, data_name=data_name)
+            selectedData=selectedData, data_name=data_name,
+            filter_condition=self.filter_condition)
 
         # Plot data
         if data is not None:
@@ -351,6 +452,9 @@ class FigureManager:
                 x = np.array(pivot_table.columns)
                 y = np.array(pivot_table.index)
                 z = np.array(pivot_table)
+
+                if 0 in (len(x), len(y), len(z)):
+                    return None
 
                 self.fig.update_img(x, y, z)
 
@@ -431,7 +535,8 @@ class FigureManager:
 
                     # Plot
                     # OPTIMIZE: known issue but from pyqtgraph, error if use FFT on one point
-                    curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+                    # careful, now that can filter data, need .values to avoid pyqtgraph bug
+                    curve = self.ax.plot(x.values, y.values, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
                     curve.setAlpha(alpha, False)
                     self.curves.append(curve)
 
