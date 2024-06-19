@@ -102,7 +102,6 @@ class Variable():
         self.refresh(self.name, value)
         return None
 
-
     def evaluate(self):
         if has_eval(self.raw):
             value = str(self.raw)[len(EVAL): ]
@@ -588,7 +587,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         """ This function open the slider associated to this variable. """
         # If the slider is not already running, create one
         if id(self) not in self.gui.sliders:
-            self.gui.sliders[id(self)] = Slider(self)
+            self.gui.sliders[id(self)] = Slider(self.variable, self)
             self.gui.sliders[id(self)].show()
         # If the slider is already running, just make as the front window
         else:

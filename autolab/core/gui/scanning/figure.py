@@ -16,6 +16,8 @@ from qtpy import QtWidgets, QtGui, QtCore
 from .display import DisplayValues
 from ..GUI_utilities import (get_font_size, setLineEditBackground,
                              pyqtgraph_fig_ax, pyqtgraph_image)
+from ..slider import Slider
+from ..variables import Variable
 from ..icons import icons
 
 
@@ -81,16 +83,15 @@ class FigureManager:
         self.gui.dataframe_comboBox.addItem("Scan")
         self.gui.dataframe_comboBox.hide()
 
-        self.gui.toolButton.hide()
-        self.clearMenuID()
-
         # Filter widgets
-        self.gui.frameFilter.hide()
+        self.gui.scrollArea_filter.hide()
         self.gui.checkBoxFilter.stateChanged.connect(self.checkBoxFilterChanged)
-        self.gui.addFilterPushButton.clicked.connect(self.addFilterClicked)
+        self.gui.addFilterPushButton.clicked.connect(lambda: self.addFilterClicked('standard'))
+        self.gui.addSliderFilterPushButton.clicked.connect(lambda: self.addFilterClicked('slider'))
+        self.gui.addCustomFilterPushButton.clicked.connect(lambda: self.addFilterClicked('custom'))
         self.gui.splitterGraph.setSizes([9000, 1000])  # fixe wrong proportion
 
-    def refreshFilters(self):
+    def refresh_filters(self):
         """ Apply filters to data """
         self.filter_condition.clear()
 
@@ -98,127 +99,195 @@ class FigureManager:
             for i in range(self.gui.layoutFilter.count()-1):  # last is buttons
                 layout = self.gui.layoutFilter.itemAt(i).layout()
 
-                enable = bool(layout.itemAt(0).widget().isChecked())
-                name = layout.itemAt(1).widget().currentText()
-                condition_raw = layout.itemAt(2).widget().currentText()
-                value = float(layout.itemAt(3).widget().text())
+                if layout.count() == 5:
+                    enable = bool(layout.itemAt(0).widget().isChecked())
+                    variableComboBox = layout.itemAt(1).widget()
+                    self.refresh_filter_combobox(variableComboBox)
+                    name = variableComboBox.currentText()
+                    condition_raw = layout.itemAt(2).widget().currentText()
+                    valueWidget = layout.itemAt(3).widget()
+                    if isinstance(valueWidget, Slider):
+                        value = float(valueWidget.valueWidget.text())  # for custom slider
+                        setLineEditBackground(
+                            valueWidget.valueWidget, 'synced', self._font_size)
+                    else:
+                        value = float(valueWidget.text())  # for editline
+                        setLineEditBackground(
+                            valueWidget, 'synced', self._font_size)
 
-                convert_condition = {
-                    '==': np.equal, '!=': np.not_equal,
-                    '<': np.less, '<=': np.less_equal,
-                    '>=': np.greater_equal, '>': np.greater
-                    }
-                condition = convert_condition[condition_raw]
 
-                filter_i = {'name': name, 'condition': condition, 'value': value, 'enable': enable}
+                    convert_condition = {
+                        '==': np.equal, '!=': np.not_equal,
+                        '<': np.less, '<=': np.less_equal,
+                        '>=': np.greater_equal, '>': np.greater
+                        }
+                    condition = convert_condition[condition_raw]
+
+                    filter_i = {'enable': enable, 'condition': condition, 'name': name, 'value': value}
+
+                elif layout.count() == 3:
+                    enable = bool(layout.itemAt(0).widget().isChecked())
+                    customConditionWidget = layout.itemAt(1).widget()
+                    condition_txt = customConditionWidget.text()
+                    setLineEditBackground(
+                        customConditionWidget, 'synced', self._font_size)
+
+                    filter_i = {'enable': enable, 'condition': condition_txt, 'name': None, 'value': None}
 
                 self.filter_condition.append(filter_i)
 
+            # Change minimum size
+            min_width = 6
+            min_height = 6
+
+            for i in range(self.gui.layoutFilter.count()):
+                layout = self.gui.layoutFilter.itemAt(i).layout()
+                min_width_temp = 6
+                min_height_temp = 6
+
+                for j in range(layout.count()):
+                    item = layout.itemAt(j)
+                    widget = item.widget()
+
+                    if widget is not None:
+                        min_size = widget.minimumSizeHint()
+
+                        min_width_temp_2 = min_size.width()
+                        min_height_temp_2 = min_size.height()
+
+                        if min_width_temp_2 == 0: min_width_temp_2 = 21
+                        if min_height_temp_2 == 0: min_height_temp_2 = 21
+
+                        min_width_temp += min_width_temp_2 + 6
+                        min_height_temp_2 += min_height_temp_2 + 6
+
+                        if min_height_temp_2 > min_height_temp:
+                            min_height_temp = min_height_temp_2
+
+                min_height += min_height_temp
+
+                if min_width_temp > min_width:
+                    min_width = min_width_temp
+
+            min_width += 12
+
+            if min_width > 500: min_width = 500
+            if min_height < 85: min_height = 85
+            if min_height > 210: min_height = 210
+
+            self.gui.frameAxis.setMinimumHeight(min_height)
+            self.gui.scrollArea_filter.setMinimumWidth(min_width)
+        else:
+            self.gui.frameAxis.setMinimumHeight(65)
+            self.gui.scrollArea_filter.setMinimumWidth(0)
+
         self.reloadData()
 
-        if self.gui.layoutFilter.count() <= 3:
-            min_size = 65 + self.gui.layoutFilter.count()*25
-        else:
-            min_size = 65 + 3*25
-        self.gui.frame_axis.setMinimumSize(0, min_size)
+    def refresh_filter_combobox(self, comboBox):
+        items = []
+        for dataset in self.gui.dataManager.datasets:
+            for recipe in dataset.values():
+                for key in recipe.data.columns:
+                    if key not in items:
+                        items.append(key)
 
-    def addFilterClicked(self):
+        existing_items = [comboBox.itemText(i) for i in range(comboBox.count())]
+        if items != existing_items:
+            comboBox.clear()
+            comboBox.addItems(items)
+
+    def addFilterClicked(self, filter_type):
         """ Add filter condition """
         conditionLayout = QtWidgets.QHBoxLayout()
 
         filterCheckBox = QtWidgets.QCheckBox()
         filterCheckBox.setMinimumSize(0, 21)
+        filterCheckBox.setMaximumSize(16777215, 21)
         filterCheckBox.setToolTip('Toggle filter')
         filterCheckBox.setCheckState(QtCore.Qt.Checked)
-        filterCheckBox.stateChanged.connect(self.refreshFilters)
+        filterCheckBox.stateChanged.connect(self.refresh_filters)
         conditionLayout.addWidget(filterCheckBox)
 
-        VariablecomboBox = QtWidgets.QComboBox()
-        VariablecomboBox.setMinimumSize(0, 21)
-        AllItems = [self.gui.variable_x_comboBox.itemText(i) for i in range(self.gui.variable_x_comboBox.count())]
-        VariablecomboBox.addItems(AllItems)
-        VariablecomboBox.activated.connect(self.refreshFilters)
-        conditionLayout.addWidget(VariablecomboBox)
+        if filter_type in ('standard', 'slider'):
+            variableComboBox = QtWidgets.QComboBox()
+            variableComboBox.setMinimumSize(0, 21)
+            variableComboBox.setMaximumSize(16777215, 21)
 
-        FiltercomboBox = QtWidgets.QComboBox()
-        FiltercomboBox.setMinimumSize(0, 21)
-        AllItems = ['==', '!=', '<', '<=', '>=', '>']
-        FiltercomboBox.addItems(AllItems)
-        FiltercomboBox.activated.connect(self.refreshFilters)
-        conditionLayout.addWidget(FiltercomboBox)
+            self.refresh_filter_combobox(variableComboBox)
+            variableComboBox.activated.connect(self.refresh_filters)
+            filterCheckBox.stateChanged.connect(lambda: self.refresh_filter_combobox(variableComboBox))
+            conditionLayout.addWidget(variableComboBox)
 
-        # OPTIMIZE: would be nice to have a slider for value
-        valueWidget = QtWidgets.QLineEdit()
-        valueWidget.setMinimumSize(0, 21)
-        valueWidget.setText('0')
-        valueWidget.returnPressed.connect(self.refreshFilters)
-        conditionLayout.addWidget(valueWidget)
+            filterComboBox = QtWidgets.QComboBox()
+            filterComboBox.setMinimumSize(0, 21)
+            filterComboBox.setMaximumSize(16777215, 21)
+            items = ['==', '!=', '<', '<=', '>=', '>']
+            filterComboBox.addItems(items)
+            filterComboBox.activated.connect(self.refresh_filters)
+            conditionLayout.addWidget(filterComboBox)
+
+            if filter_type == 'standard':
+                valueWidget = QtWidgets.QLineEdit()
+                valueWidget.setMinimumSize(0, 21)
+                valueWidget.setMaximumSize(16777215, 21)
+                valueWidget.setText('1')
+                valueWidget.returnPressed.connect(self.refresh_filters)
+                valueWidget.textEdited.connect(lambda: setLineEditBackground(
+                    valueWidget, 'edited', self._font_size))
+                setLineEditBackground(valueWidget, 'synced', self._font_size)
+                conditionLayout.addWidget(valueWidget)
+            elif filter_type == 'slider':
+                var = Variable('temp', 1)
+                valueWidget = Slider(var)
+                valueWidget.setMinimumSize(valueWidget.minimumSizeHint().width(), valueWidget.minimumSizeHint().height())  # Will hide it if too small
+                valueWidget.setMaximumSize(valueWidget.minimumSizeHint().width(), valueWidget.minimumSizeHint().height())
+                valueWidget.sliderWidget.setValue(1)
+                valueWidget.changed.connect(self.refresh_filters)
+                conditionLayout.addWidget(valueWidget)
+
+        elif filter_type == 'custom':
+            customConditionWidget = QtWidgets.QLineEdit()
+            customConditionWidget.setMinimumSize(0, 21)
+            customConditionWidget.setMaximumSize(16777215, 21)
+            customConditionWidget.setToolTip(
+                "Filter condition can be 'id == 1' '1 <= amplitude <= 2' 'id in (1, 2)'")
+            customConditionWidget.setText('id == 1')
+            customConditionWidget.returnPressed.connect(self.refresh_filters)
+            customConditionWidget.textEdited.connect(
+                lambda: setLineEditBackground(
+                    customConditionWidget, 'edited', self._font_size))
+            setLineEditBackground(customConditionWidget, 'synced', self._font_size)
+            conditionLayout.addWidget(customConditionWidget)
 
         removePushButton = QtWidgets.QPushButton()
         removePushButton.setMinimumSize(0, 21)
+        removePushButton.setMaximumSize(16777215, 21)
         removePushButton.setIcon(QtGui.QIcon(icons['remove']))
         removePushButton.clicked.connect(
-            lambda state, layout=conditionLayout: self.removeFilter(layout))
+            lambda state, layout=conditionLayout: self.remove_filter(layout))
         conditionLayout.addWidget(removePushButton)
 
         self.gui.layoutFilter.insertLayout(
             self.gui.layoutFilter.count()-1, conditionLayout)
-        self.refreshFilters()
+        self.refresh_filters()
 
-    def removeFilter(self, layout):
+    def remove_filter(self, layout):
         """ Remove filter condition """
         for j in reversed(range(layout.count())):
             layout.itemAt(j).widget().setParent(None)
         layout.setParent(None)
-        self.refreshFilters()
+        self.refresh_filters()
 
     def checkBoxFilterChanged(self):
         """ Show/hide filters frame and refresh filters """
         if self.gui.checkBoxFilter.isChecked():
-            if not self.gui.frameFilter.isVisible():
-                self.gui.frameFilter.show()
+            if not self.gui.scrollArea_filter.isVisible():
+                self.gui.scrollArea_filter.show()
         else:
-            if self.gui.frameFilter.isVisible():
-                self.gui.frameFilter.hide()
+            if self.gui.scrollArea_filter.isVisible():
+                self.gui.scrollArea_filter.hide()
 
-        self.refreshFilters()
-
-    def clearMenuID(self):
-        self.gui.toolButton.setText("Parameter")
-        self.gui.toolButton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
-        self.gui.toolButton.setMenu(QtWidgets.QMenu(self.gui.toolButton))
-
-        # TODO: add bool 'all' like in drivers
-
-        self.menuBoolList = []  # OPTIMIZE: edit: maybe not necessary <- when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
-        self.menuWidgetList = []
-        self.menuActionList = []
-        self.nbCheckBoxMenuID = 0
-
-    def addCheckBox2MenuID(self, name_ID: int):
-        self.menuBoolList.append(True)
-        checkBox = QtWidgets.QCheckBox(self.gui)
-        checkBox.setChecked(True)  # Warning: trigger stateChanged (which do reloadData)
-        checkBox.stateChanged.connect(lambda state, checkBox=checkBox: self.checkBoxChanged(checkBox, state))
-        checkBox.setText(str(name_ID))
-        self.menuWidgetList.append(checkBox)
-        action = QtWidgets.QWidgetAction(self.gui.toolButton)
-        action.setDefaultWidget(checkBox)
-        self.gui.toolButton.menu().addAction(action)
-        self.menuActionList.append(action)
-        self.nbCheckBoxMenuID += 1
-
-    def removeLastCheckBox2MenuID(self):
-        self.menuBoolList.pop(-1)
-        self.menuWidgetList.pop(-1)
-        self.gui.toolButton.menu().removeAction(self.menuActionList.pop(-1))
-        self.nbCheckBoxMenuID -= 1  # edit: not true anymore because display only one scan <- will cause "Error encountered for scan id 1: list index out of range" if do scan with n points and due a new scan with n-m points
-
-    def checkBoxChanged(self, checkBox: QtWidgets.QCheckBox, state: bool):
-        index = self.menuWidgetList.index(checkBox)
-        self.menuBoolList[index] = bool(state)
-        if self.gui.dataframe_comboBox.currentText() != "Scan":
-            self.reloadData()
+        self.refresh_filters()
 
     def data_comboBoxClicked(self):
         """ This function select a dataset """
@@ -227,13 +296,13 @@ class FigureManager:
             dataset = self.gui.dataManager.getLastSelectedDataset()
             index = self.gui.scan_recipe_comboBox.currentIndex()
 
-            resultNamesList = list(dataset)
-            AllItems = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(self.gui.scan_recipe_comboBox.count())]
+            result_names = list(dataset)
+            items = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(self.gui.scan_recipe_comboBox.count())]
 
-            if AllItems != resultNamesList:
+            if items != result_names:
                 self.gui.scan_recipe_comboBox.clear()
-                self.gui.scan_recipe_comboBox.addItems(resultNamesList)
-                if (index + 1) > len(resultNamesList) or index == -1: index = 0
+                self.gui.scan_recipe_comboBox.addItems(result_names)
+                if (index + 1) > len(result_names) or index == -1: index = 0
                 self.gui.scan_recipe_comboBox.setCurrentIndex(index)
 
             if self.gui.scan_recipe_comboBox.count() > 1:
@@ -254,7 +323,6 @@ class FigureManager:
     def dataframe_comboBoxCurrentChanged(self):
 
         self.updateDataframe_comboBox()
-        self.resetCheckBoxMenuID()
 
         self.gui.dataManager.updateDisplayableResults()
         self.reloadData()
@@ -262,10 +330,8 @@ class FigureManager:
         data_name = self.gui.dataframe_comboBox.currentText()
 
         if data_name == "Scan" or self.fig.isHidden():
-            self.gui.toolButton.hide()
             self.gui.variable_x2_checkBox.show()
         else:
-            self.gui.toolButton.show()
             self.gui.variable_x2_checkBox.hide()
 
     def updateDataframe_comboBox(self):
@@ -278,42 +344,22 @@ class FigureManager:
 
         sub_dataset = dataset[recipe_name]
 
-        resultNamesList = ["Scan"] + [
-            i for i, val in sub_dataset.dictListDataFrame.items() if not isinstance(
+        result_names = ["Scan"] + [
+            i for i, val in sub_dataset.data_arrays.items() if not isinstance(
                 val[0], (str, tuple))]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
 
-        AllItems = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
+        items = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
 
-        if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+        if result_names != items:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
             self.gui.dataframe_comboBox.clear()
-            self.gui.dataframe_comboBox.addItems(resultNamesList)
-            if (index + 1) > len(resultNamesList): index = 0
+            self.gui.dataframe_comboBox.addItems(result_names)
+            if (index + 1) > len(result_names): index = 0
             self.gui.dataframe_comboBox.setCurrentIndex(index)
 
-        if len(resultNamesList) == 1:
+        if len(result_names) == 1:
             self.gui.dataframe_comboBox.hide()
         else:
             self.gui.dataframe_comboBox.show()
-
-    def resetCheckBoxMenuID(self):
-        recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        dataset = self.gui.dataManager.getLastSelectedDataset()
-        data_name = self.gui.dataframe_comboBox.currentText()
-
-        if dataset is not None and recipe_name in dataset and data_name != "Scan":
-            sub_dataset = dataset[recipe_name]
-
-            dataframe = sub_dataset.dictListDataFrame[data_name]
-            nb_id = len(dataframe)
-            nb_bool = len(self.menuBoolList)
-
-            if nb_id != nb_bool:
-                if nb_id > nb_bool:
-                    for i in range(nb_bool+1, nb_id+1):
-                        self.addCheckBox2MenuID(i)
-                else:
-                    for i in range(nb_bool-nb_id):
-                        self.removeLastCheckBox2MenuID()
 
     # AXE LABEL
     ###########################################################################
@@ -436,16 +482,6 @@ class FigureManager:
                     pivot_table = subdata.pivot(
                         index=variable_x, columns=variable_x2, values=variable_y)
                 except ValueError:  # if more than 2 parameters
-                    ## TODO: Solution is to set all the other parameters to a constant value
-                    # data = self.gui.dataManager.getData(
-                    #     nbtraces_temp, var_to_display+['parameter_test',],
-                    #     selectedData=selectedData, data_name=data_name)
-
-                    # subdata: pd.DataFrame = data[-1]
-                    # subdata = subdata[subdata['parameter_test'] == 0]
-                    # pivot_table = subdata.pivot(
-                    #     index=variable_x, columns=variable_x2, values=variable_y)
-                    # self.clearData()
                     return None
 
                 # Extract data for plotting
@@ -498,8 +534,8 @@ class FigureManager:
                     if self.fig.isVisible():
                         self.fig.hide()
                         self.figMap.show()
-                    if self.gui.frame_axis.isVisible():
-                        self.gui.frame_axis.hide()
+                    if self.gui.frameAxis.isVisible():
+                        self.gui.frameAxis.hide()
                     image_data[i] = subdata
                     if i == len(data)-1:
                         if image_data.ndim == 3:
@@ -514,8 +550,8 @@ class FigureManager:
                     if not self.fig.isVisible():
                         self.fig.show()
                         self.figMap.hide()
-                    if not self.gui.frame_axis.isVisible():
-                        self.gui.frame_axis.show()
+                    if not self.gui.frameAxis.isVisible():
+                        self.gui.frameAxis.show()
 
                     x = subdata.loc[:,variable_x]
                     y = subdata.loc[:,variable_y]

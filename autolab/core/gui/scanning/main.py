@@ -139,13 +139,11 @@ class Scanner(QtWidgets.QMainWindow):
         """ This reset any recorded data, and the GUI accordingly """
         self.dataManager.datasets = []
         self.figureManager.clearData()
-        self.figureManager.clearMenuID()
         self.figureManager.figMap.hide()
         self.figureManager.fig.show()
         self.figureManager.setLabel("x", " ")
         self.figureManager.setLabel("y", " ")
-        self.frame_axis.show()
-        self.toolButton.hide()
+        self.frameAxis.show()
         self.variable_x_comboBox.clear()
         self.variable_x2_comboBox.clear()
         self.variable_y_comboBox.clear()
@@ -402,7 +400,8 @@ class Scanner(QtWidgets.QMainWindow):
             if save_config:
                 dataset_folder, extension = os.path.splitext(filename)
                 new_configname = dataset_folder + ".conf"
-                config_name = os.path.join(os.path.dirname(dataset.tempFolderPath), 'config.conf')
+                config_name = os.path.join(
+                    os.path.dirname(dataset.folder_dataset_temp), 'config.conf')
 
                 if os.path.exists(config_name):
                     shutil.copy(config_name, new_configname)
@@ -418,8 +417,6 @@ class Scanner(QtWidgets.QMainWindow):
 
             self.setStatus(
                 f'Last dataset successfully saved in {filename}', 5000)
-
-
 
     def dropEvent(self, event):
         """ Imports config file if event has url of a file """

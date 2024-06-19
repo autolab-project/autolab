@@ -40,10 +40,10 @@ class DataManager:
         self.timer.setInterval(33) #30fps
         self.timer.timeout.connect(self.sync)
 
-    def getData(self, nbDataset: int, varList: list,
+    def getData(self, nbDataset: int, var_list: list,
                 selectedData: int = 0, data_name: str = "Scan",
                 filter_condition: List[dict] = []) -> List[pd.DataFrame]:
-        """ This function returns to the figure manager the required data """
+        """ Returns the required data """
         dataList = []
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
 
@@ -56,7 +56,7 @@ class DataManager:
 
                 if data_name == "Scan":
                     try:
-                        data = dataset.getData(varList, data_name=data_name,
+                        data = dataset.getData(var_list, data_name=data_name,
                                                filter_condition=filter_condition)  # OPTIMIZE: Currently can't recover dataset if error before end of first recipe loop
                     except KeyError:
                         pass  # this occurs when plot variable from scani that is not in scanj
@@ -65,16 +65,20 @@ class DataManager:
                             f"Scan warning: Can't plot Scan{len(self.datasets)-i}: {e}",
                             10000, False)
                     dataList.append(data)
-                elif dataset.dictListDataFrame.get(data_name) is not None:
+                elif dataset.data_arrays.get(data_name) is not None:
                     dataList2 = []
-                    lenListDataFrame = len(dataset.dictListDataFrame[data_name])
 
-                    for index in range(lenListDataFrame):
+                    try:
+                        ids = dataset.getData(['id'], data_name='Scan',
+                                              filter_condition=filter_condition)
+                        ids = ids['id'].values - 1
+                    except KeyError:
+                        ids = []
+
+                    for index in ids:
                         try:
-                            checkBoxChecked = self.gui.figureManager.menuBoolList[index]
-                            if checkBoxChecked:
-                                data = dataset.getData(
-                                    varList, data_name=data_name, dataID=index)
+                            data = dataset.getData(
+                                var_list, data_name=data_name, dataID=index)
                         except Exception as e:
                             self.gui.setStatus(
                                 f"Scan warning: Can't plot Scan{len(self.datasets)-i} and dataframe {data_name} with ID {index+1}: {e}",
@@ -90,32 +94,32 @@ class DataManager:
         return dataList
 
     def getLastDataset(self) -> Union[dict, None]:
-        """ This return the last created dataset """
+        """ Returns the last created dataset """
         return self.datasets[-1] if len(self.datasets) > 0 else None
 
     def getLastSelectedDataset(self) -> Union[dict, None]:
-        """ This return the last selected dataset """
+        """ Returns the last selected dataset """
         index = self.gui.data_comboBox.currentIndex()
         if index != -1 and index < len(self.datasets):
             return self.datasets[index]
         return None
 
     def newDataset(self, config: dict):
-        """ This function creates and returns a new empty dataset """
+        """ Creates and returns a new empty dataset """
         maximum = 0
         datasets = {}
 
         if self.save_temp:
-            temp_folder = os.environ['TEMP']  # This variable can be changed at autolab start-up
-            tempFolderPath = tempfile.mkdtemp(dir=temp_folder) # Creates a temporary directory for this dataset
-            self.gui.configManager.export(os.path.join(tempFolderPath, 'config.conf'))
+            FOLDER_TEMP = os.environ['TEMP']  # This variable can be changed at autolab start-up
+            folder_dataset_temp = tempfile.mkdtemp(dir=FOLDER_TEMP) # Creates a temporary directory for this dataset
+            self.gui.configManager.export(os.path.join(folder_dataset_temp, 'config.conf'))
         else:
-            tempFolderPath = str(random.random())
+            folder_dataset_temp = str(random.random())
 
         for recipe_name, recipe in config.items():
 
             if recipe['active']:
-                sub_folder = os.path.join(tempFolderPath, recipe_name)
+                sub_folder = os.path.join(folder_dataset_temp, recipe_name)
                 if self.save_temp: os.mkdir(sub_folder)
 
                 dataset = Dataset(sub_folder, recipe_name,
@@ -216,8 +220,8 @@ class DataManager:
         data = None
         if data_name == "Scan": data = dataset.data
         else:
-            if dataset.dictListDataFrame.get(data_name) is not None:
-                for data in dataset.dictListDataFrame[data_name]:  # used only to get columns name
+            if dataset.data_arrays.get(data_name) is not None:
+                for data in dataset.data_arrays[data_name]:  # used only to get columns name
                     if data is not None: break
             else: return None
             # if text or if image of type ndarray return
@@ -236,38 +240,38 @@ class DataManager:
                 self.gui.variable_y_comboBox.clear()
                 return None
 
-        resultNamesList = []
+        result_names = []
 
-        for resultName in data.columns:
-            if resultName not in ['id']:
+        for result_name in data.columns:
+            if result_name not in ['id']:
                 try:
-                    point = data.iloc[0][resultName]
+                    point = data.iloc[0][result_name]
                     if isinstance(point, pd.Series):
-                        print(f"Warning: At least two variables have the same name. Data acquisition is incorrect for {resultName}!", file=sys.stderr)
+                        print(f"Warning: At least two variables have the same name. Data acquisition is incorrect for {result_name}!", file=sys.stderr)
                         float(point[0])
                     else:
                         float(point)
-                    resultNamesList.append(resultName)
+                    result_names.append(result_name)
                 except:
                     pass
 
         variable_x_index = self.gui.variable_x_comboBox.currentIndex()
         variable_y_index = self.gui.variable_y_comboBox.currentIndex()
 
-        AllItems = [self.gui.variable_x_comboBox.itemText(i) for i in range(
+        items = [self.gui.variable_x_comboBox.itemText(i) for i in range(
             self.gui.variable_x_comboBox.count())]
 
-        if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+        if result_names != items:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
             self.gui.variable_x_comboBox.clear()
             self.gui.variable_x2_comboBox.clear()
-            self.gui.variable_x_comboBox.addItems(resultNamesList)  # parameter first
-            self.gui.variable_x2_comboBox.addItems(resultNamesList)
-            if resultNamesList:
-                name = resultNamesList.pop(0)
-                resultNamesList.append(name)
+            self.gui.variable_x_comboBox.addItems(result_names)  # parameter first
+            self.gui.variable_x2_comboBox.addItems(result_names)
+            if result_names:
+                name = result_names.pop(0)
+                result_names.append(name)
 
             self.gui.variable_y_comboBox.clear()
-            self.gui.variable_y_comboBox.addItems(resultNamesList)  # first numerical measure first
+            self.gui.variable_y_comboBox.addItems(result_names)  # first numerical measure first
 
             if data_name == "Scan":
                 if variable_x_index != -1:
@@ -281,13 +285,13 @@ class DataManager:
 class Dataset():
     """ Collection of data from a scan """
 
-    def __init__(self, tempFolderPath: str, recipe_name: str, config: dict,
+    def __init__(self, folder_dataset_temp: str, recipe_name: str, config: dict,
                  save_temp: bool = True):
-        self.all_data_temp = []
+        self._data_temp = []
         self.recipe_name = recipe_name
-        self.list_array = []
-        self.dictListDataFrame = {}
-        self.tempFolderPath = tempFolderPath
+        self.folders = []
+        self.data_arrays = {}
+        self.folder_dataset_temp = folder_dataset_temp
         self.new = True
         self.save_temp = save_temp
 
@@ -296,7 +300,7 @@ class Dataset():
         list_recipe_new = [recipe]
         has_sub_recipe = True
 
-        while has_sub_recipe:
+        while has_sub_recipe:  # OBSOLETE
             has_sub_recipe = False
             recipe_list = list_recipe_new
 
@@ -319,14 +323,14 @@ class Dataset():
         self.header = ["id"] + [step['name'] for step in self.list_param] + [step['name'] for step in self.list_step if step['stepType'] == 'measure' and step['element'].type in [int, float, bool]]
         self.data = pd.DataFrame(columns=self.header)
 
-    def getData(self, varList: list, data_name: str = "Scan",
+    def getData(self, var_list: list, data_name: str = "Scan",
                 dataID: int = 0, filter_condition: List[dict] = []) -> pd.DataFrame:
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
         if data_name == "Scan":
             data = self.data
         else:
-            data = self.dictListDataFrame[data_name][dataID]
+            data = self.data_arrays[data_name][dataID]
 
             if (data is not None
                     and not isinstance(data, str)
@@ -337,39 +341,48 @@ class Dataset():
 
         # Add var for filtering
         for var_filter in filter_condition:
-            if var_filter['enable'] and var_filter['name'] not in varList and var_filter['name'] != '':
-                varList.append(var_filter['name'])
+            if var_filter['enable']:
+                if var_filter['name'] not in var_list and var_filter['name'] != '' and var_filter['name'] is not None:
+                    var_list.append(var_filter['name'])
+                elif isinstance(var_filter['condition'], str):
+                    for key in self.header:
+                        if key in var_filter['condition']:
+                            var_list.append(key)
 
-        if any(map(lambda v: v in varList, list(data.columns))):
+        if any(map(lambda v: v in var_list, list(data.columns))):
             data = data.loc[:,~data.columns.duplicated()].copy()  # unique data column
-            unique_varList = list(dict.fromkeys(varList))  # unique varList
+            unique_var_list = list(dict.fromkeys(var_list))  # unique var_list
             # Filter data
             for var_filter in filter_condition:
-                if var_filter['enable'] and var_filter['name'] in data:
-                    # Alternative could be: data.query('3 > var_x > 1')
-                    filter_cond = var_filter['condition']
-                    filter_name = var_filter['name']
-                    filter_value = var_filter['value']
-                    mask = filter_cond(data[filter_name], filter_value)
-                    data = data[mask]
+                if var_filter['enable']:
+                    if var_filter['name'] in data:
+                        filter_cond = var_filter['condition']
+                        filter_name = var_filter['name']
+                        filter_value = var_filter['value']
+                        mask = filter_cond(data[filter_name], filter_value)
+                        data = data[mask]
+                    elif isinstance(var_filter['condition'], str):
+                        filter_cond = var_filter['condition']
+                        if filter_cond:
+                            data = data.query(filter_cond)
 
-            return data.loc[:,unique_varList]
+            return data.loc[:,unique_var_list]
 
         return None
 
     def save(self, filename: str):
         """ This function saved the dataset in the provided path """
         dataset_folder = os.path.splitext(filename)[0]
-        data_name = os.path.join(self.tempFolderPath, 'data.txt')
+        data_name = os.path.join(self.folder_dataset_temp, 'data.txt')
 
         if os.path.exists(data_name):
             shutil.copy(data_name, filename)
         else:
             self.data.to_csv(filename, index=False, header=self.header)
 
-        if self.list_array:
+        if self.folders:
             if not os.path.exists(dataset_folder): os.mkdir(dataset_folder)
-            for tmp_folder in self.list_array:
+            for tmp_folder in self.folders:
                 array_name = os.path.basename(tmp_folder)
                 dest_folder = os.path.join(dataset_folder, array_name)
 
@@ -379,8 +392,8 @@ class Dataset():
                     # This is only executed if no temp folder is set
                     if not os.path.exists(dest_folder): os.mkdir(dest_folder)
 
-                    if array_name in self.dictListDataFrame.keys():
-                        list_data = self.dictListDataFrame[array_name]  # data is list representing id 1,2
+                    if array_name in self.data_arrays:
+                        list_data = self.data_arrays[array_name]  # data is list representing id 1,2
 
                         for i, value in enumerate(list_data):
                             path = os.path.join(dest_folder, f"{i+1}.txt")
@@ -401,51 +414,47 @@ class Dataset():
         simpledata = OrderedDict()
         simpledata['id'] = ID
 
-        for resultName, result in dataPoint.items():
+        for result_name, result in dataPoint.items():
 
-            if resultName == 0: continue  # skip first result which is recipe_name
+            if result_name == 0: continue  # skip first result which is recipe_name
 
-            element_list = [step['element'] for step in self.list_param if step['name']==resultName]
-            if len(element_list) != 0:
-                element = element_list[0]
-            else:
-                element_list = [step['element'] for step in self.list_step if step['name']==resultName]
-                if len(element_list) != 0:
-                    element = element_list[0]
-            # should always find element in lists above
+            elements = [step['element'] for step in (
+                self.list_param+self.list_step) if step['name']==result_name]
+            element = elements[0]
+            # should always find exactly one element in list above
 
             # If the result is displayable (numerical), keep it in memory
             if element is None or element.type in [int, float, bool]:
-                simpledata[resultName] = result
+                simpledata[result_name] = result
             else : # Else write it on a file, in a temp directory
-                folderPath = os.path.join(self.tempFolderPath, resultName)
+                results_folder = os.path.join(self.folder_dataset_temp, result_name)
 
                 if self.save_temp:
-                    if not os.path.exists(folderPath): os.mkdir(folderPath)
-                    filePath = os.path.join(folderPath, f'{ID}.txt')
+                    if not os.path.exists(results_folder): os.mkdir(results_folder)
+                    result_path = os.path.join(results_folder, f'{ID}.txt')
 
                     if element is not None:
-                        element.save(filePath, value=result)
+                        element.save(result_path, value=result)
 
-                if folderPath not in self.list_array:
-                    self.list_array.append(folderPath)
+                if results_folder not in self.folders:
+                    self.folders.append(results_folder)
 
-                if self.dictListDataFrame.get(resultName) is None:
-                    self.dictListDataFrame[resultName] = []
+                if self.data_arrays.get(result_name) is None:
+                    self.data_arrays[result_name] = []
 
-                self.dictListDataFrame[resultName].append(result)
+                self.data_arrays[result_name].append(result)
 
-        self.all_data_temp.append(simpledata)
-        self.data = pd.DataFrame(self.all_data_temp, columns=self.header)
+        self._data_temp.append(simpledata)
+        self.data = pd.DataFrame(self._data_temp, columns=self.header)
 
         if self.save_temp:
             if ID == 1:
                 self.data.tail(1).to_csv(
-                    os.path.join(self.tempFolderPath, 'data.txt'),
+                    os.path.join(self.folder_dataset_temp, 'data.txt'),
                     index=False, mode='a', header=self.header)
             else:
                 self.data.tail(1).to_csv(
-                    os.path.join(self.tempFolderPath, 'data.txt'),
+                    os.path.join(self.folder_dataset_temp, 'data.txt'),
                     index=False, mode='a', header=False)
 
     def __len__(self):

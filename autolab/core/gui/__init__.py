@@ -133,7 +133,7 @@ conda install -c conda-forge pyside6
         elif gui == 'slider':
             from .slider import Slider
             item = kwargs.get('item')
-            gui = Slider(item)
+            gui = Slider(item.variable, item)
         elif gui == 'add_device':
             from .controlcenter.main import addDeviceWindow
             gui = addDeviceWindow()

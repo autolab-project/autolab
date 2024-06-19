@@ -436,8 +436,8 @@ class ConfigManager:
             else:
                 name = self.getUniqueName(recipe_name, name)
 
-            step = {'stepType': stepType, 'element': element,
-                    'name': name, 'value': None}
+            step = {'name': name, 'element': element,
+                    'stepType': stepType, 'value': None}
 
             # Value
             if stepType == 'recipe':

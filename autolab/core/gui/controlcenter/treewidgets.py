@@ -405,8 +405,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             elif self.variable.type in [bool]:
                 self.valueWidget.setChecked(value)
             elif self.variable.type in [tuple]:
-                AllItems = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
-                if value[0] != AllItems:
+                items = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+                if value[0] != items:
                     self.valueWidget.clear()
                     self.valueWidget.addItems(value[0])
                 self.valueWidget.setCurrentIndex(value[1])
@@ -451,8 +451,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             value = self.valueWidget.isChecked()
             return value
         elif self.variable.type in [tuple]:
-            AllItems = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
-            value = (AllItems, self.valueWidget.currentIndex())
+            items = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+            value = (items, self.valueWidget.currentIndex())
             return value
 
     def setValueKnownState(self, state: bool):
@@ -590,7 +590,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         """ This function open the slider associated to this variable. """
         # If the slider is not already running, create one
         if id(self) not in self.gui.sliders.keys():
-            self.gui.sliders[id(self)] = Slider(self)
+            self.gui.sliders[id(self)] = Slider(self.variable, self)
             self.gui.sliders[id(self)].show()
         # If the slider is already running, just make as the front window
         else:
