@@ -146,21 +146,23 @@ class RecipeManager:
             # Column 5 : Value if stepType is 'set'
             value = step['value']
             if value is not None:
-
-                try:
-                    if step['element'].type in [bool, str, tuple]:
-                        item.setText(4, f'{value}')
-                    elif step['element'].type in [np.ndarray]:
-                        value = array_to_str(
-                            value, threshold=1000000, max_line_width=100)
-                        item.setText(4, f'{value}')
-                    elif step['element'].type in [pd.DataFrame]:
-                        value = dataframe_to_str(value, threshold=1000000)
-                        item.setText(4, f'{value}')
-                    else:
-                       item.setText(4, f'{value:.{self.precision}g}')
-                except ValueError:
+                if variables.has_eval(value):
                     item.setText(4, f'{value}')
+                else:
+                    try:
+                        if step['element'].type in [bool, str, tuple]:
+                            item.setText(4, f'{value}')
+                        elif step['element'].type in [np.ndarray]:
+                            value = array_to_str(
+                                value, threshold=1000000, max_line_width=100)
+                            item.setText(4, f'{value}')
+                        elif step['element'].type in [pd.DataFrame]:
+                            value = dataframe_to_str(value, threshold=1000000)
+                            item.setText(4, f'{value}')
+                        else:
+                           item.setText(4, f'{value:.{self.precision}g}')
+                    except ValueError:
+                        item.setText(4, f'{value}')
 
             # Column 6 : Unit of element
             unit = step['element'].unit
@@ -273,15 +275,18 @@ class RecipeManager:
             self.recipe_name, name)
 
         # Default value displayed in the QInputDialog
-        if element.type in [np.ndarray]:
-            defaultValue = array_to_str(value, threshold=1000000, max_line_width=100)
-        elif element.type in [pd.DataFrame]:
-            defaultValue = dataframe_to_str(value, threshold=1000000)
+        if variables.has_eval(value):
+            defaultValue = f'{value}'
         else:
-            try:
-                defaultValue = f'{value:.{self.precision}g}'
-            except (ValueError, TypeError):
-                defaultValue = f'{value}'
+            if element.type in [np.ndarray]:
+                defaultValue = array_to_str(value, threshold=1000000, max_line_width=100)
+            elif element.type in [pd.DataFrame]:
+                defaultValue = dataframe_to_str(value, threshold=1000000)
+            else:
+                try:
+                    defaultValue = f'{value:.{self.precision}g}'
+                except (ValueError, TypeError):
+                    defaultValue = f'{value}'
 
         main_dialog = variables.VariablesDialog(self.gui, name, defaultValue)
         main_dialog.show()

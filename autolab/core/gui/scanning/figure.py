@@ -237,11 +237,12 @@ class FigureManager:
                 setLineEditBackground(valueWidget, 'synced', self._font_size)
                 conditionLayout.addWidget(valueWidget)
             elif filter_type == 'slider':
-                var = Variable('temp', 1)
+                var = Variable('temp', 1.)
                 valueWidget = Slider(var)
                 valueWidget.setMinimumSize(valueWidget.minimumSizeHint().width(), valueWidget.minimumSizeHint().height())  # Will hide it if too small
                 valueWidget.setMaximumSize(valueWidget.minimumSizeHint().width(), valueWidget.minimumSizeHint().height())
-                valueWidget.sliderWidget.setValue(1)
+                valueWidget.minWidget.setText('1.0')
+                valueWidget.minWidgetValueChanged()
                 valueWidget.changed.connect(self.refresh_filters)
                 conditionLayout.addWidget(valueWidget)
 
@@ -427,10 +428,14 @@ class FigureManager:
         else:
             var_to_display = [variable_x, variable_y]
 
+        can_filter = var_to_display != ['', '']  # Allows to differentiate images from scan or arrays. Works only because on dataframe_comboBoxCurrentChanged, updateDisplayableResults is called
+        filter_condition = self.filter_condition if (
+            self.gui.checkBoxFilter.isChecked() and can_filter) else {}
+
         data: List[pd.DataFrame] = self.gui.dataManager.getData(
             nbtraces_temp, var_to_display,
             selectedData=selectedData, data_name=data_name,
-            filter_condition=self.filter_condition)
+            filter_condition=filter_condition)
 
         # Plot data
         if data is not None:
@@ -536,14 +541,22 @@ class FigureManager:
                         self.figMap.show()
                     if self.gui.frameAxis.isVisible():
                         self.gui.frameAxis.hide()
-                    image_data[i] = subdata
+                    try:
+                        image_data[i] = subdata
+                    except Exception as e:
+                        print(f"Warning can't plot image: {e}")
+                        continue
                     if i == len(data)-1:
                         if image_data.ndim == 3:
                             x,y = (0, 1) if self.figMap.imageItem.axisOrder == 'col-major' else (1, 0)
                             axes = {'t': 0, 'x': x+1, 'y': y+1, 'c': None}  # to avoid a special case in pg that incorrectly assumes the axis
                         else:
                             axes = None
-                        self.figMap.setImage(image_data, axes=axes)# xvals=() # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+                        try:
+                            self.figMap.setImage(image_data, axes=axes)# xvals=() # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+                        except Exception as e:
+                            print(f"Warning can't plot image: {e}")
+                            continue
                         self.figMap.setCurrentIndex(len(self.figMap.tVals))
 
                 else: # not an image (is pd.DataFrame)
@@ -553,8 +566,11 @@ class FigureManager:
                     if not self.gui.frameAxis.isVisible():
                         self.gui.frameAxis.show()
 
-                    x = subdata.loc[:,variable_x]
-                    y = subdata.loc[:,variable_y]
+                    try:  # If empty dataframe can't find variables
+                        x = subdata.loc[:, variable_x]
+                        y = subdata.loc[:, variable_y]
+                    except KeyError:
+                        continue
 
                     if isinstance(x, pd.DataFrame):
                         print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_x}!")

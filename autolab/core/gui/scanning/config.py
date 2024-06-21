@@ -450,8 +450,9 @@ class ConfigManager:
             if setValue:
                 if value is None:
                     if element.type in [int, float]: value = 0
-                    elif element.type in [
-                            str, np.ndarray, pd.DataFrame]: value = ''
+                    elif element.type in [str]: value = ''
+                    elif element.type in [pd.DataFrame]: value = pd.DataFrame()
+                    elif element.type in [np.ndarray]: value = np.array([])
                     elif element.type in [bool]: value = False
                 step['value'] = value
 
@@ -774,16 +775,19 @@ class ConfigManager:
                                              np.ndarray, pd.DataFrame]):
                     value = config_step['value']
 
-                    if config_step['element'].type in [np.ndarray]:
-                        valueStr = array_to_str(
-                            value, threshold=1000000, max_line_width=9000000)
-                    elif config_step['element'].type in [pd.DataFrame]:
-                        valueStr = dataframe_to_str(value, threshold=1000000)
-                    elif config_step['element'].type in [int, float, str]:
-                        try:
-                            valueStr = f'{value:.{self.precision}g}'
-                        except:
-                            valueStr = f'{value}'
+                    if variables.has_eval(value):
+                        valueStr = value
+                    else:
+                        if config_step['element'].type in [np.ndarray]:
+                            valueStr = array_to_str(
+                                value, threshold=1000000, max_line_width=9000000)
+                        elif config_step['element'].type in [pd.DataFrame]:
+                            valueStr = dataframe_to_str(value, threshold=1000000)
+                        elif config_step['element'].type in [int, float, str]:
+                            try:
+                                valueStr = f'{value:.{self.precision}g}'
+                            except:
+                                valueStr = f'{value}'
 
                     pars_recipe_i['recipe'][f'{i+1}_value'] = valueStr
 

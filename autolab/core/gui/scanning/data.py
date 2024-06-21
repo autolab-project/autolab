@@ -227,7 +227,8 @@ class DataManager:
             # if text or if image of type ndarray return
             if isinstance(data, str) or (
                     isinstance(data, np.ndarray) and not (
-                        len(data.T.shape) == 1 or data.T.shape[0] == 2)):
+                        len(data.T.shape) == 1 or (
+                            len(data.T.shape) != 0 and data.T.shape[0] == 2))):
                 self.gui.variable_x_comboBox.clear()
                 self.gui.variable_x2_comboBox.clear()
                 self.gui.variable_y_comboBox.clear()
@@ -334,7 +335,8 @@ class Dataset():
 
             if (data is not None
                     and not isinstance(data, str)
-                    and (len(data.T.shape) == 1 or data.T.shape[0] == 2)):
+                    and (len(data.T.shape) == 1 or (
+                        len(data.T.shape) != 0 and data.T.shape[0] == 2))):
                 data = utilities.formatData(data)
             else:  # Image
                 return data
