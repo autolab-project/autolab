@@ -175,7 +175,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         addDeviceAction = settingsMenu.addAction('Add device')
         addDeviceAction.setIcon(QtGui.QIcon(icons['add']))
-        addDeviceAction.triggered.connect(lambda state: self.openAddDevice())
+        addDeviceAction.triggered.connect(lambda: self.openAddDevice())
         addDeviceAction.setStatusTip("Open the utility to add a device")
 
         downloadDriverAction = settingsMenu.addAction('Download drivers')
@@ -738,7 +738,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         layout.addWidget(widget)
         widget = QtWidgets.QPushButton()
         widget.setIcon(QtGui.QIcon(icons['remove']))
-        widget.clicked.connect(lambda state, layout=layout: self.removeOptionalArgClicked(layout))
+        widget.clicked.connect(lambda: self.removeOptionalArgClicked(layout))
         layout.addWidget(widget)
 
     def removeOptionalArgClicked(self, layout):

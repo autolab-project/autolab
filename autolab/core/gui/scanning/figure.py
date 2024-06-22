@@ -21,6 +21,14 @@ from ..variables import Variable
 from ..icons import icons
 
 
+if hasattr(pd.errors, 'UndefinedVariableError'):
+    UndefinedVariableError = pd.errors.UndefinedVariableError
+elif hasattr(pd.core.computation.ops, 'UndefinedVariableError'): # pd 1.1.5
+    UndefinedVariableError = pd.core.computation.ops.UndefinedVariableError
+else:
+    UndefinedVariableError = Exception
+
+
 class FigureManager:
     """ Manage the figure of the scanner """
 
@@ -49,9 +57,11 @@ class FigureManager:
         pgv = pg.__version__.split('.')
         if int(pgv[0]) == 0 and int(pgv[1]) < 12:
             self.gui.variable_x2_checkBox.setEnabled(False)
-            self.gui.variable_x2_checkBox.setToolTip("Can't use 2D plot for scan, need pyqtgraph >= 0.13.2")
+            self.gui.variable_x2_checkBox.setToolTip(
+                "Can't use 2D plot for scan, need pyqtgraph >= 0.13.2")
             self.gui.setStatus(
-                "Can't use 2D plot for scan, need pyqtgraph >= 0.13.2", 10000, False)
+                "Can't use 2D plot for scan, need pyqtgraph >= 0.13.2",
+                10000, False)
         else:
             self.fig.activate_img()
             self.gui.variable_x2_checkBox.stateChanged.connect(self.reloadData)
@@ -60,12 +70,15 @@ class FigureManager:
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
-        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            self.gui.nbTraces_lineEdit,'edited', self._font_size))
-        setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced', self._font_size)
+        self.gui.nbTraces_lineEdit.textEdited.connect(
+            lambda: setLineEditBackground(
+                self.gui.nbTraces_lineEdit, 'edited', self._font_size))
+        setLineEditBackground(
+            self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         # Window to show scan data
-        self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)
+        self.gui.displayScanData_pushButton.clicked.connect(
+            self.displayScanDataButtonClicked)
         self.gui.displayScanData_pushButton.hide()
         self.displayScan = DisplayValues("Scan", size=(500, 300))
         self.displayScan.setWindowIcon(QtGui.QIcon(icons['DataFrame']))
@@ -75,20 +88,25 @@ class FigureManager:
         self.gui.data_comboBox.hide()
 
         # Combobo to select the recipe to plot
-        self.gui.scan_recipe_comboBox.activated.connect(self.scan_recipe_comboBoxCurrentChanged)
+        self.gui.scan_recipe_comboBox.activated.connect(
+            self.scan_recipe_comboBoxCurrentChanged)
         self.gui.scan_recipe_comboBox.hide()
 
         # Combobox to select datafram to plot
-        self.gui.dataframe_comboBox.activated.connect(self.dataframe_comboBoxCurrentChanged)
+        self.gui.dataframe_comboBox.activated.connect(
+            self.dataframe_comboBoxCurrentChanged)
         self.gui.dataframe_comboBox.addItem("Scan")
         self.gui.dataframe_comboBox.hide()
 
         # Filter widgets
         self.gui.scrollArea_filter.hide()
         self.gui.checkBoxFilter.stateChanged.connect(self.checkBoxFilterChanged)
-        self.gui.addFilterPushButton.clicked.connect(lambda: self.addFilterClicked('standard'))
-        self.gui.addSliderFilterPushButton.clicked.connect(lambda: self.addFilterClicked('slider'))
-        self.gui.addCustomFilterPushButton.clicked.connect(lambda: self.addFilterClicked('custom'))
+        self.gui.addFilterPushButton.clicked.connect(
+            lambda: self.addFilterClicked('standard'))
+        self.gui.addSliderFilterPushButton.clicked.connect(
+            lambda: self.addFilterClicked('slider'))
+        self.gui.addCustomFilterPushButton.clicked.connect(
+            lambda: self.addFilterClicked('custom'))
         self.gui.splitterGraph.setSizes([9000, 1000])  # fixe wrong proportion
 
     def refresh_filters(self):
@@ -111,10 +129,12 @@ class FigureManager:
                         setLineEditBackground(
                             valueWidget.valueWidget, 'synced', self._font_size)
                     else:
-                        value = float(valueWidget.text())  # for editline
+                        try:
+                            value = float(valueWidget.text())  # for editline
+                        except:
+                            continue
                         setLineEditBackground(
                             valueWidget, 'synced', self._font_size)
-
 
                     convert_condition = {
                         '==': np.equal, '!=': np.not_equal,
@@ -123,16 +143,24 @@ class FigureManager:
                         }
                     condition = convert_condition[condition_raw]
 
-                    filter_i = {'enable': enable, 'condition': condition, 'name': name, 'value': value}
+                    filter_i = {'enable': enable, 'condition': condition,
+                                'name': name, 'value': value}
 
                 elif layout.count() == 3:
                     enable = bool(layout.itemAt(0).widget().isChecked())
                     customConditionWidget = layout.itemAt(1).widget()
                     condition_txt = customConditionWidget.text()
+                    try:
+                        pd.eval(condition_txt)  # syntax check
+                    except UndefinedVariableError:
+                        pass
+                    except Exception:
+                        continue
                     setLineEditBackground(
                         customConditionWidget, 'synced', self._font_size)
 
-                    filter_i = {'enable': enable, 'condition': condition_txt, 'name': None, 'value': None}
+                    filter_i = {'enable': enable, 'condition': condition_txt,
+                                'name': None, 'value': None}
 
                 self.filter_condition.append(filter_i)
 
@@ -215,7 +243,8 @@ class FigureManager:
 
             self.refresh_filter_combobox(variableComboBox)
             variableComboBox.activated.connect(self.refresh_filters)
-            filterCheckBox.stateChanged.connect(lambda: self.refresh_filter_combobox(variableComboBox))
+            filterCheckBox.stateChanged.connect(
+                lambda: self.refresh_filter_combobox(variableComboBox))
             conditionLayout.addWidget(variableComboBox)
 
             filterComboBox = QtWidgets.QComboBox()
@@ -239,8 +268,9 @@ class FigureManager:
             elif filter_type == 'slider':
                 var = Variable('temp', 1.)
                 valueWidget = Slider(var)
-                valueWidget.setMinimumSize(valueWidget.minimumSizeHint().width(), valueWidget.minimumSizeHint().height())  # Will hide it if too small
-                valueWidget.setMaximumSize(valueWidget.minimumSizeHint().width(), valueWidget.minimumSizeHint().height())
+                min_size = valueWidget.minimumSizeHint()
+                valueWidget.setMinimumSize(min_size)
+                valueWidget.setMaximumSize(min_size)
                 valueWidget.minWidget.setText('1.0')
                 valueWidget.minWidgetValueChanged()
                 valueWidget.changed.connect(self.refresh_filters)
@@ -265,7 +295,7 @@ class FigureManager:
         removePushButton.setMaximumSize(16777215, 21)
         removePushButton.setIcon(QtGui.QIcon(icons['remove']))
         removePushButton.clicked.connect(
-            lambda state, layout=conditionLayout: self.remove_filter(layout))
+            lambda: self.remove_filter(conditionLayout))
         conditionLayout.addWidget(removePushButton)
 
         self.gui.layoutFilter.insertLayout(
@@ -298,7 +328,8 @@ class FigureManager:
             index = self.gui.scan_recipe_comboBox.currentIndex()
 
             result_names = list(dataset)
-            items = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(self.gui.scan_recipe_comboBox.count())]
+            items = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(
+                self.gui.scan_recipe_comboBox.count())]
 
             if items != result_names:
                 self.gui.scan_recipe_comboBox.clear()
@@ -316,7 +347,8 @@ class FigureManager:
             self.gui.data_comboBox.hide()
 
         # Change save button text to inform on scan that will be saved
-        self.gui.save_pushButton.setText('Save '+self.gui.data_comboBox.currentText().lower())
+        self.gui.save_pushButton.setText(
+            'Save '+self.gui.data_comboBox.currentText().lower())
 
     def scan_recipe_comboBoxCurrentChanged(self):
         self.dataframe_comboBoxCurrentChanged()
@@ -349,7 +381,8 @@ class FigureManager:
             i for i, val in sub_dataset.data_arrays.items() if not isinstance(
                 val[0], (str, tuple))]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
 
-        items = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
+        items = [self.gui.dataframe_comboBox.itemText(i) for i in range(
+            self.gui.dataframe_comboBox.count())]
 
         if result_names != items:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
             self.gui.dataframe_comboBox.clear()
@@ -387,8 +420,8 @@ class FigureManager:
                 self.fig.img.hide() # OPTIMIZE: would be better to erase data
 
     def reloadData(self):
-        ''' This function removes any plotted curves and reload all required curves from
-        data available in the data manager'''
+        ''' This function removes any plotted curves and reload all required
+        curves from data available in the data manager'''
         # Remove all curves
         self.clearData()
 
@@ -518,7 +551,7 @@ class FigureManager:
                     self.fig.img.hide()
 
             if len(data) != 0 and isinstance(data[0], np.ndarray):  # to avoid errors
-                image_data = np.empty((len(data), *temp_data.shape))
+                images = np.empty((len(data), *temp_data.shape))
 
             for i in range(len(data)):
                 # Data
@@ -541,21 +574,32 @@ class FigureManager:
                         self.figMap.show()
                     if self.gui.frameAxis.isVisible():
                         self.gui.frameAxis.hide()
-                    try:
-                        image_data[i] = subdata
-                    except Exception as e:
-                        print(f"Warning can't plot image: {e}")
-                        continue
+                    # OPTIMIZE: should be able to plot images of different shapes
+                    if subdata.shape == temp_data.shape:
+                        images[i] = subdata
+                        has_bad_shape = False
+                    else:
+                        has_bad_shape = True
                     if i == len(data)-1:
-                        if image_data.ndim == 3:
-                            x,y = (0, 1) if self.figMap.imageItem.axisOrder == 'col-major' else (1, 0)
+                        if images.ndim == 3:
+                            if self.figMap.imageItem.axisOrder == 'col-major':
+                                x, y = (0, 1)
+                            else:
+                                x, y = (1, 0)
                             axes = {'t': 0, 'x': x+1, 'y': y+1, 'c': None}  # to avoid a special case in pg that incorrectly assumes the axis
                         else:
                             axes = None
+                        if has_bad_shape:
+                            images_plot = np.array([subdata])
+                            print(f"Warning only plot last {data_name}." \
+                                  " Images should have the same shape." \
+                                  f" Given {subdata.shape} & {temp_data.shape}")
+                        else:
+                            images_plot = images
                         try:
-                            self.figMap.setImage(image_data, axes=axes)# xvals=() # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+                            self.figMap.setImage(images_plot, axes=axes)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
                         except Exception as e:
-                            print(f"Warning can't plot image: {e}")
+                            print(f"Warning can't plot {data_name}: {e}")
                             continue
                         self.figMap.setCurrentIndex(len(self.figMap.tVals))
 
@@ -573,9 +617,11 @@ class FigureManager:
                         continue
 
                     if isinstance(x, pd.DataFrame):
-                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_x}!")
+                        print('Warning: At least two variables have the same name.' \
+                              f" Data plotted is incorrect for {variable_x}!")
                     if isinstance(y, pd.DataFrame):
-                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_y}!")
+                        print('Warning: At least two variables have the same name.' \
+                              f" Data plotted is incorrect for {variable_y}!")
                         y = y.iloc[:, 0]
 
                     if i == (len(data) - 1):
@@ -588,14 +634,17 @@ class FigureManager:
                     # Plot
                     # OPTIMIZE: known issue but from pyqtgraph, error if use FFT on one point
                     # careful, now that can filter data, need .values to avoid pyqtgraph bug
-                    curve = self.ax.plot(x.values, y.values, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+                    curve = self.ax.plot(x.values, y.values, symbol='x',
+                                         symbolPen=color, symbolSize=10,
+                                         pen=color, symbolBrush=color)
                     curve.setAlpha(alpha, False)
                     self.curves.append(curve)
 
     def variableChanged(self, index):
         """ This function is called when the displayed result has been changed
         in the combo box. It proceeds to the change. """
-        if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1:
+        if (self.gui.variable_x_comboBox.currentIndex() != -1
+                and self.gui.variable_y_comboBox.currentIndex() != -1):
             self.reloadData()
         else:
             self.clearData()

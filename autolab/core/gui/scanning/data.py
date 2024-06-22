@@ -81,7 +81,8 @@ class DataManager:
                                 var_list, data_name=data_name, dataID=index)
                         except Exception as e:
                             self.gui.setStatus(
-                                f"Scan warning: Can't plot Scan{len(self.datasets)-i} and dataframe {data_name} with ID {index+1}: {e}",
+                                f"Scan warning: Can't plot Scan{len(self.datasets)-i}" \
+                                    f" and dataframe {data_name} with ID {index+1}: {e}",
                                 10000, False)
                         dataList2.append(data)
 
@@ -112,7 +113,8 @@ class DataManager:
         if self.save_temp:
             FOLDER_TEMP = os.environ['TEMP']  # This variable can be changed at autolab start-up
             folder_dataset_temp = tempfile.mkdtemp(dir=FOLDER_TEMP) # Creates a temporary directory for this dataset
-            self.gui.configManager.export(os.path.join(folder_dataset_temp, 'config.conf'))
+            self.gui.configManager.export(
+                os.path.join(folder_dataset_temp, 'config.conf'))
         else:
             folder_dataset_temp = str(random.random())
 
@@ -134,7 +136,8 @@ class DataManager:
                             values = variables.eval_safely(parameter['values'])
                             if isinstance(values, str):
                                 nbpts *= 11  # OPTIMIZE: can't know length in this case without doing eval (should not do eval here because can imagine recipe_2 with param set at end of recipe_1)
-                                self.gui.progressBar.setStyleSheet("""QProgressBar::chunk {background-color: orange;}""")
+                                self.gui.progressBar.setStyleSheet(
+                                    "QProgressBar::chunk {background-color: orange;}")
                             else:
                                 values = utilities.create_array(values)
                                 nbpts *= len(values)
@@ -248,7 +251,9 @@ class DataManager:
                 try:
                     point = data.iloc[0][result_name]
                     if isinstance(point, pd.Series):
-                        print(f"Warning: At least two variables have the same name. Data acquisition is incorrect for {result_name}!", file=sys.stderr)
+                        print('Warning: At least two variables have the same name.' \
+                              f" Data acquisition is incorrect for {result_name}!",
+                              file=sys.stderr)
                         float(point[0])
                     else:
                         float(point)
@@ -321,7 +326,12 @@ class Dataset():
         list_step = [recipe['recipe'] for recipe in list_recipe]
         self.list_step = sum(list_step, [])
 
-        self.header = ["id"] + [step['name'] for step in self.list_param] + [step['name'] for step in self.list_step if step['stepType'] == 'measure' and step['element'].type in [int, float, bool]]
+        self.header = (["id"]
+                       + [step['name'] for step in self.list_param]
+                       + [step['name'] for step in self.list_step if (
+                           step['stepType'] == 'measure'
+                           and step['element'].type in [int, float, bool])]
+                       )
         self.data = pd.DataFrame(columns=self.header)
 
     def getData(self, var_list: list, data_name: str = "Scan",
@@ -344,7 +354,9 @@ class Dataset():
         # Add var for filtering
         for var_filter in filter_condition:
             if var_filter['enable']:
-                if var_filter['name'] not in var_list and var_filter['name'] != '' and var_filter['name'] is not None:
+                if (var_filter['name'] not in var_list
+                        and var_filter['name'] != ''
+                        and var_filter['name'] is not None):
                     var_list.append(var_filter['name'])
                 elif isinstance(var_filter['condition'], str):
                     for key in self.header:
@@ -366,7 +378,12 @@ class Dataset():
                     elif isinstance(var_filter['condition'], str):
                         filter_cond = var_filter['condition']
                         if filter_cond:
-                            data = data.query(filter_cond)
+                            try:
+                                data = data.query(filter_cond)
+                            except:
+                                # If error, output empty dataframe
+                                data = pd.DataFrame(columns=self.header)
+                                break
 
             return data.loc[:,unique_var_list]
 

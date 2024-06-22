@@ -14,6 +14,12 @@ from .GUI_utilities import get_font_size, setLineEditBackground
 from .. import config
 
 
+if hasattr(QtCore.Qt.LeftButton, 'value'):
+    LeftButton = QtCore.Qt.LeftButton.value
+else:
+    LeftButton = QtCore.Qt.LeftButton
+
+
 class Slider(QtWidgets.QMainWindow):
 
     changed = QtCore.Signal()
@@ -291,6 +297,6 @@ class ProxyStyle(QtWidgets.QProxyStyle):
     """ https://stackoverflow.com/questions/67299834/pyqt-slider-not-come-to-a-specific-location-where-i-click-but-move-to-a-certain """
     def styleHint(self, hint, opt=None, widget=None, returnData=None):
         res = super().styleHint(hint, opt, widget, returnData)
-        if hint == self.SH_Slider_AbsoluteSetButtons:
-            res |= QtCore.Qt.LeftButton
+        if hint == QtWidgets.QStyle.SH_Slider_AbsoluteSetButtons:
+            res |= LeftButton
         return res
