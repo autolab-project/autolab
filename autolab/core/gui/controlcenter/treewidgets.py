@@ -7,7 +7,7 @@ Created on Sun Sep 29 18:29:07 2019
 
 
 import os
-from typing import Any
+from typing import Any, Union
 
 import pandas as pd
 import numpy as np
@@ -23,6 +23,151 @@ from ...devices import close
 from ...utilities import (SUPPORTED_EXTENSION,
                           str_to_array, array_to_str,
                           dataframe_to_str, str_to_dataframe)
+
+
+class CustomMenu(QtWidgets.QMenu):
+    """ Menu with action containing sub-menu for recipe and parameter selection """
+
+    def __init__(self, gui):
+        super().__init__()
+        self.gui = gui
+        self.current_menu = 1
+        self.selected_action = None
+
+        self.recipe_cb = self.gui.scanner.selectRecipe_comboBox if (
+            self.gui.scanner) else None
+        self.recipe_names = [self.recipe_cb.itemText(i) for i in range(
+            self.recipe_cb.count())] if self.recipe_cb else []
+        self.param_cb = self.gui.scanner.selectParameter_comboBox if (
+            self.gui.scanner) else None
+
+        self.CUSTOM_ACTION = len(self.recipe_names) > 1
+
+    def addAnyAction(self, action_text='', icon_name='',
+                     param_menu_active=False) -> Union[QtWidgets.QWidgetAction,
+                                                       QtWidgets.QAction]:
+        if self.CUSTOM_ACTION:
+            action = self.addCustomAction(action_text, icon_name,
+                                          param_menu_active=param_menu_active)
+        else:
+            action = self.addAction(action_text)
+            if icon_name != '':
+                action.setIcon(QtGui.QIcon(icons[icon_name]))
+
+        return action
+
+    def addCustomAction(self, action_text='', icon_name='',
+                        param_menu_active=False) -> QtWidgets.QWidgetAction:
+        """ Create an action with a sub menu for selecting a recipe and parameter """
+
+        def close_menu():
+            self.selected_action = action_widget
+            self.close()
+
+        def handle_hover():
+            """ Fixe bad hover behavior and refresh radio_button """
+            self.setActiveAction(action_widget)
+            recipe_name = self.recipe_cb.currentText()
+            action = recipe_menu.actions()[self.recipe_names.index(recipe_name)]
+            radio_button = action.defaultWidget()
+
+            if not radio_button.isChecked():
+                radio_button.setChecked(True)
+
+        def handle_radio_click(name):
+            """ Update parameters available, open parameter menu if available
+            and close main menu to validate the action """
+            if self.current_menu == 1:
+                self.recipe_cb.setCurrentIndex(self.recipe_names.index(name))
+                self.gui.scanner._updateSelectParameter()
+                recipe_menu.close()
+
+                if param_menu_active:
+                    param_items = [self.param_cb.itemText(i) for i in range(
+                        self.param_cb.count())]
+
+                    if len(param_items) > 1:
+                        self.current_menu = 2
+                        setup_menu_parameter(param_menu)
+                        return None
+            else:
+                update_parameter(name)
+                param_menu.close()
+                self.current_menu = 1
+                action_button.setMenu(recipe_menu)
+
+            close_menu()
+
+        def reset_menu(button: QtWidgets.QToolButton):
+            QtWidgets.QApplication.sendEvent(
+                button, QtCore.QEvent(QtCore.QEvent.Leave))
+            self.current_menu = 1
+            action_button.setMenu(recipe_menu)
+
+        def setup_menu_parameter(param_menu: QtWidgets.QMenu):
+            param_items = [self.param_cb.itemText(i) for i in range(
+                self.param_cb.count())]
+            param_name = self.param_cb.currentText()
+
+            param_menu.clear()
+            for param_name_i in param_items:
+                add_radio_button_to_menu(param_name_i, param_name, param_menu)
+
+            action_button.setMenu(param_menu)
+            action_button.showMenu()
+
+        def update_parameter(name: str):
+            param_items = [self.param_cb.itemText(i) for i in range(
+                self.param_cb.count())]
+            self.param_cb.setCurrentIndex(param_items.index(name))
+            self.gui.scanner._updateSelectParameter()
+
+        def add_radio_button_to_menu(item_name: str, current_name: str,
+                                     target_menu: QtWidgets.QMenu):
+            widget = QtWidgets.QWidget()
+            radio_button = QtWidgets.QRadioButton(item_name, widget)
+            action = QtWidgets.QWidgetAction(self.gui)
+            action.setDefaultWidget(radio_button)
+            target_menu.addAction(action)
+
+            if item_name == current_name:
+                radio_button.setChecked(True)
+
+            radio_button.clicked.connect(
+                lambda: handle_radio_click(item_name))
+
+        # Add custom action
+        action_button = QtWidgets.QToolButton()
+        action_button.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        action_button.setText(f"   {action_text}")
+        action_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        action_button.setAutoRaise(True)
+        action_button.clicked.connect(close_menu)
+        action_button.enterEvent = lambda event: handle_hover()
+        if icon_name != '':
+            action_button.setIcon(QtGui.QIcon(icons[icon_name]))
+
+        action_widget = QtWidgets.QWidgetAction(action_button)
+        action_widget.setDefaultWidget(action_button)
+        self.addAction(action_widget)
+
+        recipe_menu = QtWidgets.QMenu()
+        # recipe_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+        recipe_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        if param_menu_active:
+            param_menu = QtWidgets.QMenu()
+            # param_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+            param_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        recipe_name = self.gui.scanner.selectRecipe_comboBox.currentText()
+
+        for recipe_name_i in self.recipe_names:
+            add_radio_button_to_menu(recipe_name_i, recipe_name, recipe_menu)
+
+        action_button.setMenu(recipe_menu)
+
+        return action_widget
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -91,7 +236,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                     self.loaded = False
             elif id(self) in self.gui.threadManager.threads_conn:
                 menu = QtWidgets.QMenu()
-                cancelDevice = menu.addAction(f"Cancel loading")
+                cancelDevice = menu.addAction('Cancel loading')
                 cancelDevice.setIcon(QtGui.QIcon(icons['disconnect']))
 
                 choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
@@ -107,6 +252,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
                 if choice == modifyDeviceChoice:
                     self.gui.openAddDevice(self)
+
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
     """ This class represents an action in an item of the tree """
@@ -227,11 +373,13 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if not self.isDisabled():
-            menu = QtWidgets.QMenu()
-            scanRecipe = menu.addAction("Do in scan recipe")
-            scanRecipe.setIcon(QtGui.QIcon(icons['action']))
+            menu = CustomMenu(self.gui)
+
+            scanRecipe = menu.addAnyAction('Do in scan recipe', 'action')
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+            if choice is None: choice = menu.selected_action
+
             if choice == scanRecipe:
                 recipe_name = self.gui.getRecipeName()
                 self.gui.addStepToScanRecipe(recipe_name, 'action', self.action)
@@ -491,36 +639,21 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if not self.isDisabled():
-            # TODO: could be used to select which recipe and parameter the step should go
-            # But, seems not ergonomic (not finish to implement it if want it)
-            # if self.gui.scanner is None:
-            #     pass
-            # else:
-            #     recipe_name = self.gui.getRecipeName()
-            #     recipe_name_list = self.gui.scanner.configManager.recipeNameList()
-            #     param_name = self.gui.getParameterName()
-            #     param_name_list = self.gui.scanner.configManager.parameterNameList(recipe_name)
-            #     print(recipe_name, recipe_name_list,
-            #           param_name, param_name_list)
-
-            menu = QtWidgets.QMenu()
+            menu = CustomMenu(self.gui)
             monitoringAction = menu.addAction("Start monitoring")
             monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
             menu.addSeparator()
             sliderAction = menu.addAction("Create a slider")
             sliderAction.setIcon(QtGui.QIcon(icons['slider']))
             menu.addSeparator()
-            # sub_menu = QtWidgets.QMenu("Set as parameter", menu)
-            # sub_menu.setIcon(QtGui.QIcon(icons['parameter']))
-            # menu.addMenu(sub_menu)
-            # scanParameterAction = sub_menu.addAction(f"in {recipe_name}")
-            # scanParameterAction.setIcon(QtGui.QIcon(icons['recipe']))
-            scanParameterAction = menu.addAction("Set as scan parameter")
-            scanParameterAction.setIcon(QtGui.QIcon(icons['parameter']))
-            scanMeasureStepAction = menu.addAction("Measure in scan recipe")
-            scanMeasureStepAction.setIcon(QtGui.QIcon(icons['measure']))
-            scanSetStepAction = menu.addAction("Set value in scan recipe")
-            scanSetStepAction.setIcon(QtGui.QIcon(icons['write']))
+
+            scanParameterAction = menu.addAnyAction(
+                'Set as scan parameter', 'parameter', param_menu_active=True)
+            scanMeasureStepAction = menu.addAnyAction(
+                'Measure in scan recipe', 'measure')
+            scanSetStepAction = menu.addAnyAction(
+                'Set value in scan recipe', 'write')
+
             menu.addSeparator()
             saveAction = menu.addAction("Read and save as...")
             saveAction.setIcon(QtGui.QIcon(icons['read-save']))
@@ -539,6 +672,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     tuple] else False)  # OPTIMIZE: forbid setting tuple to scanner
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+            if choice is None: choice = menu.selected_action
+
             if choice == monitoringAction: self.openMonitor()
             elif choice == sliderAction: self.openSlider()
             elif choice == scanParameterAction:

@@ -62,7 +62,12 @@ def get_element_by_address(address: str) -> Union[Element, None]:
     """ Returns the Element located at the provided address if exists """
     address = address.split('.')
     try:
-        element = get_device(address[0])
+        device_name = address[0]
+        if device_name in DEVICES:
+            element = DEVICES[device_name]
+        else:
+            # This should not be used on autolab closing to avoid access violation due to config opening
+            element = get_device(device_name)
         for addressPart in address[1: ]:
             element = getattr(element, addressPart.replace(" ", ""))
         return element

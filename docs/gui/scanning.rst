@@ -91,4 +91,6 @@ If the user has created several recipes in a scan, it is possible to display its
 
 It is possible to display arrays and images using the combobox above the scanner figure containing the dataframe name or 'Scan' for the main scan result.
 
+A data filtering option is available below the figure to select the desired data, allowing for example to plot a slice of a 2D scan.
+
 .. image:: multiple_recipes.png

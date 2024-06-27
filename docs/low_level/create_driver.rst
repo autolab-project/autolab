@@ -53,7 +53,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     The class Driver_CONNECTION: **establish the connection with the instrument** and **define the communication functions**.
 
-    As a reminder, a communication with an instruments occurs in general with strings that are set by the manufacturer and instrument and model dependent. To receive and send strings from and to the instrument we first need to establish a connection. This will be done using dedicated python package such as `pyvisa`, `pyserial`, `socket` and physical connections such as Ethernet, GPIB, or USB. See bellow for an example help with using a VISA type of connection.
+    As a reminder, a communication with an instruments occurs in general with strings that are set by the manufacturer and instrument and model dependent. To receive and send strings from and to the instrument we first need to establish a connection. This will be done using dedicated python package such as `pyvisa`, `pyserial`, `socket` and physical connections such as Ethernet, GPIB, or USB. See below for an example help with using a VISA type of connection.
 
     .. caution::
         The connection types are refered to with capital characters in the classes names, e.g.:
@@ -64,9 +64,9 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
             class Driver_TELNET():
 
 
-    When using the driver module (.py) the Driver_CONNECTION class is imported as the top layer, it inherits all the attributes of the Driver class and run its ``__init__`` function. It is the class that is used. Note that the connection classes are located, within a driver module, bellow the Driver class, because they use it before reaching their own ``__init__`` function.
+    When using the driver module (.py) the Driver_CONNECTION class is imported as the top layer, it inherits all the attributes of the Driver class and run its ``__init__`` function. It is the class that is used. Note that the connection classes are located, within a driver module, below the Driver class, because they use it before reaching their own ``__init__`` function.
 
-    Here is a commented example of the Driver_CONNECTION class, further explained bellow:
+    Here is a commented example of the Driver_CONNECTION class, further explained below:
 
     .. code-block:: python
 
@@ -178,7 +178,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     The class Driver_CONNECTION inherits all the attributes of the class Driver. The function ``__init__`` of the class Driver is run by the class Driver_CONNECTION. The Driver class will act as your main instrument.
 
-    Here is a commented example of the class Driver, further explained bellow:
+    Here is a commented example of the class Driver, further explained below:
 
     .. code-block:: python
 
@@ -231,7 +231,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     **Further instrument complexity:**
 
-        Here is a way to modify the ``__init__`` function of the class Driver to deal with the case of a **multi-channel instrument**. (Note: some of the lines have been removed from the previous example for clarity.) It is further explained bellow:
+        Here is a way to modify the ``__init__`` function of the class Driver to deal with the case of a **multi-channel instrument**. (Note: some of the lines have been removed from the previous example for clarity.) It is further explained below:
 
         .. code-block:: python
 
@@ -473,7 +473,7 @@ Driver utilities structure (*\<manufacturer\>_\<MODEL\>_utilities.py* file)
 
 This optional file can be added to the driver directory (*\<manufacturer\>_\<MODEL\>.py*).
 
-Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py*, further explained bellow:
+Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py*, further explained below:
 
 .. code-block:: python
 
