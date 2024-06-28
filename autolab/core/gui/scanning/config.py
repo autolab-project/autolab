@@ -309,6 +309,12 @@ class ConfigManager:
         """ Sets the element provided as the new parameter of the scan.
         Add a parameter is no existing parameter """
         if not self.gui.scanManager.isStarted():
+            if recipe_name == "":
+                self.configHistory.active = False
+                self.addRecipe("recipe")
+                self.configHistory.active = True
+                recipe_name = self.lastRecipeName()
+                param_name = self.parameterNameList(recipe_name)[-1]
             if len(self.parameterList(recipe_name)) == 0:
                 self.configHistory.active = False
                 self.addParameter(recipe_name)

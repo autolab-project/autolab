@@ -22,7 +22,7 @@ from ... import paths, config
 from ...devices import close
 from ...utilities import (SUPPORTED_EXTENSION,
                           str_to_array, array_to_str,
-                          dataframe_to_str, str_to_dataframe)
+                          dataframe_to_str, str_to_dataframe, create_array)
 
 
 class CustomMenu(QtWidgets.QMenu):
@@ -585,6 +585,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     value = variables.eval_variable(value)
                     if self.variable.type in [np.ndarray]:
                         if isinstance(value, str): value = str_to_array(value)
+                        else: value = create_array(value)
                     elif self.variable.type in [pd.DataFrame]:
                         if isinstance(value, str): value = str_to_dataframe(value)
                     else:

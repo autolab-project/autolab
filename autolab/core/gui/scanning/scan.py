@@ -485,6 +485,7 @@ class ScanThread(QtCore.QThread):
             variables.set_variable(stepInfos['name'], result)
         elif stepType == 'set':
             value = variables.eval_variable(stepInfos['value'])
+            if element.type in [np.ndarray]: value = create_array(value)
             element(value)
         elif stepType == 'action':
             if stepInfos['value'] is not None:

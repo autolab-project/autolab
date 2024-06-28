@@ -105,7 +105,7 @@ class Variable(Element):
                 value = pd.DataFrame(value)  # faster and handle better different dtype than np.savetxt
                 value.to_csv(path, index=False, header=None)
             except:
-                # Avoid error if strange ndim, 0 or (1,2,3) ... occurs in GUI scan if do $eval:[1] instead of $eval:np.array([1])
+                # Avoid error if strange ndim, 0 or (1,2,3) ... was occuring in GUI scan when doing $eval:[1] instead of $eval:np.array([1]). Now GUI forces array to ndim=1
                 print(f"Warning, can't save {value}")
         elif self.type == pd.DataFrame:
             value.to_csv(path, index=False)
