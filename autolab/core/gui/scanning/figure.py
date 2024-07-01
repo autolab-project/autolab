@@ -6,17 +6,27 @@ Created on Sun Sep 29 18:12:24 2019
 """
 
 import os
+from typing import List
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-import pyqtgraph.exporters
-from pyqtgraph.Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui, QtCore
 
 from .display import DisplayValues
-from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_utilities import (get_font_size, setLineEditBackground,
+                             pyqtgraph_fig_ax, pyqtgraph_image)
+from ..slider import Slider
+from ..variables import Variable
 from ..icons import icons
-from ... import utilities
+
+
+if hasattr(pd.errors, 'UndefinedVariableError'):
+    UndefinedVariableError = pd.errors.UndefinedVariableError
+elif hasattr(pd.core.computation.ops, 'UndefinedVariableError'): # pd 1.1.5
+    UndefinedVariableError = pd.core.computation.ops.UndefinedVariableError
+else:
+    UndefinedVariableError = Exception
 
 
 class FigureManager:
@@ -26,31 +36,49 @@ class FigureManager:
 
         self.gui = gui
         self.curves = []
+        self.filter_condition = []
 
         self._font_size = get_font_size() + 1
 
         # Configure and initialize the figure in the GUI
-        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.fig, self.ax = pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
-        self.figMap, widget = utilities.pyqtgraph_image()
+        self.figMap, widget = pyqtgraph_image()
         self.gui.graph.addWidget(widget)
         self.figMap.hide()
 
-        getattr(self.gui, 'variable_x_comboBox').activated.connect(
+        self.gui.variable_x_comboBox.activated.connect(
             self.variableChanged)
-        getattr(self.gui, 'variable_y_comboBox').activated.connect(
+        self.gui.variable_x2_comboBox.activated.connect(
             self.variableChanged)
+        self.gui.variable_y_comboBox.activated.connect(
+            self.variableChanged)
+
+        pgv = pg.__version__.split('.')
+        if int(pgv[0]) == 0 and int(pgv[1]) < 12:
+            self.gui.variable_x2_checkBox.setEnabled(False)
+            self.gui.variable_x2_checkBox.setToolTip(
+                "Can't use 2D plot for scan, need pyqtgraph >= 0.13.2")
+            self.gui.setStatus(
+                "Can't use 2D plot for scan, need pyqtgraph >= 0.13.2",
+                10000, False)
+        else:
+            self.fig.activate_img()
+            self.gui.variable_x2_checkBox.stateChanged.connect(self.reloadData)
 
         # Number of traces
         self.nbtraces = 5
         self.gui.nbTraces_lineEdit.setText(f'{self.nbtraces:g}')
         self.gui.nbTraces_lineEdit.returnPressed.connect(self.nbTracesChanged)
-        self.gui.nbTraces_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            self.gui.nbTraces_lineEdit,'edited', self._font_size))
-        setLineEditBackground(self.gui.nbTraces_lineEdit, 'synced', self._font_size)
+        self.gui.nbTraces_lineEdit.textEdited.connect(
+            lambda: setLineEditBackground(
+                self.gui.nbTraces_lineEdit, 'edited', self._font_size))
+        setLineEditBackground(
+            self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         # Window to show scan data
-        self.gui.displayScanData_pushButton.clicked.connect(self.displayScanDataButtonClicked)
+        self.gui.displayScanData_pushButton.clicked.connect(
+            self.displayScanDataButtonClicked)
         self.gui.displayScanData_pushButton.hide()
         self.displayScan = DisplayValues("Scan", size=(500, 300))
         self.displayScan.setWindowIcon(QtGui.QIcon(icons['DataFrame']))
@@ -60,53 +88,237 @@ class FigureManager:
         self.gui.data_comboBox.hide()
 
         # Combobo to select the recipe to plot
-        self.gui.scan_recipe_comboBox.activated.connect(self.scan_recipe_comboBoxCurrentChanged)
+        self.gui.scan_recipe_comboBox.activated.connect(
+            self.scan_recipe_comboBoxCurrentChanged)
         self.gui.scan_recipe_comboBox.hide()
 
         # Combobox to select datafram to plot
-        self.gui.dataframe_comboBox.activated.connect(self.dataframe_comboBoxCurrentChanged)
+        self.gui.dataframe_comboBox.activated.connect(
+            self.dataframe_comboBoxCurrentChanged)
         self.gui.dataframe_comboBox.addItem("Scan")
         self.gui.dataframe_comboBox.hide()
 
-        self.gui.toolButton.hide()
-        self.clearMenuID()
+        # Filter widgets
+        self.gui.scrollArea_filter.hide()
+        self.gui.checkBoxFilter.stateChanged.connect(self.checkBoxFilterChanged)
+        self.gui.addFilterPushButton.clicked.connect(
+            lambda: self.addFilterClicked('standard'))
+        self.gui.addSliderFilterPushButton.clicked.connect(
+            lambda: self.addFilterClicked('slider'))
+        self.gui.addCustomFilterPushButton.clicked.connect(
+            lambda: self.addFilterClicked('custom'))
+        self.gui.splitterGraph.setSizes([9000, 1000])  # fixe wrong proportion
 
-    def clearMenuID(self):
-        self.gui.toolButton.setText("Parameter")
-        self.gui.toolButton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
-        self.gui.toolButton.setMenu(QtWidgets.QMenu(self.gui.toolButton))
+    def refresh_filters(self):
+        """ Apply filters to data """
+        self.filter_condition.clear()
 
-        # TODO: add bool 'all' like in drivers
+        if self.gui.checkBoxFilter.isChecked():
+            for i in range(self.gui.layoutFilter.count()-1):  # last is buttons
+                layout = self.gui.layoutFilter.itemAt(i).layout()
 
-        self.menuBoolList = list()  # OPTIMIZE: edit: maybe not necessary <- when will merge everything, maybe have some class MetaDataset with init(dataSet) to collect all dataSet and organize data relative to scan id and dataframe
-        self.menuWidgetList = list()
-        self.menuActionList = list()
-        self.nbCheckBoxMenuID = 0
+                if layout.count() == 5:
+                    enable = bool(layout.itemAt(0).widget().isChecked())
+                    variableComboBox = layout.itemAt(1).widget()
+                    self.refresh_filter_combobox(variableComboBox)
+                    name = variableComboBox.currentText()
+                    condition_raw = layout.itemAt(2).widget().currentText()
+                    valueWidget = layout.itemAt(3).widget()
+                    if isinstance(valueWidget, Slider):
+                        value = float(valueWidget.valueWidget.text())  # for custom slider
+                        setLineEditBackground(
+                            valueWidget.valueWidget, 'synced', self._font_size)
+                    else:
+                        try:
+                            value = float(valueWidget.text())  # for editline
+                        except:
+                            continue
+                        setLineEditBackground(
+                            valueWidget, 'synced', self._font_size)
 
-    def addCheckBox2MenuID(self, name_ID: int):
-        self.menuBoolList.append(True)
-        checkBox = QtWidgets.QCheckBox(self.gui)
-        checkBox.setChecked(True)  # Warning: trigger stateChanged (which do reloadData)
-        checkBox.stateChanged.connect(lambda state, checkBox=checkBox: self.checkBoxChanged(checkBox, state))
-        checkBox.setText(str(name_ID))
-        self.menuWidgetList.append(checkBox)
-        action = QtWidgets.QWidgetAction(self.gui.toolButton)
-        action.setDefaultWidget(checkBox)
-        self.gui.toolButton.menu().addAction(action)
-        self.menuActionList.append(action)
-        self.nbCheckBoxMenuID += 1
+                    convert_condition = {
+                        '==': np.equal, '!=': np.not_equal,
+                        '<': np.less, '<=': np.less_equal,
+                        '>=': np.greater_equal, '>': np.greater
+                        }
+                    condition = convert_condition[condition_raw]
 
-    def removeLastCheckBox2MenuID(self):
-        self.menuBoolList.pop(-1)
-        self.menuWidgetList.pop(-1)
-        self.gui.toolButton.menu().removeAction(self.menuActionList.pop(-1))
-        self.nbCheckBoxMenuID -= 1  # edit: not true anymore because display only one scan <- will cause "Error encountered for scan id 1: list index out of range" if do scan with n points and due a new scan with n-m points
+                    filter_i = {'enable': enable, 'condition': condition,
+                                'name': name, 'value': value}
 
-    def checkBoxChanged(self, checkBox: QtWidgets.QCheckBox, state: bool):
-        index = self.menuWidgetList.index(checkBox)
-        self.menuBoolList[index] = bool(state)
-        if self.gui.dataframe_comboBox.currentText() != "Scan":
-            self.reloadData()
+                elif layout.count() == 3:
+                    enable = bool(layout.itemAt(0).widget().isChecked())
+                    customConditionWidget = layout.itemAt(1).widget()
+                    condition_txt = customConditionWidget.text()
+                    try:
+                        pd.eval(condition_txt)  # syntax check
+                    except UndefinedVariableError:
+                        pass
+                    except Exception:
+                        continue
+                    setLineEditBackground(
+                        customConditionWidget, 'synced', self._font_size)
+
+                    filter_i = {'enable': enable, 'condition': condition_txt,
+                                'name': None, 'value': None}
+
+                self.filter_condition.append(filter_i)
+
+            # Change minimum size
+            min_width = 6
+            min_height = 6
+
+            for i in range(self.gui.layoutFilter.count()):
+                layout = self.gui.layoutFilter.itemAt(i).layout()
+                min_width_temp = 6
+                min_height_temp = 6
+
+                for j in range(layout.count()):
+                    item = layout.itemAt(j)
+                    widget = item.widget()
+
+                    if widget is not None:
+                        min_size = widget.minimumSizeHint()
+
+                        min_width_temp_2 = min_size.width()
+                        min_height_temp_2 = min_size.height()
+
+                        if min_width_temp_2 == 0: min_width_temp_2 = 21
+                        if min_height_temp_2 == 0: min_height_temp_2 = 21
+
+                        min_width_temp += min_width_temp_2 + 6
+                        min_height_temp_2 += min_height_temp_2 + 6
+
+                        if min_height_temp_2 > min_height_temp:
+                            min_height_temp = min_height_temp_2
+
+                min_height += min_height_temp
+
+                if min_width_temp > min_width:
+                    min_width = min_width_temp
+
+            min_width += 12
+
+            if min_width > 500: min_width = 500
+            if min_height < 85: min_height = 85
+            if min_height > 210: min_height = 210
+
+            self.gui.frameAxis.setMinimumHeight(min_height)
+            self.gui.scrollArea_filter.setMinimumWidth(min_width)
+        else:
+            self.gui.frameAxis.setMinimumHeight(65)
+            self.gui.scrollArea_filter.setMinimumWidth(0)
+
+        self.reloadData()
+
+    def refresh_filter_combobox(self, comboBox):
+        items = []
+        for dataset in self.gui.dataManager.datasets:
+            for recipe in dataset.values():
+                for key in recipe.data.columns:
+                    if key not in items:
+                        items.append(key)
+
+        existing_items = [comboBox.itemText(i) for i in range(comboBox.count())]
+        if items != existing_items:
+            comboBox.clear()
+            comboBox.addItems(items)
+
+    def addFilterClicked(self, filter_type):
+        """ Add filter condition """
+        conditionLayout = QtWidgets.QHBoxLayout()
+
+        filterCheckBox = QtWidgets.QCheckBox()
+        filterCheckBox.setMinimumSize(0, 21)
+        filterCheckBox.setMaximumSize(16777215, 21)
+        filterCheckBox.setToolTip('Toggle filter')
+        filterCheckBox.setCheckState(QtCore.Qt.Checked)
+        filterCheckBox.stateChanged.connect(self.refresh_filters)
+        conditionLayout.addWidget(filterCheckBox)
+
+        if filter_type in ('standard', 'slider'):
+            variableComboBox = QtWidgets.QComboBox()
+            variableComboBox.setMinimumSize(0, 21)
+            variableComboBox.setMaximumSize(16777215, 21)
+
+            self.refresh_filter_combobox(variableComboBox)
+            variableComboBox.activated.connect(self.refresh_filters)
+            filterCheckBox.stateChanged.connect(
+                lambda: self.refresh_filter_combobox(variableComboBox))
+            conditionLayout.addWidget(variableComboBox)
+
+            filterComboBox = QtWidgets.QComboBox()
+            filterComboBox.setMinimumSize(0, 21)
+            filterComboBox.setMaximumSize(16777215, 21)
+            items = ['==', '!=', '<', '<=', '>=', '>']
+            filterComboBox.addItems(items)
+            filterComboBox.activated.connect(self.refresh_filters)
+            conditionLayout.addWidget(filterComboBox)
+
+            if filter_type == 'standard':
+                valueWidget = QtWidgets.QLineEdit()
+                valueWidget.setMinimumSize(0, 21)
+                valueWidget.setMaximumSize(16777215, 21)
+                valueWidget.setText('1')
+                valueWidget.returnPressed.connect(self.refresh_filters)
+                valueWidget.textEdited.connect(lambda: setLineEditBackground(
+                    valueWidget, 'edited', self._font_size))
+                setLineEditBackground(valueWidget, 'synced', self._font_size)
+                conditionLayout.addWidget(valueWidget)
+            elif filter_type == 'slider':
+                var = Variable('temp', 1.)
+                valueWidget = Slider(var)
+                min_size = valueWidget.minimumSizeHint()
+                valueWidget.setMinimumSize(min_size)
+                valueWidget.setMaximumSize(min_size)
+                valueWidget.minWidget.setText('1.0')
+                valueWidget.minWidgetValueChanged()
+                valueWidget.changed.connect(self.refresh_filters)
+                conditionLayout.addWidget(valueWidget)
+
+        elif filter_type == 'custom':
+            customConditionWidget = QtWidgets.QLineEdit()
+            customConditionWidget.setMinimumSize(0, 21)
+            customConditionWidget.setMaximumSize(16777215, 21)
+            customConditionWidget.setToolTip(
+                "Filter condition can be 'id == 1' '1 <= amplitude <= 2' 'id in (1, 2)'")
+            customConditionWidget.setText('id == 1')
+            customConditionWidget.returnPressed.connect(self.refresh_filters)
+            customConditionWidget.textEdited.connect(
+                lambda: setLineEditBackground(
+                    customConditionWidget, 'edited', self._font_size))
+            setLineEditBackground(customConditionWidget, 'synced', self._font_size)
+            conditionLayout.addWidget(customConditionWidget)
+
+        removePushButton = QtWidgets.QPushButton()
+        removePushButton.setMinimumSize(0, 21)
+        removePushButton.setMaximumSize(16777215, 21)
+        removePushButton.setIcon(QtGui.QIcon(icons['remove']))
+        removePushButton.clicked.connect(
+            lambda: self.remove_filter(conditionLayout))
+        conditionLayout.addWidget(removePushButton)
+
+        self.gui.layoutFilter.insertLayout(
+            self.gui.layoutFilter.count()-1, conditionLayout)
+        self.refresh_filters()
+
+    def remove_filter(self, layout):
+        """ Remove filter condition """
+        for j in reversed(range(layout.count())):
+            layout.itemAt(j).widget().setParent(None)
+        layout.setParent(None)
+        self.refresh_filters()
+
+    def checkBoxFilterChanged(self):
+        """ Show/hide filters frame and refresh filters """
+        if self.gui.checkBoxFilter.isChecked():
+            if not self.gui.scrollArea_filter.isVisible():
+                self.gui.scrollArea_filter.show()
+        else:
+            if self.gui.scrollArea_filter.isVisible():
+                self.gui.scrollArea_filter.hide()
+
+        self.refresh_filters()
 
     def data_comboBoxClicked(self):
         """ This function select a dataset """
@@ -115,13 +327,14 @@ class FigureManager:
             dataset = self.gui.dataManager.getLastSelectedDataset()
             index = self.gui.scan_recipe_comboBox.currentIndex()
 
-            resultNamesList = list(dataset.keys())
-            AllItems = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(self.gui.scan_recipe_comboBox.count())]
+            result_names = list(dataset)
+            items = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(
+                self.gui.scan_recipe_comboBox.count())]
 
-            if AllItems != resultNamesList:
+            if items != result_names:
                 self.gui.scan_recipe_comboBox.clear()
-                self.gui.scan_recipe_comboBox.addItems(resultNamesList)
-                if (index + 1) > len(resultNamesList) or index == -1: index = 0
+                self.gui.scan_recipe_comboBox.addItems(result_names)
+                if (index + 1) > len(result_names) or index == -1: index = 0
                 self.gui.scan_recipe_comboBox.setCurrentIndex(index)
 
             if self.gui.scan_recipe_comboBox.count() > 1:
@@ -134,7 +347,8 @@ class FigureManager:
             self.gui.data_comboBox.hide()
 
         # Change save button text to inform on scan that will be saved
-        self.gui.save_pushButton.setText('Save '+self.gui.data_comboBox.currentText().lower())
+        self.gui.save_pushButton.setText(
+            'Save '+self.gui.data_comboBox.currentText().lower())
 
     def scan_recipe_comboBoxCurrentChanged(self):
         self.dataframe_comboBoxCurrentChanged()
@@ -142,7 +356,6 @@ class FigureManager:
     def dataframe_comboBoxCurrentChanged(self):
 
         self.updateDataframe_comboBox()
-        self.resetCheckBoxMenuID()
 
         self.gui.dataManager.updateDisplayableResults()
         self.reloadData()
@@ -150,9 +363,9 @@ class FigureManager:
         data_name = self.gui.dataframe_comboBox.currentText()
 
         if data_name == "Scan" or self.fig.isHidden():
-            self.gui.toolButton.hide()
+            self.gui.variable_x2_checkBox.show()
         else:
-           self.gui.toolButton.show()
+            self.gui.variable_x2_checkBox.hide()
 
     def updateDataframe_comboBox(self):
         # Executed each time the queue is read
@@ -164,42 +377,23 @@ class FigureManager:
 
         sub_dataset = dataset[recipe_name]
 
-        resultNamesList = ["Scan"] + [
-            i for i in sub_dataset.dictListDataFrame.keys() if type(
-                sub_dataset.dictListDataFrame[i][0]) not in (str, tuple)]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
+        result_names = ["Scan"] + [
+            i for i, val in sub_dataset.data_arrays.items() if not isinstance(
+                val[0], (str, tuple))]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
 
-        AllItems = [self.gui.dataframe_comboBox.itemText(i) for i in range(self.gui.dataframe_comboBox.count())]
+        items = [self.gui.dataframe_comboBox.itemText(i) for i in range(
+            self.gui.dataframe_comboBox.count())]
 
-        if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+        if result_names != items:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
             self.gui.dataframe_comboBox.clear()
-            self.gui.dataframe_comboBox.addItems(resultNamesList)
-            if (index + 1) > len(resultNamesList): index = 0
+            self.gui.dataframe_comboBox.addItems(result_names)
+            if (index + 1) > len(result_names): index = 0
             self.gui.dataframe_comboBox.setCurrentIndex(index)
 
-        if len(resultNamesList) == 1:
+        if len(result_names) == 1:
             self.gui.dataframe_comboBox.hide()
         else:
             self.gui.dataframe_comboBox.show()
-
-    def resetCheckBoxMenuID(self):
-        recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        dataset = self.gui.dataManager.getLastSelectedDataset()
-        data_name = self.gui.dataframe_comboBox.currentText()
-
-        if dataset is not None and recipe_name in dataset and data_name != "Scan":
-            sub_dataset = dataset[recipe_name]
-
-            dataframe = sub_dataset.dictListDataFrame[data_name]
-            nb_id = len(dataframe)
-            nb_bool = len(self.menuBoolList)
-
-            if nb_id != nb_bool:
-                if nb_id > nb_bool:
-                    for i in range(nb_bool+1, nb_id+1):
-                        self.addCheckBox2MenuID(i)
-                else:
-                    for i in range(nb_bool-nb_id):
-                        self.removeLastCheckBox2MenuID()
 
     # AXE LABEL
     ###########################################################################
@@ -219,16 +413,22 @@ class FigureManager:
             try: self.ax.removeItem(curve)  # try because curve=None if close before end of scan
             except: pass
         self.curves = []
+        self.figMap.clear()
+
+        if self.fig.img_active:
+            if self.fig.img.isVisible():
+                self.fig.img.hide() # OPTIMIZE: would be better to erase data
 
     def reloadData(self):
-        ''' This function removes any plotted curves and reload all required curves from
-        data available in the data manager'''
+        ''' This function removes any plotted curves and reload all required
+        curves from data available in the data manager'''
         # Remove all curves
         self.clearData()
 
         # Get current displayed result
         data_name = self.gui.dataframe_comboBox.currentText()
         variable_x = self.gui.variable_x_comboBox.currentText()
+        variable_x2 = self.gui.variable_x2_comboBox.currentText()
         variable_y = self.gui.variable_y_comboBox.currentText()
         data_id = int(self.gui.data_comboBox.currentIndex()) + 1
         data_len = len(self.gui.dataManager.datasets)
@@ -241,34 +441,117 @@ class FigureManager:
         self.setLabel('x', variable_x)
         self.setLabel('y', variable_y)
 
-        self.gui.frame_axis.show()
-        if data_name == "Scan":
+        self.displayed_as_image = self.gui.variable_x2_checkBox.isChecked()
+
+        if data_name == "Scan" and not self.displayed_as_image:
             nbtraces_temp  = self.nbtraces
-            self.gui.nbTraces_lineEdit.show()
-            self.gui.graph_nbTracesLabel.show()
+            if not self.gui.nbTraces_lineEdit.isVisible():
+                self.gui.nbTraces_lineEdit.show()
+                self.gui.graph_nbTracesLabel.show()
         else:
-            nbtraces_temp = 1  # decided to only show the last scan data for dataframes
-            self.gui.nbTraces_lineEdit.hide()
-            self.gui.graph_nbTracesLabel.hide()
+            # decided to only show the last scan data for dataframes and scan displayed as image
+            nbtraces_temp = 1
+            if self.gui.nbTraces_lineEdit.isVisible():
+                self.gui.nbTraces_lineEdit.hide()
+                self.gui.graph_nbTracesLabel.hide()
 
         # Load the last results data
-        data: pd.DataFrame = self.gui.dataManager.getData(
-            nbtraces_temp, [variable_x, variable_y],
-            selectedData=selectedData, data_name=data_name)
+        if self.displayed_as_image:
+            var_to_display = [variable_x, variable_x2, variable_y]
+        else:
+            var_to_display = [variable_x, variable_y]
 
-        # update displayScan
-        self.refreshDisplayScanData()
+        can_filter = var_to_display != ['', '']  # Allows to differentiate images from scan or arrays. Works only because on dataframe_comboBoxCurrentChanged, updateDisplayableResults is called
+        filter_condition = self.filter_condition if (
+            self.gui.checkBoxFilter.isChecked() and can_filter) else {}
+
+        data: List[pd.DataFrame] = self.gui.dataManager.getData(
+            nbtraces_temp, var_to_display,
+            selectedData=selectedData, data_name=data_name,
+            filter_condition=filter_condition)
 
         # Plot data
         if data is not None:
             true_nbtraces = max(nbtraces_temp, len(data))  # not good but avoid error
+
             if len(data) != 0:
+                # update displayScan
+                self.refreshDisplayScanData()
+                if not self.gui.displayScanData_pushButton.isVisible():
+                    self.gui.displayScanData_pushButton.show()
+
                 for temp_data in data:
                     if temp_data is not None: break
                 else: return None
 
-            if len(data) != 0 and type(data[0]) is np.ndarray:  # to avoid errors
-                image_data = np.empty((len(data), *temp_data.shape))
+            # If plot scan as image
+            if data_name == "Scan" and self.displayed_as_image:
+
+                if not self.gui.variable_x2_comboBox.isVisible():
+                    self.gui.variable_x2_comboBox.show()
+                    self.gui.label_scan_2D.show()
+                    self.gui.label_y_axis.setText('Z axis')
+
+                if not self.fig.isVisible():
+                    self.figMap.hide()
+                    self.fig.show()
+
+                if not self.fig.colorbar.isVisible():
+                    self.fig.colorbar.show()
+
+                self.setLabel('x', variable_x)
+                self.setLabel('y', variable_x2)
+
+                if variable_x == variable_x2:
+                    return None
+
+                # Data
+                if len(data) == 0:
+                    return None
+
+                subdata: pd.DataFrame = data[-1]  # Only plot last scan
+
+                if subdata is None:
+                    return None
+
+                subdata = subdata.astype(float)
+
+                try:
+                    pivot_table = subdata.pivot(
+                        index=variable_x, columns=variable_x2, values=variable_y)
+                except ValueError:  # if more than 2 parameters
+                    return None
+
+                # Extract data for plotting
+                x = np.array(pivot_table.columns)
+                y = np.array(pivot_table.index)
+                z = np.array(pivot_table)
+
+                if 0 in (len(x), len(y), len(z)):
+                    return None
+
+                self.fig.update_img(x, y, z)
+
+                if not self.fig.img.isVisible():
+                    self.fig.img.show()
+
+                return None
+
+            # If plot scan or array
+            if self.gui.variable_x2_comboBox.isVisible():
+                self.gui.variable_x2_comboBox.hide()
+                self.gui.label_scan_2D.hide()
+                self.gui.label_y_axis.setText('Y axis')
+
+            if self.fig.img_active:
+                if self.fig.colorbar.isVisible():
+                    self.fig.colorbar.hide()
+
+                if self.fig.img.isVisible():
+                    self.fig.img.hide()
+
+            if len(data) != 0 and isinstance(data[0], np.ndarray):  # to avoid errors
+                images = np.empty((len(data), *temp_data.shape))
 
             for i in range(len(data)):
                 # Data
@@ -276,38 +559,69 @@ class FigureManager:
 
                 if subdata is None: continue
 
-                if type(subdata) is str:  # Could think of someway to show text. Currently removed it from dataset directly
+                if isinstance(subdata, str):  # Could think of someway to show text. Currently removed it from dataset directly
                     print("Warning: Can't display text")
                     continue
-                elif type(subdata) is tuple:
+                if isinstance(subdata, tuple):
                     print("Warning: Can't display tuple")
                     continue
 
                 subdata = subdata.astype(float)
 
-                if type(subdata) is np.ndarray:  # is image
-                    self.fig.hide()
-                    self.figMap.show()
-                    self.gui.frame_axis.hide()
-                    image_data[i] = subdata
+                if isinstance(subdata, np.ndarray):  # is image
+                    if self.fig.isVisible():
+                        self.fig.hide()
+                        self.figMap.show()
+                    if self.gui.frameAxis.isVisible():
+                        self.gui.frameAxis.hide()
+                    # OPTIMIZE: should be able to plot images of different shapes
+                    if subdata.shape == temp_data.shape:
+                        images[i] = subdata
+                        has_bad_shape = False
+                    else:
+                        has_bad_shape = True
                     if i == len(data)-1:
-                        if image_data.ndim == 3:
-                            x,y = (0, 1) if self.figMap.imageItem.axisOrder == 'col-major' else (1, 0)
+                        if images.ndim == 3:
+                            if self.figMap.imageItem.axisOrder == 'col-major':
+                                x, y = (0, 1)
+                            else:
+                                x, y = (1, 0)
                             axes = {'t': 0, 'x': x+1, 'y': y+1, 'c': None}  # to avoid a special case in pg that incorrectly assumes the axis
                         else:
                             axes = None
-                        self.figMap.setImage(image_data, axes=axes)# xvals=() # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+                        if has_bad_shape:
+                            images_plot = np.array([subdata])
+                            print(f"Warning only plot last {data_name}." \
+                                  " Images should have the same shape." \
+                                  f" Given {subdata.shape} & {temp_data.shape}")
+                        else:
+                            images_plot = images
+                        try:
+                            self.figMap.setImage(images_plot, axes=axes)  # Defined which axe is major using pg.setConfigOption('imageAxisOrder', 'row-major') in gui start-up so no need to .T data
+                        except Exception as e:
+                            print(f"Warning can't plot {data_name}: {e}")
+                            continue
                         self.figMap.setCurrentIndex(len(self.figMap.tVals))
 
                 else: # not an image (is pd.DataFrame)
-                    self.figMap.hide()
-                    self.fig.show()
-                    x = subdata.loc[:,variable_x]
-                    y = subdata.loc[:,variable_y]
+                    if not self.fig.isVisible():
+                        self.fig.show()
+                        self.figMap.hide()
+                    if not self.gui.frameAxis.isVisible():
+                        self.gui.frameAxis.show()
+
+                    try:  # If empty dataframe can't find variables
+                        x = subdata.loc[:, variable_x]
+                        y = subdata.loc[:, variable_y]
+                    except KeyError:
+                        continue
+
                     if isinstance(x, pd.DataFrame):
-                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_x}!")
+                        print('Warning: At least two variables have the same name.' \
+                              f" Data plotted is incorrect for {variable_x}!")
                     if isinstance(y, pd.DataFrame):
-                        print(f"Warning: At least two variables have the same name. Data plotted is incorrect for {variable_y}!")
+                        print('Warning: At least two variables have the same name.' \
+                              f" Data plotted is incorrect for {variable_y}!")
                         y = y.iloc[:, 0]
 
                     if i == (len(data) - 1):
@@ -318,14 +632,18 @@ class FigureManager:
                         alpha = (true_nbtraces - (len(data) - 1 - i)) / true_nbtraces
 
                     # Plot
-                    curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+                    # careful, now that can filter data, need .values to avoid pyqtgraph bug
+                    curve = self.ax.plot(x.values, y.values, symbol='x',
+                                         symbolPen=color, symbolSize=10,
+                                         pen=color, symbolBrush=color)
                     curve.setAlpha(alpha, False)
                     self.curves.append(curve)
 
     def variableChanged(self, index):
         """ This function is called when the displayed result has been changed
         in the combo box. It proceeds to the change. """
-        if self.gui.variable_x_comboBox.currentIndex() != -1 and self.gui.variable_y_comboBox.currentIndex() != -1:
+        if (self.gui.variable_x_comboBox.currentIndex() != -1
+                and self.gui.variable_y_comboBox.currentIndex() != -1):
             self.reloadData()
         else:
             self.clearData()
@@ -355,7 +673,6 @@ class FigureManager:
     # Show data
     ###########################################################################
     def refreshDisplayScanData(self):
-        self.gui.displayScanData_pushButton.show()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
         datasets = self.gui.dataManager.getLastSelectedDataset()
         if datasets is not None and recipe_name in datasets:
@@ -377,7 +694,7 @@ class FigureManager:
         """ This function save the figure with the provided filename """
         raw_name, extension = os.path.splitext(filename)
         new_filename = raw_name + ".png"
-        exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+        exporter = pg.exporters.ImageExporter(self.ax)
         exporter.export(new_filename)
 
     def close(self):

@@ -58,7 +58,7 @@ def _download_repo(url: str, output_dir: str):
                     progress_bar.update(len(data))
                     file.write(data)
 
-        if total_size != 0 and progress_bar.n != total_size:
+        if total_size not in (0, progress_bar.n):
             raise RuntimeError("Could not download file")
 
 
@@ -122,8 +122,8 @@ def _check_empty_driver_folder():
         install_drivers()
 
 
-def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
-                    experimental_feature=False):
+def install_drivers(*repo_url: Union[None, str, Tuple[str, str]],
+                    skip_input=False, experimental_feature=False):
     """ Ask if want to install drivers from repo url.
     repo_url: can be url or tuple ('path to install', 'url to download').
     If no argument passed, download official drivers to official driver folder.
@@ -131,7 +131,7 @@ def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
     Also install mandatory drivers (system, dummy, plotter) from official repo."""
     if experimental_feature:
         _install_drivers_custom()
-        return
+        return None
 
     # Download mandatory drivers
     official_folder = paths.DRIVER_SOURCES['official']
@@ -149,15 +149,15 @@ def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
 
     # create list of tuple with tuple being ('path to install', 'url to download')
     if len(repo_url) == 0:
-        list_repo_tuple = [(key, paths.DRIVER_REPOSITORY[key]) for key in paths.DRIVER_REPOSITORY.keys()]  # This variable can be modified in autolab_config.ini
+        list_repo_tuple = list(paths.DRIVER_REPOSITORY.items())  # This variable can be modified in autolab_config.ini
     else:
         list_repo_tuple = list(repo_url)
         for i, repo_url_tmp in enumerate(list_repo_tuple):
-            if type(repo_url_tmp) is str:
+            if isinstance(repo_url_tmp, str):
                 list_repo_tuple[i] = (official_folder, repo_url_tmp)
-            elif type(repo_url_tmp) is dict:
+            elif isinstance(repo_url_tmp, dict):
                 raise TypeError("Error: This option has been removed, use tuple instead with (folder, url)")
-            elif type(repo_url_tmp) is not tuple:
+            elif not isinstance(repo_url_tmp, tuple):
                 raise TypeError(f'repo_url must be str or tuple. Given {type(repo_url_tmp)}')
             assert len(list_repo_tuple[i]) == 2, "Expect (folder, url), got wrong length: {len(list_repo_tuple[i])} for {list_repo_tuple[i]}"
 
@@ -178,10 +178,10 @@ def install_drivers(*repo_url: Union[str, Tuple[str, str]], skip_input=False,
             ans = input_wrap(f'Install drivers from {drivers_url} to {drivers_folder}? [default:yes] > ')
 
         if ans.strip().lower() == 'no': continue
-        else:
-            _download_repo(repo_zip_url, temp_repo_zip)
-            _unzip_repo(temp_repo_zip, drivers_folder)
-            os.remove(temp_repo_zip)
+
+        _download_repo(repo_zip_url, temp_repo_zip)
+        _unzip_repo(temp_repo_zip, drivers_folder)
+        os.remove(temp_repo_zip)
     os.rmdir(temp_repo_folder)
 
     # Update available drivers
@@ -229,10 +229,14 @@ def _download_driver(url, driver_name, output_dir, _print=True):
         # 'HTTP Error 403: rate limit exceeded' due to too much download if don't have github account
         download(driver_url, output_dir=output_dir, _print=_print)
     except:  # if use Exception, crash python when having error
-        print(f"Error when downloading driver '{driver_name}'", file=sys.stderr)
+        e = f"Error when downloading driver '{driver_name}'"
+        if _print:
+            print(e, file=sys.stderr)
+        else:
+            return e
 
 
-def _install_drivers_custom(_print=True):
+def _install_drivers_custom(_print=True, parent=None):
     """ Ask the user which driver to install from the official autolab driver github repo.
     If qtpy is install, open a GUI to select the driver.
     Else, prompt the user to install individual drivers. """
@@ -243,7 +247,7 @@ def _install_drivers_custom(_print=True):
         list_driver = _get_drivers_list_from_github(official_url)
     except:
         print(f'Cannot access {official_url}, skip installation')
-        return
+        return None
 
     try:
         from qtpy import QtWidgets, QtGui
@@ -252,7 +256,7 @@ def _install_drivers_custom(_print=True):
 
         if _print:
             print(f"Drivers will be downloaded to {official_folder}")
-        for i, driver_name in enumerate(list_driver):
+        for driver_name in list_driver:
             ans = input(f'Download {driver_name}? [default:yes] > ')  # didn't use input_wrap because don't want to say yes to download all drivers
             if ans.strip().lower() == 'stop':
                 break
@@ -262,18 +266,21 @@ def _install_drivers_custom(_print=True):
 
         class DriverInstaller(QtWidgets.QMainWindow):
 
-            def __init__(self, url, list_driver, OUTPUT_DIR):
+            def __init__(self, url, list_driver, OUTPUT_DIR, parent=None):
                 """ GUI to select which driver to install from the official github repo """
 
+                self.gui = parent
                 self.url = url
                 self.list_driver = list_driver
                 self.OUTPUT_DIR = OUTPUT_DIR
 
-                QtWidgets.QMainWindow.__init__(self)
+                super().__init__(parent)
 
-                self.setWindowTitle("Autolab Driver Installer")
+                self.setWindowTitle("Autolab - Driver Installer")
                 self.setFocus()
                 self.activateWindow()
+
+                self.statusBar = self.statusBar()
 
                 centralWidget = QtWidgets.QWidget()
                 self.setCentralWidget(centralWidget)
@@ -299,8 +306,10 @@ def _install_drivers_custom(_print=True):
                 tab.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
                 tab.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
                 tab.setAlternatingRowColors(True)
-                tab.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-                tab.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+                tab.horizontalHeader().setSectionResizeMode(
+                    0, QtWidgets.QHeaderView.ResizeToContents)
+                tab.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                  QtWidgets.QSizePolicy.Expanding)
                 tab.setSizeAdjustPolicy(tab.AdjustToContents)
 
                 # Init checkBox
@@ -326,27 +335,50 @@ def _install_drivers_custom(_print=True):
                 for checkBox in self.list_checkBox:
                     checkBox.setChecked(state)
 
-            def closeEvent(self,event):
-                """ This function does some steps before the window is really killed """
-                QtWidgets.QApplication.quit()  # close the interface
-
             def installListDriver(self):
                 """ Install all the drivers for which the corresponding checkBox has been checked """
+                list_bool = [
+                    checkBox.isChecked() for checkBox in self.list_checkBox]
+                list_driver_to_download = [
+                    driver_name for (driver_name, driver_bool) in zip(
+                        self.list_driver, list_bool) if driver_bool]
 
-                list_bool = [checkBox.isChecked() for checkBox in self.list_checkBox]
-                list_driver_to_download = [driver_name for (driver_name, driver_bool) in zip(self.list_driver, list_bool) if driver_bool]
+                if all(list_bool):  # Better for all drivers
+                    install_drivers(skip_input=True, experimental_feature=False)
+                    self.close()
+                elif any(list_bool):  # Better for couple drivers
+                    for driver_name in list_driver_to_download:
+                        if _print:
+                            print(f"Downloading {driver_name}")
+                            # self.setStatus(f"Downloading {driver_name}", 5000)  # OPTIMIZE: currently thread blocked by installer so don't show anything until the end
+                        e = _download_driver(self.url, driver_name,
+                                             self.OUTPUT_DIR, _print=False)
+                        if e is not None:
+                            print(e, file=sys.stderr)
+                            # self.setStatus(e, 10000, False)
+                    self.setStatus('Finished!', 5000)
 
-                for driver in list_driver_to_download:
-                    _download_driver(self.url, driver, self.OUTPUT_DIR, _print=_print)
-                print('Done!')
+            def closeEvent(self, event):
+                """ This function does some steps before the window is really killed """
+                super().closeEvent(event)
 
-        if _print: print("Open driver installer")
-        app = QtWidgets.QApplication.instance()
-        if app is None: app = QtWidgets.QApplication([])
+                if self.gui is None:
+                    QtWidgets.QApplication.quit()  # close the app
 
-        driverInstaller = DriverInstaller(official_url, list_driver, official_folder)
+            def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
+                """ Modify the message displayed in the status bar and add error message to logger """
+                self.statusBar.showMessage(message, timeout)
+                if not stdout: print(message, file=sys.stderr)
+
+        if parent is None:
+            if  _print: print("Open driver installer")
+            app = QtWidgets.QApplication.instance()
+            if app is None: app = QtWidgets.QApplication([])
+
+        driverInstaller = DriverInstaller(
+            official_url, list_driver, official_folder, parent=parent)
         driverInstaller.show()
-        app.exec_()
+        if parent is None: app.exec()
 
     # Update available drivers
     drivers.update_drivers_paths()

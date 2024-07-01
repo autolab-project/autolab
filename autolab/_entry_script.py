@@ -21,6 +21,8 @@ def print_help():
     print()
     print('Commands:')
     print('  gui                   Start the Graphical User Interface')
+    print('  plotter               Start the Plotter')
+    print('  add_device            Start add device menu')
     print('  install_drivers       Install drivers from GitHub')
     print('  driver                Driver interface')
     print('  device                Device interface')
@@ -48,20 +50,19 @@ def main():
         args = [f'autolab {command}'] + args[2: ]  # first is 'autolab' and second is command
         sys.argv = args
 
-        if command == 'doc':   # Open help on read the docs
-            autolab.doc()
-        elif command == 'report':        # Open github report issue webpage
-            autolab.report()
-        elif command == 'gui':           # GUI
-            autolab.gui()
-        elif command == 'infos':
-            autolab.infos()
-        elif command == 'install_drivers':
-            autolab.install_drivers()
-        elif command == 'driver':
+        # Removed bellow and similar because getattr will get every standard command (only difference is now it raises error if gives too much arguments)
+        # if command == 'gui':
+        #     autolab.gui()
+        if command == 'driver':
             driver_parser(args)
         elif command == 'device':
             device_parser(args)
+        elif command in dir(autolab):  # Execute autolab.command if exists
+            attr = getattr(autolab, command)
+            if hasattr(attr, '__call__'):
+                attr(*args[1: ])
+            else:
+                print(attr)
         else:
             print(f"Command {command} not known. Autolab doesn't have Super Cow Power... yet ^^")
 
@@ -163,14 +164,14 @@ def driver_parser(args_list: List[str]):
 
     # Instantiation of driver.py and driver_utilities.py
     global driver_instance
-    assert 'connection' in config.keys(), f"Must provide a connection for the driver using -C connection with connection being for this driver among {autolab._drivers.get_connection_names(autolab._drivers.load_driver_lib(driver_name))}"
+    assert 'connection' in config, f"Must provide a connection for the driver using -C connection with connection being for this driver among {autolab._drivers.get_connection_names(autolab._drivers.load_driver_lib(driver_name))}"
     driver_instance = autolab.get_driver(driver_name, **config)
 
     if driver_name in autolab._config.list_all_devices_configs():
         # Load config object
         config = dict(autolab._config.get_device_config(driver_name))
         # Check if driver provided
-        assert 'driver' in config.keys(), f"Driver name not found in driver config '{driver_name}'"
+        assert 'driver' in config, f"Driver name not found in driver config '{driver_name}'"
         driver_name = config['driver']
 
     driver_utilities = autolab._drivers.load_driver_utilities_lib(driver_name + '_utilities')

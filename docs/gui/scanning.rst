@@ -25,21 +25,23 @@ It it possible to add extra parameters to a recipe by right cliking on the top o
 This feature allows to realize 2D scan or ND-scan.
 A parameter can be removed by right cliking on its frame and selecting **Remove <parameter>**.
 A parameter is optional, a recipe is executed once if no parameter is given.
-It is possible to set a custom array by right cliking on the parameter frame and selecting **Custom values**.
 
 Parameter range
 ---------------
 
-The second step is to configure the range of the values that will be applied to the parameter during the scan. The user can set the start value, the end value, the mean value, the range width, the number of points of the scan or the step between two values. The user can also space the points following a log scale by checking the **Log** check box.
+The second step is to configure the range of the values that will be applied to the parameter during the scan.
+The user can set the start value, the end value, the mean value, the range width, the number of points of the scan or the step between two values.
+The user can also space the points following a log scale by selecting the **Log** option.
+It is also possible to use a custom array for the parameter using the **Custom** option.
 
 Steps
 -----
 
 The third step is to configure recipe steps, that will be executed for each value of parameters. There are four kinds of recipe steps:
 
-	* **Measure the value of a Variable**. Right click on the desired *Variable* in the control panel and select **Measure in scan recipe** to append this step to the recipe.
-	* **Set the value of a Variable**. Right click on the desired *Variable* in the control panel and select **Set value in scan recipe** to append this step to the recipe. The variable must be numerical (integer, float or boolean value). To set the value, right click on the recipe step and click **Set value**. The user can also directly double click on the value to change it.
-	* **Execute an Action**. Right click on the desired *Action* in the control panel and select **Do in scan recipe** to append this step to the recipe.
+	* **Measure** the value of a Variable. Right click on the desired *Variable* in the control panel and select **Measure in scan recipe** to append this step to the recipe.
+	* **Set** the value of a Variable. Right click on the desired *Variable* in the control panel and select **Set value in scan recipe** to append this step to the recipe. The variable must be numerical (integer, float or boolean value). To set the value, right click on the recipe step and click **Set value**. The user can also directly double click on the value to change it.
+	* **Execute** an Action. Right click on the desired *Action* in the control panel and select **Do in scan recipe** to append this step to the recipe.
 
 Each recipe step must have a unique name. To change the name of a recipe step, right click on it and select **Rename**, or directly double click on the name to change it. This name will be used in the data files.
 
@@ -56,6 +58,7 @@ Once the configuration of a scan is finished, the user can save it locally in a 
 
 To load a previously exported scan configuration, open the menu **Configuration** and select **Import configuration**. The user will be prompted for the path of the configuration file.
 Use the **Append** option to append the selected configuration as an extra recipe to the existing scan.
+Alternatively, recently opened configuration files can be accessed via the **Import recent configuration** menu.
 
 Scan execution
 ##############
@@ -87,5 +90,7 @@ The user can display the previous scan results using the combobox above the scan
 If the user has created several recipes in a scan, it is possible to display its results using the combobox above the scanner figure contaning the recipe name.
 
 It is possible to display arrays and images using the combobox above the scanner figure containing the dataframe name or 'Scan' for the main scan result.
+
+A data filtering option is available below the figure to select the desired data, allowing for example to plot a slice of a 2D scan.
 
 .. image:: multiple_recipes.png

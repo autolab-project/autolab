@@ -10,6 +10,9 @@ import sys
 import inspect
 from typing import Type, Tuple, List, Any
 
+import numpy as np
+import pandas as pd
+
 from . import paths
 from .utilities import emphasize, clean_string, SUPPORTED_EXTENSION
 
@@ -28,50 +31,48 @@ class Element():
         <module.submodule.variable> """
         if self._parent is not None:
             return self._parent.address() + '.' + self.name
-        else: return self.name
+        return self.name
 
 
 class Variable(Element):
 
     def __init__(self, parent: Type, config: dict):
 
-        Element.__init__(self, parent, 'variable', config['name'])
-
-        import numpy as np
-        import pandas as pd
+        super().__init__(parent, 'variable', config['name'])
 
         # Type
-        assert 'type' in config.keys(), f"Variable {self.address()}: Missing variable type"
+        assert 'type' in config, f"Variable {self.address()}: Missing variable type"
         assert config['type'] in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame], f"Variable {self.address()} configuration: Variable type not supported in autolab"
         self.type = config['type']
 
         # Read and write function
-        assert 'read' in config.keys() or 'write' in config.keys(), f"Variable {self.address()} configuration: no 'read' nor 'write' functions provided"
+        assert 'read' in config or 'write' in config, f"Variable {self.address()} configuration: no 'read' nor 'write' functions provided"
 
         # Read function
         self.read_function = None
         self.read_init = False
-        if config['type'] in [tuple]: assert 'read' in config.keys(), f"Variable {self.address()} configuration: Must provide a read function"
-        if 'read' in config.keys():
+        if config['type'] in [tuple]: assert 'read' in config, f"Variable {self.address()} configuration: Must provide a read function"
+        if 'read' in config:
             assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
-            if 'read_init' in config.keys():
-                assert type(config['read_init']) is bool, f"Variable {self.address()} configuration: read_init parameter must be a boolean"
+            if 'read_init' in config:
+                assert isinstance(config['read_init'], bool), f"Variable {self.address()} configuration: read_init parameter must be a boolean"
                 self.read_init = bool(config['read_init'])
+
         # Write function
         self.write_function = None
-        if 'write' in config.keys():
+        if 'write' in config:
             assert inspect.ismethod(config['write']), f"Variable {self.address()} configuration: Write parameter must be a function"
             self.write_function = config['write']
 
         # Unit
         self.unit = None
-        if 'unit' in config.keys():
+        if 'unit' in config:
             assert isinstance(config['unit'], str), f"Variable {self.address()} configuration: Unit parameter must be a string"
             self.unit = config['unit']
 
         # Help
-        if 'help' in config.keys():
+        if 'help' in config:
             assert isinstance(config['help'], str), f"Variable {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
 
@@ -88,9 +89,6 @@ class Variable(Element):
     def save(self, path: str, value: Any = None):
         """ This function measure the variable and saves its value in the provided path """
 
-        import pandas as pd
-        import numpy as np
-
         assert self.readable, f"The variable {self.name} is not configured to be measurable"
 
         if os.path.isdir(path):
@@ -103,8 +101,12 @@ class Variable(Element):
         elif self.type == bytes:
             with open(path, 'wb') as f: f.write(value)
         elif self.type == np.ndarray:
-            value = pd.DataFrame(value)  # faster and handle better different dtype than np.savetxt
-            value.to_csv(path, index=False, header=None)
+            try:
+                value = pd.DataFrame(value)  # faster and handle better different dtype than np.savetxt
+                value.to_csv(path, index=False, header=None)
+            except:
+                # Avoid error if strange ndim, 0 or (1,2,3) ... was occuring in GUI scan when doing $eval:[1] instead of $eval:np.array([1]). Now GUI forces array to ndim=1
+                print(f"Warning, can't save {value}")
         elif self.type == pd.DataFrame:
             value.to_csv(path, index=False)
         else:
@@ -114,7 +116,7 @@ class Variable(Element):
         """ This function prints informations for the user about the current variable """
         print(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ This function returns informations for the user about the current variable """
         display = '\n' + emphasize(f'Variable {self.name}') + '\n'
         if self._help is not None: display += f'Help: {self._help}\n'
@@ -136,7 +138,7 @@ class Variable(Element):
 
         return display
 
-    def __call__(self, value: Any = None):
+    def __call__(self, value: Any = None) -> Any:
         """ Measure or set the value of the variable """
         # GET FUNCTION
         if value is None:
@@ -146,43 +148,40 @@ class Variable(Element):
             return answer
 
         # SET FUNCTION
+        assert self.writable, f"The variable {self.name} is not writable"
+
+        if isinstance(value, np.ndarray):
+            value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
         else:
-            assert self.writable, f"The variable {self.name} is not writable"
-            import numpy as np
-            if isinstance(value, np.ndarray):
-                value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
-            else:
-                value = self.type(value)
-            self.write_function(value)
-            if self._write_signal is not None: self._write_signal.emit_write()
+            value = self.type(value)
+        self.write_function(value)
+        if self._write_signal is not None: self._write_signal.emit_write()
+        return None
 
 
 class Action(Element):
 
     def __init__(self, parent: Type, config: dict):
 
-        Element.__init__(self, parent, 'action', config['name'])
-
-        import pandas as pd
-        import numpy as np
+        super().__init__(parent, 'action', config['name'])
 
         # Do function
-        assert 'do' in config.keys(), f"Action {self.address()}: Missing 'do' function"
+        assert 'do' in config, f"Action {self.address()}: Missing 'do' function"
         assert inspect.ismethod(config['do']), f"Action {self.address()} configuration: Do parameter must be a function"
         self.function = config['do']
 
         # Argument
         self.type = None
         self.unit = None
-        if 'param_type' in config.keys():
+        if 'param_type' in config:
             assert config['param_type'] in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame], f"Action {self.address()} configuration: Argument type not supported in autolab"
             self.type = config['param_type']
-            if 'param_unit' in config.keys():
+            if 'param_unit' in config:
                 assert isinstance(config['param_unit'], str), f"Action {self.address()} configuration: Argument unit parameter must be a string"
                 self.unit = config['param_unit']
 
         # Help
-        if 'help' in config.keys():
+        if 'help' in config:
             assert isinstance(config['help'], str), f"Action {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
 
@@ -192,7 +191,7 @@ class Action(Element):
         """ This function prints informations for the user about the current variable """
         print(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ This function returns informations for the user about the current variable """
         display = '\n' + emphasize(f'Action {self.name}') + '\n'
         if self._help is not None: display+=f'Help: {self._help}\n'
@@ -204,12 +203,12 @@ class Action(Element):
             display += f'Parameter: YES (type: {self.type.__name__})'
             if self.unit is not None: display += f'(unit: {self.unit})'
             display += '\n'
-        else :
+        else:
             display += 'Parameter: NO\n'
 
         return display
 
-    def __call__(self, value: Any = None):
+    def __call__(self, value: Any = None) -> Any:
         """ Executes the action """
         # DO FUNCTION
         assert self.function is not None, f"The action {self.name} is not configured to be actionable"
@@ -225,16 +224,16 @@ class Action(Element):
                     self.unit = 'open-file'
 
                 from qtpy import QtWidgets
-                app = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
+                _ = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
 
                 if self.unit == 'open-file':
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                        caption="Open file",
+                        caption=f"Open file - {self.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
                 elif self.unit == 'save-file':
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                        caption="Save file",
+                        caption=f"Save file - {self.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
 
@@ -243,7 +242,19 @@ class Action(Element):
                     paths.USER_LAST_CUSTOM_FOLDER = path
                     self.function(filename)
                 else:
-                    print("Filename prompt cancelled")
+                    print(f"Action '{self.name}' cancel filename selection")
+
+            elif self.unit == "user-input":
+
+                from qtpy import QtWidgets
+                _ = QtWidgets.QApplication(sys.argv)  # Needed if started outside of GUI
+                # OPTIMIZE: dialog closes on instantiation inside Spyder
+                response, _ = QtWidgets.QInputDialog.getText(
+                    None, self.name, f"Set {self.name} value",
+                    QtWidgets.QLineEdit.Normal)
+
+                if response != '':
+                    self.function(response)
             else:
                 assert value is not None, f"The action {self.name} requires an argument"
         else:
@@ -255,7 +266,7 @@ class Module(Element):
 
     def __init__(self, parent: Type, config: dict):
 
-        Element.__init__(self, parent, 'module', config['name'])
+        super().__init__(parent, 'module', config['name'])
 
         self._mod = {}
         self._var = {}
@@ -263,11 +274,11 @@ class Module(Element):
         self._read_init_list = []
 
         # Object - instance
-        assert 'object' in config.keys(), f"Module {self.name}: missing module object"
+        assert 'object' in config, f"Module {self.name}: missing module object"
         self.instance = config['object']
 
         # Help
-        if 'help' in config.keys():
+        if 'help' in config:
             assert isinstance(config['help'], str), f"Module {self.address()} configuration: Help parameter must be a string"
             self._help = config['help']
 
@@ -281,13 +292,13 @@ class Module(Element):
             assert isinstance(config_line, dict), f"Module {self.name} configuration: 'get_driver_model' output must be a list of dictionnaries"
 
             # Name check
-            assert 'name' in config_line.keys(), f"Module {self.name} configuration: missing 'name' key in one dictionnary"
+            assert 'name' in config_line, f"Module {self.name} configuration: missing 'name' key in one dictionnary"
             assert isinstance(config_line['name'], str), f"Module {self.name} configuration: elements names must be a string"
             name = clean_string(config_line['name'])
             assert name != '', f"Module {self.name}: elements names cannot be empty"
 
             # Element type check
-            assert 'element' in config_line.keys(), f"Module {self.name}, Element {name} configuration: missing 'element' key in the dictionnary"
+            assert 'element' in config_line, f"Module {self.name}, Element {name} configuration: missing 'element' key in the dictionnary"
             assert isinstance(config_line['element'], str), f"Module {self.name}, Element {name} configuration: element type must be a string"
             element_type = config_line['element']
             assert element_type in ['module', 'variable', 'action'], f"Module {self.name}, Element {name} configuration: Element type has to be either 'module','variable' or 'action'"
@@ -316,7 +327,7 @@ class Module(Element):
 
     def list_modules(self) -> List[str]:
         """ Returns a list with the names of all existing submodules """
-        return list(self._mod.keys())
+        return list(self._mod)
 
     def get_variable(self, name: str) -> Variable:
         """ Returns the variable with the given name """
@@ -325,7 +336,7 @@ class Module(Element):
 
     def list_variables(self) -> List[str]:
         """ Returns a list with the names of all existing variables attached to this module """
-        return list(self._var.keys())
+        return list(self._var)
 
     def get_action(self, name) -> Action:
         """ Returns the action with the given name """
@@ -334,19 +345,19 @@ class Module(Element):
 
     def list_actions(self) -> List[str]:
         """ Returns a list with the names of all existing actions attached to this module """
-        return list(self._act.keys())
+        return list(self._act)
 
     def get_names(self) -> List[str]:
         """ Returns the list of the names of all the elements of this module """
         return self.list_modules() + self.list_variables() + self.list_actions()
 
-    def __getattr__(self, attr) -> Element:
+    def __getattr__(self, attr: str) -> Element:
         if attr in self.list_variables(): return self.get_variable(attr)
-        elif attr in self.list_actions(): return self.get_action(attr)
-        elif attr in self.list_modules(): return self.get_module(attr)
-        else: raise AttributeError(f"'{attr}' not found in module '{self.name}'")
+        if attr in self.list_actions(): return self.get_action(attr)
+        if attr in self.list_modules(): return self.get_module(attr)
+        raise AttributeError(f"'{attr}' not found in module '{self.name}'")
 
-    def get_structure(self):
+    def get_structure(self) -> List[Tuple[str, str]]:
         """ Returns the structure of the module as a list containing each element address associated with its type as
         [['address1', 'variable'], ['address2', 'action'],...] """
         structure = []
@@ -354,9 +365,9 @@ class Module(Element):
         for mod in self.list_modules():
             structure += self.get_module(mod).get_structure()
         for var in self.list_variables():
-            structure.append([self.get_variable(var).address(), 'variable'])
+            structure.append((self.get_variable(var).address(), 'variable'))
         for act in self.list_actions():
-            structure.append([self.get_action(act).address(), 'action'])
+            structure.append((self.get_action(act).address(), 'action'))
 
         return structure
 
@@ -366,16 +377,16 @@ class Module(Element):
         '''
         h = []
 
-        from .devices import Device
-        if isinstance(self, Device): h.append([self.name, 'Device/Module', level])
-        else: h.append([self.name, 'Module', level])
+        from .devices import Device  # import here to avoid ImportError circular import
+        if isinstance(self, Device): h.append((self.name, 'Device/Module', level))
+        else: h.append((self.name, 'Module', level))
 
         for mod in self.list_modules():
             h += self.get_module(mod).sub_hierarchy(level+1)
         for var in self.list_variables():
-            h.append([var, 'Variable', level+1])
+            h.append((var, 'Variable', level+1))
         for act in self.list_actions():
-            h.append([act, 'Action', level+1])
+            h.append((act, 'Action', level+1))
 
         return h
 

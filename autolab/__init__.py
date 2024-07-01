@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 17 15:04:04 2019
-
 Python package for scientific experiments automation
 
 The purpose of this package it to provide easy and efficient tools to deal with your scientific instruments, and to run automated experiments with them, by command line instructions or through a graphical user interface (GUI).
 
 Created by Quentin Chateiller, Python drivers originally from Quentin Chateiller and Bruno Garbin, for the C2N-CNRS (Center for Nanosciences and Nanotechnologies, Palaiseau, France) ToniQ team.
-Project continued by Jonathan Peltier, for the C2N-CNRS, Minaphot team.
+Project continued by Jonathan Peltier, for the C2N-CNRS Minaphot team and Mathieu Jeannin, for the C2N-CNRS Odin team.
 
 Project hosted at https://github.com/autolab-project/autolab
 
@@ -31,7 +29,7 @@ del version_adapter
 
 # Load user config
 from .core import config as _config
-first = _config.initialize_local_directory()
+FIRST = _config.initialize_local_directory()
 _config.check_autolab_config()
 _config.check_plotter_config()
 _config.set_temp_folder()
@@ -56,7 +54,7 @@ from .core.web import report, doc
 from .core.server import Server as server
 
 # GUI
-from .core.gui import start as gui
+from .core.gui import gui, plotter, monitor, slider, add_device, about, variables_menu
 
 # Repository
 from .core.repository import install_drivers
@@ -68,10 +66,10 @@ del socket
 
 from .core._create_shortcut import create_shortcut
 
-if first:
+if FIRST:
     # Ask if create shortcut
     create_shortcut(ask=True)
-del first
+del FIRST
 
 # Loading the drivers informations on startup
 _drivers.update_drivers_paths()

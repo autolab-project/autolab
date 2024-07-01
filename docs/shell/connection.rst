@@ -7,7 +7,7 @@ The two sections that follow are equivalent for the commands ``autolab driver`` 
 Getting help
 ============
 
-Three helps are configured (device or driver may be used equally in the lines bellow):
+Three helps are configured (device or driver may be used equally in the lines below):
 
     1) Basic help of the commands autolab driver/device:
 

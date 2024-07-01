@@ -9,9 +9,10 @@ More precisely, this configuration is stored in a local configuration file named
 
 .. code-block:: python
 
-	INFORMATION: The local directory of AUTOLAB has been created: C:\Users\<USER>\autolab
-	INFORMATION: The devices configuration file devices_config.ini has been created: C:\Users\<USER>\autolab\devices_config.ini
-
+	The local directory of AUTOLAB has been created: C:\Users\<USER>\autolab.
+	It contains the configuration files devices_config.ini, autolab_config.ini and plotter.ini.
+	It also contains the 'driver' directory with 'official' and 'local' sub-directories.
+	
 .. warning ::
 
 	Do not move or rename the local directory nor the configuration file.
@@ -65,3 +66,9 @@ Save the configuration file, and go back to Autolab. You don't need to restart A
 .. code-block:: python
 
 	>>> laserSource = autolab.get_device('my_tunics')
+
+You can also use Autolab's ``add_device`` function to open up a minimalist graphical interface, allowing you to configure an instrument in a more user-friendly way.
+
+.. code-block:: python
+
+	>>> autolab.add_device()

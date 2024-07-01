@@ -5,13 +5,14 @@ Created on Sun Sep 29 18:26:32 2019
 @author: qchat
 """
 
+import sys
 import inspect
 from typing import Any
 
 from qtpy import QtCore, QtWidgets
+from ..GUI_utilities import qt_object_exists
 from ... import devices
 from ... import drivers
-from ...utilities import qt_object_exists
 
 
 class ThreadManager:
@@ -20,6 +21,7 @@ class ThreadManager:
     def __init__(self, gui: QtWidgets.QMainWindow):
         self.gui = gui
         self.threads = {}
+        self.threads_conn = {}
 
     def start(self, item: QtWidgets.QTreeWidgetItem, intType: str, value = None):
         """ This function is called when a new thread is requested,
@@ -53,24 +55,41 @@ class ThreadManager:
         self.gui.setStatus(status)
 
         # Thread configuration
+        if intType == 'load':
+            assert id(item) not in self.threads_conn
         thread = InteractionThread(item, intType, value)
         tid = id(thread)
         self.threads[tid] = thread
+        if intType == 'load':
+            self.threads_conn[id(item)] = tid
+
         thread.endSignal.connect(
-            lambda error, x=tid : self.threadFinished(x, error))
-        thread.finished.connect(lambda x=tid : self.delete(x))
+            lambda error, x=tid: self.threadFinished(x, error))
+        thread.finished.connect(lambda x=tid: self.delete(x))
 
         # Starting thread
         thread.start()
 
     def threadFinished(self, tid: int, error: Exception):
         """ This function is called when a thread has finished its job, with an error or not
-        It updates the status bar of the GUI in consequence and enabled back the correspondig item """
-        if error is None: self.gui.clearStatus()
-        else: self.gui.setStatus(str(error), 10000, False)
+        It updates the status bar of the GUI in consequence and enabled back the corresponding item """
+        if error:
+            if qt_object_exists(self.gui.statusBar):
+                self.gui.setStatus(str(error), 10000, False)
+            else:
+                print(str(error), file=sys.stderr)
+
+            if tid in self.threads_conn.values():
+                item_id = list(self.threads_conn)[list(self.threads_conn.values()).index(tid)]
+                if item_id in self.gui.threadItemDict:
+                    self.gui.threadItemDict.pop(item_id)
+        else:
+            if qt_object_exists(self.gui.statusBar):
+                self.gui.clearStatus()
 
         item = self.threads[tid].item
-        item.setDisabled(False)
+        if qt_object_exists(item):
+            item.setDisabled(False)
 
         if hasattr(item, "execButton"):
             if qt_object_exists(item.execButton):
@@ -85,6 +104,9 @@ class ThreadManager:
     def delete(self, tid: int):
         """ This function is called when a thread is about to be deleted.
         This removes it from the dictionnary self.threads, for a complete deletion """
+        if self.threads[tid].intType == 'load':
+            item_id = list(self.threads_conn)[list(self.threads_conn.values()).index(tid)]
+            self.threads_conn.pop(item_id)
         self.threads.pop(tid)
 
 
@@ -93,7 +115,7 @@ class InteractionThread(QtCore.QThread):
     endSignal = QtCore.Signal(object)
 
     def __init__(self, item: QtWidgets.QTreeWidgetItem, intType: str, value: Any):
-        QtCore.QThread.__init__(self)
+        super().__init__()
         self.item = item
         self.intType = intType
         self.value = value
@@ -142,8 +164,6 @@ class InteractionThread(QtCore.QThread):
         except Exception as e:
             error = e
             if self.intType == 'load':
-                error = f'An error occured when loading device {self.item.name} : {str(e)}'
-                if id(self.item) in self.item.gui.threadItemDict.keys():
-                    self.item.gui.threadItemDict.pop(id(self.item))
+                error = f'An error occured when loading device {self.item.name}: {str(e)}'
 
         self.endSignal.emit(error)

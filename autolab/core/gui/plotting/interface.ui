@@ -154,7 +154,7 @@
             </item>
            </layout>
           </widget>
-          <widget class="QFrame" name="frame5">
+          <widget class="QFrame" name="frame_device">
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>

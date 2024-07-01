@@ -12,8 +12,9 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 from qtpy import QtWidgets
 
+from ..GUI_utilities import pyqtgraph_fig_ax, pyqtgraph_image
 from ... import config
-from ... import utilities
+from ...utilities import boolean
 
 
 class FigureManager:
@@ -25,12 +26,12 @@ class FigureManager:
         # Import Autolab config
         monitor_config = config.get_monitor_config()
         self.precision = int(monitor_config['precision'])
-        self.do_save_figure = utilities.boolean(monitor_config['save_figure'])
+        self.do_save_figure = boolean(monitor_config['save_figure'])
 
         # Configure and initialize the figure in the GUI
-        self.fig, self.ax = utilities.pyqtgraph_fig_ax()
+        self.fig, self.ax = pyqtgraph_fig_ax()
         self.gui.graph.addWidget(self.fig)
-        self.figMap, widget = utilities.pyqtgraph_image()
+        self.figMap, widget = pyqtgraph_image()
         self.gui.graph.addWidget(widget)
         self.figMap.hide()
 
@@ -49,17 +50,19 @@ class FigureManager:
     # PLOT DATA
     ###########################################################################
 
-    def update(self, xlist: list, ylist: list):
+    def update(self, xlist: list, ylist: list) -> None:
         """ This function update the figure in the GUI """
         if xlist is None: # image
-            self.fig.hide()
-            self.gui.min_checkBox.hide()
-            self.gui.mean_checkBox.hide()
-            self.gui.max_checkBox.hide()
-            self.figMap.show()
+            if self.fig.isVisible():
+                self.fig.hide()
+                self.gui.min_checkBox.hide()
+                self.gui.mean_checkBox.hide()
+                self.gui.max_checkBox.hide()
+                self.figMap.show()
             self.figMap.setImage(ylist)
             return None
-        else:
+
+        if not self.fig.isVisible():
             self.fig.show()
             self.gui.min_checkBox.show()
             self.gui.mean_checkBox.show()
@@ -67,7 +70,13 @@ class FigureManager:
             self.figMap.hide()
 
         # Data retrieval
-        self.plot.setData(xlist, ylist)
+        try:
+            self.plot.setData(xlist, ylist)
+        except Exception as e:
+            self.gui.setStatus(f'Error: {e}', 10000, False)
+            if not self.gui.monitorManager.isPaused():
+                self.gui.pauseButtonClicked()
+            return None
 
         xlist, ylist = self.plot.getData()
 
@@ -131,7 +140,7 @@ class FigureManager:
             new_filename = raw_name+".png"
 
             if not self.fig.isHidden():
-                exporter = pg.exporters.ImageExporter(self.fig.plotItem)
+                exporter = pg.exporters.ImageExporter(self.ax)
                 exporter.export(new_filename)
             else:
                 self.figMap.export(new_filename)

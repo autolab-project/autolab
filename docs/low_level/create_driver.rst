@@ -53,7 +53,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     The class Driver_CONNECTION: **establish the connection with the instrument** and **define the communication functions**.
 
-    As a reminder, a communication with an instruments occurs in general with strings that are set by the manufacturer and instrument and model dependent. To receive and send strings from and to the instrument we first need to establish a connection. This will be done using dedicated python package such as `pyvisa`, `pyserial`, `socket` and physical connections such as Ethernet, GPIB, or USB. See bellow for an example help with using a VISA type of connection.
+    As a reminder, a communication with an instruments occurs in general with strings that are set by the manufacturer and instrument and model dependent. To receive and send strings from and to the instrument we first need to establish a connection. This will be done using dedicated python package such as `pyvisa`, `pyserial`, `socket` and physical connections such as Ethernet, GPIB, or USB. See below for an example help with using a VISA type of connection.
 
     .. caution::
         The connection types are refered to with capital characters in the classes names, e.g.:
@@ -64,9 +64,9 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
             class Driver_TELNET():
 
 
-    When using the driver module (.py) the Driver_CONNECTION class is imported as the top layer, it inherits all the attributes of the Driver class and run its ``__init__`` function. It is the class that is used. Note that the connection classes are located, within a driver module, bellow the Driver class, because they use it before reaching their own ``__init__`` function.
+    When using the driver module (.py) the Driver_CONNECTION class is imported as the top layer, it inherits all the attributes of the Driver class and run its ``__init__`` function. It is the class that is used. Note that the connection classes are located, within a driver module, below the Driver class, because they use it before reaching their own ``__init__`` function.
 
-    Here is a commented example of the Driver_CONNECTION class, further explained bellow:
+    Here is a commented example of the Driver_CONNECTION class, further explained below:
 
     .. code-block:: python
 
@@ -178,7 +178,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     The class Driver_CONNECTION inherits all the attributes of the class Driver. The function ``__init__`` of the class Driver is run by the class Driver_CONNECTION. The Driver class will act as your main instrument.
 
-    Here is a commented example of the class Driver, further explained bellow:
+    Here is a commented example of the class Driver, further explained below:
 
     .. code-block:: python
 
@@ -231,7 +231,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     **Further instrument complexity:**
 
-        Here is a way to modify the ``__init__`` function of the class Driver to deal with the case of a **multi-channel instrument**. (Note: some of the lines have been removed from the previous example for clarity.) It is further explained bellow:
+        Here is a way to modify the ``__init__`` function of the class Driver to deal with the case of a **multi-channel instrument**. (Note: some of the lines have been removed from the previous example for clarity.) It is further explained below:
 
         .. code-block:: python
 
@@ -450,7 +450,7 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
 *Action*:
     - 'do': class attribute (argument type: function)
     - 'param_type': python type, exclusively in: int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame, optional
-    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit "filename" to open a open file dialog)
+    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit 'open-file' to open a open file dialog, 'save-file' to open a save file dialog and 'user-input' to open an input dialog)
 
 
 
@@ -463,7 +463,7 @@ Example code:
         model.append({'name':'line1', 'element':'module', 'object':self.slot1, 'help':'Simple help for line1 module'})
         model.append({'name':'amplitude', 'element':'variable', 'type':float, 'read':self.get_amplitude, 'write':self.set_amplitude, 'unit':'V', 'help':'Simple help for amplitude variable'}
         model.append({'name':'go_home', 'element':'action', 'do':self.home, 'help':'Simple help for go_home action'})
-        model.append({'name':'open', 'element':'action', 'do':self.open, 'param_type':str, 'param_unit':'filename', 'help':'Open data with the provided filename'})
+        model.append({'name':'open', 'element':'action', 'do':self.open, 'param_type':str, 'param_unit':'open-file', 'help':'Open data with the provided filename'})
     return model
 
 .. _name_driver_utilities.py:
@@ -471,9 +471,9 @@ Example code:
 Driver utilities structure (*\<manufacturer\>_\<MODEL\>_utilities.py* file)
 ###########################################################################
 
-This file should be present in the driver directory (*\<manufacturer\>_\<MODEL\>.py*).
+This optional file can be added to the driver directory (*\<manufacturer\>_\<MODEL\>.py*).
 
-Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py*, further explained bellow:
+Here is a commented example of the file *\<manufacturer\>_\<MODEL\>_utilities.py*, further explained below:
 
 .. code-block:: python
 

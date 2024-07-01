@@ -69,7 +69,7 @@ class MonitorThread(QtCore.QThread):
 
     def __init__(self, variable: Device, queue: Queue):
 
-        QtCore.QThread.__init__(self)
+        super().__init__()
         self.variable = variable
         self.queue = queue
 
@@ -98,7 +98,7 @@ class MonitorThread(QtCore.QThread):
                 value = self.variable()
 
                 # Check type
-                if type(value) not in (np.ndarray, pd.DataFrame):  # should not float(array) because if 0D convert to float and loose information on type
+                if not isinstance(value, (np.ndarray, pd.DataFrame)):  # should not float(array) because if 0D convert to float and loose information on type
                     try:
                         value = float(value)
                     except TypeError:

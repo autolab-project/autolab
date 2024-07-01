@@ -62,7 +62,7 @@ To close properly the connection to the instrument, simply call its the function
 
 	>>> lightSource.close()
 
-To close all devices connection (not drivers) at once you can use the Autolab close function.
+To close the connection to all instruments (devices, not drivers) at once, you can use Autolab's ``close`` function.
 
 .. code-block:: python
 
@@ -134,7 +134,7 @@ You can execute an **Action** simply by calling its attribute:
 Script example
 --------------
 
-With all these commands, you can now create your own Python script. Here is an example of a script that sweep the wavelength of a light source, and measure a power of a power meter:
+With all these commands, you can now create your own Python script. Here is an example of a script that sweep the wavelength of a light source, and measure the power of a power meter:
 
 .. code-block:: python
 
