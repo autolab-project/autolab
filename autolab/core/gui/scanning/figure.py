@@ -632,7 +632,6 @@ class FigureManager:
                         alpha = (true_nbtraces - (len(data) - 1 - i)) / true_nbtraces
 
                     # Plot
-                    # OPTIMIZE: known issue but from pyqtgraph, error if use FFT on one point
                     # careful, now that can filter data, need .values to avoid pyqtgraph bug
                     curve = self.ax.plot(x.values, y.values, symbol='x',
                                          symbolPen=color, symbolSize=10,

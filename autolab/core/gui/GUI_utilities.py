@@ -15,7 +15,23 @@ import pyqtgraph as pg
 
 from ..config import get_GUI_config
 
+
+# Fixes pyqtgraph/issues/3018 for pg<=0.13.7 (before pyqtgraph/pull/3070)
+from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
+
+if hasattr(PlotDataItem, '_fourierTransform'):
+
+    _fourierTransform_bugged = PlotDataItem._fourierTransform
+
+    def _fourierTransform_fixed(self, x, y):
+        if len(x) == 1: return np.array([0]), abs(y)
+        return _fourierTransform_bugged(self, x, y)
+
+    PlotDataItem._fourierTransform = _fourierTransform_fixed
+
+
 ONCE = False
+
 
 def get_font_size() -> int:
     GUI_config = get_GUI_config()
@@ -188,6 +204,7 @@ class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         self.ax.removeItem(self.img)
         self.img = img
         self.ax.addItem(self.img)
+
 
 def pyqtgraph_fig_ax() -> Tuple[MyGraphicsLayoutWidget, pg.PlotItem]:
     """ Return a formated fig and ax pyqtgraph for a basic plot """
