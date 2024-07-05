@@ -41,12 +41,15 @@ class CustomMenu(QtWidgets.QMenu):
         self.param_cb = self.gui.scanner.selectParameter_comboBox if (
             self.gui.scanner) else None
 
-        self.CUSTOM_ACTION = len(self.recipe_names) > 1
+        self.HAS_RECIPE = len(self.recipe_names) > 1
+        self.HAS_PARAM = (self.param_cb.count() > 1 if self.param_cb is not None
+                          else False)
 
     def addAnyAction(self, action_text='', icon_name='',
                      param_menu_active=False) -> Union[QtWidgets.QWidgetAction,
                                                        QtWidgets.QAction]:
-        if self.CUSTOM_ACTION:
+
+        if self.HAS_RECIPE or (self.HAS_PARAM and param_menu_active):
             action = self.addCustomAction(action_text, icon_name,
                                           param_menu_active=param_menu_active)
         else:
