@@ -31,10 +31,10 @@ class Scanner(QtWidgets.QMainWindow):
         self.mainGui = mainGui
 
         # Configuration of the window
-        QtWidgets.QMainWindow.__init__(self)
+        super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
-        self.setWindowTitle("AUTOLAB Scanner")
+        self.setWindowTitle("AUTOLAB - Scanner")
         self.setWindowIcon(QtGui.QIcon(icons['scanner']))
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
         self.setAcceptDrops(True)
@@ -92,6 +92,9 @@ class Scanner(QtWidgets.QMainWindow):
         # Clear button configuration
         self.clear_pushButton.clicked.connect(self.clear)
 
+        self.variable_x2_comboBox.hide()
+        self.label_scan_2D.hide()
+
     def populateOpenRecent(self):
         """ https://realpython.com/python-menus-toolbars/#populating-python-menus-dynamically """
         self.openRecentMenu.clear()
@@ -119,7 +122,7 @@ class Scanner(QtWidgets.QMainWindow):
             with open(paths.HISTORY_CONFIG, 'r') as f: lines = f.readlines()
             lines.append(filename)
             lines = [line.rstrip('\n')+'\n' for line in lines]
-            lines = list(reversed(dict.fromkeys(reversed(lines))))  # unique names
+            lines = list(reversed(list(dict.fromkeys(reversed(lines)))))  # unique names
             lines = lines[-10:]
             with open(paths.HISTORY_CONFIG, 'w') as f: f.writelines(lines)
 
@@ -134,19 +137,17 @@ class Scanner(QtWidgets.QMainWindow):
 
     def clear(self):
         """ This reset any recorded data, and the GUI accordingly """
-        self.dataManager.datasets = list()
+        self.dataManager.datasets = []
         self.figureManager.clearData()
-        self.figureManager.clearMenuID()
         self.figureManager.figMap.hide()
         self.figureManager.fig.show()
         self.figureManager.setLabel("x", " ")
         self.figureManager.setLabel("y", " ")
-        self.nbTraces_lineEdit.show()
-        self.graph_nbTracesLabel.show()
-        self.frame_axis.show()
-        self.toolButton.hide()
+        self.frameAxis.show()
         self.variable_x_comboBox.clear()
+        self.variable_x2_comboBox.clear()
         self.variable_y_comboBox.clear()
+        self.variable_x2_checkBox.show()
         self.data_comboBox.clear()
         self.data_comboBox.hide()
         self.save_pushButton.setEnabled(False)
@@ -163,6 +164,7 @@ class Scanner(QtWidgets.QMainWindow):
     def openVariablesMenu(self):
         if self.variablesMenu is None:
             self.variablesMenu = variables.VariablesMenu(self)
+            self.variablesMenu.show()
         else:
             self.variablesMenu.refresh()
 
@@ -215,7 +217,7 @@ class Scanner(QtWidgets.QMainWindow):
 
     def _clearRecipe(self):
         """ Clears recipes from managers. Called by configManager """
-        for recipe_name in list(self.recipeDict.keys()):
+        for recipe_name in list(self.recipeDict):
             self._removeRecipe(recipe_name)
 
     def _addParameter(self, recipe_name: str, param_name: str):
@@ -224,7 +226,7 @@ class Scanner(QtWidgets.QMainWindow):
         self.recipeDict[recipe_name]['parameterManager'][param_name] = new_ParameterManager
 
         layoutAll = self.recipeDict[recipe_name]['recipeManager']._layoutAll
-        layoutAll.insertWidget(len(layoutAll)-1, new_ParameterManager.mainFrame)
+        layoutAll.insertWidget(layoutAll.count()-1, new_ParameterManager.mainFrame)
 
         self._updateSelectParameter()
         self.selectParameter_comboBox.setCurrentIndex(self.selectParameter_comboBox.count()-1)
@@ -260,6 +262,36 @@ class Scanner(QtWidgets.QMainWindow):
             if not self.selectRecipe_comboBox.isVisible():
                 self.label_selectRecipeParameter.hide()
 
+    def _refreshParameterRange(self, recipe_name: str, param_name: str,
+                               newName: str = None):
+        """ Updates parameterManager with new parameter name """
+        recipeDictParam = self.recipeDict[recipe_name]['parameterManager']
+
+        if newName is None:
+            recipeDictParam[param_name].refresh()
+        else:
+            if param_name in recipeDictParam:
+                recipeDictParam[newName] = recipeDictParam.pop(param_name)
+                recipeDictParam[newName].changeName(newName)
+                recipeDictParam[newName].refresh()
+            else:
+                print(f"Error: Can't refresh parameter '{param_name}', not found in recipeDictParam '{recipeDictParam}'")
+
+        self._updateSelectParameter()
+
+    def _refreshRecipe(self, recipe_name: str):
+        self.recipeDict[recipe_name]['recipeManager'].refresh()
+
+    def _resetRecipe(self):
+        """ Resets recipe """
+        self._clearRecipe()  # before everything to have access to recipe and del it
+
+        for recipe_name in self.configManager.recipeNameList():
+            self._addRecipe(recipe_name)
+            for parameterManager in self.recipeDict[recipe_name]['parameterManager'].values():
+                parameterManager.refresh()
+            self._refreshRecipe(recipe_name)
+
     def importActionClicked(self):
         """ Prompts the user for a configuration filename,
         and import the current scan configuration from it """
@@ -288,8 +320,6 @@ class Scanner(QtWidgets.QMainWindow):
                 appendCheck.stateChanged.connect(self.appendCheckChanged)
                 layout.addWidget(appendCheck)
 
-                self.show()
-
                 self.exec_ = file_dialog.exec_
                 self.selectedFiles = file_dialog.selectedFiles
 
@@ -297,14 +327,13 @@ class Scanner(QtWidgets.QMainWindow):
                 self.append = event
 
             def closeEvent(self, event):
-                for children in self.findChildren(
-                        QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+                for children in self.findChildren(QtWidgets.QWidget):
                     children.deleteLater()
 
                 super().closeEvent(event)
 
-
         main_dialog = ImportDialog(self, self._append)
+        main_dialog.show()
 
         once_or_append = True
         while once_or_append:
@@ -344,10 +373,10 @@ class Scanner(QtWidgets.QMainWindow):
     def saveButtonClicked(self):
         """ This function is called when the save button is clicked.
         It asks a path and starts the procedure to save the data """
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+        filename = QtWidgets.QFileDialog.getSaveFileName(
             self,  caption="Save data",
             directory=paths.USER_LAST_CUSTOM_FOLDER,
-            filter=utilities.SUPPORTED_EXTENSION)
+            filter=utilities.SUPPORTED_EXTENSION)[0]
         path = os.path.dirname(filename)
 
         if path != '':
@@ -355,7 +384,7 @@ class Scanner(QtWidgets.QMainWindow):
             self.setStatus('Saving data...', 5000)
             datasets = self.dataManager.getLastSelectedDataset()
 
-            for dataset_name in datasets.keys():
+            for dataset_name in datasets:
                 dataset = datasets[dataset_name]
 
                 if len(datasets) == 1:
@@ -371,7 +400,8 @@ class Scanner(QtWidgets.QMainWindow):
             if save_config:
                 dataset_folder, extension = os.path.splitext(filename)
                 new_configname = dataset_folder + ".conf"
-                config_name = os.path.join(os.path.dirname(dataset.tempFolderPath), 'config.conf')
+                config_name = os.path.join(
+                    os.path.dirname(dataset.folder_dataset_temp), 'config.conf')
 
                 if os.path.exists(config_name):
                     shutil.copy(config_name, new_configname)
@@ -387,8 +417,6 @@ class Scanner(QtWidgets.QMainWindow):
 
             self.setStatus(
                 f'Last dataset successfully saved in {filename}', 5000)
-
-
 
     def dropEvent(self, event):
         """ Imports config file if event has url of a file """
@@ -436,8 +464,7 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.figureManager.close()
 
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         # Remove scan variables from VARIABLES

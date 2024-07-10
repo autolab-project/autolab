@@ -7,21 +7,170 @@ Created on Sun Sep 29 18:29:07 2019
 
 
 import os
-from typing import Any
+from typing import Any, Union
 
 import pandas as pd
 import numpy as np
 from qtpy import QtCore, QtWidgets, QtGui
 
-from .slider import Slider
+from ..slider import Slider
 from ..monitoring.main import Monitor
 from .. import variables
 from ..icons import icons
+from ..GUI_utilities import qt_object_exists
 from ... import paths, config
 from ...devices import close
-from ...utilities import (qt_object_exists, SUPPORTED_EXTENSION,
+from ...utilities import (SUPPORTED_EXTENSION,
                           str_to_array, array_to_str,
-                          dataframe_to_str, str_to_dataframe)
+                          dataframe_to_str, str_to_dataframe, create_array)
+
+
+class CustomMenu(QtWidgets.QMenu):
+    """ Menu with action containing sub-menu for recipe and parameter selection """
+
+    def __init__(self, gui):
+        super().__init__()
+        self.gui = gui
+        self.current_menu = 1
+        self.selected_action = None
+
+        self.recipe_cb = self.gui.scanner.selectRecipe_comboBox if (
+            self.gui.scanner) else None
+        self.recipe_names = [self.recipe_cb.itemText(i) for i in range(
+            self.recipe_cb.count())] if self.recipe_cb else []
+        self.param_cb = self.gui.scanner.selectParameter_comboBox if (
+            self.gui.scanner) else None
+
+        self.HAS_RECIPE = len(self.recipe_names) > 1
+        self.HAS_PARAM = (self.param_cb.count() > 1 if self.param_cb is not None
+                          else False)
+
+    def addAnyAction(self, action_text='', icon_name='',
+                     param_menu_active=False) -> Union[QtWidgets.QWidgetAction,
+                                                       QtWidgets.QAction]:
+
+        if self.HAS_RECIPE or (self.HAS_PARAM and param_menu_active):
+            action = self.addCustomAction(action_text, icon_name,
+                                          param_menu_active=param_menu_active)
+        else:
+            action = self.addAction(action_text)
+            if icon_name != '':
+                action.setIcon(QtGui.QIcon(icons[icon_name]))
+
+        return action
+
+    def addCustomAction(self, action_text='', icon_name='',
+                        param_menu_active=False) -> QtWidgets.QWidgetAction:
+        """ Create an action with a sub menu for selecting a recipe and parameter """
+
+        def close_menu():
+            self.selected_action = action_widget
+            self.close()
+
+        def handle_hover():
+            """ Fixe bad hover behavior and refresh radio_button """
+            self.setActiveAction(action_widget)
+            recipe_name = self.recipe_cb.currentText()
+            action = recipe_menu.actions()[self.recipe_names.index(recipe_name)]
+            radio_button = action.defaultWidget()
+
+            if not radio_button.isChecked():
+                radio_button.setChecked(True)
+
+        def handle_radio_click(name):
+            """ Update parameters available, open parameter menu if available
+            and close main menu to validate the action """
+            if self.current_menu == 1:
+                self.recipe_cb.setCurrentIndex(self.recipe_names.index(name))
+                self.gui.scanner._updateSelectParameter()
+                recipe_menu.close()
+
+                if param_menu_active:
+                    param_items = [self.param_cb.itemText(i) for i in range(
+                        self.param_cb.count())]
+
+                    if len(param_items) > 1:
+                        self.current_menu = 2
+                        setup_menu_parameter(param_menu)
+                        return None
+            else:
+                update_parameter(name)
+                param_menu.close()
+                self.current_menu = 1
+                action_button.setMenu(recipe_menu)
+
+            close_menu()
+
+        def reset_menu(button: QtWidgets.QToolButton):
+            QtWidgets.QApplication.sendEvent(
+                button, QtCore.QEvent(QtCore.QEvent.Leave))
+            self.current_menu = 1
+            action_button.setMenu(recipe_menu)
+
+        def setup_menu_parameter(param_menu: QtWidgets.QMenu):
+            param_items = [self.param_cb.itemText(i) for i in range(
+                self.param_cb.count())]
+            param_name = self.param_cb.currentText()
+
+            param_menu.clear()
+            for param_name_i in param_items:
+                add_radio_button_to_menu(param_name_i, param_name, param_menu)
+
+            action_button.setMenu(param_menu)
+            action_button.showMenu()
+
+        def update_parameter(name: str):
+            param_items = [self.param_cb.itemText(i) for i in range(
+                self.param_cb.count())]
+            self.param_cb.setCurrentIndex(param_items.index(name))
+            self.gui.scanner._updateSelectParameter()
+
+        def add_radio_button_to_menu(item_name: str, current_name: str,
+                                     target_menu: QtWidgets.QMenu):
+            widget = QtWidgets.QWidget()
+            radio_button = QtWidgets.QRadioButton(item_name, widget)
+            action = QtWidgets.QWidgetAction(self.gui)
+            action.setDefaultWidget(radio_button)
+            target_menu.addAction(action)
+
+            if item_name == current_name:
+                radio_button.setChecked(True)
+
+            radio_button.clicked.connect(
+                lambda: handle_radio_click(item_name))
+
+        # Add custom action
+        action_button = QtWidgets.QToolButton()
+        action_button.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        action_button.setText(f"   {action_text}")
+        action_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        action_button.setAutoRaise(True)
+        action_button.clicked.connect(close_menu)
+        action_button.enterEvent = lambda event: handle_hover()
+        if icon_name != '':
+            action_button.setIcon(QtGui.QIcon(icons[icon_name]))
+
+        action_widget = QtWidgets.QWidgetAction(action_button)
+        action_widget.setDefaultWidget(action_button)
+        self.addAction(action_widget)
+
+        recipe_menu = QtWidgets.QMenu()
+        # recipe_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+        recipe_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        if param_menu_active:
+            param_menu = QtWidgets.QMenu()
+            # param_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+            param_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        recipe_name = self.gui.scanner.selectRecipe_comboBox.currentText()
+
+        for recipe_name_i in self.recipe_names:
+            add_radio_button_to_menu(recipe_name_i, recipe_name, recipe_menu)
+
+        action_button.setMenu(recipe_menu)
+
+        return action_widget
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -33,12 +182,12 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         self.module = None
         self.loaded = False
         self.gui = gui
-        self.is_not_submodule = type(gui.tree) is type(itemParent)
+        self.is_not_submodule = isinstance(gui.tree, type(itemParent))
 
         if self.is_not_submodule:
-            QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Device'])
+            super().__init__(itemParent, [name, 'Device'])
         else:
-            QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [name, 'Module'])
+            super().__init__(itemParent, [name, 'Module'])
 
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
@@ -73,20 +222,39 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
-        if self.is_not_submodule and self.loaded:
-            menu = QtWidgets.QMenu()
-            disconnectDevice = menu.addAction(f"Disconnect {self.name}")
-            disconnectDevice.setIcon(QtGui.QIcon(icons['disconnect']))
+        if self.is_not_submodule:
+            if self.loaded:
+                menu = QtWidgets.QMenu()
+                disconnectDevice = menu.addAction(f"Disconnect {self.name}")
+                disconnectDevice.setIcon(QtGui.QIcon(icons['disconnect']))
 
-            choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+                choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
-            if choice == disconnectDevice:
-                close(self.name)
+                if choice == disconnectDevice:
+                    close(self.name)
 
-                for i in range(self.childCount()):
-                    self.removeChild(self.child(0))
+                    for i in range(self.childCount()):
+                        self.removeChild(self.child(0))
 
-                self.loaded = False
+                    self.loaded = False
+            elif id(self) in self.gui.threadManager.threads_conn:
+                menu = QtWidgets.QMenu()
+                cancelDevice = menu.addAction('Cancel loading')
+                cancelDevice.setIcon(QtGui.QIcon(icons['disconnect']))
+
+                choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+
+                if choice == cancelDevice:
+                    self.gui.itemCanceled(self)
+            else:
+                menu = QtWidgets.QMenu()
+                modifyDeviceChoice = menu.addAction('Modify device')
+                modifyDeviceChoice.setIcon(QtGui.QIcon(icons['rename']))
+
+                choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+
+                if choice == modifyDeviceChoice:
+                    self.gui.openAddDevice(self)
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
@@ -98,7 +266,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         if action.unit is not None:
             displayName += f' ({action.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(self, itemParent, [displayName, 'Action'])
+        super().__init__(itemParent, [displayName, 'Action'])
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
         self.gui = gui
@@ -140,7 +308,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         if value == '':
             if self.action.unit in ('open-file', 'save-file', 'filename'):
-                if self.action.unit == "filename":  # LEGACY (may be removed later)
+                if self.action.unit == "filename":  # TODO: LEGACY (to remove later)
                     self.gui.setStatus("Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
                                        f"\nUpdate driver {self.action.name} to remove this warning",
                                        10000, False)
@@ -148,12 +316,12 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
                 if self.action.unit == "open-file":
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                        self.gui, caption="Open file",
+                        self.gui, caption=f"Open file - {self.action.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
                 elif self.action.unit == "save-file":
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                        self.gui, caption="Save file",
+                        self.gui, caption=f"Save file - {self.action.name}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
 
@@ -165,6 +333,17 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                     self.gui.setStatus(
                         f"Action {self.action.name} cancel filename selection",
                         10000)
+            elif self.action.unit == "user-input":
+                response, _ = QtWidgets.QInputDialog.getText(
+                    self.gui, self.action.name, f"Set {self.action.name} value",
+                    QtWidgets.QLineEdit.Normal)
+
+                if response != '':
+                    return response
+                else:
+                    self.gui.setStatus(
+                        f"Action {self.action.name} cancel user input",
+                        10000)
             else:
                 self.gui.setStatus(
                     f"Action {self.action.name} requires a value for its parameter",
@@ -173,9 +352,9 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             try:
                 value = variables.eval_variable(value)
                 if self.action.type in [np.ndarray]:
-                    if type(value) is str: value = str_to_array(value)
+                    if isinstance(value, str): value = str_to_array(value)
                 elif self.action.type in [pd.DataFrame]:
-                    if type(value) is str: value = str_to_dataframe(value)
+                    if isinstance(value, str): value = str_to_dataframe(value)
                 else:
                     value = self.action.type(value)
                 return value
@@ -197,11 +376,13 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if not self.isDisabled():
-            menu = QtWidgets.QMenu()
-            scanRecipe = menu.addAction("Do in scan recipe")
-            scanRecipe.setIcon(QtGui.QIcon(icons['action']))
+            menu = CustomMenu(self.gui)
+
+            scanRecipe = menu.addAnyAction('Do in scan recipe', 'action')
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+            if choice is None: choice = menu.selected_action
+
             if choice == scanRecipe:
                 recipe_name = self.gui.getRecipeName()
                 self.gui.addStepToScanRecipe(recipe_name, 'action', self.action)
@@ -210,14 +391,13 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     """ This class represents a variable in an item of the tree """
 
-    def __init__(self, itemParent, variable , gui):
+    def __init__(self, itemParent, variable, gui):
 
-        self.displayName = f'{variable.name}'
+        displayName = f'{variable.name}'
         if variable.unit is not None:
-            self.displayName += f' ({variable.unit})'
+            displayName += f' ({variable.unit})'
 
-        QtWidgets.QTreeWidgetItem.__init__(
-            self, itemParent, [self.displayName, 'Variable'])
+        super().__init__(itemParent, [displayName, 'Variable'])
         self.setTextAlignment(1, QtCore.Qt.AlignHCenter)
 
         self.gui = gui
@@ -290,10 +470,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
                 def __init__(self, parent):
                     self.parent = parent
-                    QtWidgets.QCheckBox.__init__(self)
+                    super().__init__()
 
                 def mouseReleaseEvent(self, event):
-                    super(MyQCheckBox, self).mouseReleaseEvent(event)
+                    super().mouseReleaseEvent(event)
                     self.parent.valueEdited()
                     self.parent.write()
 
@@ -318,22 +498,22 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
             class MyQComboBox(QtWidgets.QComboBox):
                 def __init__(self):
-                    QtWidgets.QComboBox.__init__(self)
+                    super().__init__()
                     self.readonly = False
                     self.wheel = True
                     self.key = True
 
                 def mousePressEvent(self, event):
                     if not self.readonly:
-                        QtWidgets.QComboBox.mousePressEvent(self, event)
+                        super().mousePressEvent(event)
 
                 def keyPressEvent(self, event):
                     if not self.readonly and self.key:
-                        QtWidgets.QComboBox.keyPressEvent(self, event)
+                        super().keyPressEvent(event)
 
                 def wheelEvent(self, event):
                     if not self.readonly and self.wheel:
-                        QtWidgets.QComboBox.wheelEvent(self, event)
+                        super().wheelEvent(event)
 
             if self.variable.writable:
                 self.valueWidget = MyQComboBox()
@@ -376,8 +556,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             elif self.variable.type in [bool]:
                 self.valueWidget.setChecked(value)
             elif self.variable.type in [tuple]:
-                AllItems = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
-                if value[0] != AllItems:
+                items = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+                if value[0] != items:
                     self.valueWidget.clear()
                     self.valueWidget.addItems(value[0])
                 self.valueWidget.setCurrentIndex(value[1])
@@ -407,9 +587,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 try:
                     value = variables.eval_variable(value)
                     if self.variable.type in [np.ndarray]:
-                        if type(value) is str: value = str_to_array(value)
+                        if isinstance(value, str): value = str_to_array(value)
+                        else: value = create_array(value)
                     elif self.variable.type in [pd.DataFrame]:
-                        if type(value) is str: value = str_to_dataframe(value)
+                        if isinstance(value, str): value = str_to_dataframe(value)
                     else:
                         value = self.variable.type(value)
                     return value
@@ -422,8 +603,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             value = self.valueWidget.isChecked()
             return value
         elif self.variable.type in [tuple]:
-            AllItems = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
-            value = (AllItems, self.valueWidget.currentIndex())
+            items = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+            value = (items, self.valueWidget.currentIndex())
             return value
 
     def setValueKnownState(self, state: bool):
@@ -462,36 +643,21 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
         if not self.isDisabled():
-            # TODO: could be used to select which recipe and parameter the step should go
-            # But, seems not ergonomic (not finish to implement it if want it)
-            # if self.gui.scanner is None:
-            #     pass
-            # else:
-            #     recipe_name = self.gui.getRecipeName()
-            #     recipe_name_list = self.gui.scanner.configManager.recipeNameList()
-            #     param_name = self.gui.getParameterName()
-            #     param_name_list = self.gui.scanner.configManager.parameterNameList(recipe_name)
-            #     print(recipe_name, recipe_name_list,
-            #           param_name, param_name_list)
-
-            menu = QtWidgets.QMenu()
+            menu = CustomMenu(self.gui)
             monitoringAction = menu.addAction("Start monitoring")
             monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
             menu.addSeparator()
             sliderAction = menu.addAction("Create a slider")
             sliderAction.setIcon(QtGui.QIcon(icons['slider']))
             menu.addSeparator()
-            # sub_menu = QtWidgets.QMenu("Set as parameter", menu)
-            # sub_menu.setIcon(QtGui.QIcon(icons['parameter']))
-            # menu.addMenu(sub_menu)
-            # scanParameterAction = sub_menu.addAction(f"in {recipe_name}")
-            # scanParameterAction.setIcon(QtGui.QIcon(icons['recipe']))
-            scanParameterAction = menu.addAction("Set as scan parameter")
-            scanParameterAction.setIcon(QtGui.QIcon(icons['parameter']))
-            scanMeasureStepAction = menu.addAction("Measure in scan recipe")
-            scanMeasureStepAction.setIcon(QtGui.QIcon(icons['measure']))
-            scanSetStepAction = menu.addAction("Set value in scan recipe")
-            scanSetStepAction.setIcon(QtGui.QIcon(icons['write']))
+
+            scanParameterAction = menu.addAnyAction(
+                'Set as scan parameter', 'parameter', param_menu_active=True)
+            scanMeasureStepAction = menu.addAnyAction(
+                'Measure in scan recipe', 'measure')
+            scanSetStepAction = menu.addAnyAction(
+                'Set value in scan recipe', 'write')
+
             menu.addSeparator()
             saveAction = menu.addAction("Read and save as...")
             saveAction.setIcon(QtGui.QIcon(icons['read-save']))
@@ -510,6 +676,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     tuple] else False)  # OPTIMIZE: forbid setting tuple to scanner
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
+            if choice is None: choice = menu.selected_action
+
             if choice == monitoringAction: self.openMonitor()
             elif choice == sliderAction: self.openSlider()
             elif choice == scanParameterAction:
@@ -561,7 +729,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         """ This function open the slider associated to this variable. """
         # If the slider is not already running, create one
         if id(self) not in self.gui.sliders.keys():
-            self.gui.sliders[id(self)] = Slider(self)
+            self.gui.sliders[id(self)] = Slider(self.variable, self)
+            self.gui.sliders[id(self)].show()
         # If the slider is already running, just make as the front window
         else:
             slider = self.gui.sliders[id(self)]

@@ -6,6 +6,7 @@ Created on Mon Nov 18 14:53:10 2019
 """
 
 import os
+import tempfile
 import configparser
 from typing import List
 from . import paths
@@ -19,7 +20,7 @@ from . import utilities
 def initialize_local_directory() -> bool:
     """ This function creates the default autolab local directory.
     Returns True if create default autolab folder (first autolab use) """
-    first = False
+    FIRST = False
     _print = True
     # LOCAL DIRECTORY
     if not os.path.exists(paths.USER_FOLDER):
@@ -30,7 +31,7 @@ def initialize_local_directory() -> bool:
               "It also contains the 'driver' directory with 'official' and 'local' sub-directories."
               )
         _print = False
-        first = True
+        FIRST = True
 
     # DEVICES CONFIGURATION FILE
     if not os.path.exists(paths.DEVICES_CONFIG):
@@ -62,7 +63,7 @@ def initialize_local_directory() -> bool:
         save_config('plotter', configparser.ConfigParser())
         if _print: print(f'The configuration file plotter_config.ini has been created: {paths.PLOTTER_CONFIG}')
 
-    return first
+    return FIRST
 
 
 def save_config(config_name, config):
@@ -137,15 +138,14 @@ def check_autolab_config():
         # 'plotter': {'precision': 10},
     }
 
-    for section_key in autolab_dict.keys():
-        dic = autolab_dict[section_key]
+    for section_key, section_dic in autolab_dict.items():
         if section_key in autolab_config.sections():
             conf = dict(autolab_config[section_key])
-            for key in dic.keys():
-                if key not in conf.keys():
-                    conf[key] = str(dic[key])
+            for key, dic in section_dic.items():
+                if key not in conf:
+                    conf[key] = str(dic)
         else:
-            conf = dic
+            conf = section_dic
 
         autolab_config[section_key] = conf
 
@@ -220,7 +220,6 @@ def set_temp_folder() -> str:
     temp_folder = get_directories_config()["temp_folder"]
 
     if temp_folder == 'default':
-        import tempfile
         # Try to get TEMP, if not get tempfile
         temp_folder = os.environ.get('TEMP', tempfile.gettempdir())
 
@@ -271,15 +270,14 @@ def check_plotter_config():
         'device': {'address': 'dummy.array_1D'},
     }
 
-    for section_key in plotter_dict.keys():
-        dic = plotter_dict[section_key]
+    for section_key, section_dic in plotter_dict.items():
         if section_key in plotter_config.sections():
             conf = dict(plotter_config[section_key])
-            for key in dic.keys():
-                if key not in conf.keys():
-                    conf[key] = str(dic[key])
+            for key, dic in section_dic.items():
+                if key not in conf:
+                    conf[key] = str(dic)
         else:
-            conf = dic
+            conf = section_dic
 
         plotter_config[section_key] = conf
 

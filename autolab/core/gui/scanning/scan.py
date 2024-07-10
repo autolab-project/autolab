@@ -5,6 +5,7 @@ Created on Sun Sep 29 18:08:45 2019
 @author: qchat
 """
 
+import os
 import time
 import math as m
 import threading
@@ -16,7 +17,9 @@ import numpy as np
 from qtpy import QtCore, QtWidgets
 
 from .. import variables
-from ...utilities import create_array
+from ... import paths
+from ..GUI_utilities import qt_object_exists
+from ...utilities import create_array, SUPPORTED_EXTENSION
 
 
 class ScanManager:
@@ -38,6 +41,7 @@ class ScanManager:
 
         # Thread
         self.thread = None
+        self.main_dialog = None
 
     # START AND STOP
     #############################################################################
@@ -58,7 +62,7 @@ class ScanManager:
             self.gui.configManager.checkConfig()  #  raise error if config not valid
             config = self.gui.configManager.config
         except Exception as e:
-            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration : {str(e)}', 10000, False)
+            self.gui.setStatus(f'ERROR The scan cannot start with the current configuration: {str(e)}', 10000, False)
         # Only if current config is valid to start a scan
         else:
             # Prepare a new dataset in the datacenter
@@ -74,6 +78,7 @@ class ScanManager:
             self.thread = ScanThread(self.gui.dataManager.queue, config)
             ## Signal connections
             self.thread.errorSignal.connect(self.error)
+            self.thread.userSignal.connect(self.handler_user_input)
 
             self.thread.startParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'started'))
             self.thread.finishParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'finished'))
@@ -98,9 +103,118 @@ class ScanManager:
             self.gui.clear_pushButton.setEnabled(False)
             self.gui.progressBar.setValue(0)
             self.gui.importAction.setEnabled(False)
+            self.gui.openRecentMenu.setEnabled(False)
             self.gui.undo.setEnabled(False)
             self.gui.redo.setEnabled(False)
             self.gui.setStatus('Scan started!', 5000)
+
+    def handler_user_input(self, stepInfos: dict):
+        unit = stepInfos['element'].unit
+        name = stepInfos['name']
+
+        if unit in ("open-file", "save-file"):
+
+            class FileDialog(QtWidgets.QDialog):
+
+                def __init__(self, parent: QtWidgets.QMainWindow, name: str,
+                             mode: QtWidgets.QFileDialog):
+
+                    super().__init__(parent)
+                    if mode == QtWidgets.QFileDialog.AcceptOpen:
+                        self.setWindowTitle(f"Open file - {name}")
+                    elif mode == QtWidgets.QFileDialog.AcceptSave:
+                        self.setWindowTitle(f"Save file - {name}")
+
+                    file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
+                    file_dialog.setAcceptMode(mode)
+                    file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+                    file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
+                    file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
+                    file_dialog.setNameFilters(SUPPORTED_EXTENSION.split(";;"))
+
+                    layout = QtWidgets.QVBoxLayout(self)
+                    layout.addWidget(file_dialog)
+                    layout.addStretch()
+                    layout.setSpacing(0)
+                    layout.setContentsMargins(0,0,0,0)
+
+                    self.exec_ = file_dialog.exec_
+                    self.selectedFiles = file_dialog.selectedFiles
+
+                def closeEvent(self, event):
+                    for children in self.findChildren(QtWidgets.QWidget):
+                        children.deleteLater()
+
+                    super().closeEvent(event)
+
+            if unit == "open-file":
+                self.main_dialog = FileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptOpen)
+                self.main_dialog.show()
+
+                if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                    filename = self.main_dialog.selectedFiles()[0]
+                else:
+                    filename = ''
+
+            elif unit == "save-file":
+                self.main_dialog = FileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptSave)
+                self.main_dialog.show()
+
+                if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                    filename = self.main_dialog.selectedFiles()[0]
+                else:
+                    filename = ''
+
+            if filename != '':
+                path = os.path.dirname(filename)
+                paths.USER_LAST_CUSTOM_FOLDER = path
+
+            if qt_object_exists(self.main_dialog): self.main_dialog.deleteLater()
+            if self.thread is not None: self.thread.user_response = filename
+
+        elif unit == 'user-input':
+
+            class InputDialog(QtWidgets.QDialog):
+
+                def __init__(self, parent: QtWidgets.QMainWindow, name: str):
+
+                    super().__init__(parent)
+                    self.setWindowTitle(name)
+
+                    input_dialog = QtWidgets.QInputDialog(self)
+                    input_dialog.setLabelText(f"Set {name} value")
+                    input_dialog.setInputMode(QtWidgets.QInputDialog.TextInput)
+                    input_dialog.setWindowFlags(input_dialog.windowFlags() & ~QtCore.Qt.Dialog)
+
+                    lineEdit = input_dialog.findChild(QtWidgets.QLineEdit)
+                    lineEdit.setMaxLength(10000000)
+
+                    layout = QtWidgets.QVBoxLayout(self)
+                    layout.addWidget(input_dialog)
+                    layout.addStretch()
+                    layout.setSpacing(0)
+                    layout.setContentsMargins(0,0,0,0)
+
+                    self.exec_ = input_dialog.exec_
+                    self.textValue = input_dialog.textValue
+
+                def closeEvent(self, event):
+                    for children in self.findChildren(QtWidgets.QWidget):
+                        children.deleteLater()
+                    super().closeEvent(event)
+
+            self.main_dialog = InputDialog(self.gui, name)
+            self.main_dialog.show()
+
+            if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                response = self.main_dialog.textValue()
+            else:
+                response = ''
+
+            if qt_object_exists(self.main_dialog): self.main_dialog.deleteLater()
+            if self.thread is not None: self.thread.user_response = response
+        else:
+            if self.thread is not None: self.thread.user_response = f"Unknown unit '{unit}'"
 
     def scanCompleted(self):
         self.gui.progressBar.setStyleSheet("")
@@ -129,7 +243,9 @@ class ScanManager:
         """ Stops manually the scan """
         self.disableContinuousMode()
         self.thread.stopFlag.set()
+        self.thread.user_response = 'Close'  # needed to stop scan
         self.resume()
+        if self.main_dialog is not None and qt_object_exists(self.main_dialog): self.main_dialog.deleteLater()
         self.thread.wait()
 
     # SIGNALS
@@ -144,6 +260,7 @@ class ScanManager:
         self.gui.clear_pushButton.setEnabled(True)
         self.gui.displayScanData_pushButton.setEnabled(True)
         self.gui.importAction.setEnabled(True)
+        self.gui.openRecentMenu.setEnabled(True)
         self.gui.configManager.updateUndoRedoButtons()
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
@@ -200,6 +317,7 @@ class ScanThread(QtCore.QThread):
     """ This thread class is dedicated to read the variable,
         and send its data to GUI through a queue """
     # Signals
+    userSignal = QtCore.Signal(dict)
     errorSignal = QtCore.Signal(object)
 
     startParameterSignal = QtCore.Signal(object, object)
@@ -212,23 +330,25 @@ class ScanThread(QtCore.QThread):
     scanCompletedSignal = QtCore.Signal()
 
     def __init__(self, queue: Queue, config: dict):
-        QtCore.QThread.__init__(self)
+        super().__init__()
         self.config = config
         self.queue = queue
 
         self.pauseFlag = threading.Event()
         self.stopFlag = threading.Event()
 
+        self.user_response = None
+
     def run(self):
         # Start the scan
-        for recipe_name in self.config.keys():
+        for recipe_name in self.config:
             if self.config[recipe_name]['active']: self.execRecipe(recipe_name)
 
         self.scanCompletedSignal.emit()
 
     def execRecipe(self, recipe_name: str,
                    initPoint: OrderedDict = None):
-        """ Executes a recipe. initPoint is used to add parameters values
+        """ Executes a recipe. initPoint is obsolete, was used to add parameters values
         and master-recipe name to a sub-recipe """
 
         paramValues_list = []
@@ -239,8 +359,12 @@ class ScanThread(QtCore.QThread):
 
             if 'values' in parameter:
                 paramValues = parameter['values']
-                paramValues = variables.eval_variable(paramValues)
-                paramValues = create_array(paramValues)
+                try:
+                    paramValues = variables.eval_variable(paramValues)
+                    paramValues = create_array(paramValues)
+                except Exception as e:
+                    self.errorSignal.emit(e)
+                    self.stopFlag.set()
             else:
                 startValue, endValue = parameter['range']
                 nbpts = parameter['nbpts']
@@ -261,7 +385,7 @@ class ScanThread(QtCore.QThread):
 
             if not self.stopFlag.is_set():
 
-                if initPoint is None:
+                if initPoint is None:  # OBSOLETE
                     initPoint = OrderedDict()
                     initPoint[0] = recipe_name
 
@@ -269,15 +393,17 @@ class ScanThread(QtCore.QThread):
 
                 try:
                     self._source_of_error = None
+                    ID += 1
+                    variables.set_variable('ID', ID)
+
                     for parameter, paramValue in zip(
                             self.config[recipe_name]['parameter'], paramValueList):
                         self._source_of_error = parameter
                         element = parameter['element']
                         param_name = parameter['name']
 
-                        ID += 1
-                        variables.set_variable('ID', ID)
-                        variables.set_variable(param_name, paramValue)
+                        variables.set_variable(param_name, element.type(
+                                paramValue) if element is not None else paramValue)
 
                         # Set the parameter value
                         self.startParameterSignal.emit(recipe_name, param_name)
@@ -357,17 +483,27 @@ class ScanThread(QtCore.QThread):
         if stepType == 'measure':
             result = element()
             variables.set_variable(stepInfos['name'], result)
-
         elif stepType == 'set':
             value = variables.eval_variable(stepInfos['value'])
+            if element.type in [np.ndarray]: value = create_array(value)
             element(value)
         elif stepType == 'action':
             if stepInfos['value'] is not None:
-                value = variables.eval_variable(stepInfos['value'])
-                element(value)
+                # Open dialog for open file, save file or input text
+                if stepInfos['value'] == '':
+                    self.userSignal.emit(stepInfos)
+                    while (not self.stopFlag.is_set()
+                           and self.user_response is None):
+                        time.sleep(0.1)
+                    if not self.stopFlag.is_set():
+                        element(self.user_response)
+                    self.user_response = None
+                else:
+                    value = variables.eval_variable(stepInfos['value'])
+                    element(value)
             else:
                 element()
-        elif stepType == 'recipe':
+        elif stepType == 'recipe':  # OBSOLETE
             self.execRecipe(element, initPoint=initPoint)  # Execute a recipe in the recipe
 
         self.finishStepSignal.emit(recipe_name, stepInfos['name'])

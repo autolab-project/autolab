@@ -27,23 +27,23 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
     reorderSignal = QtCore.Signal(object)
 
-    def __init__(self,parent, plotter):
+    def __init__(self, parent, plotter):
         self.plotter = plotter
-        QtWidgets.QTreeWidget.__init__(self,parent)
+        super().__init__(parent)
 
         self.setAcceptDrops(True)
 
     def dropEvent(self, event):
         """ This function is used to add a plugin to the plotter """
         variable = event.source().last_drag
-        if type(variable) == str:
+        if isinstance(variable, str):
             self.plotter.addPlugin(variable)
         self.setGraphicsEffect(None)
 
     def dragEnterEvent(self, event):
 
         if (event.source() is self) or (
-                hasattr(event.source(), "last_drag") and type(event.source().last_drag) is str):
+                hasattr(event.source(), "last_drag") and isinstance(event.source().last_drag, str)):
             event.accept()
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             self.setGraphicsEffect(shadow)
@@ -56,20 +56,20 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
 class Plotter(QtWidgets.QMainWindow):
 
-    def __init__(self,mainGui):
+    def __init__(self, mainGui):
 
         self.active = False
         self.mainGui = mainGui
-        self.all_plugin_list = list()
-        self.active_plugin_dict = dict()
+        self.all_plugin_list = []
+        self.active_plugin_dict = {}
 
         self._font_size = get_font_size() + 1
 
         # Configuration of the window
-        QtWidgets.QMainWindow.__init__(self)
-        ui_path = os.path.join(os.path.dirname(__file__),'interface.ui')
-        uic.loadUi(ui_path,self)
-        self.setWindowTitle("AUTOLAB Plotter")
+        super().__init__()
+        ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
+        uic.loadUi(ui_path, self)
+        self.setWindowTitle("AUTOLAB - Plotter")
         self.setWindowIcon(QtGui.QIcon(icons['plotter']))
 
         # Loading of the different centers
@@ -103,35 +103,39 @@ class Plotter(QtWidgets.QMainWindow):
             self.nbTraces_lineEdit,'edited', self._font_size))
         setLineEditBackground(self.nbTraces_lineEdit, 'synced', self._font_size)
 
-        getattr(self, 'variable_x_comboBox').currentIndexChanged.connect(
+        self.variable_x_comboBox.currentIndexChanged.connect(
             self.variableChanged)
-        getattr(self, 'variable_y_comboBox').currentIndexChanged.connect(
+        self.variable_y_comboBox.currentIndexChanged.connect(
             self.variableChanged)
 
-        self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
-        self.device_lineEdit.returnPressed.connect(self.deviceChanged)
-        self.device_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            self.device_lineEdit, 'edited', self._font_size))
-        setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
+        if self.mainGui is not None:
+            self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
+            self.device_lineEdit.returnPressed.connect(self.deviceChanged)
+            self.device_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+                self.device_lineEdit, 'edited', self._font_size))
+            setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
 
-        # Plot button
-        self.plotDataButton.clicked.connect(self.refreshPlotData)
+            # Plot button
+            self.plotDataButton.clicked.connect(self.refreshPlotData)
 
-        # Timer
-        self.timer_time = 0.5  # This plotter is not meant for fast plotting like the monitor, be aware it may crash with too high refreshing rate
-        self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(int(self.timer_time*1000)) # ms
-        self.timer.timeout.connect(self.autoRefreshPlotData)
+            # Timer
+            self.timer_time = 0.5  # This plotter is not meant for fast plotting like the monitor, be aware it may crash with too high refreshing rate
+            self.timer = QtCore.QTimer(self)
+            self.timer.setInterval(int(self.timer_time*1000)) # ms
+            self.timer.timeout.connect(self.autoRefreshPlotData)
 
-        self.auto_plotDataButton.clicked.connect(self.autoRefreshChanged)
+            self.auto_plotDataButton.clicked.connect(self.autoRefreshChanged)
+
+            # Delay
+            self.delay_lineEdit.setText(str(self.timer_time))
+            self.delay_lineEdit.returnPressed.connect(self.delayChanged)
+            self.delay_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+                self.delay_lineEdit, 'edited', self._font_size))
+            setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
+        else:
+            self.frame_device.hide()
+
         self.overwriteDataButton.clicked.connect(self.overwriteDataChanged)
-
-        # Delay
-        self.delay_lineEdit.setText(str(self.timer_time))
-        self.delay_lineEdit.returnPressed.connect(self.delayChanged)
-        self.delay_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            self.delay_lineEdit, 'edited', self._font_size))
-        setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
         self.setAcceptDrops(True)
 
@@ -142,7 +146,7 @@ class Plotter(QtWidgets.QMainWindow):
 
         # queue and timer to add/remove plot from plugin
         self.queue_driver = queue.Queue()
-        self.dict_widget = dict()
+        self.dict_widget = {}
         self.timerQueue = QtCore.QTimer(self)
         self.timerQueue.setInterval(int(50)) # ms
         self.timerQueue.timeout.connect(self._queueDriverHandler)
@@ -161,11 +165,12 @@ class Plotter(QtWidgets.QMainWindow):
             widget_created = self.dict_widget.get(unique_name)
 
             if widget_created: return widget_created
-            else:
-                time.sleep(0.01)
-                if (time.time() - start) > 1:
-                    print(f"Warning: Importation of {widget} too long, skip it", file=sys.stderr)
-                    return None
+
+            time.sleep(0.01)
+            if (time.time() - start) > 1:
+                print(f"Warning: Importation of {widget} too long, skip it",
+                      file=sys.stderr)
+                return None
 
     def removeWidget(self, widget: Type):
         """ Function used by a driver to remove a widget record from GUI """
@@ -184,8 +189,8 @@ class Plotter(QtWidgets.QMainWindow):
             if action == 'create':
                 widget = widget(*args, **kwargs)
                 self.dict_widget[widget_name] = widget
-                try: self.figureManager.fig.addItem(widget)
-                except: pass
+                try: self.figureManager.ax.addItem(widget)
+                except Exception as e: self.setStatus(str(e), 10000, False)
             elif action == "remove":
                 d = self.dict_widget
                 if widget is not None:
@@ -195,8 +200,8 @@ class Plotter(QtWidgets.QMainWindow):
                         widget = d.get(widget_name)
                         if widget is not None:
                             widget = d.pop(widget_name)
-                            try: self.figureManager.fig.removeItem(widget)
-                            except: pass
+                            try: self.figureManager.ax.removeItem(widget)
+                            except Exception as e: self.setStatus(str(e), 10000, False)
 
     def timerAction(self):
         """ This function checks if a module has been loaded and put to the queue. If so, associate item and module """
@@ -447,16 +452,21 @@ class Plotter(QtWidgets.QMainWindow):
 
     def closeEvent(self,event):
         """ This function does some steps before the window is closed (not killed) """
-        self.timer.stop()
+        if hasattr(self, 'timer'): self.timer.stop()
         self.timerPlugin.stop()
         self.timerQueue.stop()
 
-        self.mainGui.clearPlotter()
+        if hasattr(self.mainGui, 'clearPlotter'):
+            self.mainGui.clearPlotter()
+
+        super().closeEvent(event)
+
+        if self.mainGui is None:
+            QtWidgets.QApplication.quit()  # close the plotter app
 
     def close(self):
         """ This function does some steps before the window is killed """
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         super().close()

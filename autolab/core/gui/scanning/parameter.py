@@ -328,7 +328,7 @@ class ParameterManager:
             address = element.address()
             unit = element.unit
         else:
-            address = 'None'
+            address = self.param_name
             unit = ''
 
         self.parameterName_lineEdit.setEnabled(True)
@@ -510,7 +510,7 @@ class ParameterManager:
             xrange[1] = value
 
             self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange)
-        except :
+        except:
             self.refresh()
 
     def meanChanged(self):
@@ -525,8 +525,9 @@ class ParameterManager:
             xrange_new = xrange.copy()
             xrange_new[0] = value - (xrange[1] - xrange[0])/2
             xrange_new[1] = value + (xrange[1] - xrange[0])/2
-            assert xrange_new[0] > 0
-            assert xrange_new[1] > 0
+            if log:
+                assert xrange_new[0] > 0
+                assert xrange_new[1] > 0
 
             self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange_new)
         except:
@@ -544,8 +545,9 @@ class ParameterManager:
             xrange_new = xrange.copy()
             xrange_new[0] = (xrange[1]+xrange[0])/2 - value/2
             xrange_new[1] = (xrange[1]+xrange[0])/2 + value/2
-            assert xrange_new[0] > 0
-            assert xrange_new[1] > 0
+            if log:
+                assert xrange_new[0] > 0
+                assert xrange_new[1] > 0
 
             self.gui.configManager.setRange(self.recipe_name, self.param_name, xrange_new)
         except:
@@ -614,8 +616,9 @@ class ParameterManager:
                 values = raw_values
             elif not variables.has_variable(raw_values):
                 values = variables.eval_safely(raw_values)
-                values = create_array(values)
-                assert len(values) != 0, "Cannot have empty array"
+                if not isinstance(values, str):
+                    values = create_array(values)
+                    assert len(values) != 0, "Cannot have empty array"
 
             self.gui.configManager.setValues(self.recipe_name, self.param_name, raw_values)
         except Exception as e:
@@ -647,7 +650,7 @@ class ParameterManager:
         if state == 'idle':
             self.parameterAddress_label.setStyleSheet(
                 f"font-size: {self._font_size+1}pt;")
-        else :
+        else:
             if state == 'started': color = '#ff8c1a'
             if state == 'finished': color = '#70db70'
             self.parameterAddress_label.setStyleSheet(

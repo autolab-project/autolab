@@ -126,7 +126,7 @@ class DataManager :
         self.overwriteData = bool(value)
 
     def getDatasetsNames(self):
-        names = list()
+        names = []
         for dataset in self.datasets:
             names.append(dataset.name)
         return names

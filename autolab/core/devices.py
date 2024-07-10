@@ -5,11 +5,11 @@ Created on Thu Jun 13 10:25:49 2019
 @author: quentin.chateiller
 """
 
-from typing import List
+from typing import List, Union
 
 from . import drivers
 from . import config
-from .elements import Module
+from .elements import Module, Element
 
 # Storage of the devices
 DEVICES = {}
@@ -27,13 +27,25 @@ class Device(Module):
         self.device_config = device_config  # hidden from completion
         self.driver_path = drivers.get_driver_path(device_config["driver"])
 
-        Module.__init__(self, None, {'name': device_name, 'object': instance,
-                                     'help': f'Device {device_name} at {self.driver_path}'})
+        super().__init__(None, {'name': device_name, 'object': instance,
+                                'help': f'Device {device_name} at {self.driver_path}'})
 
     def close(self):
         """ This function close the connection of the current physical device """
+        # Remove read and write signals from gui
+        try:
+            # condition avoid reopenning connection if use close twice
+            if self.name in DEVICES:
+                for struc in self.get_structure():
+                    element = get_element_by_address(struc[0])
+                    if struc[1] == 'variable':
+                        element._read_signal = None
+                        element._write_signal = None
+        except: pass
+
         try: self.instance.close()
         except: pass
+
         del DEVICES[self.name]
 
     def __dir__(self):
@@ -46,11 +58,16 @@ class Device(Module):
 # DEVICE GET FUNCTION
 # =============================================================================
 
-def get_element_by_address(address: str) -> Device:
-    """ Returns the Element located at the provided address """
+def get_element_by_address(address: str) -> Union[Element, None]:
+    """ Returns the Element located at the provided address if exists """
     address = address.split('.')
     try:
-        element = get_device(address[0])
+        device_name = address[0]
+        if device_name in DEVICES:
+            element = DEVICES[device_name]
+        else:
+            # This should not be used on autolab closing to avoid access violation due to config opening
+            element = get_device(device_name)
         for addressPart in address[1: ]:
             element = getattr(element, addressPart.replace(" ", ""))
         return element
@@ -70,12 +87,12 @@ def get_final_device_config(device_name: str, **kwargs) -> dict:
         device_config[key] = value
 
     # And the argument connection has to be provided
-    assert 'driver' in device_config.keys(), f"Missing driver name for device '{device_name}'"
+    assert 'driver' in device_config, f"Missing driver name for device '{device_name}'"
 
     if device_config['driver'] == 'autolab_server':
         device_config['connection'] = 'USELESS_ENTRY'
 
-    assert 'connection' in device_config.keys(), f"Missing connection type for device '{device_name}'"
+    assert 'connection' in device_config, f"Missing connection type for device '{device_name}'"
 
     return device_config
 
@@ -103,7 +120,7 @@ def get_device(device_name: str, **kwargs) -> Device:
 
 def list_loaded_devices() -> List[str]:
     ''' Returns the list of the loaded devices '''
-    return list(DEVICES.keys())
+    return list(DEVICES)
 
 
 def list_devices() -> List[str]:
@@ -124,7 +141,7 @@ def get_devices_status() -> dict:
 # CLOSE DEVICES
 # =============================================================================
 
-def close(device: Device = "all"):
+def close(device: Union[str, Device] = "all"):
     """ Close a device by providing its name or its instance. Use 'all' to close all openned devices. """
 
     if str(device) == "all":

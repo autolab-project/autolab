@@ -54,13 +54,11 @@ def load_lib(lib_path: str) -> ModuleType:
     # Load the module
     spec = importlib.util.spec_from_file_location(lib_name, lib_path)
     lib = importlib.util.module_from_spec(spec)
-    try:
-        spec.loader.exec_module(lib)
-    except Exception as e:
-        print(f"Can't load {lib}: {e}", file=sys.stderr)
 
     # Come back to previous working directory
     os.chdir(curr_dir)
+
+    spec.loader.exec_module(lib)
 
     return lib
 
@@ -110,14 +108,14 @@ def list_drivers() -> List[str]:
     ''' Returns the list of available drivers '''
     # To be sure that the list is up to date
     update_drivers_paths()
-    return sorted(list(DRIVERS_PATHS.keys()))
+    return sorted(list(DRIVERS_PATHS))
 
 
 # =============================================================================
 # DRIVERS INSPECTION
 # =============================================================================
 
-def get_module_names(driver_lib: ModuleType) -> str:
+def get_module_names(driver_lib: ModuleType) -> List[str]:
     ''' Returns the list of the driver's Module(s) name(s) (classes Module_XXX) '''
     return [name.split('_')[1]
             for name, obj in inspect.getmembers(driver_lib, inspect.isclass)
@@ -125,7 +123,7 @@ def get_module_names(driver_lib: ModuleType) -> str:
             and name.startswith('Module_')]
 
 
-def get_connection_names(driver_lib: ModuleType) -> str:
+def get_connection_names(driver_lib: ModuleType) -> List[str]:
     ''' Returns the list of the driver's connection types (classes Driver_XXX) '''
     return [name.split('_')[1]
             for name, obj in inspect.getmembers(driver_lib, inspect.isclass)
@@ -139,14 +137,17 @@ def get_driver_category(driver_name: str) -> str:
 
         driver_utilities_path = os.path.join(
             os.path.dirname(get_driver_path(driver_name)), f'{driver_name}{filename}.py')
-        category = 'Other'
+        category = 'Unknown'
 
         if os.path.exists(driver_utilities_path):
-            driver_utilities = load_lib(driver_utilities_path)
-
-            if hasattr(driver_utilities, 'category'):
-                category = driver_utilities.category
-                break
+            try:
+                driver_utilities = load_lib(driver_utilities_path)
+            except Exception as e:
+                print(f"Can't load {driver_name}: {e}", file=sys.stderr)
+            else:
+                if hasattr(driver_utilities, 'category'):
+                    category = driver_utilities.category
+                    break
 
     return category
 
@@ -160,11 +161,181 @@ def get_driver_class(driver_lib: ModuleType) -> Type:
 
 def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
     ''' Returns the class Driver_XXX of the provided driver library and connection type '''
+    if connection in get_connection_names(driver_lib):
+        return getattr(driver_lib, f'Driver_{connection}')
+
+    driver_instance = create_default_driver_conn(driver_lib, connection)
+    if driver_instance is not None:
+        print(f'Warning, {connection} not find in {driver_lib.__name__} but will try to connect using default connection')
+        return driver_instance
+
     assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
-    return getattr(driver_lib, f'Driver_{connection}')
 
 
-def get_module_class(driver_lib: ModuleType, module_name: str):
+def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
+    """ Create a default connection class when not provided in Driver.
+    Will be used to try to connect to an instrument. """
+    Driver = getattr(driver_lib, f'Driver')
+
+    if connection == 'DEFAULT':
+        class Driver_DEFAULT(Driver):
+            def __init__(self):
+                Driver.__init__(self)
+
+        return Driver_DEFAULT
+
+    if connection == 'VISA':
+        class Driver_VISA(Driver):
+            def __init__(self, address='GPIB0::2::INSTR', **kwargs):
+                import pyvisa as visa
+
+                self.TIMEOUT = 15000  # ms
+
+                rm = visa.ResourceManager()
+                self.controller = rm.open_resource(address)
+                self.controller.timeout = self.TIMEOUT
+
+                Driver.__init__(self)
+
+            def close(self):
+                try: self.controller.close()
+                except: pass
+
+            def query(self, command):
+                result = self.controller.query(command)
+                result = result.strip('\n')
+                return result
+
+            def write(self, command):
+                self.controller.write(command)
+
+            def read(self):
+                return self.controller.read()
+
+        return Driver_VISA
+
+    if connection == 'GPIB':
+        class Driver_GPIB(Driver):
+            def __init__(self, address=23, board_index=0, **kwargs):
+                import Gpib
+
+                self.inst = Gpib.Gpib(int(board_index), int(address))
+                Driver.__init__(self)
+
+            def query(self, query):
+                self.write(query)
+                return self.read()
+
+            def write(self, query):
+                self.inst.write(query)
+
+            def read(self, length=1000000000):
+                return self.inst.read().decode().strip('\n')
+
+            def close(self):
+                """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
+                #Gpib.gpib.close(self.inst.id)
+                pass
+
+        return Driver_USB
+
+    if connection == 'USB':
+        class Driver_USB(Driver):
+            def __init__(self, **kwargs):
+                import usb
+                import usb.core
+                import usb.util
+
+                dev = usb.core.find(idVendor=0x104d, idProduct=0x100a)
+                dev.reset()
+                dev.set_configuration()
+                interface = 0
+                if dev.is_kernel_driver_active(interface) is True:
+                    dev.detach_kernel_driver(interface)  # tell the kernel to detach
+                    usb.util.claim_interface(dev, interface)  # claim the device
+
+                cfg = dev.get_active_configuration()
+                intf = cfg[(0,0)]
+                self.ep_out = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+                self.ep_in = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
+
+                assert self.ep_out is not None
+                assert self.ep_in is not None
+
+                Driver.__init__(self)
+
+            def write(self, query):
+                self.string = query + '\r\n'
+                self.ep_out.write(self.string)
+
+            def read(self):
+                rep = self.ep_in.read(64)
+                const = ''.join(chr(i) for i in rep)
+                const = const[:const.find('\r\n')]
+                return const
+
+        return Driver_USB
+
+    if connection == 'SOCKET':
+        class Driver_SOCKET(Driver):
+
+            def __init__(self, address='192.168.0.8', **kwargs):
+
+                import socket
+
+                self.ADDRESS = address
+                self.PORT = 5005
+                self.BUFFER_SIZE = 40000
+
+                self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.controller.connect((self.ADDRESS, int(self.PORT)))
+
+                Driver.__init__(self)
+
+            def write(self, command):
+                self.controller.send(command.encode())
+                self.controller.recv(self.BUFFER_SIZE)
+
+            def query(self, command):
+                self.controller.send(command.encode())
+                data = self.controller.recv(self.BUFFER_SIZE)
+                return data.decode()
+
+            def close(self):
+                try: self.controller.close()
+                except: pass
+                self.controller = None
+
+        return Driver_SOCKET
+
+    if connection == 'TEST':
+        class Controller: pass
+        class Driver_TEST(Driver):
+            def __init__(self, *args, **kwargs):
+                try:
+                    Driver.__init__(self)
+                except:
+                    Driver.__init__(self, *args, **kwargs)
+
+                self.controller = Controller()
+                self.controller.timeout = 5000
+
+            def write(self, value):
+                pass
+            def read(self):
+                return '1'
+            def read_raw(self):
+                return b'1'
+            def query(self, value):
+                self.write(value)
+                return self.read()
+
+        return Driver_TEST
+
+    return None
+
+
+def get_module_class(driver_lib: ModuleType, module_name: str) -> Type:
     ''' Returns the class Module_XXX of the provided driver library and module_name'''
     assert module_name in get_module_names(driver_lib)
     return getattr(driver_lib, f'Module_{module_name}')
@@ -181,7 +352,7 @@ def explore_driver(instance: Type, _print: bool = True) -> str:
     if _print:
         print(s)
         return None
-    else: return s
+    return s
 
 
 def get_instance_methods(instance: Type) -> Type:
@@ -189,21 +360,19 @@ def get_instance_methods(instance: Type) -> Type:
     methods = []
 
     # LEVEL 1
-    for name, obj in inspect.getmembers(instance, inspect.ismethod):
+    for name, _ in inspect.getmembers(instance, inspect.ismethod):
         if name != '__init__':
             attr = getattr(instance, name)
-            args = list(inspect.signature(attr).parameters.keys())
+            args = list(inspect.signature(attr).parameters)
             methods.append([name, args])
 
     # LEVEL 2
-    instance_vars = vars(instance)
-    for key in instance_vars.keys():
-        try:    # explicit to avoid visa and inspect.getmembers issue
-            name_obj = inspect.getmembers(instance_vars[key], inspect.ismethod)
-            if name_obj != '__init__' and name_obj and name != '__init__':
-                for name, obj in name_obj:
+    for key, val in vars(instance).items():
+        try:  # explicit to avoid visa and inspect.getmembers issue
+            for name, _ in inspect.getmembers(val, inspect.ismethod):
+                if name != '__init__':
                     attr = getattr(getattr(instance, key), name)
-                    args = list(inspect.signature(attr).parameters.keys())
+                    args = list(inspect.signature(attr).parameters)
                     methods.append([f'{key}.{name}', args])
         except: pass
 
@@ -224,8 +393,8 @@ def get_class_args(clas: Type) -> dict:
 
 def get_driver_path(driver_name: str) -> str:
     ''' Returns the config associated with driver_name '''
-    assert type(driver_name) is str, "drive_name must be a string."
-    assert driver_name in DRIVERS_PATHS.keys(), f'Driver {driver_name} not found.'
+    assert isinstance(driver_name, str), "drive_name must be a string."
+    assert driver_name in DRIVERS_PATHS, f'Driver {driver_name} not found.'
     return DRIVERS_PATHS[driver_name]['path']
 
 
@@ -255,5 +424,6 @@ def load_drivers_paths() -> dict:
 
 
 def update_drivers_paths():
+    ''' Update list of available driver '''
     global DRIVERS_PATHS
     DRIVERS_PATHS = load_drivers_paths()

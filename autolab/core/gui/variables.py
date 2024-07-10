@@ -8,17 +8,20 @@ Created on Mon Mar  4 14:54:41 2024
 import sys
 import re
 # import ast
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
 from .GUI_utilities import setLineEditBackground
+from .icons import icons
 from ..devices import DEVICES
 from ..utilities import (str_to_array, str_to_dataframe, str_to_value,
-                         array_to_str, dataframe_to_str)
+                         array_to_str, dataframe_to_str, clean_string)
 
+from .monitoring.main import Monitor
+from .slider import Slider
 
 
 # class AddVarSignal(QtCore.QObject):
@@ -64,11 +67,18 @@ def update_allowed_dict() -> dict:
 
 allowed_dict = update_allowed_dict()
 
-
+# TODO: replace refresh by (value)?
+# OPTIMIZE: Variable becomes closer and closer to core.elements.Variable, could envision a merge
+# TODO: refresh menu display by looking if has eval (no -> can refresh)
 # TODO add read signal to update gui (seperate class for event and use it on itemwidget creation to change setText with new value)
 class Variable():
+    """ Class used to control basic variable """
 
-    def __init__(self, var: Any):
+    def __init__(self, name: str, var: Any):
+        """ name: name of the variable, var: value of the variable """
+        self.refresh(name, var)
+
+    def refresh(self, name: str, var: Any):
         if isinstance(var, Variable):
             self.raw = var.raw
             self.value = var.value
@@ -80,8 +90,17 @@ class Variable():
             try: self.value = self.evaluate()  # If no devices or variables found in name, can evaluate value safely
             except Exception as e: self.value = str(e)
 
-    def __call__(self) -> Any:
-        return self.evaluate()
+        self.name = name
+        self.unit = None
+        self.address = lambda: name
+        self.type = type(self.raw)  # For slider
+
+    def __call__(self, value: Any = None) -> Any:
+        if value is None:
+            return self.evaluate()
+
+        self.refresh(self.name, value)
+        return None
 
     def evaluate(self):
         if has_eval(self.raw):
@@ -89,34 +108,48 @@ class Variable():
             call = eval(str(value), {}, allowed_dict)
             self.value = call
         else:
-            call = self.raw
+            call = self.value
 
         return call
 
     def __repr__(self) -> str:
-        if type(self.raw) in [np.ndarray]:
+        if isinstance(self.raw, np.ndarray):
             raw_value_str = array_to_str(self.raw, threshold=1000000, max_line_width=9000000)
-        elif type(self.raw) in [pd.DataFrame]:
+        elif isinstance(self.raw, pd.DataFrame):
             raw_value_str = dataframe_to_str(self.raw, threshold=1000000)
         else:
             raw_value_str = str(self.raw)
         return raw_value_str
 
 
+def rename_variable(name, new_name):
+    var = remove_variable(name)
+    assert var is not None
+    set_variable(new_name, var)
+
+
 def set_variable(name: str, value: Any):
-    for character in r'$*."/\[]:;|, ': name = name.replace(character, '')
-    assert re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', name) is not None, f"Wrong format for variable '{name}'"
-    var = Variable(value) if has_eval(value) else value
+    ''' Create or modify a Variable with provided name and value '''
+    name = clean_string(name)
+
+    if is_Variable(value):
+        var = value
+        var.refresh(name, value)
+    else:
+        var = get_variable(name)
+        if var is None:
+            var = Variable(name, value)
+        else:
+            assert is_Variable(var)
+            var.refresh(name, value)
+
     VARIABLES[name] = var
     update_allowed_dict()
 
 
-def get_variable(name: str) -> Any:
+def get_variable(name: str) -> Union[Variable, None]:
+    ''' Return Variable with provided name if exists else None '''
     return VARIABLES.get(name)
-
-
-def list_variable() -> List[str]:
-    return list(VARIABLES.keys())
 
 
 def remove_variable(name: str) -> Any:
@@ -133,7 +166,6 @@ def remove_from_config(listVariable: List[Tuple[str, Any]]):
 def update_from_config(listVariable: List[Tuple[str, Any]]):
     for var in listVariable:
         set_variable(var[0], var[1])
-
 
 
 def convert_str_to_data(raw_value: str) -> Any:
@@ -154,9 +186,10 @@ def convert_str_to_data(raw_value: str) -> Any:
 def has_variable(value: str) -> bool:
     pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?'
 
-    for key in list(DEVICES.keys())+list(VARIABLES.keys()):
-        if key in re.findall(pattern, str(value)): return True
-    else: return False
+    for key in (list(DEVICES) + list(VARIABLES)):
+        if key in [var.split('.')[0] for var in re.findall(pattern, str(value))]:
+            return True
+    return False
 
 
 def has_eval(value: Any) -> bool:
@@ -172,18 +205,18 @@ def is_Variable(value: Any):
 def eval_variable(value: Any) -> Any:
     """ Evaluate the given python string. String can contain variables,
     devices, numpy arrays and pandas dataframes."""
-    if has_eval(value): value = Variable(value)
+    if has_eval(value): value = Variable('temp', value)
 
     if is_Variable(value): return value()
-    else: return value
+    return value
 
 
 def eval_safely(value: Any) -> Any:
     """ Same as eval_variable but do not evaluate if contains devices or variables """
-    if has_eval(value): value = Variable(value)
+    if has_eval(value): value = Variable('temp', value)
 
     if is_Variable(value): return value.value
-    else: return value
+    return value
 
 
 class VariablesDialog(QtWidgets.QDialog):
@@ -223,8 +256,6 @@ class VariablesDialog(QtWidgets.QDialog):
         layout.setSpacing(0)
         layout.setContentsMargins(0,0,0,0)
 
-        self.show()
-
         self.exec_ = dialog.exec_
         self.textValue = dialog.textValue
         self.setTextValue = dialog.setTextValue
@@ -237,6 +268,7 @@ class VariablesDialog(QtWidgets.QDialog):
 
             self.variablesMenu.variableSignal.connect(self.toggleVariableName)
             self.variablesMenu.deviceSignal.connect(self.toggleDeviceName)
+            self.variablesMenu.show()
         else:
             self.variablesMenu.refresh()
 
@@ -263,8 +295,7 @@ class VariablesDialog(QtWidgets.QDialog):
         self.toggleVariableName(name)
 
     def closeEvent(self, event):
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
         super().closeEvent(event)
 
@@ -279,6 +310,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.gui = parent
         self.setWindowTitle('Variables manager')
+        if self.gui is None: self.setWindowIcon(QtGui.QIcon(icons['autolab']))
 
         self.statusBar = self.statusBar()
 
@@ -300,6 +332,8 @@ class VariablesMenu(QtWidgets.QMainWindow):
         header.resizeSection(5, 100)
         self.variablesWidget.itemDoubleClicked.connect(self.variableActivated)
         self.variablesWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.variablesWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.variablesWidget.customContextMenuRequested.connect(self.rightClick)
 
         addButton = QtWidgets.QPushButton('Add')
         addButton.clicked.connect(self.addVariableAction)
@@ -351,8 +385,9 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
         self.resize(550, 300)
         self.refresh()
-        self.show()
 
+        self.monitors = {}
+        self.sliders = {}
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(400) # ms
         # self.timer.timeout.connect(self.refresh_new)
@@ -363,9 +398,13 @@ class VariablesMenu(QtWidgets.QMainWindow):
     def variableActivated(self, item: QtWidgets.QTreeWidgetItem):
         self.variableSignal.emit(item.name)
 
+    def rightClick(self, position: QtCore.QPoint):
+        """ Provides a menu where the user right clicked to manage a variable """
+        item = self.variablesWidget.itemAt(position)
+        if hasattr(item, 'menu'): item.menu(position)
+
     def deviceActivated(self, item: QtWidgets.QTreeWidgetItem):
-        if hasattr(item, 'name'):
-            self.deviceSignal.emit(item.name)
+        if hasattr(item, 'name'): self.deviceSignal.emit(item.name)
 
     def removeVariableAction(self):
         for variableItem in self.variablesWidget.selectedItems():
@@ -382,7 +421,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
     def addVariableAction(self):
         basename = 'var'
         name = basename
-        names = list_variable()
+        names = list(VARIABLES)
 
         compt = 0
         while True:
@@ -393,7 +432,9 @@ class VariablesMenu(QtWidgets.QMainWindow):
                 break
 
         set_variable(name, 0)
-        MyQTreeWidgetItem(self.variablesWidget, name, self)  # not catched by VARIABLES signal
+
+        variable = get_variable(name)
+        MyQTreeWidgetItem(self.variablesWidget, name, variable, self)  # not catched by VARIABLES signal
 
     # def addVarSignalChanged(self, key, value):
     #     print('got add signal', key, value)
@@ -423,11 +464,12 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
     def refresh(self):
         self.variablesWidget.clear()
-        for i, var_name in enumerate(list_variable()):
-            MyQTreeWidgetItem(self.variablesWidget, var_name, self)
+        for var_name in VARIABLES:
+            variable = get_variable(var_name)
+            MyQTreeWidgetItem(self.variablesWidget, var_name, variable, self)
 
         self.devicesWidget.clear()
-        for i, device_name in enumerate(DEVICES):
+        for device_name in DEVICES:
             device = DEVICES[device_name]
             deviceItem = QtWidgets.QTreeWidgetItem(
                 self.devicesWidget, [device_name])
@@ -445,28 +487,33 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         # self.timer.stop()
-        if self.gui is not None and hasattr(self.gui, 'clearVariablesMenu'):
+        if hasattr(self.gui, 'clearVariablesMenu'):
             self.gui.clearVariablesMenu()
 
-        for children in self.findChildren(
-                QtWidgets.QWidget, options=QtCore.Qt.FindDirectChildrenOnly):
+        for monitor in list(self.monitors.values()):
+            monitor.close()
+
+        for slider in list(self.sliders.values()):
+            slider.close()
+
+        for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         super().closeEvent(event)
 
+        if self.gui is None:
+            QtWidgets.QApplication.quit()  # close the variable app
 
 class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
-    def __init__(self, itemParent, name, gui):
+    def __init__(self, itemParent, name, variable, gui):
 
         super().__init__(itemParent, ['', name])
 
         self.itemParent = itemParent
         self.gui = gui
         self.name = name
-
-        raw_value = get_variable(name)
-        self.raw_value = raw_value
+        self.variable = variable
 
         nameWidget = QtWidgets.QLineEdit()
         nameWidget.setText(name)
@@ -506,13 +553,66 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         self.refresh_rawValue()
         self.refresh_value()
 
+    def menu(self, position: QtCore.QPoint):
+        """ This function provides the menu when the user right click on an item """
+        menu = QtWidgets.QMenu()
+        monitoringAction = menu.addAction("Start monitoring")
+        monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
+        monitoringAction.setEnabled(has_eval(self.variable.raw) or isinstance(
+            self.variable.value, (int, float, np.ndarray, pd.DataFrame)))
+
+        menu.addSeparator()
+        sliderAction = menu.addAction("Create a slider")
+        sliderAction.setIcon(QtGui.QIcon(icons['slider']))
+        sliderAction.setEnabled(self.variable.type in (int, float))
+
+        choice = menu.exec_(self.gui.variablesWidget.viewport().mapToGlobal(position))
+        if choice == monitoringAction: self.openMonitor()
+        elif choice == sliderAction: self.openSlider()
+
+    def openMonitor(self):
+        """ This function open the monitor associated to this variable. """
+        # If the monitor is not already running, create one
+        if id(self) not in self.gui.monitors:
+            self.gui.monitors[id(self)] = Monitor(self)
+            self.gui.monitors[id(self)].show()
+        # If the monitor is already running, just make as the front window
+        else:
+            monitor = self.gui.monitors[id(self)]
+            monitor.setWindowState(
+                monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            monitor.activateWindow()
+
+    def openSlider(self):
+        """ This function open the slider associated to this variable. """
+        # If the slider is not already running, create one
+        if id(self) not in self.gui.sliders:
+            self.gui.sliders[id(self)] = Slider(self.variable, self)
+            self.gui.sliders[id(self)].show()
+        # If the slider is already running, just make as the front window
+        else:
+            slider = self.gui.sliders[id(self)]
+            slider.setWindowState(
+                slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            slider.activateWindow()
+
+    def clearMonitor(self):
+        """ This clear monitor instances reference when quitted """
+        if id(self) in self.gui.monitors:
+            self.gui.monitors.pop(id(self))
+
+    def clearSlider(self):
+        """ This clear the slider instances reference when quitted """
+        if id(self) in self.gui.sliders:
+            self.gui.sliders.pop(id(self))
+
     def renameVariable(self):
         new_name = self.nameWidget.text()
         if new_name == self.name:
             setLineEditBackground(self.nameWidget, 'synced')
             return None
 
-        if new_name in list_variable():
+        if new_name in VARIABLES:
             self.gui.setStatus(
                 f"Error: {new_name} already exist!", 10000, False)
             return None
@@ -521,22 +621,21 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             new_name = new_name.replace(character, '')
 
         try:
-            set_variable(new_name, get_variable(self.name))
+            rename_variable(self.name, new_name)
         except Exception as e:
             self.gui.setStatus(f'Error: {e}', 10000, False)
         else:
-            remove_variable(self.name)
             self.name = new_name
             new_name = self.nameWidget.setText(self.name)
             setLineEditBackground(self.nameWidget, 'synced')
             self.gui.setStatus('')
 
     def refresh_rawValue(self):
-        raw_value = self.raw_value
+        raw_value = self.variable.raw
 
-        if type(raw_value) in [np.ndarray]:
+        if isinstance(raw_value, np.ndarray):
             raw_value_str = array_to_str(raw_value)
-        elif type(raw_value) in [pd.DataFrame]:
+        elif isinstance(raw_value, pd.DataFrame):
             raw_value_str = dataframe_to_str(raw_value)
         else:
             raw_value_str = str(raw_value)
@@ -544,7 +643,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         self.rawValueWidget.setText(raw_value_str)
         setLineEditBackground(self.rawValueWidget, 'synced')
 
-        if isinstance(raw_value, Variable) and has_variable(raw_value):  # OPTIMIZE: use hide and show instead but doesn't hide on instantiation
+        if has_variable(self.variable):  # OPTIMIZE: use hide and show instead but doesn't hide on instantiation
             if self.actionButtonWidget is None:
                 actionButtonWidget = QtWidgets.QPushButton()
                 actionButtonWidget.setText('Update value')
@@ -558,13 +657,11 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             self.actionButtonWidget = None
 
     def refresh_value(self):
-        raw_value = self.raw_value
+        value = self.variable.value
 
-        value = eval_safely(raw_value)
-
-        if type(value) in [np.ndarray]:
+        if isinstance(value, np.ndarray):
             value_str = array_to_str(value)
-        elif type(value) in [pd.DataFrame]:
+        elif isinstance(value, pd.DataFrame):
             value_str = dataframe_to_str(value)
         else:
             value_str = str(value)
@@ -594,18 +691,17 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             except Exception as e:
                 self.gui.setStatus(f'Error: {e}', 10000)
             else:
-                self.raw_value = get_variable(name)
                 self.refresh_rawValue()
                 self.refresh_value()
 
     def convertVariableClicked(self):
-        try: value = eval_variable(self.raw_value)
+        try: value = eval_variable(self.variable)
         except Exception as e:
             self.gui.setStatus(f'Error: {e}', 10000, False)
         else:
-            if type(value) in [np.ndarray]:
+            if isinstance(value, np.ndarray):
                 value_str = array_to_str(value)
-            elif type(value) in [pd.DataFrame]:
+            elif isinstance(value, pd.DataFrame):
                 value_str = dataframe_to_str(value)
             else:
                 value_str = str(value)

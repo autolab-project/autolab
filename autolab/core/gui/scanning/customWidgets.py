@@ -24,7 +24,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
         self.recipe_name = recipe_name
         self.scanner = gui
-        QtWidgets.QTreeWidget.__init__(self, parent)
+        super().__init__(parent)
         self.setAcceptDrops(True)
 
     def mimeTypes(self) -> QtWidgets.QTreeWidget.mimeTypes:
@@ -66,10 +66,10 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         stream = QtCore.QDataStream(encoded, QtCore.QIODevice.ReadOnly)
         while not stream.atEnd():
             nItems = stream.readInt32()
-            for i in range(nItems):
+            for _ in range(nItems):
                 path = stream.readInt32()
                 row = []
-                for j in range(path):
+                for _ in range(path):
                     row.append(stream.readInt32())
                 rows.append(row)
 
@@ -110,7 +110,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                         self.scanner.configManager.configHistory.active = True
                         self.scanner.configManager.addRecipeStep(self.recipe_name, stepType, stepElement, name, stepValue)
 
-                        try: self.scanner.configManager.getAllowedRecipe(self.recipe_name)
+                        try: self.scanner.configManager.getAllowedRecipe(self.recipe_name)  # OBSOLETE
                         except ValueError:
                             self.scanner.setStatus('ERROR cycle between recipes detected! change cancelled', 10000, False)
                             self.scanner.configManager.configHistory.active = False
@@ -161,7 +161,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             self.setGraphicsEffect(shadow)
 
-        elif type(event.source()) == type(self):
+        elif isinstance(event.source(), type(self)):
             try:  # Refuse drop recipe in itself
                 if event.mimeData().hasFormat(MyQTreeWidget.customMimeType):
                     encoded = event.mimeData().data(MyQTreeWidget.customMimeType)
@@ -211,7 +211,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
 
         self.recipe_name = recipe_name
         self.gui = gui
-        QtWidgets.QTabWidget.__init__(self)
+        super().__init__()
 
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.menu)
@@ -265,7 +265,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
             moveDownRecipeAction.setIcon(QtGui.QIcon(icons['down']))
 
             config = self.gui.configManager.config
-            keys = list(config.keys())
+            keys = list(config)
             pos = keys.index(self.recipe_name)
 
             if pos == 0: moveUpRecipeAction.setEnabled(False)
@@ -308,7 +308,7 @@ class parameterQFrame(QtWidgets.QFrame):
     def __init__(self, parent: QtWidgets.QMainWindow, recipe_name: str, param_name: str):
         self.recipe_name = recipe_name
         self.param_name = param_name
-        QtWidgets.QFrame.__init__(self, parent)
+        super().__init__(parent)
         self.setAcceptDrops(True)
 
     def dropEvent(self, event):
@@ -326,7 +326,6 @@ class parameterQFrame(QtWidgets.QFrame):
         # OPTIMIZE: create mimedata like for recipe if want to drag/drop parameter to recipe or parap to param
         if (hasattr(event.source(), "last_drag") and (hasattr(event.source().last_drag, "parameter_allowed") and event.source().last_drag.parameter_allowed)):
             event.accept()
-
             shadow = QtWidgets.QGraphicsDropShadowEffect(blurRadius=25, xOffset=3, yOffset=3)
             self.setGraphicsEffect(shadow)
         else:
