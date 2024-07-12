@@ -7,12 +7,12 @@ To avoid having to provide each time the full configuration of an instrument (co
 
 More precisely, this configuration is stored in a local configuration file named ``devices_config.ini``, which is located in the local directory of Autolab. Both this directory and this file are created automatically in your home directory the first time you use the package (the following messages will be displayed, indicating their exact paths).
 
-.. code-block:: python
+.. code-block:: none
 
 	The local directory of AUTOLAB has been created: C:\Users\<USER>\autolab.
 	It contains the configuration files devices_config.ini, autolab_config.ini and plotter.ini.
 	It also contains the 'driver' directory with 'official' and 'local' sub-directories.
-	
+
 .. warning ::
 
 	Do not move or rename the local directory nor the configuration file.

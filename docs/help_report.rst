@@ -1,5 +1,5 @@
-Doc / Reports / Stats
------------------------------------------
+Doc / Reports
+-------------
 
 Documentation
 =============

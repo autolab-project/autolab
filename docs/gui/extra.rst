@@ -12,7 +12,7 @@ To use this function both in the control panel and in a scan recipe, use the spe
 This name was chosen in reference to the python function eval used to perform the operation and also to be complex enough not to be used by mistake and produce an unexpected result.
 The eval function only has access to all instantiated devices and to the pandas and numpy packages.
 
-.. code-block:: none
+.. code-block:: python
 
 	>>> # Usefull to set the value of a parameter to a step of a recipe
 	>>> $eval:system.parameter_buffer()
