@@ -1,9 +1,8 @@
 Release notes
--------------
-
+=============
 
 2.0
-===
+###
 
 Autolab 2.0 is the first major release since 2020.
 
@@ -102,8 +101,7 @@ Miscellaneous Improvements
   - Added an "About" window showing versions, authors, license, and project URLs.
   - Implemented various fixes for thread handling and error prevention.
 
-
 1.1.12
-======
+######
 
 Last version developed by the original authors.
