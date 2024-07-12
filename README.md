@@ -17,10 +17,10 @@ Visit https://autolab.readthedocs.io/ for the full documentation of this package
 
 ## Overview
 
-![Autolab scheme](docs/scheme.png)
+<img src="https://raw.githubusercontent.com/autolab-project/autolab/master/docs/scheme.png">
 
 ## GUI example
 
-![Autolab Scanning GUI](docs/gui/scanning.png)
+<img src="https://raw.githubusercontent.com/autolab-project/autolab/master/docs/gui/scanning.png">
 
-![Autolab Control Panel GUI](docs/gui/control_panel.png)
+<img src="https://raw.githubusercontent.com/autolab-project/autolab/master/docs/gui/control_panel.png">
