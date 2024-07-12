@@ -11,12 +11,12 @@ From it, you can visualize and set the value of its *Variables*, and execute its
 Devices tree
 ------------
 
-By default, the name of each local configuration in represented in a tree widget.
+By default, the name of each local configuration is represented in a tree widget.
 Click on one of them to load the associated **Device**.
 Then, the corresponding *Element* hierarchy appears.
-Right-click to bring up the close option.
+Right-click to bring up the close options.
 
-The help of a given **Element** (see :ref:`highlevel`) can be displayed though a tooltip by passing the mouse over it (if provided in the driver files).
+The help of a given **Element** (see :ref:`highlevel`) can be displayed through a tooltip by passing the mouse over it (if provided in the driver files).
 
 Actions
 #######
@@ -33,15 +33,15 @@ The value of a *Variable* can be set or read if its type is numerical (integer, 
 If the *Variable* is readable (read function provided in the driver), a **Read** button is available on its line.
 When clicking on this button, the *Variable*'s value is read and displayed in a line edit widget (integer / float values) or in a checkbox (boolean).
 
-If the *Variable* is writable (write function provided in the driver), its value can be edited and sent to the instrument (return pressed for interger / float values, check box checked or unchecked for boolean values).
-If the *Variable* is also readable, a **Read** operation will be executed automatically after that.
+If the *Variable* is writable (write function provided in the driver), its value can be edited and sent to the instrument (return pressed for integer / float values, check box checked or unchecked for boolean values).
+If the *Variable* is readable, a **Read** operation will be executed automatically after that.
 
 To read and save the value of a *Variable*, right click on its line and select **Read and save as...**.
 You will be prompted to select the path of the output file.
 
 The colored displayed at the end of a line corresponds to the state of the displayed value:
 
-	* The orange color means that the currently displayed value is not necessary the current value of the **Variable** in the instrument. The user should click the **Read** button to update the value in the interface.
+	* The orange color means that the currently displayed value is not necessarily the current value of the **Variable** in the instrument. The user should click the **Read** button to update the value in the interface.
 	* The green color means that the currently displayed value is up to date (except if the user modified its value directly on the instrument. In that case, click the **Read** button to update the value in the interface).
 
 Monitoring
@@ -54,7 +54,7 @@ Please visit the section :ref:`monitoring`.
 Slider
 ------
 
-A readable and numerical *Variable* can be controled by a slider for convinient setting.
+A readable and numerical *Variable* can be controled by a slider for convenient setting.
 To open the slider of this *Variable*, right click on it and select **Create a slider**.
 
 .. image:: slider.png
@@ -70,4 +70,4 @@ Plotting
 --------
 
 You can open the plotting interface with the associated button 'Open plotter' in the menu bar of the control panel window.
-See section :ref:`plotting`.
+See section :ref:`plotting` for more details.

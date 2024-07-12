@@ -12,7 +12,7 @@ Scan configuration
 
 A scan can be composed of several recipes. Click on **Add recipe** at the bottom of the scanner to add an extra recipe.
 
-A recipe represent a list of steps that are executed for each value of a or multiple parameter.
+A recipe represents a list of steps that are executed for each value of one or multiple parameters.
 
 
 Parameters
@@ -20,10 +20,10 @@ Parameters
 
 The first step to do is to configure a scan parameter. A parameter is a *Variable* which is writable (write function provided in the driver) and numerical (integer or float value). To set a *Variable* as scan parameter, right click on it on the control panel window, and select **Set as scan parameter**.
 
-The user can change the name of the parameter with the line edit widget. This name will be used is the data files.
-It it possible to add extra parameters to a recipe by right cliking on the top of a recipe and selecting **Add Parameter**
+The user can change the name of the parameter using the line edit widget. This name will be used in the data files.
+It is possible to add extra parameters to a recipe by right-clicking on the top of a recipe and selecting **Add Parameter**
 This feature allows to realize 2D scan or ND-scan.
-A parameter can be removed by right cliking on its frame and selecting **Remove <parameter>**.
+A parameter can be removed by right-clicking on its frame and selecting **Remove <parameter>**.
 A parameter is optional, a recipe is executed once if no parameter is given.
 
 Parameter range
@@ -31,7 +31,7 @@ Parameter range
 
 The second step is to configure the range of the values that will be applied to the parameter during the scan.
 The user can set the start value, the end value, the mean value, the range width, the number of points of the scan or the step between two values.
-The user can also space the points following a log scale by selecting the **Log** option.
+The user can also space the points following a logarithmic scale by selecting the **Log** option.
 It is also possible to use a custom array for the parameter using the **Custom** option.
 
 Steps
@@ -47,14 +47,14 @@ Each recipe step must have a unique name. To change the name of a recipe step, r
 
 Recipe steps can be dragged and dropped to modify their relative order inside a recipe, to move them between multiple recipes, or to add them from the control panel. They can also be removed from the recipe using the right click menu **Remove**.
 
-Right clicking on a recipe gives several options: **Disable**, **Rename**, **Remove**, **Add Parameter**, **Move up** and **Move down**.
+Right-clicking on a recipe gives several options: **Disable**, **Rename**, **Remove**, **Add Parameter**, **Move up** and **Move down**.
 
-All changes made to the scan configuration are kept in a history allowing changes to be undone or restored using buttons **Undo** and **Redo**. These buttons are accessible using the **Edit** button in the menu bar of the scanner window.
+All changes made to the scan configuration are kept in a history, allowing changes to be undone or restored using the **Undo** and **Redo** buttons. These buttons are accessible using the **Edit** button in the menu bar of the scanner window.
 
 Store the configuration
 -----------------------
 
-Once the configuration of a scan is finished, the user can save it locally in a file for future use, by opening the menu **Configuration** and selecting **Export current configuration**. The user will be prompted for a file path in which the current scan configuration (parameter, parameter range, recipe) will be saved.
+Once the configuration of a scan is finished, the user can save it locally in a file for future use by opening the **Configuration** menu and selecting **Export current configuration**. The user will be prompted for a file path in which the current scan configuration (parameter, parameter range, recipe) will be saved.
 
 To load a previously exported scan configuration, open the menu **Configuration** and select **Import configuration**. The user will be prompted for the path of the configuration file.
 Use the **Append** option to append the selected configuration as an extra recipe to the existing scan.
@@ -83,11 +83,11 @@ Figure
 
 The user can interact with the figure at any time (during a scan or not).
 
-After a first loop of a recipe has been processed, the user can select the *Variable* displayed in x and y axis of the figure.
+After the first loop of a recipe has been processed, the user can select the *Variable* displayed in x and y axes of the figure.
 
 The user can display the previous scan results using the combobox above the scanner figure containing the scan name.
 
-If the user has created several recipes in a scan, it is possible to display its results using the combobox above the scanner figure contaning the recipe name.
+If the user has created several recipes in a scan, it is possible to display their results using the combobox above the scanner figure contaning the recipe names.
 
 It is possible to display arrays and images using the combobox above the scanner figure containing the dataframe name or 'Scan' for the main scan result.
 

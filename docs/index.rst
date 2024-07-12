@@ -8,7 +8,7 @@ Welcome to Autolab's documentation!
 
 **"Forget your instruments, focus on your experiment!"**
 
-Autolab is a Python package dedicated to control remotely any laboratory instruments and automate scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 50 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones). The configuration required to communicate with a given instrument (connection type, address, ...) can be saved locally to avoid providing it each time. Autolab can also be used either through a Python shell, an OS shell, or a graphical interface.
+Autolab is a Python package dedicated to remotely controlling any laboratory instruments and automating scientific experiments in the most user-friendly way. This package provides a set of standardized drivers for about 50 instruments (for now) which are ready to use, and is open to inputs from the community (new drivers or upgrades of existing ones). The configuration required to communicate with a given instrument (connection type, address, ...) can be saved locally to avoid providing it each time. Autolab can also be used either through a Python shell, an OS shell, or a graphical interface.
 
 .. figure:: scheme.png
 	:figclass: align-center
@@ -33,7 +33,7 @@ In this package, the interaction with a scientific instrument can be done throug
 		>>> stage = autolab.get_driver('newport_XPS', connection='SOCKET')
 		>>> stage.go_home()
 
-	* The :ref:`highlevel`, are an abstraction layer of the low-level interface that provide a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects.
+	* The :ref:`highlevel`, is an abstraction layer of the low-level interface that provides a simple and straightforward way to communicate with an instrument, through a hierarchy of Modules, Variables and Actions objects.
 
 	.. code-block:: python
 
@@ -52,12 +52,12 @@ In this package, the interaction with a scientific instrument can be done throug
 		>>> stage = autolab.get_device('my_stage')		# Create the Device 'my_stage'
 		>>> stage.home()					# Execute the Action 'home'
 
-	The user can also interact even more easily with this high-level interface through a user-friendly :ref:`gui` which contains three panels: A Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
+	The user can also interact even more easily with this high-level interface through a user-friendly :ref:`gui` which contains three panels: a Control Panel (graphical equivalent of the high-level interface), a Monitor (to monitor the value of a Variable in time) and a Scanner (to scan a Parameter and execute a custom Recipe).
 
 	.. figure:: gui/scanning.png
 		:figclass: align-center
 
-All the Autolab's features are also available through an :ref:`shell_scripts` interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without opening explicitely a Python shell.
+All of Autolab's features are also available through an :ref:`shell_scripts` interface (Windows and Linux) that can be used to perform for instance a quick single-shot operation without explicitly opening a Python shell.
 
 	.. code-block:: none
 
@@ -65,9 +65,9 @@ All the Autolab's features are also available through an :ref:`shell_scripts` in
 		>>> autolab device -D my_tunics -e wavelength -v 1551
 
 .. note::
-	**Useful links**:
+	**Useful Links**:
 
-	* `Slides of our Autolab seminar (March 2020) <https://docs.google.com/presentation/d/1Uc6f0dEn6C18_0fr1pFuYSLmQ2AhIkVi9B5xTKfUIqw/edit?usp=sharing>`_
+	* `Slides from our Autolab seminar (March 2020) <https://docs.google.com/presentation/d/1Uc6f0dEn6C18_0fr1pFuYSLmQ2AhIkVi9B5xTKfUIqw/edit?usp=sharing>`_
 	* Github project: `github.com/autolab-project/autolab <https://github.com/autolab-project/autolab>`_
 	* PyPi project: `pypi.org/project/autolab/ <https://pypi.org/project/autolab/>`_
 	* Online documentation: `autolab.readthedocs.io/ <https://autolab.readthedocs.io/en/latest/>`_

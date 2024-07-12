@@ -4,7 +4,7 @@ Doc / Reports
 Documentation
 =============
 
-You can open directly this documentation from Python by calling the function ``doc`` of the package:
+You can directly open this documentation from Python by calling the ``doc`` function of the package:
 
 .. code-block:: python
 
@@ -19,10 +19,10 @@ You can open directly this documentation from Python by calling the function ``d
 Bugs & suggestions reports
 ==========================
 
-If you encounter some problems or bugs, or if you have any suggestion to improve this package, or one of its driver, please open an Issue on the GitHub page of this project
+If you encounter any problems or bugs, or if you have any suggestion to improve this package, or one of its drivers, please open an Issue on the GitHub page of this project
 https://github.com/autolab-project/autolab/issues/new
 
-You can also directly call the function ``report`` of the package, which will open this page in your web browser:
+You can also directly call the ``report`` function of the package, which will open this page in your web browser:
 
 .. code-block:: python
 

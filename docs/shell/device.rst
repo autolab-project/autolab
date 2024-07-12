@@ -38,7 +38,7 @@ The available operations are listed below:
 
 		>>> autolab device -D myLinearStage -e goHome
 
-	* **To display the help** of any **Element**, provide its address with the option ``-h`` or ``--help`` :
+	* **To display the help** of any **Element**, provide its address with the option ``-h`` or ``--help``:
 
 	.. code-block:: none
 
