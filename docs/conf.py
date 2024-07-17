@@ -34,7 +34,7 @@ copyright = (
     "2019-2020 Quentin Chateiller and Bruno Garbin (C2N-CNRS), "
     "2021-2024 Jonathan Peltier and Mathieu Jeannin (C2N-CNRS)"
 )
-author = 'Quentin Chateiller & Bruno Garbin\n& Jonathan Peltier & Mathieu Jeannin'
+author = 'Quentin Chateiller, Bruno Garbin \\ Jonathan Peltier and Mathieu Jeannin'
 
 # The full version, including alpha/beta/rc tags
 release = version

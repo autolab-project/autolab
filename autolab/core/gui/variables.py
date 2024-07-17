@@ -7,8 +7,7 @@ Created on Mon Mar  4 14:54:41 2024
 
 import sys
 import re
-# import ast
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -70,7 +69,7 @@ allowed_dict = update_allowed_dict()
 # TODO: replace refresh by (value)?
 # OPTIMIZE: Variable becomes closer and closer to core.elements.Variable, could envision a merge
 # TODO: refresh menu display by looking if has eval (no -> can refresh)
-# TODO add read signal to update gui (seperate class for event and use it on itemwidget creation to change setText with new value)
+# TODO add read signal to update gui (separate class for event and use it on itemwidget creation to change setText with new value)
 class Variable():
     """ Class used to control basic variable """
 
@@ -112,23 +111,18 @@ class Variable():
 
         return call
 
-    def __repr__(self) -> str:
-        if isinstance(self.raw, np.ndarray):
-            raw_value_str = array_to_str(self.raw, threshold=1000000, max_line_width=9000000)
-        elif isinstance(self.raw, pd.DataFrame):
-            raw_value_str = dataframe_to_str(self.raw, threshold=1000000)
-        else:
-            raw_value_str = str(self.raw)
-        return raw_value_str
+
+def list_variables() -> List[str]:
+    ''' Returns a list of Variables '''
+    return list(VARIABLES)
 
 
-def rename_variable(name, new_name):
+def rename_variable(name: str, new_name: str) -> Variable:
     var = remove_variable(name)
-    assert var is not None
-    set_variable(new_name, var)
+    return set_variable(new_name, var)
 
 
-def set_variable(name: str, value: Any):
+def set_variable(name: str, value: Any) -> Variable:
     ''' Create or modify a Variable with provided name and value '''
     name = clean_string(name)
 
@@ -136,40 +130,41 @@ def set_variable(name: str, value: Any):
         var = value
         var.refresh(name, value)
     else:
-        var = get_variable(name)
-        if var is None:
-            var = Variable(name, value)
-        else:
-            assert is_Variable(var)
+        if name in VARIABLES:
+            var = get_variable(name)
             var.refresh(name, value)
+        else:
+            var = Variable(name, value)
 
     VARIABLES[name] = var
     update_allowed_dict()
+    return var
 
 
-def get_variable(name: str) -> Union[Variable, None]:
+def get_variable(name: str) -> Variable:
     ''' Return Variable with provided name if exists else None '''
-    return VARIABLES.get(name)
+    return VARIABLES[name]
 
 
-def remove_variable(name: str) -> Any:
-    value = VARIABLES.pop(name) if name in VARIABLES else None
+def remove_variable(name: str) -> Variable:
+    value = VARIABLES.pop(name)
     update_allowed_dict()
     return value
 
 
-def remove_from_config(listVariable: List[Tuple[str, Any]]):
-    for var in listVariable:
-        remove_variable(var[0])
+def remove_from_config(variables: List[Tuple[str, Any]]):
+    for name, _ in variables:
+        if name in VARIABLES:
+            remove_variable(name)
 
 
-def update_from_config(listVariable: List[Tuple[str, Any]]):
-    for var in listVariable:
+def update_from_config(variables: List[Tuple[str, Any]]):
+    for var in variables:
         set_variable(var[0], var[1])
 
 
-def convert_str_to_data(raw_value: str) -> Any:
-    """ Convert data in str format to proper format """
+def str_to_data(raw_value: str) -> Any:
+    """ Convert str to data with special format for ndarray and dataframe """
     if not has_eval(raw_value):
         if '\t' in raw_value and '\n' in raw_value:
             try: raw_value = str_to_dataframe(raw_value)
@@ -183,11 +178,23 @@ def convert_str_to_data(raw_value: str) -> Any:
     return raw_value
 
 
+def data_to_str(value: Any) -> str:
+    """ Convert data to str with special format for ndarray and dataframe """
+    if isinstance(value, np.ndarray):
+        raw_value_str = array_to_str(value, threshold=1000000, max_line_width=9000000)
+    elif isinstance(value, pd.DataFrame):
+        raw_value_str = dataframe_to_str(value, threshold=1000000)
+    else:
+        raw_value_str = str(value)
+    return raw_value_str
+
+
 def has_variable(value: str) -> bool:
+    if not isinstance(value, str): return False
     pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?'
 
     for key in (list(DEVICES) + list(VARIABLES)):
-        if key in [var.split('.')[0] for var in re.findall(pattern, str(value))]:
+        if key in [var.split('.')[0] for var in re.findall(pattern, value)]:
             return True
     return False
 
@@ -278,7 +285,7 @@ class VariablesDialog(QtWidgets.QDialog):
 
     def toggleVariableName(self, name):
         value = self.textValue()
-        if is_Variable(get_variable(name)): name += '()'
+        if name in VARIABLES and is_Variable(get_variable(name)): name += '()'
 
         if value in ('0', "''"): value = ''
         if not has_eval(value): value = EVAL + value
@@ -431,9 +438,8 @@ class VariablesMenu(QtWidgets.QMainWindow):
             else:
                 break
 
-        set_variable(name, 0)
+        variable = set_variable(name, 0)
 
-        variable = get_variable(name)
         MyQTreeWidgetItem(self.variablesWidget, name, variable, self)  # not catched by VARIABLES signal
 
     # def addVarSignalChanged(self, key, value):
@@ -631,19 +637,12 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             self.gui.setStatus('')
 
     def refresh_rawValue(self):
-        raw_value = self.variable.raw
-
-        if isinstance(raw_value, np.ndarray):
-            raw_value_str = array_to_str(raw_value)
-        elif isinstance(raw_value, pd.DataFrame):
-            raw_value_str = dataframe_to_str(raw_value)
-        else:
-            raw_value_str = str(raw_value)
+        raw_value_str = data_to_str(self.variable.raw)
 
         self.rawValueWidget.setText(raw_value_str)
         setLineEditBackground(self.rawValueWidget, 'synced')
 
-        if has_variable(self.variable):  # OPTIMIZE: use hide and show instead but doesn't hide on instantiation
+        if has_variable(self.variable.raw):  # OPTIMIZE: use hide and show instead but doesn't hide on instantiation
             if self.actionButtonWidget is None:
                 actionButtonWidget = QtWidgets.QPushButton()
                 actionButtonWidget.setText('Update value')
@@ -658,13 +657,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
     def refresh_value(self):
         value = self.variable.value
-
-        if isinstance(value, np.ndarray):
-            value_str = array_to_str(value)
-        elif isinstance(value, pd.DataFrame):
-            value_str = dataframe_to_str(value)
-        else:
-            value_str = str(value)
+        value_str = data_to_str(value)
 
         self.valueWidget.setText(value_str)
         self.typeWidget.setText(str(type(value).__name__))
@@ -674,7 +667,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         raw_value = self.rawValueWidget.text()
         try:
             if not has_eval(raw_value):
-                raw_value = convert_str_to_data(raw_value)
+                raw_value = str_to_data(raw_value)
             else:
                 # get all variables
                 pattern1 = r'[a-zA-Z][a-zA-Z0-9._]*'
@@ -699,12 +692,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         except Exception as e:
             self.gui.setStatus(f'Error: {e}', 10000, False)
         else:
-            if isinstance(value, np.ndarray):
-                value_str = array_to_str(value)
-            elif isinstance(value, pd.DataFrame):
-                value_str = dataframe_to_str(value)
-            else:
-                value_str = str(value)
+            value_str = data_to_str(value)
 
             self.valueWidget.setText(value_str)
             self.typeWidget.setText(str(type(value).__name__))

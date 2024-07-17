@@ -1050,7 +1050,7 @@ class ConfigManager:
 
                 add_vars = []
                 for var_name, raw_value in var_dict.items():
-                    raw_value = variables.convert_str_to_data(raw_value)
+                    raw_value = variables.str_to_data(raw_value)
                     add_vars.append((var_name, raw_value))
 
                 variables.update_from_config(add_vars)

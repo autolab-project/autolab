@@ -27,11 +27,11 @@ def _create_item(var):
     class temp:
         gui = None
 
+    assert isinstance(var, (Variable, Variable_og)), f'Need type {Variable} ' \
+        f'or {Variable_og}, but given type is {type(var)}'
+
     item = temp()
-    if isinstance(var, (Variable, Variable_og)):
-        item.variable = var
-    else:
-        item.variable = Variable('Variable', var)
+    item.variable = var
     return item
 
 

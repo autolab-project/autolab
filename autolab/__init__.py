@@ -55,6 +55,10 @@ from .core.server import Server as server
 
 # GUI
 from .core.gui import gui, plotter, monitor, slider, add_device, about, variables_menu
+try:  # Avoid raising error if no GUI packages installed
+    from .core.gui.variables import get_variable, list_variables
+    from .core.gui.variables import set_variable as add_variable
+except: pass
 
 # Repository
 from .core.repository import install_drivers

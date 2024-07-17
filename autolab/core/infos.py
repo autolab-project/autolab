@@ -22,15 +22,15 @@ def list_drivers(_print: bool = True) -> str:
         sub_driver_list = sorted([key for key, val in drivers.DRIVERS_PATHS.items() if val['source']==source_name])
         s += f'Drivers in {source}:\n'
         if len(sub_driver_list) > 0:
-            txt_list = [[f'    - {driver_name}',
+            txt_list = [[f' - {driver_name}',
                          f'({drivers.get_driver_category(driver_name)})']
                             for driver_name in sub_driver_list]
             s += utilities.two_columns(txt_list) + '\n\n'
         else:
             if (i + 1) == len(paths.DRIVER_SOURCES):
-                s += '    <No drivers>\n\n'
+                s += ' <No drivers>\n\n'
             else:
-                s += '    <No drivers> (or overwritten)\n\n'
+                s += ' <No drivers> (or overwritten)\n\n'
 
     if _print:
         print(s)
@@ -47,7 +47,7 @@ def list_devices(_print: bool = True) -> str:
     # Build infos str for devices
     s = '\n'
     s += f'{len(devices_names)} devices found\n\n'
-    txt_list = [[f'    - {name} ' + ('[loaded]' if name in devices_names_loaded else ''),
+    txt_list = [[f' - {name} ' + ('[loaded]' if name in devices_names_loaded else ''),
                  f'({config.get_device_config(name)["driver"]})']
                      for name in devices_names]
     s += utilities.two_columns(txt_list) + '\n'
@@ -124,16 +124,16 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     mess += '\n' + utilities.underline(
         'Saving a Device configuration in devices_config.ini:') + '\n'
     for conn in params['connection']:
-        mess += f"\n   [my_{params['driver']}]\n"
-        mess += f"   driver = {params['driver']}\n"
-        mess += f"   connection = {conn}\n"
+        mess += f"\n[my_{params['driver']}]\n"
+        mess += f"driver = {params['driver']}\n"
+        mess += f"connection = {conn}\n"
         for arg, value in params['connection'][conn].items():
-            mess += f"   {arg} = {value}\n"
+            mess += f"{arg} = {value}\n"
         for arg, value in params['other'].items():
-            mess += f"   {arg} = {value}\n"
+            mess += f"{arg} = {value}\n"
 
     # Example of get_driver
-    mess += '\n' + utilities.underline('Loading a Driver:') + '\n\n'
+    mess += '\n\n' + utilities.underline('Loading a Driver:') + '\n\n'
     for conn in params['connection']:
         if not _parser:
             args_str = f"'{params['driver']}', connection='{conn}'"
@@ -144,7 +144,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
                     args_str += f", {arg}='{value}'"
                 else:
                     args_str += f", {arg}={value}"
-            mess += f"   a = autolab.get_driver({args_str})\n"
+            mess += f"a = autolab.get_driver({args_str})\n"
         else:
             args_str = f"-D {params['driver']} -C {conn} "
             for arg,value in params['connection'][conn].items():
@@ -153,15 +153,15 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
             if len(params['other']) > 0: args_str += '-O '
             for arg,value in params['other'].items():
                 args_str += f"{arg}={value} "
-            mess += f"   autolab driver {args_str} -m method(value) \n"
+            mess += f"autolab driver {args_str} -m method(value) \n"
 
     # Example of get_device
     mess += '\n\n' + utilities.underline(
         'Loading a Device configured in devices_config.ini:') + '\n\n'
     if not _parser:
-        mess += f"   a = autolab.get_device('my_{params['driver']}')"
+        mess += f"a = autolab.get_device('my_{params['driver']}')"
     else:
-        mess += f"   autolab device -D my_{params['driver']} -e element -v value \n"
+        mess += f"autolab device -D my_{params['driver']} -e element -v value \n"
 
     if _print:
         print(mess)
