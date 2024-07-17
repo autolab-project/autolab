@@ -312,7 +312,7 @@ class Scanner(QtWidgets.QMainWindow):
                 file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
                 file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
                 file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
-                file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "All Files (*)"])
+                file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "Any Files (*)"])
                 layout.addWidget(file_dialog)
 
                 appendCheck = QtWidgets.QCheckBox('Append', self)
@@ -322,6 +322,8 @@ class Scanner(QtWidgets.QMainWindow):
 
                 self.exec_ = file_dialog.exec_
                 self.selectedFiles = file_dialog.selectedFiles
+
+                self.setLayout(layout)
 
             def appendCheckChanged(self, event):
                 self.append = event

@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 
-SUPPORTED_EXTENSION = "Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)"
+SUPPORTED_EXTENSION = "Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; Any Files (*)"
 
 
 def emphasize(txt: str, sign: str = '-') -> str:

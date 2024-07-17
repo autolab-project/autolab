@@ -48,7 +48,7 @@ class Monitor(QtWidgets.QMainWindow):
         setLineEditBackground(
             self.windowLength_lineEdit, 'synced', self._font_size)
 
-        self.xlabel = ''  # defined in data according to data type
+        self.xlabel = 'Time(s)'  # Is changed to x if ndarray or dataframe
         self.ylabel = f'{self.variable.address()}'  # OPTIMIZE: could depend on 1D or 2D
 
         if self.variable.unit is not None:
