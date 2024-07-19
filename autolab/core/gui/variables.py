@@ -66,18 +66,26 @@ def update_allowed_dict() -> dict:
 
 allowed_dict = update_allowed_dict()
 
-# TODO: replace refresh by (value)?
 # OPTIMIZE: Variable becomes closer and closer to core.elements.Variable, could envision a merge
 # TODO: refresh menu display by looking if has eval (no -> can refresh)
 # TODO add read signal to update gui (separate class for event and use it on itemwidget creation to change setText with new value)
 class Variable():
     """ Class used to control basic variable """
 
+    raw: Any
+    value: Any
+
     def __init__(self, name: str, var: Any):
         """ name: name of the variable, var: value of the variable """
-        self.refresh(name, var)
+        self.unit = None
+        self._rename(name)
+        self._refresh(var)
 
-    def refresh(self, name: str, var: Any):
+    def _rename(self, new_name: str):
+            self.name = new_name
+            self.address = lambda: new_name
+
+    def _refresh(self, var: Any):
         if isinstance(var, Variable):
             self.raw = var.raw
             self.value = var.value
@@ -85,23 +93,14 @@ class Variable():
             self.raw = var
             self.value = 'Need update' if has_eval(self.raw) else self.raw
 
+        # If no devices or variables found in name, can evaluate value safely
         if not has_variable(self.raw):
-            try: self.value = self.evaluate()  # If no devices or variables found in name, can evaluate value safely
+            try: self.value = self._evaluate()
             except Exception as e: self.value = str(e)
 
-        self.name = name
-        self.unit = None
-        self.address = lambda: name
         self.type = type(self.raw)  # For slider
 
-    def __call__(self, value: Any = None) -> Any:
-        if value is None:
-            return self.evaluate()
-
-        self.refresh(self.name, value)
-        return None
-
-    def evaluate(self):
+    def _evaluate(self):
         if has_eval(self.raw):
             value = str(self.raw)[len(EVAL): ]
             call = eval(str(value), {}, allowed_dict)
@@ -111,15 +110,26 @@ class Variable():
 
         return call
 
+    def __call__(self, value: Any = None) -> Any:
+        if value is None:
+            return self._evaluate()
+
+        self._refresh(value)
+        return None
+
 
 def list_variables() -> List[str]:
     ''' Returns a list of Variables '''
     return list(VARIABLES)
 
 
-def rename_variable(name: str, new_name: str) -> Variable:
-    var = remove_variable(name)
-    return set_variable(new_name, var)
+def rename_variable(name: str, new_name: str):
+    ''' Rename an existing Variable '''
+    new_name = clean_string(new_name)
+    var = VARIABLES.pop(name)
+    VARIABLES[new_name] = var
+    var._rename(new_name)
+    update_allowed_dict()
 
 
 def set_variable(name: str, value: Any) -> Variable:
@@ -128,11 +138,11 @@ def set_variable(name: str, value: Any) -> Variable:
 
     if is_Variable(value):
         var = value
-        var.refresh(name, value)
+        var(value)
     else:
         if name in VARIABLES:
             var = get_variable(name)
-            var.refresh(name, value)
+            var(value)
         else:
             var = Variable(name, value)
 
@@ -147,9 +157,9 @@ def get_variable(name: str) -> Variable:
 
 
 def remove_variable(name: str) -> Variable:
-    value = VARIABLES.pop(name)
+    var = VARIABLES.pop(name)
     update_allowed_dict()
-    return value
+    return var
 
 
 def remove_from_config(variables: List[Tuple[str, Any]]):
