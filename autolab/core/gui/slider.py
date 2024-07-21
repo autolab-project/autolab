@@ -45,9 +45,14 @@ class Slider(QtWidgets.QMainWindow):
         # Slider
         self.slider_instantaneous = True
 
-        self.true_min = self.variable.type(0)
-        self.true_max = self.variable.type(10)
-        self.true_step = self.variable.type(1)
+        if self.is_writable():
+            self.true_min = self.variable.type(0)
+            self.true_max = self.variable.type(10)
+            self.true_step = self.variable.type(1)
+        else:
+            self.true_min = 0
+            self.true_max = 10
+            self.true_step = 1
 
         centralWidget = QtWidgets.QWidget()
         layoutWindow = QtWidgets.QVBoxLayout()
@@ -136,9 +141,12 @@ class Slider(QtWidgets.QMainWindow):
 
         self.resize(self.minimumSizeHint())
 
+    def is_writable(self):
+        return self.variable.writable and self.variable.type in (int, float)
+
     def updateStep(self):
 
-        if self.variable.type in (int, float):
+        if self.is_writable():
             slider_points = 1 + int(
                 np.floor((self.true_max - self.true_min) / self.true_step))
             self.true_max = self.variable.type(
@@ -162,7 +170,7 @@ class Slider(QtWidgets.QMainWindow):
 
     def updateTrueValue(self, old_true_value: Any):
 
-        if self.variable.type in (int, float):
+        if self.is_writable():
             new_cursor_step = round(
                 (old_true_value - self.true_min) / self.true_step)
             slider_points = 1 + int(
@@ -185,17 +193,15 @@ class Slider(QtWidgets.QMainWindow):
 
     def stepWidgetValueChanged(self):
 
-        if self.variable.type in (int, float):
+        if self.is_writable():
             old_true_value = self.variable.type(self.valueWidget.text())
             try:
                 true_step = self.variable.type(self.stepWidget.text())
                 assert true_step != 0, "Can't have step=0"
                 self.true_step = true_step
             except Exception as e:
-                if self.main_gui:
-                    self.main_gui.setStatus(
-                        f"Variable {self.variable.name}: {e}", 10000, False)
-                    # OPTIMIZE: else print ?
+                e = f"Variable {self.variable.address()}: {e}"
+                self.main_gui.setStatus(e, 10000, False) if self.main_gui else print(e)
             else:
                 self.updateStep()
                 self.updateTrueValue(old_true_value)
@@ -203,14 +209,13 @@ class Slider(QtWidgets.QMainWindow):
 
     def minWidgetValueChanged(self):
 
-        if self.variable.type in (int, float):
+        if self.is_writable():
             old_true_value = self.variable.type(self.valueWidget.text())
             try:
                 self.true_min = self.variable.type(self.minWidget.text())
             except Exception as e:
-                if self.main_gui:
-                    self.main_gui.setStatus(
-                        f"Variable {self.variable.name}: {e}", 10000, False)
+                e = f"Variable {self.variable.address()}: {e}"
+                self.main_gui.setStatus(e, 10000, False) if self.main_gui else print(e)
             else:
                 self.updateStep()
                 self.updateTrueValue(old_true_value)
@@ -218,14 +223,13 @@ class Slider(QtWidgets.QMainWindow):
 
     def maxWidgetValueChanged(self):
 
-        if self.variable.type in (int, float):
+        if self.is_writable():
             old_true_value = self.variable.type(self.valueWidget.text())
             try:
                 self.true_max = self.variable.type(self.maxWidget.text())
             except Exception as e:
-                if self.main_gui:
-                    self.main_gui.setStatus(
-                        f"Variable {self.variable.name}: {e}", 10000, False)
+                e = f"Variable {self.variable.address()}: {e}"
+                self.main_gui.setStatus(e, 10000, False) if self.main_gui else print(e)
             else:
                 self.updateStep()
                 self.updateTrueValue(old_true_value)
@@ -233,7 +237,7 @@ class Slider(QtWidgets.QMainWindow):
 
     def sliderReleased(self):
         """ Do something when the cursor is released """
-        if self.variable.type in (int, float):
+        if self.is_writable():
             value = self.sliderWidget.value()
             true_value = self.variable.type(
                 value*self.true_step + self.true_min)
@@ -251,7 +255,7 @@ class Slider(QtWidgets.QMainWindow):
 
     def valueChanged(self, value: Any):
         """ Do something with the slider value when the cursor is moved """
-        if self.variable.type in (int, float):
+        if self.is_writable():
             true_value = self.variable.type(
                 value*self.true_step + self.true_min)
             self.valueWidget.setText(f'{true_value:.{self.precision}g}')
@@ -284,6 +288,9 @@ class Slider(QtWidgets.QMainWindow):
         setLineEditBackground(self.minWidget, 'edited', self._font_size)
         setLineEditBackground(self.stepWidget, 'edited', self._font_size)
         setLineEditBackground(self.maxWidget, 'edited', self._font_size)
+
+        e = f"Variable {self.variable.address()}: Variable should be writable int or float"
+        self.main_gui.setStatus(e, 10000, False) if self.main_gui else print(e)
 
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """

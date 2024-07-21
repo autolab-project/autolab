@@ -48,12 +48,14 @@ def plotter():
 def monitor(var):
     """ Open the Autolab Monitor for variable var """
     item = _create_item(var)
+    assert var.readable, f"The variable {var.address()} is not readable"
     _start('monitor', item=item)
 
 
 def slider(var):
     """ Open a slider for variable var """
     item = _create_item(var)
+    assert var.writable, f"The variable {var.address()} is not writable"
     _start('slider', item=item)
 
 

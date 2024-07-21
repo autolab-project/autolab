@@ -78,6 +78,8 @@ class Variable():
     def __init__(self, name: str, var: Any):
         """ name: name of the variable, var: value of the variable """
         self.unit = None
+        self.writable = True
+        self.readable = True
         self._rename(name)
         self._refresh(var)
 

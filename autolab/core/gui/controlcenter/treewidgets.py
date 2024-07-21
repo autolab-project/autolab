@@ -310,18 +310,18 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             if self.action.unit in ('open-file', 'save-file', 'filename'):
                 if self.action.unit == "filename":  # TODO: LEGACY (to remove later)
                     self.gui.setStatus("Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
-                                       f"\nUpdate driver {self.action.name} to remove this warning",
+                                       f"\nUpdate driver '{self.action.address().split('.')[0]}' to remove this warning",
                                        10000, False)
                     self.action.unit = "open-file"
 
                 if self.action.unit == "open-file":
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                        self.gui, caption=f"Open file - {self.action.name}",
+                        self.gui, caption=f"Open file - {self.action.address()}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
                 elif self.action.unit == "save-file":
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                        self.gui, caption=f"Save file - {self.action.name}",
+                        self.gui, caption=f"Save file - {self.action.address()}",
                         directory=paths.USER_LAST_CUSTOM_FOLDER,
                         filter=SUPPORTED_EXTENSION)
 
@@ -331,22 +331,22 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                     return filename
                 else:
                     self.gui.setStatus(
-                        f"Action {self.action.name} cancel filename selection",
+                        f"Action {self.action.address()} cancel filename selection",
                         10000)
             elif self.action.unit == "user-input":
                 response, _ = QtWidgets.QInputDialog.getText(
-                    self.gui, self.action.name, f"Set {self.action.name} value",
+                    self.gui, self.action.address(), f"Set {self.action.address()} value",
                     QtWidgets.QLineEdit.Normal)
 
                 if response != '':
                     return response
                 else:
                     self.gui.setStatus(
-                        f"Action {self.action.name} cancel user input",
+                        f"Action {self.action.address()} cancel user input",
                         10000)
             else:
                 self.gui.setStatus(
-                    f"Action {self.action.name} requires a value for its parameter",
+                    f"Action {self.action.address()} requires a value for its parameter",
                     10000, False)
         else:
             try:
@@ -360,7 +360,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 return value
             except:
                 self.gui.setStatus(
-                    f"Action {self.action.name}: Impossible to convert {value} to {self.action.type.__name__}",
+                    f"Action {self.action.address()}: Impossible to convert {value} to {self.action.type.__name__}",
                     10000, False)
 
     def execute(self):
@@ -581,7 +581,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             value = self.valueWidget.text()
             if value == '':
                 self.gui.setStatus(
-                    f"Variable {self.variable.name} requires a value to be set",
+                    f"Variable {self.variable.address()} requires a value to be set",
                     10000, False)
             else:
                 try:
@@ -596,7 +596,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     return value
                 except:
                     self.gui.setStatus(
-                        f"Variable {self.variable.name}: Impossible to convert {value} to {self.variable.type.__name__}",
+                        f"Variable {self.variable.address()}: Impossible to convert {value} to {self.variable.type.__name__}",
                         10000, False)
 
         elif self.variable.type in [bool]:
@@ -695,7 +695,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def saveValue(self):
         """ Prompt user for filename to save data of the variable """
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self.gui, f"Save {self.variable.name} value", os.path.join(
+            self.gui, f"Save {self.variable.address()} value", os.path.join(
                 paths.USER_LAST_CUSTOM_FOLDER, f'{self.variable.address()}.txt'),
             filter=SUPPORTED_EXTENSION)
 
@@ -703,11 +703,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if path != '':
             paths.USER_LAST_CUSTOM_FOLDER = path
             try:
-                self.gui.setStatus(f"Saving value of {self.variable.name}...",
+                self.gui.setStatus(f"Saving value of {self.variable.address()}...",
                                    5000)
                 self.variable.save(filename)
                 self.gui.setStatus(
-                    f"Value of {self.variable.name} successfully read and save at {filename}",
+                    f"Value of {self.variable.address()} successfully read and save at {filename}",
                     5000)
             except Exception as e:
                 self.gui.setStatus(f"An error occured: {str(e)}", 10000, False)

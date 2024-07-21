@@ -32,7 +32,7 @@ class Monitor(QtWidgets.QMainWindow):
         super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
-        self.setWindowTitle(f"AUTOLAB - Monitor: Variable {self.variable.address()}")
+        self.setWindowTitle(f"AUTOLAB - Monitor: {self.variable.address()}")
         self.setWindowIcon(QtGui.QIcon(icons['monitor']))
         # Queue
         self.queue = queue.Queue()
