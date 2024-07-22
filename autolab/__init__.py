@@ -36,6 +36,13 @@ _config.set_temp_folder()
 _config.add_extra_driver_path()
 _config.add_extra_driver_repo_url()
 
+# Add drivers folder to sys (allows a driver to import another driver)
+import sys
+# Order of append between local and official matter for priority
+for folder in reversed(_paths.DRIVER_SOURCES.values()):
+    sys.path.append(folder)
+del sys
+
 # infos
 from .core.infos import list_devices, list_drivers, infos, config_help
 
