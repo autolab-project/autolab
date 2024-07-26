@@ -17,8 +17,8 @@ import numpy  # OPTIMIZE: temporary fix to an infinite loading on some computer 
 import socket  # OPTIMIZE: temporary fix to an infinite loading on some computer
 
 # Load current version in version file
-from .core import paths as _paths
-with open(_paths.VERSION) as version_file:
+from .core.paths import PATHS, DRIVER_SOURCES
+with open(PATHS['version']) as version_file:
     __version__ = version_file.read().strip()
 del version_file
 
@@ -39,12 +39,15 @@ _config.add_extra_driver_repo_url()
 # Add drivers folder to sys (allows a driver to import another driver)
 import sys
 # Order of append between local and official matter for priority
-for folder in reversed(_paths.DRIVER_SOURCES.values()):
+for folder in reversed(DRIVER_SOURCES.values()):
     sys.path.append(folder)
 del sys
+del folder
 
 # infos
-from .core.infos import list_devices, list_drivers, infos, config_help
+from .core.infos import infos, config_help
+from .core.infos import _list_devices as list_devices
+from .core.infos import _list_drivers as list_drivers
 
 # Devices
 from .core.devices import get_device, close
@@ -62,10 +65,9 @@ from .core.server import Server as server
 
 # GUI
 from .core.gui import gui, plotter, monitor, slider, add_device, about, variables_menu
-try:  # Avoid raising error if no GUI packages installed
-    from .core.gui.variables import get_variable, list_variables
-    from .core.gui.variables import set_variable as add_variable
-except: pass
+
+from .core.variables import get_variable, list_variables
+from .core.variables import set_variable as add_variable
 
 # Repository
 from .core.repository import install_drivers

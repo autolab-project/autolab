@@ -9,7 +9,7 @@ import sys
 import queue
 import time
 import uuid
-from typing import Any, Type
+from typing import Type
 
 from qtpy import QtCore, QtWidgets, uic, QtGui
 
@@ -18,9 +18,9 @@ from .data import DataManager
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..icons import icons
-from ... import devices
-from ... import config
 from ..GUI_utilities import get_font_size, setLineEditBackground
+from ...devices import list_devices
+from ...config import load_config
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
@@ -268,7 +268,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.tree.itemClicked.connect(self.itemClicked)
         self.tree.customContextMenuRequested.connect(self.rightClick)
 
-        plotter_config = config.load_config("plotter")
+        plotter_config = load_config("plotter_config")
 
         if 'plugin' in plotter_config.sections() and len(plotter_config['plugin']) != 0:
             self.splitter_2.setSizes([200,300,80,80])
@@ -284,7 +284,7 @@ class Plotter(QtWidgets.QMainWindow):
         if plugin_nickname is None:
             plugin_nickname = plugin_name
 
-        if plugin_name in devices.list_devices():
+        if plugin_name in list_devices():
             plugin_nickname = self.getUniqueName(plugin_nickname)
             self.all_plugin_list.append(plugin_nickname)
             item = TreeWidgetItemModule(self.tree,plugin_name,plugin_nickname,self)

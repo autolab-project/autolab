@@ -18,9 +18,9 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
 
-from .. import variables
-from ... import config as autolab_config
-from ... import utilities
+from ...config import get_scanner_config
+from ...utilities import boolean, create_array, data_to_dataframe
+from ...variables import has_eval, eval_safely
 
 
 class DataManager:
@@ -32,8 +32,8 @@ class DataManager:
         self.datasets = []
         self.queue = Queue()
 
-        scanner_config = autolab_config.get_scanner_config()
-        self.save_temp = utilities.boolean(scanner_config["save_temp"])
+        scanner_config = get_scanner_config()
+        self.save_temp = boolean(scanner_config["save_temp"])
 
         # Timer
         self.timer = QtCore.QTimer(self.gui)
@@ -132,14 +132,14 @@ class DataManager:
                 nbpts = 1
                 for parameter in recipe['parameter']:
                     if 'values' in parameter:
-                        if variables.has_eval(parameter['values']):
-                            values = variables.eval_safely(parameter['values'])
+                        if has_eval(parameter['values']):
+                            values = eval_safely(parameter['values'])
                             if isinstance(values, str):
                                 nbpts *= 11  # OPTIMIZE: can't know length in this case without doing eval (should not do eval here because can imagine recipe_2 with param set at end of recipe_1)
                                 self.gui.progressBar.setStyleSheet(
                                     "QProgressBar::chunk {background-color: orange;}")
                             else:
-                                values = utilities.create_array(values)
+                                values = create_array(values)
                                 nbpts *= len(values)
                         else: nbpts *= len(parameter['values'])
                     else: nbpts *= parameter['nbpts']
@@ -237,7 +237,7 @@ class DataManager:
                 self.gui.variable_y_comboBox.clear()
                 return None
 
-            try: data = utilities.formatData(data)
+            try: data = data_to_dataframe(data)
             except AssertionError:  # if np.ndarray of string for example
                 self.gui.variable_x_comboBox.clear()
                 self.gui.variable_x2_comboBox.clear()
@@ -347,7 +347,7 @@ class Dataset():
                     and not isinstance(data, str)
                     and (len(data.T.shape) == 1 or (
                         len(data.T.shape) != 0 and data.T.shape[0] == 2))):
-                data = utilities.formatData(data)
+                data = data_to_dataframe(data)
             else:  # Image
                 return data
 

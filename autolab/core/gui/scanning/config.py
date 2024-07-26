@@ -16,10 +16,13 @@ import numpy as np
 import pandas as pd
 from qtpy import QtWidgets, QtCore
 
-from .. import variables
-from ...utilities import (boolean, str_to_array, array_to_str,
-                          str_to_dataframe, dataframe_to_str, create_array)
-from ... import paths, devices, config
+from ...config import get_scanner_config
+from ...devices import DEVICES, Device, list_loaded_devices, get_element_by_address
+from ...utilities import (boolean, str_to_array, array_to_str, create_array,
+                          str_to_dataframe, dataframe_to_str, str_to_data)
+from ...variables import (get_variable, has_eval, is_Variable, eval_variable,
+                          remove_from_config, update_from_config, VARIABLES)
+from ...paths import PATHS
 from .... import __version__
 
 
@@ -71,7 +74,7 @@ class ConfigManager:
         self.gui = gui
 
         # Import Autolab config
-        scanner_config = config.get_scanner_config()
+        scanner_config = get_scanner_config()
         self.precision = scanner_config['precision']
 
         # Initializing configuration values
@@ -139,8 +142,8 @@ class ConfigManager:
         if new_variables is None:
             new_variables = self.getConfigVariables()
         remove_variables = list(set(self._old_variables) - set(new_variables))
-        variables.remove_from_config(remove_variables)
-        variables.update_from_config(new_variables)
+        remove_from_config(remove_variables)
+        update_from_config(new_variables)
         self._old_variables = new_variables
 
     def addNewConfig(self):
@@ -250,8 +253,8 @@ class ConfigManager:
         # Replace closed devices by reopenned one
         for recipe_name in self.recipeNameList():
             for i, step in enumerate(self.config[recipe_name]['recipe']):
-                if (step['element']._parent.name in devices.DEVICES
-                        and not step['element']._parent in devices.DEVICES.values()):
+                if (step['element']._parent.name in DEVICES
+                        and not step['element']._parent in DEVICES.values()):
                     module_name = step['element']._parent.name
                     module = self.gui.mainGui.tree.findItems(
                         module_name, QtCore.Qt.MatchExactly)[0].module
@@ -305,7 +308,7 @@ class ConfigManager:
             self.addNewConfig()
 
     def setParameter(self, recipe_name: str, param_name: str,
-                     element: devices.Device, newName: str = None):
+                     element: Device, newName: str = None):
         """ Sets the element provided as the new parameter of the scan.
         Add a parameter is no existing parameter """
         if not self.gui.scanManager.isStarted():
@@ -420,7 +423,7 @@ class ConfigManager:
         if not self.gui.scanManager.isStarted():
             param = self.getParameter(recipe_name, param_name)
 
-            if variables.has_eval(values) or np.ndim(values) == 1:
+            if has_eval(values) or np.ndim(values) == 1:
                 param['values'] = values
                 self.addNewConfig()
 
@@ -611,7 +614,7 @@ class ConfigManager:
         else:
             return []
 
-    def getParameterElement(self, recipe_name: str, param_name: str) -> devices.Device:
+    def getParameterElement(self, recipe_name: str, param_name: str) -> Device:
         """ Returns the element of a parameter """
         param = self.getParameter(recipe_name, param_name)
         return param['element']
@@ -664,7 +667,7 @@ class ConfigManager:
         """ Returns the list of steps in the recipe """
         return self.config[recipe_name]['recipe']
 
-    def getRecipeStepElement(self, recipe_name: str, name: str) -> devices.Device:
+    def getRecipeStepElement(self, recipe_name: str, name: str) -> Device:
         """ Returns the element of a recipe step """
         pos = self.getRecipeStepPosition(recipe_name, name)
         return self.stepList(recipe_name)[pos]['element']
@@ -687,7 +690,7 @@ class ConfigManager:
         """ Returns a pd.DataFrame with 'id' and 'param_name'
         columns containing the parameter array """
         paramValues = self.getValues(recipe_name, param_name)
-        paramValues = variables.eval_variable(paramValues)
+        paramValues = eval_variable(paramValues)
         paramValues = create_array(paramValues)
         assert isinstance(paramValues, np.ndarray)
         data = pd.DataFrame()
@@ -704,7 +707,7 @@ class ConfigManager:
         for recipe_name in reversed(self.recipeNameList()):
             for param_name in self.parameterNameList(recipe_name):
                 values = self.getValues(recipe_name, param_name)
-                value = values if variables.has_eval(values) else float(values[0])
+                value = values if has_eval(values) else float(values[0])
                 listVariable.append((param_name, value))
             for step in self.stepList(recipe_name):
                 if step['stepType'] == 'measure':
@@ -749,7 +752,7 @@ class ConfigManager:
                     param_pars['address'] = "None"
 
                 if 'values' in param:
-                    if variables.has_eval(param['values']):
+                    if has_eval(param['values']):
                         param_pars['values'] = param['values']
                     else:
                         param_pars['values'] = array_to_str(
@@ -781,7 +784,7 @@ class ConfigManager:
                                              np.ndarray, pd.DataFrame]):
                     value = config_step['value']
 
-                    if variables.has_eval(value):
+                    if has_eval(value):
                         valueStr = value
                     else:
                         if config_step['element'].type in [np.ndarray]:
@@ -801,15 +804,15 @@ class ConfigManager:
 
         # Add variables to config
         name_var_config = [var[0] for var in self.getConfigVariables()]
-        names_var_user = list(variables.VARIABLES)
+        names_var_user = list(VARIABLES)
         names_var_to_save = list(set(names_var_user) - set(name_var_config))
 
         var_to_save = {}
         for var_name in names_var_to_save:
-            var = variables.get_variable(var_name)
+            var = get_variable(var_name)
 
             if var is not None:
-                assert variables.is_Variable(var)
+                assert is_Variable(var)
                 value_raw = var.raw
                 if isinstance(value_raw, np.ndarray): valueStr = array_to_str(
                         value_raw, threshold=1000000, max_line_width=9000000)
@@ -844,7 +847,7 @@ class ConfigManager:
                     configPars = {s: dict(legacy_configPars.items(s)) for s in legacy_configPars.sections()}
 
                 path = os.path.dirname(filename)
-                paths.USER_LAST_CUSTOM_FOLDER = path
+                PATHS['last_folder'] = path
 
                 self.load_configPars(configPars, append=append)
 
@@ -857,7 +860,7 @@ class ConfigManager:
         self._got_error = False
         self.configHistory.active = False
         previous_config = self.config.copy()  # used to recover old config if error in loading new one
-        already_loaded_devices = devices.list_loaded_devices()
+        already_loaded_devices = list_loaded_devices()
 
         try:
             # LEGACY <= 1.2
@@ -940,17 +943,17 @@ class ConfigManager:
                     assert 'address' in param_pars, f"Missing address to {param_pars}"
                     if param_pars['address'] == "None": element = None
                     else:
-                        element = devices.get_element_by_address(param_pars['address'])
+                        element = get_element_by_address(param_pars['address'])
                         assert element is not None, f"Parameter {param_pars['address']} not found."
 
                     param['element'] = element
 
                     if 'values' in param_pars:
-                        if variables.has_eval(param_pars['values']):
+                        if has_eval(param_pars['values']):
                             values = param_pars['values']
                         else:
                             values = str_to_array(param_pars['values'])
-                        if not variables.has_eval(values):
+                        if not has_eval(values):
                             assert np.ndim(values) == 1, f"Values must be one dimension array in parameter: {param['name']}"
                         param['values'] = values
                     else:
@@ -992,7 +995,7 @@ class ConfigManager:
                             assert step['stepType'] != 'recipe', "Removed the recipe in recipe feature!"
                             element = address
                         else:
-                            element = devices.get_element_by_address(address)
+                            element = get_element_by_address(address)
 
                         assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
@@ -1005,7 +1008,7 @@ class ConfigManager:
 
                             try:
                                 try:
-                                    assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                                    assert has_eval(value), "Need $eval: to evaluate the given string"
                                 except:
                                     # Type conversions
                                     if element.type in [int]:
@@ -1021,7 +1024,7 @@ class ConfigManager:
                                     elif element.type in [pd.DataFrame]:
                                         value = str_to_dataframe(value)
                                     else:
-                                        assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                                        assert has_eval(value), "Need $eval: to evaluate the given string"
                             except:
                                 raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
 
@@ -1050,10 +1053,11 @@ class ConfigManager:
 
                 add_vars = []
                 for var_name, raw_value in var_dict.items():
-                    raw_value = variables.str_to_data(raw_value)
+                    if not has_eval(raw_value):
+                        raw_value = str_to_data(raw_value)
                     add_vars.append((var_name, raw_value))
 
-                variables.update_from_config(add_vars)
+                update_from_config(add_vars)
 
         except Exception as error:
             self._got_error = True
@@ -1063,7 +1067,7 @@ class ConfigManager:
             self.gui._resetRecipe()
             self.gui.setStatus("Configuration file loaded successfully", 5000)
 
-            for device in (set(devices.list_loaded_devices()) - set(already_loaded_devices)):
+            for device in (set(list_loaded_devices()) - set(already_loaded_devices)):
                 item_list = self.gui.mainGui.tree.findItems(device, QtCore.Qt.MatchExactly, 0)
 
                 if len(item_list) == 1:

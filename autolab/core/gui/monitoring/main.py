@@ -14,8 +14,8 @@ from .data import DataManager
 from .figure import FigureManager
 from .monitor import MonitorManager
 from ..icons import icons
-from ... import paths
 from ..GUI_utilities import get_font_size, setLineEditBackground
+from ...paths import PATHS
 from ...utilities import SUPPORTED_EXTENSION
 
 
@@ -126,14 +126,14 @@ class Monitor(QtWidgets.QMainWindow):
         # Ask the filename of the output data
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             self, caption="Save data", directory=os.path.join(
-                paths.USER_LAST_CUSTOM_FOLDER,
+                PATHS['last_folder'],
                 f'{self.variable.address()}_monitor.txt'),
             filter=SUPPORTED_EXTENSION)
 
         path = os.path.dirname(filename)
         # Save the given path for future, the data and the figure if the path provided is valid
         if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
             self.setStatus('Saving data...', 5000)
 
             try:
@@ -240,7 +240,7 @@ class Monitor(QtWidgets.QMainWindow):
         self.delay_lineEdit.setText(f'{value:g}')
         setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
-    def setStatus(self, message: str, timeout: int  = 0, stdout: bool = True):
+    def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
         self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)

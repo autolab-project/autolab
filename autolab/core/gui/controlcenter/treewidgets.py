@@ -15,13 +15,13 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from ..slider import Slider
 from ..monitoring.main import Monitor
-from .. import variables
 from ..icons import icons
 from ..GUI_utilities import qt_object_exists
-from ... import paths, config
+from ...paths import PATHS
+from ...config import get_control_center_config
+from ...variables import eval_variable
 from ...devices import close
-from ...utilities import (SUPPORTED_EXTENSION,
-                          str_to_array, array_to_str,
+from ...utilities import (SUPPORTED_EXTENSION, str_to_array, array_to_str,
                           dataframe_to_str, str_to_dataframe, create_array)
 
 
@@ -317,17 +317,17 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 if self.action.unit == "open-file":
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                         self.gui, caption=f"Open file - {self.action.address()}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
                 elif self.action.unit == "save-file":
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                         self.gui, caption=f"Save file - {self.action.address()}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
 
                 if filename != '':
                     path = os.path.dirname(filename)
-                    paths.USER_LAST_CUSTOM_FOLDER = path
+                    PATHS['last_folder'] = path
                     return filename
                 else:
                     self.gui.setStatus(
@@ -350,7 +350,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                     10000, False)
         else:
             try:
-                value = variables.eval_variable(value)
+                value = eval_variable(value)
                 if self.action.type in [np.ndarray]:
                     if isinstance(value, str): value = str_to_array(value)
                 elif self.action.type in [pd.DataFrame]:
@@ -404,7 +404,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.variable = variable
 
         # Import Autolab config
-        control_center_config = config.get_control_center_config()
+        control_center_config = get_control_center_config()
         self.precision = int(control_center_config['precision'])
 
         # Signal creation and associations in autolab devices instances
@@ -585,7 +585,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     10000, False)
             else:
                 try:
-                    value = variables.eval_variable(value)
+                    value = eval_variable(value)
                     if self.variable.type in [np.ndarray]:
                         if isinstance(value, str): value = str_to_array(value)
                         else: value = create_array(value)
@@ -696,12 +696,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         """ Prompt user for filename to save data of the variable """
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             self.gui, f"Save {self.variable.address()} value", os.path.join(
-                paths.USER_LAST_CUSTOM_FOLDER, f'{self.variable.address()}.txt'),
+                PATHS['last_folder'], f'{self.variable.address()}.txt'),
             filter=SUPPORTED_EXTENSION)
 
         path = os.path.dirname(filename)
         if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
             try:
                 self.gui.setStatus(f"Saving value of {self.variable.address()}...",
                                    5000)

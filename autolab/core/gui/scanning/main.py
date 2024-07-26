@@ -18,10 +18,11 @@ from .parameter import ParameterManager
 from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
-from .. import variables
+from ..GUI_variables import VariablesMenu
 from ..icons import icons
-from ... import paths, utilities
-from ... import config as autolab_config
+from ...paths import PATHS
+from ...utilities import boolean, SUPPORTED_EXTENSION
+from ...config import get_scanner_config
 
 
 class Scanner(QtWidgets.QMainWindow):
@@ -99,8 +100,8 @@ class Scanner(QtWidgets.QMainWindow):
         """ https://realpython.com/python-menus-toolbars/#populating-python-menus-dynamically """
         self.openRecentMenu.clear()
 
-        if os.path.exists(paths.HISTORY_CONFIG):
-            with open(paths.HISTORY_CONFIG, 'r') as f: filenames = f.readlines()
+        if os.path.exists(PATHS['history_config']):
+            with open(PATHS['history_config'], 'r') as f: filenames = f.readlines()
             for filename in reversed(filenames):
                 filename = filename.rstrip('\n')
                 action = QtWidgets.QAction(filename, self)
@@ -116,21 +117,21 @@ class Scanner(QtWidgets.QMainWindow):
 
     def addOpenRecent(self, filename: str):
 
-        if not os.path.exists(paths.HISTORY_CONFIG):
-            with open(paths.HISTORY_CONFIG, 'w') as f: f.write(filename + '\n')
+        if not os.path.exists(PATHS['history_config']):
+            with open(PATHS['history_config'], 'w') as f: f.write(filename + '\n')
         else:
-            with open(paths.HISTORY_CONFIG, 'r') as f: lines = f.readlines()
+            with open(PATHS['history_config'], 'r') as f: lines = f.readlines()
             lines.append(filename)
             lines = [line.rstrip('\n')+'\n' for line in lines]
             lines = list(reversed(list(dict.fromkeys(reversed(lines)))))  # unique names
             lines = lines[-10:]
-            with open(paths.HISTORY_CONFIG, 'w') as f: f.writelines(lines)
+            with open(PATHS['history_config'], 'w') as f: f.writelines(lines)
 
         self.populateOpenRecent()
 
     def clearOpenRecent(self):
-        if os.path.exists(paths.HISTORY_CONFIG):
-            try: os.remove(paths.HISTORY_CONFIG)
+        if os.path.exists(PATHS['history_config']):
+            try: os.remove(PATHS['history_config'])
             except: pass
 
         self.populateOpenRecent()
@@ -163,7 +164,7 @@ class Scanner(QtWidgets.QMainWindow):
 
     def openVariablesMenu(self):
         if self.variablesMenu is None:
-            self.variablesMenu = variables.VariablesMenu(self)
+            self.variablesMenu = VariablesMenu(self)
             self.variablesMenu.show()
         else:
             self.variablesMenu.refresh()
@@ -311,7 +312,7 @@ class Scanner(QtWidgets.QMainWindow):
                 file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
                 file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
                 file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
-                file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
+                file_dialog.setDirectory(PATHS['last_folder'])
                 file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "Any Files (*)"])
                 layout.addWidget(file_dialog)
 
@@ -357,12 +358,12 @@ class Scanner(QtWidgets.QMainWindow):
         and export the current scan configuration in it """
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self, "Export AUTOLAB configuration file",
-            os.path.join(paths.USER_LAST_CUSTOM_FOLDER, 'config.conf'),
+            os.path.join(PATHS['last_folder'], 'config.conf'),
             "AUTOLAB configuration file (*.conf);;All Files (*)")[0]
 
         if filename != '':
             path = os.path.dirname(filename)
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
 
             try:
                 self.configManager.export(filename)
@@ -377,12 +378,12 @@ class Scanner(QtWidgets.QMainWindow):
         It asks a path and starts the procedure to save the data """
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self,  caption="Save data",
-            directory=paths.USER_LAST_CUSTOM_FOLDER,
-            filter=utilities.SUPPORTED_EXTENSION)[0]
+            directory=PATHS['last_folder'],
+            filter=SUPPORTED_EXTENSION)[0]
         path = os.path.dirname(filename)
 
         if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
             self.setStatus('Saving data...', 5000)
             datasets = self.dataManager.getLastSelectedDataset()
 
@@ -396,8 +397,8 @@ class Scanner(QtWidgets.QMainWindow):
                     filename_recipe = f'{dataset_folder}_{dataset_name}{extension}'
                 dataset.save(filename_recipe)
 
-            scanner_config = autolab_config.get_scanner_config()
-            save_config = utilities.boolean(scanner_config["save_config"])
+            scanner_config = get_scanner_config()
+            save_config = boolean(scanner_config["save_config"])
 
             if save_config:
                 dataset_folder, extension = os.path.splitext(filename)
@@ -414,7 +415,7 @@ class Scanner(QtWidgets.QMainWindow):
 
                 self.addOpenRecent(new_configname)
 
-            if utilities.boolean(scanner_config["save_figure"]):
+            if boolean(scanner_config["save_figure"]):
                 self.figureManager.save(filename)
 
             self.setStatus(

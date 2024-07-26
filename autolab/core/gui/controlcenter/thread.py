@@ -11,8 +11,8 @@ from typing import Any
 
 from qtpy import QtCore, QtWidgets
 from ..GUI_utilities import qt_object_exists
-from ... import devices
-from ... import drivers
+from ...devices import get_final_device_config, list_loaded_devices, DEVICES, Device
+from ...drivers import load_driver_lib, get_driver
 
 
 class ThreadManager:
@@ -142,24 +142,24 @@ class InteractionThread(QtCore.QThread):
             elif self.intType == 'load':  # OPTIMIZE: is very similar to get_device()
                 # Note that threadItemDict needs to be updated outside of thread to avoid timing error
                 device_name = self.item.name
-                device_config = devices.get_final_device_config(device_name)
+                device_config = get_final_device_config(device_name)
 
-                if device_name in devices.list_loaded_devices():
-                    assert device_config == devices.DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
+                if device_name in list_loaded_devices():
+                    assert device_config == DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
                 else:
                     driver_kwargs = {k: v for k, v in device_config.items() if k not in ['driver', 'connection']}
-                    driver_lib = drivers.load_driver_lib(device_config['driver'])
+                    driver_lib = load_driver_lib(device_config['driver'])
 
                     if hasattr(driver_lib, 'Driver') and 'gui' in [param.name for param in inspect.signature(driver_lib.Driver.__init__).parameters.values()]:
                             driver_kwargs['gui'] = self.item.gui
 
-                    instance = drivers.get_driver(device_config['driver'],
-                                                  device_config['connection'],
-                                                  **driver_kwargs)
-                    devices.DEVICES[device_name] = devices.Device(
+                    instance = get_driver(
+                        device_config['driver'], device_config['connection'],
+                        **driver_kwargs)
+                    DEVICES[device_name] = Device(
                         device_name, instance, device_config)
 
-                self.item.gui.threadDeviceDict[id(self.item)] = devices.DEVICES[device_name]
+                self.item.gui.threadDeviceDict[id(self.item)] = DEVICES[device_name]
 
         except Exception as e:
             error = e

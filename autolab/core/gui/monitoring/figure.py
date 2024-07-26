@@ -13,7 +13,7 @@ import pyqtgraph.exporters
 from qtpy import QtWidgets
 
 from ..GUI_utilities import pyqtgraph_fig_ax, pyqtgraph_image
-from ... import config
+from ...config import get_monitor_config
 from ...utilities import boolean
 
 
@@ -24,7 +24,7 @@ class FigureManager:
         self.gui = gui
 
         # Import Autolab config
-        monitor_config = config.get_monitor_config()
+        monitor_config = get_monitor_config()
         self.precision = int(monitor_config['precision'])
         self.do_save_figure = boolean(monitor_config['save_figure'])
 

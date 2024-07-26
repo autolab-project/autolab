@@ -1,33 +1,38 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from . import config
-from . import drivers
-from . import paths
-from . import utilities
-from . import devices
+from .config import get_device_config
+from .drivers import (update_drivers_paths, DRIVERS_PATHS, get_driver_category,
+                      load_driver_lib, get_connection_names, get_class_args,
+                      get_connection_class, get_driver_class, get_module_names,
+                      get_module_class)
+from .paths import DRIVER_SOURCES
+from .utilities import two_columns, emphasize, underline
+from .devices import list_devices, list_loaded_devices, get_final_device_config
 
 # =============================================================================
 # INFOS
 # =============================================================================
 
-def list_drivers(_print: bool = True) -> str:
-    ''' Returns a list of all the drivers with categories by sections (autolab drivers, local drivers) '''
-    drivers.update_drivers_paths()
+def _list_drivers(_print: bool = True) -> str:
+    ''' Returns a list of all the drivers with categories by sections
+    (autolab drivers, local drivers) '''
+    update_drivers_paths()
 
     s = '\n'
-    s += f'{len(drivers.DRIVERS_PATHS)} drivers found\n\n'
+    s += f'{len(DRIVERS_PATHS)} drivers found\n\n'
 
-    for i, (source_name, source) in enumerate(paths.DRIVER_SOURCES.items()):
-        sub_driver_list = sorted([key for key, val in drivers.DRIVERS_PATHS.items() if val['source']==source_name])
+    for i, (source_name, source) in enumerate(DRIVER_SOURCES.items()):
+        sub_driver_list = sorted([key for key, val in DRIVERS_PATHS.items(
+            ) if val['source'] == source_name])
         s += f'Drivers in {source}:\n'
         if len(sub_driver_list) > 0:
             txt_list = [[f' - {driver_name}',
-                         f'({drivers.get_driver_category(driver_name)})']
+                         f'({get_driver_category(driver_name)})']
                             for driver_name in sub_driver_list]
-            s += utilities.two_columns(txt_list) + '\n\n'
+            s += two_columns(txt_list) + '\n\n'
         else:
-            if (i + 1) == len(paths.DRIVER_SOURCES):
+            if (i + 1) == len(DRIVER_SOURCES):
                 s += ' <No drivers>\n\n'
             else:
                 s += ' <No drivers> (or overwritten)\n\n'
@@ -38,19 +43,20 @@ def list_drivers(_print: bool = True) -> str:
     return s
 
 
-def list_devices(_print: bool = True) -> str:
-    ''' Returns a list of all the devices and their associated drivers from devices_config.ini '''
+def _list_devices(_print: bool = True) -> str:
+    ''' Returns a list of all the devices and their associated drivers
+    from devices_config.ini '''
     # Gather local config informations
-    devices_names = devices.list_devices()
-    devices_names_loaded = devices.list_loaded_devices()
+    devices_names = list_devices()
+    devices_names_loaded = list_loaded_devices()
 
     # Build infos str for devices
     s = '\n'
     s += f'{len(devices_names)} devices found\n\n'
-    txt_list = [[f' - {name} ' + ('[loaded]' if name in devices_names_loaded else ''),
-                 f'({config.get_device_config(name)["driver"]})']
-                     for name in devices_names]
-    s += utilities.two_columns(txt_list) + '\n'
+    txt_list = [
+        [f' - {name} ' + ('[loaded]' if name in devices_names_loaded else ''),
+         f'({get_device_config(name)["driver"]})'] for name in devices_names]
+    s += two_columns(txt_list) + '\n'
 
     if _print:
         print(s)
@@ -59,10 +65,11 @@ def list_devices(_print: bool = True) -> str:
 
 
 def infos(_print: bool = True) -> str:
-    ''' Returns a list of all the drivers and all the devices, along with their associated drivers from devices_config.ini '''
+    ''' Returns a list of all the drivers and all the devices,
+    along with their associated drivers from devices_config.ini '''
     s  = ''
-    s += list_drivers(_print=False)
-    s += list_devices(_print=False)
+    s += _list_drivers(_print=False)
+    s += _list_devices(_print=False)
 
     if _print:
         print(s)
@@ -76,31 +83,31 @@ def infos(_print: bool = True) -> str:
 def config_help(driver_name: str, _print: bool = True, _parser: bool = False) -> str:
     ''' Display the help of a particular driver (connection types, modules, ...) '''
     try:
-        driver_name = devices.get_final_device_config(driver_name)["driver"]
+        driver_name = get_final_device_config(driver_name)["driver"]
     except:
         pass
     # Load list of all parameters
     try:
-        driver_lib = drivers.load_driver_lib(driver_name)
+        driver_lib = load_driver_lib(driver_name)
     except Exception as e:
         print(f"Can't load {driver_name}: {e}", file=sys.stderr)
         return None
     params = {}
     params['driver'] = driver_name
     params['connection'] = {}
-    for conn in drivers.get_connection_names(driver_lib):
-        params['connection'][conn] = drivers.get_class_args(
-            drivers.get_connection_class(driver_lib, conn))
-    params['other'] = drivers.get_class_args(drivers.get_driver_class(driver_lib))
-    if hasattr(drivers.get_driver_class(driver_lib), 'slot_config'):
-        params['other']['slot1'] = f'{drivers.get_driver_class(driver_lib).slot_config}'
+    for conn in get_connection_names(driver_lib):
+        params['connection'][conn] = get_class_args(
+            get_connection_class(driver_lib, conn))
+    params['other'] = get_class_args(get_driver_class(driver_lib))
+    if hasattr(get_driver_class(driver_lib), 'slot_config'):
+        params['other']['slot1'] = f'{get_driver_class(driver_lib).slot_config}'
         params['other']['slot1_name'] = 'my_<MODULE_NAME>'
 
     mess = '\n'
 
     # Name and category if available
-    submess = f'Driver "{driver_name}" ({drivers.get_driver_category(driver_name)})'
-    mess += utilities.emphasize(submess, sign='=') + '\n'
+    submess = f'Driver "{driver_name}" ({get_driver_category(driver_name)})'
+    mess += emphasize(submess, sign='=') + '\n'
 
     # Connections types
     c_option=' (-C option)' if _parser else ''
@@ -110,18 +117,18 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
     mess += '\n'
 
     # Modules
-    if hasattr(drivers.get_driver_class(driver_lib), 'slot_config'):
+    if hasattr(get_driver_class(driver_lib), 'slot_config'):
         mess += 'Available modules:\n'
-        modules = drivers.get_module_names(driver_lib)
+        modules = get_module_names(driver_lib)
         for module in modules:
-            moduleClass = drivers.get_module_class(driver_lib, module)
+            moduleClass = get_module_class(driver_lib, module)
             mess += f' - {module}'
             if hasattr(moduleClass, 'category'): mess += f' ({moduleClass.category})'
             mess += '\n'
         mess += '\n'
 
     # Example of a devices_config.ini section
-    mess += '\n' + utilities.underline(
+    mess += '\n' + underline(
         'Saving a Device configuration in devices_config.ini:') + '\n'
     for conn in params['connection']:
         mess += f"\n[my_{params['driver']}]\n"
@@ -133,7 +140,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
             mess += f"{arg} = {value}\n"
 
     # Example of get_driver
-    mess += '\n\n' + utilities.underline('Loading a Driver:') + '\n\n'
+    mess += '\n\n' + underline('Loading a Driver:') + '\n\n'
     for conn in params['connection']:
         if not _parser:
             args_str = f"'{params['driver']}', connection='{conn}'"
@@ -156,7 +163,7 @@ def config_help(driver_name: str, _print: bool = True, _parser: bool = False) ->
             mess += f"autolab driver {args_str} -m method(value) \n"
 
     # Example of get_device
-    mess += '\n\n' + utilities.underline(
+    mess += '\n\n' + underline(
         'Loading a Device configured in devices_config.ini:') + '\n\n'
     if not _parser:
         mess += f"a = autolab.get_device('my_{params['driver']}')"

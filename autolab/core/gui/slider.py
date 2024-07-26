@@ -11,7 +11,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from .icons import icons
 from .GUI_utilities import get_font_size, setLineEditBackground
-from .. import config
+from ..config import get_control_center_config
 
 
 if hasattr(QtCore.Qt.LeftButton, 'value'):
@@ -37,7 +37,7 @@ class Slider(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon(icons['slider']))
 
         # Load configuration
-        control_center_config = config.get_control_center_config()
+        control_center_config = get_control_center_config()
         self.precision = int(control_center_config['precision'])
 
         self._font_size = get_font_size() + 1

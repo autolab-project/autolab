@@ -118,7 +118,32 @@ def dataframe_to_str(value: pd.DataFrame, threshold=1000) -> str:
     return pd.DataFrame(value).head(threshold).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
 
 
-def openFile(filename: str):
+def str_to_data(s: str) -> Any:
+    """ Convert str to data with special format for ndarray and dataframe """
+    if '\t' in s and '\n' in s:
+        try: s = str_to_dataframe(s)
+        except: pass
+    elif '[' in s:
+        try: s = str_to_array(s)
+        except: pass
+    else:
+        try: s = str_to_value(s)
+        except: pass
+    return s
+
+
+def data_to_str(value: Any) -> str:
+    """ Convert data to str with special format for ndarray and dataframe """
+    if isinstance(value, np.ndarray):
+        raw_value_str = array_to_str(value, threshold=1000000, max_line_width=9000000)
+    elif isinstance(value, pd.DataFrame):
+        raw_value_str = dataframe_to_str(value, threshold=1000000)
+    else:
+        raw_value_str = str(value)
+    return raw_value_str
+
+
+def open_file(filename: str):
     ''' Opens a file using the platform specific command '''
     system = platform.system()
     if system == 'Windows': os.startfile(filename)
@@ -126,7 +151,7 @@ def openFile(filename: str):
     elif system == 'Darwin': os.system(f'open "{filename}"')
 
 
-def formatData(data: Any) -> pd.DataFrame:
+def data_to_dataframe(data: Any) -> pd.DataFrame:
     """ Format data to DataFrame """
     try: data = pd.DataFrame(data)
     except ValueError: data = pd.DataFrame([data])

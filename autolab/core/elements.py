@@ -13,7 +13,7 @@ from typing import Type, Tuple, List, Any
 import numpy as np
 import pandas as pd
 
-from . import paths
+from .paths import PATHS
 from .utilities import emphasize, clean_string, SUPPORTED_EXTENSION
 
 
@@ -229,17 +229,17 @@ class Action(Element):
                 if self.unit == 'open-file':
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                         caption=f"Open file - {self.address()}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
                 elif self.unit == 'save-file':
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                         caption=f"Save file - {self.address()}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
 
                 if filename != '':
                     path = os.path.dirname(filename)
-                    paths.USER_LAST_CUSTOM_FOLDER = path
+                    PATHS['last_folder'] = path
                     self.function(filename)
                 else:
                     print(f"Action '{self.address()}' cancel filename selection")

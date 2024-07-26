@@ -21,7 +21,7 @@ quentin.chateiller@c2n.upsaclay.fr
 
 
 def _create_item(var):
-    from .variables import Variable
+    from ..variables import Variable
     from ..elements import Variable as Variable_og
 
     class temp:
@@ -47,16 +47,12 @@ def plotter():
 
 def monitor(var):
     """ Open the Autolab Monitor for variable var """
-    item = _create_item(var)
-    assert var.readable, f"The variable {var.address()} is not readable"
-    _start('monitor', item=item)
+    _start('monitor', var=var)
 
 
 def slider(var):
     """ Open a slider for variable var """
-    item = _create_item(var)
-    assert var.writable, f"The variable {var.address()} is not writable"
-    _start('slider', item=item)
+    _start('slider', var=var)
 
 
 def add_device():
@@ -129,12 +125,16 @@ conda install -c conda-forge pyside6
             from .plotting.main import Plotter
             gui = Plotter(None)
         elif gui == 'monitor':
+            var = kwargs.get('var')
+            item = _create_item(var)
+            assert var.readable, f"The variable {var.address()} is not readable"
             from .monitoring.main import Monitor
-            item = kwargs.get('item')
             gui = Monitor(item)
         elif gui == 'slider':
+            var = kwargs.get('var')
+            item = _create_item(var)
+            assert var.writable, f"The variable {var.address()} is not writable"
             from .slider import Slider
-            item = kwargs.get('item')
             gui = Slider(item.variable, item)
         elif gui == 'add_device':
             from .controlcenter.main import addDeviceWindow
@@ -143,7 +143,7 @@ conda install -c conda-forge pyside6
             from .controlcenter.main import AboutWindow
             gui = AboutWindow()
         elif gui == 'variables_menu':
-            from .variables import VariablesMenu
+            from .GUI_variables import VariablesMenu
             gui = VariablesMenu()
         else:
             raise ValueError("gui accept either 'main', 'plotter', 'monitor'," \

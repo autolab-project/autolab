@@ -13,10 +13,11 @@ import numpy as np
 
 from qtpy import QtCore, QtWidgets
 
-from .. import variables
 from ..GUI_utilities import qt_object_exists
-from ... import paths, config
+from ...paths import PATHS
+from ...config import get_control_center_config
 from ...utilities import SUPPORTED_EXTENSION
+from ...variables import eval_variable
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -142,17 +143,17 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 if self.action.unit == "open-file":
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                         self.gui, caption=f"Open file - {self.action.name}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
                 elif self.action.unit == "save-file":
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                         self.gui, caption=f"Save file - {self.action.name}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
 
                 if filename != '':
                     path = os.path.dirname(filename)
-                    paths.USER_LAST_CUSTOM_FOLDER = path
+                    PATHS['last_folder'] = path
                     return filename
                 else:
                     self.gui.setStatus(
@@ -175,7 +176,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                     10000, False)
         else:
             try:
-                value = variables.eval_variable(value)
+                value = eval_variable(value)
                 value = self.action.type(value)
                 return value
             except:
@@ -207,7 +208,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.variable = variable
 
         # Import Autolab config
-        control_center_config = config.get_control_center_config()
+        control_center_config = get_control_center_config()
         self.precision = int(control_center_config['precision'])
 
         # Signal creation and associations in autolab devices instances
@@ -315,7 +316,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     10000, False)
             else:
                 try:
-                    value = variables.eval_variable(value)
+                    value = eval_variable(value)
                     value = self.variable.type(value)
                     return value
                 except:
@@ -362,12 +363,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def saveValue(self):
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self.gui, f"Save {self.variable.name} value", os.path.join(
-                paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'),
+                PATHS['last_folder'],f'{self.variable.address()}.txt'),
             filter=SUPPORTED_EXTENSION)[0]
 
         path = os.path.dirname(filename)
         if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
             try:
                 self.gui.setStatus(
                     f"Saving value of {self.variable.name}...", 5000)

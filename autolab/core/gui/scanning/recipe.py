@@ -10,9 +10,10 @@ import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
 from .customWidgets import MyQTreeWidget, MyQTabWidget
-from .. import variables
 from ..icons import icons
-from ... import config
+from ..GUI_variables import VariablesDialog
+from ...config import get_scanner_config
+from ...variables import has_eval
 from ...utilities import (clean_string, str_to_array, array_to_str,
                           str_to_dataframe, dataframe_to_str)
 
@@ -26,7 +27,7 @@ class RecipeManager:
         self.recipe_name = recipe_name
 
         # Import Autolab config
-        scanner_config = config.get_scanner_config()
+        scanner_config = get_scanner_config()
         self.precision = scanner_config['precision']
 
         self.defaultItemBackground = None
@@ -146,7 +147,7 @@ class RecipeManager:
             # Column 5 : Value if stepType is 'set'
             value = step['value']
             if value is not None:
-                if variables.has_eval(value):
+                if has_eval(value):
                     item.setText(4, f'{value}')
                 else:
                     try:
@@ -275,7 +276,7 @@ class RecipeManager:
             self.recipe_name, name)
 
         # Default value displayed in the QInputDialog
-        if variables.has_eval(value):
+        if has_eval(value):
             defaultValue = f'{value}'
         else:
             if element.type in [np.ndarray]:
@@ -288,7 +289,7 @@ class RecipeManager:
                 except (ValueError, TypeError):
                     defaultValue = f'{value}'
 
-        main_dialog = variables.VariablesDialog(self.gui, name, defaultValue)
+        main_dialog = VariablesDialog(self.gui, name, defaultValue)
         main_dialog.show()
 
         if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -296,7 +297,7 @@ class RecipeManager:
 
             try:
                 try:
-                    assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                    assert has_eval(value), "Need $eval: to evaluate the given string"
                 except:
                     # Type conversions
                     if element.type in [int]:
@@ -319,7 +320,7 @@ class RecipeManager:
                     elif element.type in [pd.DataFrame]:
                         value = str_to_dataframe(value)
                     else:
-                        assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                        assert has_eval(value), "Need $eval: to evaluate the given string"
                 # Apply modification
                 self.gui.configManager.setRecipeStepValue(
                     self.recipe_name, name, value)

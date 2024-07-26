@@ -9,7 +9,6 @@ import os
 import sys
 import csv
 
-import numpy as np
 import pandas as pd
 
 try:
@@ -19,9 +18,9 @@ except:
 
 from qtpy import QtCore, QtWidgets
 
-from ... import paths
-from ... import config
-from ... import utilities
+from ...paths import PATHS
+from ...config import load_config
+from ...utilities import data_to_dataframe, SUPPORTED_EXTENSION
 
 
 def find_delimiter(filename):
@@ -97,7 +96,7 @@ def importData(filename):
         data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows, names=columns)
 
     assert len(data) != 0, "Can't import empty DataFrame"
-    data = utilities.formatData(data)
+    data = data_to_dataframe(data)
     return data
 
 
@@ -112,7 +111,7 @@ class DataManager :
 
         self.overwriteData = True
 
-        plotter_config = config.load_config("plotter")
+        plotter_config = load_config("plotter_config")
         if 'device' in plotter_config.sections() and 'address' in plotter_config['device']:
             self.deviceValue = str(plotter_config['device']['address'])
         else:
@@ -202,8 +201,8 @@ class DataManager :
         and import the dataset"""
 
         filenames = QtWidgets.QFileDialog.getOpenFileNames(
-            self.gui, "Import data file", paths.USER_LAST_CUSTOM_FOLDER,
-            filter=utilities.SUPPORTED_EXTENSION)[0]
+            self.gui, "Import data file", PATHS['last_folder'],
+            filter=SUPPORTED_EXTENSION)[0]
         if not filenames:
             return
         else:
@@ -225,14 +224,14 @@ class DataManager :
             self.gui.figureManager.start(dataset)
 
         path = os.path.dirname(filename)
-        paths.USER_LAST_CUSTOM_FOLDER = path
+        PATHS['last_folder'] = path
 
     def importDeviceData(self, deviceVariable):
         """ This function open the data of the provided device """
 
         data = deviceVariable()
 
-        data = utilities.formatData(data)
+        data = data_to_dataframe(data)
 
         if self.overwriteData:
             data_name = self.deviceValue
@@ -301,12 +300,12 @@ class DataManager :
 
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 self.gui, caption="Save data",
-                directory=paths.USER_LAST_CUSTOM_FOLDER,
-                filter=utilities.SUPPORTED_EXTENSION)
+                directory=PATHS['last_folder'],
+                filter=SUPPORTED_EXTENSION)
             path = os.path.dirname(filename)
 
             if path != '' :
-                paths.USER_LAST_CUSTOM_FOLDER = path
+                PATHS['last_folder'] = path
                 self.gui.setStatus('Saving data...',5000)
 
                 dataset.save(filename)

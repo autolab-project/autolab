@@ -12,10 +12,10 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from .display import DisplayValues
 from .customWidgets import parameterQFrame
-from .. import variables
 from ..GUI_utilities import get_font_size, setLineEditBackground
 from ..icons import icons
 from ...utilities import clean_string, str_to_array, array_to_str, create_array
+from ...variables import has_eval, has_variable, eval_safely
 
 
 class ParameterManager:
@@ -344,18 +344,18 @@ class ParameterManager:
         if self.gui.configManager.hasCustomValues(self.recipe_name, self.param_name):
             raw_values = self.gui.configManager.getValues(self.recipe_name, self.param_name)
 
-            str_raw_values = raw_values if variables.has_eval(
+            str_raw_values = raw_values if has_eval(
                 raw_values) else array_to_str(raw_values)
 
-            if not variables.has_eval(raw_values):
+            if not has_eval(raw_values):
                 str_values = str_raw_values
                 self.evaluatedValues_lineEdit.hide()
                 self.labelEvaluatedValues.hide()
             else:
-                values = variables.eval_safely(raw_values)
+                values = eval_safely(raw_values)
                 try: values = create_array(values)
                 except: str_values = values
-                else: str_values = variables.array_to_str(values)
+                else: str_values = array_to_str(values)
                 self.evaluatedValues_lineEdit.show()
                 self.labelEvaluatedValues.show()
 
@@ -424,7 +424,7 @@ class ParameterManager:
                     f"Wrong format for parameter '{self.param_name}'", 10000, False)
                 return None
 
-            str_values = variables.array_to_str(paramValues[self.param_name].values)
+            str_values = array_to_str(paramValues[self.param_name].values)
             self.evaluatedValues_lineEdit.setText(f'{str_values}')
             self.displayParameter.refresh(paramValues)
 
@@ -436,7 +436,7 @@ class ParameterManager:
             except Exception as e:
                 self.gui.setStatus(f"Wrong format for parameter '{self.param_name}': {e}", 10000)
                 return None
-            str_values = variables.array_to_str(paramValues[self.param_name].values)
+            str_values = array_to_str(paramValues[self.param_name].values)
             self.evaluatedValues_lineEdit.setText(f'{str_values}')
             self.displayParameter.refresh(paramValues)
 
@@ -610,12 +610,12 @@ class ParameterManager:
         raw_values = self.values_lineEdit.text()
 
         try:
-            if not variables.has_eval(raw_values):
+            if not has_eval(raw_values):
                 raw_values = str_to_array(raw_values)
                 assert len(raw_values) != 0, "Cannot have empty array"
                 values = raw_values
-            elif not variables.has_variable(raw_values):
-                values = variables.eval_safely(raw_values)
+            elif not has_variable(raw_values):
+                values = eval_safely(raw_values)
                 if not isinstance(values, str):
                     values = create_array(values)
                     assert len(values) != 0, "Cannot have empty array"

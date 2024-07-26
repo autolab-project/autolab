@@ -11,7 +11,7 @@ import importlib
 from typing import Type, List
 from types import ModuleType
 
-from . import paths, server
+from .paths import PATHS, DRIVERS_PATHS, DRIVER_SOURCES
 
 
 # =============================================================================
@@ -21,7 +21,8 @@ from . import paths, server
 def get_driver(driver_name: str, connection: str, **kwargs) -> Type:
     ''' Returns a driver instance using configuration provided in kwargs '''
     if driver_name == 'autolab_server':
-        driver_instance = server.Driver_REMOTE(**kwargs)
+        from .server import Driver_REMOTE  # avoid circular import
+        driver_instance = Driver_REMOTE(**kwargs)
     else:
         assert driver_name in list_drivers(), f"Driver {driver_name} not found in autolab's drivers"
         driver_lib = load_driver_lib(driver_name)
@@ -69,7 +70,7 @@ def load_driver_utilities_lib(driver_utilities_name: str) -> ModuleType:
     if os.path.exists(driver_utilities_name):
         driver_path = get_driver_path(driver_utilities_name.replace('_utilities', ''))
     else:
-        driver_path = os.path.join(paths.AUTOLAB_FOLDER, 'core', 'default_driver.py')
+        driver_path = os.path.join(PATHS['autolab_folder'], 'core', 'default_driver.py')
 
     # Load library
     driver_lib = load_utilities_lib(driver_path)
@@ -175,7 +176,7 @@ def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
 def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
     """ Create a default connection class when not provided in Driver.
     Will be used to try to connect to an instrument. """
-    Driver = getattr(driver_lib, f'Driver')
+    Driver = getattr(driver_lib, 'Driver')
 
     if connection == 'DEFAULT':
         class Driver_DEFAULT(Driver):
@@ -237,44 +238,44 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
                 #Gpib.gpib.close(self.inst.id)
                 pass
 
-        return Driver_USB
+        return Driver_GPIB
 
-    if connection == 'USB':
-        class Driver_USB(Driver):
-            def __init__(self, **kwargs):
-                import usb
-                import usb.core
-                import usb.util
+    # if connection == 'USB':
+    #     class Driver_USB(Driver):
+    #         def __init__(self, **kwargs):
+    #             import usb
+    #             import usb.core
+    #             import usb.util
 
-                dev = usb.core.find(idVendor=0x104d, idProduct=0x100a)
-                dev.reset()
-                dev.set_configuration()
-                interface = 0
-                if dev.is_kernel_driver_active(interface) is True:
-                    dev.detach_kernel_driver(interface)  # tell the kernel to detach
-                    usb.util.claim_interface(dev, interface)  # claim the device
+    #             dev = usb.core.find(idVendor=0x104d, idProduct=0x100a)
+    #             dev.reset()
+    #             dev.set_configuration()
+    #             interface = 0
+    #             if dev.is_kernel_driver_active(interface) is True:
+    #                 dev.detach_kernel_driver(interface)  # tell the kernel to detach
+    #                 usb.util.claim_interface(dev, interface)  # claim the device
 
-                cfg = dev.get_active_configuration()
-                intf = cfg[(0,0)]
-                self.ep_out = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
-                self.ep_in = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
+    #             cfg = dev.get_active_configuration()
+    #             intf = cfg[(0,0)]
+    #             self.ep_out = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+    #             self.ep_in = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
 
-                assert self.ep_out is not None
-                assert self.ep_in is not None
+    #             assert self.ep_out is not None
+    #             assert self.ep_in is not None
 
-                Driver.__init__(self)
+    #             Driver.__init__(self)
 
-            def write(self, query):
-                self.string = query + '\r\n'
-                self.ep_out.write(self.string)
+    #         def write(self, query):
+    #             self.string = query + '\r\n'
+    #             self.ep_out.write(self.string)
 
-            def read(self):
-                rep = self.ep_in.read(64)
-                const = ''.join(chr(i) for i in rep)
-                const = const[:const.find('\r\n')]
-                return const
+    #         def read(self):
+    #             rep = self.ep_in.read(64)
+    #             const = ''.join(chr(i) for i in rep)
+    #             const = const[:const.find('\r\n')]
+    #             return const
 
-        return Driver_USB
+    #     return Driver_USB
 
     if connection == 'SOCKET':
         class Driver_SOCKET(Driver):
@@ -404,7 +405,7 @@ def load_drivers_paths() -> dict:
         - value: path of the driver python script
     '''
     drivers_paths = {}
-    for source_name, source_path in paths.DRIVER_SOURCES.items():
+    for source_name, source_path in DRIVER_SOURCES.items():
         if not os.path.isdir(source_path):
             print(f"Warning, can't found driver folder: {source_path}")
             continue
@@ -425,5 +426,5 @@ def load_drivers_paths() -> dict:
 
 def update_drivers_paths():
     ''' Update list of available driver '''
-    global DRIVERS_PATHS
-    DRIVERS_PATHS = load_drivers_paths()
+    DRIVERS_PATHS.clear()
+    DRIVERS_PATHS.update(load_drivers_paths())

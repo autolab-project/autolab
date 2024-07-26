@@ -14,8 +14,8 @@ import urllib.request
 import json
 from typing import Union, Tuple
 
-from . import paths
-from . import drivers
+from .paths import DRIVER_SOURCES, DRIVER_REPOSITORY
+from .drivers import update_drivers_paths
 from .utilities import input_wrap
 from .gitdir import download
 
@@ -117,8 +117,8 @@ def _copy_move(temp_unzip_repo, filename, output_dir):
 
 
 def _check_empty_driver_folder():
-    if not os.listdir(paths.DRIVER_SOURCES['official']):
-        print(f"No drivers found in {paths.DRIVER_SOURCES['official']}")
+    if not os.listdir(DRIVER_SOURCES['official']):
+        print(f"No drivers found in {DRIVER_SOURCES['official']}")
         install_drivers()
 
 
@@ -134,8 +134,8 @@ def install_drivers(*repo_url: Union[None, str, Tuple[str, str]],
         return None
 
     # Download mandatory drivers
-    official_folder = paths.DRIVER_SOURCES['official']
-    official_url = paths.DRIVER_REPOSITORY[official_folder]
+    official_folder = DRIVER_SOURCES['official']
+    official_url = DRIVER_REPOSITORY[official_folder]
     mandatory_drivers = ['system', 'dummy', 'plotter']
 
     for driver in mandatory_drivers:
@@ -149,7 +149,7 @@ def install_drivers(*repo_url: Union[None, str, Tuple[str, str]],
 
     # create list of tuple with tuple being ('path to install', 'url to download')
     if len(repo_url) == 0:
-        list_repo_tuple = list(paths.DRIVER_REPOSITORY.items())  # This variable can be modified in autolab_config.ini
+        list_repo_tuple = list(DRIVER_REPOSITORY.items())  # This variable can be modified in autolab_config.ini
     else:
         list_repo_tuple = list(repo_url)
         for i, repo_url_tmp in enumerate(list_repo_tuple):
@@ -185,7 +185,7 @@ def install_drivers(*repo_url: Union[None, str, Tuple[str, str]],
     os.rmdir(temp_repo_folder)
 
     # Update available drivers
-    drivers.update_drivers_paths()
+    update_drivers_paths()
 
 
 # =============================================================================
@@ -240,8 +240,8 @@ def _install_drivers_custom(_print=True, parent=None):
     """ Ask the user which driver to install from the official autolab driver github repo.
     If qtpy is install, open a GUI to select the driver.
     Else, prompt the user to install individual drivers. """
-    official_folder = paths.DRIVER_SOURCES['official']
-    official_url = paths.DRIVER_REPOSITORY[official_folder]
+    official_folder = DRIVER_SOURCES['official']
+    official_url = DRIVER_REPOSITORY[official_folder]
 
     try:
         list_driver = _get_drivers_list_from_github(official_url)
@@ -288,7 +288,7 @@ def _install_drivers_custom(_print=True, parent=None):
                 # OFFICIAL DRIVERS
                 formLayout = QtWidgets.QFormLayout()
 
-                self.masterCheckBox = QtWidgets.QCheckBox(f"From {paths.DRIVER_REPOSITORY[paths.DRIVER_SOURCES['official']]}:")
+                self.masterCheckBox = QtWidgets.QCheckBox(f"From {DRIVER_REPOSITORY[DRIVER_SOURCES['official']]}:")
                 self.masterCheckBox.setChecked(False)
                 self.masterCheckBox.stateChanged.connect(self.masterCheckBoxChanged)
                 formLayout.addRow(self.masterCheckBox)
@@ -381,4 +381,4 @@ def _install_drivers_custom(_print=True, parent=None):
         if parent is None: app.exec()
 
     # Update available drivers
-    drivers.update_drivers_paths()
+    update_drivers_paths()

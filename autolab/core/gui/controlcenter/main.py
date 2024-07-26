@@ -24,12 +24,19 @@ from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..plotting.main import Plotter
-from ..variables import VARIABLES
 from ..GUI_utilities import get_font_size
 from ..icons import icons
-from ... import devices, drivers, web, paths, config, utilities
+from ...paths import PATHS
+from ...devices import (list_devices, list_loaded_devices, Device, close,
+                        get_final_device_config)
+from ...drivers import (list_drivers, load_driver_lib, get_connection_names,
+                        get_driver_class, get_connection_class, get_class_args)
+from ...config import (get_control_center_config, get_all_devices_configs,
+                       save_config)
+from ...utilities import boolean, open_file
+from ...variables import VARIABLES
 from ...repository import _install_drivers_custom
-from ...web import project_url, drivers_url, doc_url
+from ...web import project_url, drivers_url, doc_url, report, doc
 from .... import __version__
 
 
@@ -192,19 +199,19 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         reportAction = helpMenu.addAction('Report bugs / suggestions')
         reportAction.setIcon(QtGui.QIcon(icons['github']))
-        reportAction.triggered.connect(web.report)
+        reportAction.triggered.connect(report)
         reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
 
         helpMenu.addSeparator()
 
         helpAction = helpMenu.addAction('Documentation')
         helpAction.setIcon(QtGui.QIcon(icons['readthedocs']))
-        helpAction.triggered.connect(lambda: web.doc('default'))
+        helpAction.triggered.connect(lambda: doc('default'))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
 
         helpActionOffline = helpMenu.addAction('Documentation (Offline)')
         helpActionOffline.setIcon(QtGui.QIcon(icons['pdf']))
-        helpActionOffline.triggered.connect(lambda: web.doc(False))
+        helpActionOffline.triggered.connect(lambda: doc(False))
         helpActionOffline.setStatusTip('Open the pdf documentation form local file')
 
         helpMenu.addSeparator()
@@ -228,10 +235,10 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.timerQueue.start()  # OPTIMIZE: should be started only when needed but difficult to know it before openning device which occurs in a diff thread! (can't start timer on diff thread)
 
         # Import Autolab config
-        control_center_config = config.get_control_center_config()
-        logger_active = utilities.boolean(control_center_config['logger'])
-        console_active = utilities.boolean(control_center_config['console'])
-        print_active = utilities.boolean(control_center_config['print'])
+        control_center_config = get_control_center_config()
+        logger_active = boolean(control_center_config['logger'])
+        console_active = boolean(control_center_config['console'])
+        print_active = boolean(control_center_config['print'])
 
         # Prepare docker
         if console_active or logger_active:
@@ -347,17 +354,17 @@ class ControlCenter(QtWidgets.QMainWindow):
         associate only the ones already loaded in autolab """
         self.tree.clear()
         try:
-            list_devices = devices.list_devices()
+            devices_name = list_devices()
         except Exception as e:
             self.setStatus(f'Error {e}', 10000, False)
         else:
-            for devName in list_devices:
-                item = TreeWidgetItemModule(self.tree, devName, self)
+            for dev_name in devices_name:
+                item = TreeWidgetItemModule(self.tree, dev_name, self)
 
                 for i in range(5):
                     item.setBackground(i, QtGui.QColor('#9EB7F5'))  # blue
 
-                if devName in devices.list_loaded_devices(): self.itemClicked(item)
+                if dev_name in list_loaded_devices(): self.itemClicked(item)
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
@@ -395,10 +402,12 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.timerDevice.start()
 
     def itemCanceled(self, item):
-        """ Cancel the device openning. Can be used to avoid GUI blocking for devices with infinite loading issue """
+        """ Cancel the device openning. Can be used to avoid GUI blocking
+        for devices with infinite loading issue """
         if id(item) in self.threadManager.threads_conn:
             tid = self.threadManager.threads_conn[id(item)]
-            self.threadManager.threads[tid].endSignal.emit(f'Cancel loading device {item.name}')
+            self.threadManager.threads[tid].endSignal.emit(
+                f'Cancel loading device {item.name}')
             self.threadManager.threads[tid].terminate()
 
     def itemPressed(self, item: QtWidgets.QTreeWidgetItem):
@@ -412,7 +421,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         elif hasattr(item, "action"): self.tree.last_drag = item.action
         else: self.tree.last_drag = None
 
-    def associate(self, item: QtWidgets.QTreeWidgetItem, module: devices.Device):
+    def associate(self, item: QtWidgets.QTreeWidgetItem, module: Device):
         """ Function called to associate a main module to one item in the tree """
         # load the entire module (submodules, variables, actions)
         item.load(module)
@@ -487,7 +496,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         if item is not None:
             name = item.name
             try:
-                conf = devices.get_final_device_config(item.name)
+                conf = get_final_device_config(item.name)
             except Exception as e:
                 self.setStatus(str(e), 10000, False)
             else:
@@ -500,20 +509,20 @@ class ControlCenter(QtWidgets.QMainWindow):
     @staticmethod
     def openAutolabConfig():
         """ Open the Autolab configuration file """
-        utilities.openFile(paths.AUTOLAB_CONFIG)
+        open_file(PATHS['autolab_config'])
 
     @staticmethod
     def openDevicesConfig():
         """ Open the devices configuration file """
-        utilities.openFile(paths.DEVICES_CONFIG)
+        open_file(PATHS['devices_config'])
 
     @staticmethod
     def openPlotterConfig():
         """ Open the plotter configuration file """
-        utilities.openFile(paths.PLOTTER_CONFIG)
+        open_file(PATHS['plotter_config'])
 
     def setScanParameter(self, recipe_name: str, param_name: str,
-                         variable: devices.Device):
+                         variable: Device):
         """ Set the selected variable has parameter for the recipe """
         if self.scanner is None:
             self.openScanner()
@@ -521,7 +530,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.scanner.configManager.setParameter(recipe_name, param_name, variable)
 
     def addStepToScanRecipe(self, recipe_name: str, stepType: str,
-                            element: devices.Device):
+                            element: Device):
         """ Add the selected variable has a step for the recipe """
         if self.scanner is None:
             self.openScanner()
@@ -586,7 +595,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         for slider in list(self.sliders.values()):
             slider.close()
 
-        devices.close()  # close all devices
+        close()  # close all devices
 
         QtWidgets.QApplication.quit()  # close the control center interface
 
@@ -669,7 +678,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         label.setMaximumSize(60, 23)
 
         self.driversComboBox = QtWidgets.QComboBox()
-        self.driversComboBox.addItems(drivers.list_drivers())
+        self.driversComboBox.addItems(list_drivers())
         self.driversComboBox.activated.connect(self.driverChanged)
 
         layoutDriverName.addWidget(label)
@@ -770,10 +779,10 @@ class addDeviceWindow(QtWidgets.QMainWindow):
             device_dict[key] = val
 
         # Update devices config
-        device_config = config.get_all_devices_configs()
+        device_config = get_all_devices_configs()
         new_device = {device_name: device_dict}
         device_config.update(new_device)
-        config.save_config('devices', device_config)
+        save_config('devices_config', device_config)
 
         if hasattr(self.mainGui, 'initialize'): self.mainGui.initialize()
 
@@ -794,10 +803,10 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         self.driverChanged()
 
         try:
-            driver_lib = drivers.load_driver_lib(driver_name)
+            driver_lib = load_driver_lib(driver_name)
         except: pass
         else:
-            list_conn = drivers.get_connection_names(driver_lib)
+            list_conn = get_connection_names(driver_lib)
             if conn not in list_conn:
                 if list_conn:
                     self.setStatus(f"Connection {conn} not found, switch to {list_conn[0]}", 10000, False)
@@ -812,8 +821,8 @@ class addDeviceWindow(QtWidgets.QMainWindow):
 
         # Used to remove default value
         try:
-            driver_lib = drivers.load_driver_lib(driver_name)
-            driver_class = drivers.get_driver_class(driver_lib)
+            driver_lib = load_driver_lib(driver_name)
+            driver_class = get_driver_class(driver_lib)
             assert hasattr(driver_class, 'slot_config')
         except:
             slot_config = '<MODULE_NAME>'
@@ -855,7 +864,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         self._prev_name = driver_name
 
         try:
-            driver_lib = drivers.load_driver_lib(driver_name)
+            driver_lib = load_driver_lib(driver_name)
         except Exception as e:
             # If error with driver remove all layouts
             self.setStatus(f"Can't load {driver_name}: {e}", 10000, False)
@@ -877,7 +886,7 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         self.setStatus('')
 
         # Update available connections
-        connections = drivers.get_connection_names(driver_lib)
+        connections = get_connection_names(driver_lib)
         self.connectionComboBox.clear()
         self.connectionComboBox.addItems(connections)
 
@@ -892,15 +901,15 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         # used to skip doublon key
         conn = self.connectionComboBox.currentText()
         try:
-            driver_instance = drivers.get_connection_class(driver_lib, conn)
+            driver_instance = get_connection_class(driver_lib, conn)
         except:
             connection_args = {}
         else:
-            connection_args = drivers.get_class_args(driver_instance)
+            connection_args = get_class_args(driver_instance)
 
         # populate layoutDriverOtherArgs
-        driver_class = drivers.get_driver_class(driver_lib)
-        other_args = drivers.get_class_args(driver_class)
+        driver_class = get_driver_class(driver_lib)
+        other_args = get_class_args(driver_class)
         for key, val in other_args.items():
             if key in connection_args: continue
             widget = QtWidgets.QLabel()
@@ -930,10 +939,10 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         self._prev_conn = conn
 
         driver_name = self.driversComboBox.currentText()
-        driver_lib = drivers.load_driver_lib(driver_name)
+        driver_lib = load_driver_lib(driver_name)
 
-        connection_args = drivers.get_class_args(
-            drivers.get_connection_class(driver_lib, conn))
+        connection_args = get_class_args(
+            get_connection_class(driver_lib, conn))
 
         # reset layoutDriverArgs
         for i in reversed(range(self.layoutDriverArgs.count())):

@@ -7,235 +7,20 @@ Created on Mon Mar  4 14:54:41 2024
 
 import sys
 import re
-from typing import Any, List, Tuple
 
 import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
+from .monitoring.main import Monitor
+from .slider import Slider
 from .GUI_utilities import setLineEditBackground
 from .icons import icons
 from ..devices import DEVICES
-from ..utilities import (str_to_array, str_to_dataframe, str_to_value,
-                         array_to_str, dataframe_to_str, clean_string)
-
-from .monitoring.main import Monitor
-from .slider import Slider
-
-
-# class AddVarSignal(QtCore.QObject):
-#     add = QtCore.Signal(object, object)
-#     def emit_add(self, name, value):
-#         self.add.emit(name, value)
-
-
-# class RemoveVarSignal(QtCore.QObject):
-#     remove = QtCore.Signal(object)
-#     def emit_remove(self, name):
-#         self.remove.emit(name)
-
-
-# class MyDict(dict):
-
-#     def __init__(self):
-#         self.addVarSignal = AddVarSignal()
-#         self.removeVarSignal = RemoveVarSignal()
-
-#     def __setitem__(self, item, value):
-#         super(MyDict, self).__setitem__(item, value)
-#         self.addVarSignal.emit_add(item, value)
-
-#     def pop(self, item):
-#         super(MyDict, self).pop(item)
-#         self.removeVarSignal.emit_remove(item)
-
-
-# VARIABLES = MyDict()
-VARIABLES = {}
-
-EVAL = "$eval:"
-
-
-def update_allowed_dict() -> dict:
-    global allowed_dict  # needed to remove variables instead of just adding new one
-    allowed_dict = {"np": np, "pd": pd}
-    allowed_dict.update(DEVICES)
-    allowed_dict.update(VARIABLES)
-    return allowed_dict
-
-
-allowed_dict = update_allowed_dict()
-
-# OPTIMIZE: Variable becomes closer and closer to core.elements.Variable, could envision a merge
-# TODO: refresh menu display by looking if has eval (no -> can refresh)
-# TODO add read signal to update gui (separate class for event and use it on itemwidget creation to change setText with new value)
-class Variable():
-    """ Class used to control basic variable """
-
-    raw: Any
-    value: Any
-
-    def __init__(self, name: str, var: Any):
-        """ name: name of the variable, var: value of the variable """
-        self.unit = None
-        self.writable = True
-        self.readable = True
-        self._rename(name)
-        self._refresh(var)
-
-    def _rename(self, new_name: str):
-            self.name = new_name
-            self.address = lambda: new_name
-
-    def _refresh(self, var: Any):
-        if isinstance(var, Variable):
-            self.raw = var.raw
-            self.value = var.value
-        else:
-            self.raw = var
-            self.value = 'Need update' if has_eval(self.raw) else self.raw
-
-        # If no devices or variables found in name, can evaluate value safely
-        if not has_variable(self.raw):
-            try: self.value = self._evaluate()
-            except Exception as e: self.value = str(e)
-
-        self.type = type(self.raw)  # For slider
-
-    def _evaluate(self):
-        if has_eval(self.raw):
-            value = str(self.raw)[len(EVAL): ]
-            call = eval(str(value), {}, allowed_dict)
-            self.value = call
-        else:
-            call = self.value
-
-        return call
-
-    def __call__(self, value: Any = None) -> Any:
-        if value is None:
-            return self._evaluate()
-
-        self._refresh(value)
-        return None
-
-
-def list_variables() -> List[str]:
-    ''' Returns a list of Variables '''
-    return list(VARIABLES)
-
-
-def rename_variable(name: str, new_name: str):
-    ''' Rename an existing Variable '''
-    new_name = clean_string(new_name)
-    var = VARIABLES.pop(name)
-    VARIABLES[new_name] = var
-    var._rename(new_name)
-    update_allowed_dict()
-
-
-def set_variable(name: str, value: Any) -> Variable:
-    ''' Create or modify a Variable with provided name and value '''
-    name = clean_string(name)
-
-    if is_Variable(value):
-        var = value
-        var(value)
-    else:
-        if name in VARIABLES:
-            var = get_variable(name)
-            var(value)
-        else:
-            var = Variable(name, value)
-
-    VARIABLES[name] = var
-    update_allowed_dict()
-    return var
-
-
-def get_variable(name: str) -> Variable:
-    ''' Return Variable with provided name if exists else None '''
-    return VARIABLES[name]
-
-
-def remove_variable(name: str) -> Variable:
-    var = VARIABLES.pop(name)
-    update_allowed_dict()
-    return var
-
-
-def remove_from_config(variables: List[Tuple[str, Any]]):
-    for name, _ in variables:
-        if name in VARIABLES:
-            remove_variable(name)
-
-
-def update_from_config(variables: List[Tuple[str, Any]]):
-    for var in variables:
-        set_variable(var[0], var[1])
-
-
-def str_to_data(raw_value: str) -> Any:
-    """ Convert str to data with special format for ndarray and dataframe """
-    if not has_eval(raw_value):
-        if '\t' in raw_value and '\n' in raw_value:
-            try: raw_value = str_to_dataframe(raw_value)
-            except: pass
-        elif '[' in raw_value:
-            try: raw_value = str_to_array(raw_value)
-            except: pass
-        else:
-            try: raw_value = str_to_value(raw_value)
-            except: pass
-    return raw_value
-
-
-def data_to_str(value: Any) -> str:
-    """ Convert data to str with special format for ndarray and dataframe """
-    if isinstance(value, np.ndarray):
-        raw_value_str = array_to_str(value, threshold=1000000, max_line_width=9000000)
-    elif isinstance(value, pd.DataFrame):
-        raw_value_str = dataframe_to_str(value, threshold=1000000)
-    else:
-        raw_value_str = str(value)
-    return raw_value_str
-
-
-def has_variable(value: str) -> bool:
-    if not isinstance(value, str): return False
-    pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?'
-
-    for key in (list(DEVICES) + list(VARIABLES)):
-        if key in [var.split('.')[0] for var in re.findall(pattern, value)]:
-            return True
-    return False
-
-
-def has_eval(value: Any) -> bool:
-    """ Checks if value is a string starting with '$eval:'"""
-    return True if isinstance(value, str) and value.startswith(EVAL) else False
-
-
-def is_Variable(value: Any):
-    """ Returns True if value of type Variable """
-    return isinstance(value, Variable)
-
-
-def eval_variable(value: Any) -> Any:
-    """ Evaluate the given python string. String can contain variables,
-    devices, numpy arrays and pandas dataframes."""
-    if has_eval(value): value = Variable('temp', value)
-
-    if is_Variable(value): return value()
-    return value
-
-
-def eval_safely(value: Any) -> Any:
-    """ Same as eval_variable but do not evaluate if contains devices or variables """
-    if has_eval(value): value = Variable('temp', value)
-
-    if is_Variable(value): return value.value
-    return value
+from ..utilities import data_to_str, str_to_data, clean_string
+from ..variables import (VARIABLES, get_variable, set_variable,
+                         rename_variable, remove_variable,
+                         has_variable, has_eval, eval_variable, EVAL)
 
 
 class VariablesDialog(QtWidgets.QDialog):
@@ -297,7 +82,7 @@ class VariablesDialog(QtWidgets.QDialog):
 
     def toggleVariableName(self, name):
         value = self.textValue()
-        if name in VARIABLES and is_Variable(get_variable(name)): name += '()'
+        if name in VARIABLES: name += '()'
 
         if value in ('0', "''"): value = ''
         if not has_eval(value): value = EVAL + value
@@ -624,7 +409,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         if id(self) in self.gui.sliders:
             self.gui.sliders.pop(id(self))
 
-    def renameVariable(self):
+    def renameVariable(self) -> None:
         new_name = self.nameWidget.text()
         if new_name == self.name:
             setLineEditBackground(self.nameWidget, 'synced')
@@ -635,8 +420,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
                 f"Error: {new_name} already exist!", 10000, False)
             return None
 
-        for character in r'$*."/\[]:;|, -(){}^=':
-            new_name = new_name.replace(character, '')
+        new_name = clean_string(new_name)
 
         try:
             rename_variable(self.name, new_name)
@@ -647,6 +431,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             new_name = self.nameWidget.setText(self.name)
             setLineEditBackground(self.nameWidget, 'synced')
             self.gui.setStatus('')
+        return None
 
     def refresh_rawValue(self):
         raw_value_str = data_to_str(self.variable.raw)
@@ -682,12 +467,17 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
                 raw_value = str_to_data(raw_value)
             else:
                 # get all variables
+                raw_value_check = raw_value[len(EVAL): ]  # Allows variable with name 'eval'
                 pattern1 = r'[a-zA-Z][a-zA-Z0-9._]*'
-                matches1 = re.findall(pattern1, raw_value)
+                matches1 = re.findall(pattern1, raw_value_check)
                 # get variables not unclosed by ' or " (gives bad name so needs to check with all variables)
                 pattern2 = r'(?<!["\'])([a-zA-Z][a-zA-Z0-9._]*)(?!["\'])'
-                matches2 = re.findall(pattern2, raw_value)
+                matches2 = re.findall(pattern2, raw_value_check)
                 matches = list(set(matches1) & set(matches2))
+                # Add device/variable name to matches
+                for match in list(matches):
+                    matches.append(match.split('.')[0])
+                matches = list(set(matches))
                 assert name not in matches, f"Variable '{name}' name can't be used in eval to avoid circular definition"
         except Exception as e:
             self.gui.setStatus(f'Error: {e}', 10000, False)

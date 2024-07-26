@@ -17,8 +17,8 @@ from .display import DisplayValues
 from ..GUI_utilities import (get_font_size, setLineEditBackground,
                              pyqtgraph_fig_ax, pyqtgraph_image)
 from ..slider import Slider
-from ..variables import Variable
 from ..icons import icons
+from ...variables import Variable
 
 
 if hasattr(pd.errors, 'UndefinedVariableError'):
