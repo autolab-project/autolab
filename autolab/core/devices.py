@@ -119,12 +119,12 @@ def get_device(device_name: str, **kwargs) -> Device:
 # =============================================================================
 
 def list_loaded_devices() -> List[str]:
-    ''' Returns the list of the loaded devices '''
+    ''' Returns the list of loaded device names '''
     return list(DEVICES)
 
 
 def list_devices() -> List[str]:
-    ''' Returns the list of all configured devices '''
+    ''' Returns the list of all configured device names '''
     return list_all_devices_configs()
 
 

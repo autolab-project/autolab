@@ -91,6 +91,8 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.activateWindow()
         self.resize(700, 573)
 
+        self.close_device_on_exit = True
+
         # Main frame configuration: centralWidget(verticalLayout(splitter(tree)))
 
         # Tree widget configuration
@@ -131,6 +133,13 @@ class ControlCenter(QtWidgets.QMainWindow):
         verticalLayout.setSpacing(0)
         verticalLayout.setContentsMargins(0,0,0,0)
         verticalLayout.addWidget(self.splitter)
+
+        closeWidget = QtWidgets.QCheckBox('Close device connection on exit')
+        closeWidget.setChecked(self.close_device_on_exit)
+        closeWidget.stateChanged.connect(
+            lambda state: setattr(self, 'close_device_on_exit', state))
+
+        verticalLayout.addWidget(closeWidget)
 
         centralWidget = QtWidgets.QWidget()
         centralWidget.setLayout(verticalLayout)
@@ -595,7 +604,8 @@ class ControlCenter(QtWidgets.QMainWindow):
         for slider in list(self.sliders.values()):
             slider.close()
 
-        close()  # close all devices
+        if self.close_device_on_exit:
+            close()  # close all devices
 
         QtWidgets.QApplication.quit()  # close the control center interface
 

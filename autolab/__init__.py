@@ -50,7 +50,7 @@ from .core.infos import _list_devices as list_devices
 from .core.infos import _list_drivers as list_drivers
 
 # Devices
-from .core.devices import get_device, close
+from .core.devices import get_device, close, list_loaded_devices
 from .core import devices as _devices
 
 # Drivers

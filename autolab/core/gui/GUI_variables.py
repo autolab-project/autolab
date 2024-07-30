@@ -19,9 +19,9 @@ from .icons import icons
 from ..devices import DEVICES
 from ..utilities import data_to_str, str_to_data, clean_string
 from ..variables import (VARIABLES, get_variable, set_variable,
-                         rename_variable, remove_variable,
+                         rename_variable, remove_variable, is_Variable,
                          has_variable, has_eval, eval_variable, EVAL)
-
+from ..devices import get_element_by_address
 
 class VariablesDialog(QtWidgets.QDialog):
 
@@ -151,10 +151,12 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.devicesWidget.setIndentation(10)
         self.devicesWidget.setStyleSheet("QHeaderView::section { background-color: lightgray; }")
         self.devicesWidget.itemDoubleClicked.connect(self.deviceActivated)
+        self.devicesWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.devicesWidget.customContextMenuRequested.connect(self.rightClickDevice)
 
         # Main layout creation
         layoutWindow = QtWidgets.QVBoxLayout()
-        layoutTab = QtWidgets.QHBoxLayout()
+        layoutTab = QtWidgets.QVBoxLayout()
         layoutWindow.addLayout(layoutTab)
 
         centralWidget = QtWidgets.QWidget()
@@ -169,7 +171,6 @@ class VariablesMenu(QtWidgets.QMainWindow):
         layoutButton = QtWidgets.QHBoxLayout()
         layoutButton.addWidget(addButton)
         layoutButton.addWidget(removeButton)
-        layoutButton.addWidget(refreshButtonWidget)
         layoutButton.addStretch()
 
         frameVariables = QtWidgets.QFrame()
@@ -186,6 +187,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         tab.addTab(frameDevices, 'Devices')
 
         layoutTab.addWidget(tab)
+        layoutTab.addWidget(refreshButtonWidget)
 
         self.resize(550, 300)
         self.refresh()
@@ -205,6 +207,11 @@ class VariablesMenu(QtWidgets.QMainWindow):
     def rightClick(self, position: QtCore.QPoint):
         """ Provides a menu where the user right clicked to manage a variable """
         item = self.variablesWidget.itemAt(position)
+        if hasattr(item, 'menu'): item.menu(position)
+
+    def rightClickDevice(self, position: QtCore.QPoint):
+        """ Provides a menu where the user right clicked to manage a variable """
+        item = self.devicesWidget.itemAt(position)
         if hasattr(item, 'menu'): item.menu(position)
 
     def deviceActivated(self, item: QtWidgets.QTreeWidgetItem):
@@ -279,9 +286,8 @@ class VariablesMenu(QtWidgets.QMainWindow):
             deviceItem.setBackground(0, QtGui.QColor('#9EB7F5'))  # blue
             deviceItem.setExpanded(True)
             for elements in device.get_structure():
-                deviceItem2 = QtWidgets.QTreeWidgetItem(
-                    deviceItem, [elements[0]])
-                deviceItem2.name = elements[0]
+                var = get_element_by_address(elements[0])
+                MyQTreeWidgetItem(deviceItem, var.address(), var, self)
 
     def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
@@ -311,12 +317,16 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
     def __init__(self, itemParent, name, variable, gui):
 
-        super().__init__(itemParent, ['', name])
-
         self.itemParent = itemParent
         self.gui = gui
         self.name = name
         self.variable = variable
+
+        if is_Variable(self.variable):
+            super().__init__(itemParent, ['', name])
+        else:
+            super().__init__(itemParent, [name])
+            return None
 
         nameWidget = QtWidgets.QLineEdit()
         nameWidget.setText(name)
@@ -361,13 +371,23 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         menu = QtWidgets.QMenu()
         monitoringAction = menu.addAction("Start monitoring")
         monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
-        monitoringAction.setEnabled(has_eval(self.variable.raw) or isinstance(
-            self.variable.value, (int, float, np.ndarray, pd.DataFrame)))
+        monitoringAction.setEnabled(
+            (hasattr(self.variable, 'readable')  # Action don't have readable
+             and self.variable.readable
+             and self.variable.type in (int, float, np.ndarray, pd.DataFrame)
+             ) or (
+                 is_Variable(self.variable)
+                 and (has_eval(self.variable.raw) or isinstance(
+                     self.variable.value, (int, float, np.ndarray, pd.DataFrame)))
+                 ))
 
         menu.addSeparator()
         sliderAction = menu.addAction("Create a slider")
         sliderAction.setIcon(QtGui.QIcon(icons['slider']))
-        sliderAction.setEnabled(self.variable.type in (int, float))
+        sliderAction.setEnabled(
+            (hasattr(self.variable, 'writable')
+             and self.variable.writable
+             and self.variable.type in (int, float)))
 
         choice = menu.exec_(self.gui.variablesWidget.viewport().mapToGlobal(position))
         if choice == monitoringAction: self.openMonitor()
