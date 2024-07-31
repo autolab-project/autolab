@@ -181,6 +181,7 @@ class ScanManager:
                     super().__init__(parent)
                     self.setWindowTitle(name)
 
+                    # OPTIMIZE: could use MyLineEdit but also need to implement $eval:
                     input_dialog = QtWidgets.QInputDialog(self)
                     input_dialog.setLabelText(f"Set {name} value")
                     input_dialog.setInputMode(QtWidgets.QInputDialog.TextInput)

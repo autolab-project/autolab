@@ -16,7 +16,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 from ..slider import Slider
 from ..monitoring.main import Monitor
 from ..icons import icons
-from ..GUI_utilities import qt_object_exists
+from ..GUI_utilities import qt_object_exists, MyLineEdit
 from ...paths import PATHS
 from ...config import get_control_center_config
 from ...variables import eval_variable
@@ -292,7 +292,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         # Main - Column 3 : QlineEdit if the action has a parameter
         if self.has_value:
-            self.valueWidget = QtWidgets.QLineEdit()
+            self.valueWidget = MyLineEdit()
             self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
             self.valueWidget.returnPressed.connect(self.execute)
@@ -335,7 +335,8 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                         10000)
             elif self.action.unit == "user-input":
                 response, _ = QtWidgets.QInputDialog.getText(
-                    self.gui, self.action.address(), f"Set {self.action.address()} value",
+                    self.gui, self.action.address(),
+                    f"Set {self.action.address()} value",
                     QtWidgets.QLineEdit.Normal)
 
                 if response != '':
@@ -358,9 +359,9 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 else:
                     value = self.action.type(value)
                 return value
-            except:
+            except Exception as e:
                 self.gui.setStatus(
-                    f"Action {self.action.address()}: Impossible to convert {value} to {self.action.type.__name__}",
+                    f"Action {self.action.address()}: {e}",
                     10000, False)
 
     def execute(self):
@@ -369,7 +370,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
             if self.has_value:
                 value = self.readGui()
                 if value is not None: self.gui.threadManager.start(
-                        self, 'execute', value=value)
+                    self, 'execute', value=value)
             else:
                 self.gui.threadManager.start(self, 'execute')
 
@@ -425,8 +426,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             if not self.variable.writable and self.variable.type in [
                     np.ndarray, pd.DataFrame]:
                 self.readButtonCheck = QtWidgets.QCheckBox()
-                self.readButtonCheck.stateChanged.connect(self.readButtonCheckEdited)
-                self.readButtonCheck.setToolTip('Toggle reading in text, careful can truncate data and impact performance')
+                self.readButtonCheck.stateChanged.connect(
+                    self.readButtonCheckEdited)
+                self.readButtonCheck.setToolTip(
+                    'Toggle reading in text, ' \
+                    'careful can truncate data and impact performance')
                 self.readButtonCheck.setMaximumWidth(15)
 
                 frameReadButton = QtWidgets.QFrame()
@@ -444,7 +448,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         ## QLineEdit or QLabel
         if self.variable.type in [int, float, str, np.ndarray, pd.DataFrame]:
             if self.variable.writable:
-                self.valueWidget = QtWidgets.QLineEdit()
+                self.valueWidget = MyLineEdit()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
                 self.valueWidget.returnPressed.connect(self.write)
                 self.valueWidget.textEdited.connect(self.valueEdited)
@@ -478,9 +482,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     self.parent.write()
 
             self.valueWidget = MyQCheckBox(self)
-            # self.valueWidget = QtWidgets.QCheckBox()
-            # self.valueWidget.stateChanged.connect(self.valueEdited)
-            # self.valueWidget.stateChanged.connect(self.write)  # removed this to avoid setting a second time when reading a change
             hbox = QtWidgets.QHBoxLayout()
             hbox.addWidget(self.valueWidget)
             hbox.setAlignment(QtCore.Qt.AlignCenter)
@@ -530,7 +531,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
 
         # Main - column 4 : indicator (status of the actual value : known or not known)
-        if self.variable.type in [int, float, str, bool, tuple, np.ndarray, pd.DataFrame]:
+        if self.variable.type in [
+                int, float, str, bool, tuple, np.ndarray, pd.DataFrame]:
             self.indicator = QtWidgets.QLabel()
             self.gui.tree.setItemWidget(self, 4, self.indicator)
 
@@ -556,7 +558,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             elif self.variable.type in [bool]:
                 self.valueWidget.setChecked(value)
             elif self.variable.type in [tuple]:
-                items = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+                items = [self.valueWidget.itemText(i)
+                         for i in range(self.valueWidget.count())]
                 if value[0] != items:
                     self.valueWidget.clear()
                     self.valueWidget.addItems(value[0])
@@ -572,7 +575,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 #     self.valueWidget.setText('')
 
             # Change indicator light to green
-            if self.variable.type in [int, float, bool, str, tuple, np.ndarray, pd.DataFrame]:
+            if self.variable.type in [
+                    int, float, bool, str, tuple, np.ndarray, pd.DataFrame]:
                 self.setValueKnownState(True)
 
     def readGui(self):
@@ -594,16 +598,17 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     else:
                         value = self.variable.type(value)
                     return value
-                except:
+                except Exception as e:
                     self.gui.setStatus(
-                        f"Variable {self.variable.address()}: Impossible to convert {value} to {self.variable.type.__name__}",
+                        f"Variable {self.variable.address()}: {e}",
                         10000, False)
 
         elif self.variable.type in [bool]:
             value = self.valueWidget.isChecked()
             return value
         elif self.variable.type in [tuple]:
-            items = [self.valueWidget.itemText(i) for i in range(self.valueWidget.count())]
+            items = [self.valueWidget.itemText(i)
+                     for i in range(self.valueWidget.count())]
             value = (items, self.valueWidget.currentIndex())
             return value
 
@@ -627,7 +632,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
     def valueEdited(self):
         """ Function call when the value displayed in not sure anymore.
-            The value has been modified either in the GUI (but not sent) or by command line """
+            The value has been modified either in the GUI (but not sent)
+            or by command line """
         self.setValueKnownState(False)
 
     def readButtonCheckEdited(self):
@@ -703,14 +709,14 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if path != '':
             PATHS['last_folder'] = path
             try:
-                self.gui.setStatus(f"Saving value of {self.variable.address()}...",
-                                   5000)
+                self.gui.setStatus(
+                    f"Saving value of {self.variable.address()}...", 5000)
                 self.variable.save(filename)
                 self.gui.setStatus(
-                    f"Value of {self.variable.address()} successfully read and save at {filename}",
-                    5000)
+                    f"Value of {self.variable.address()} successfully read " \
+                    f"and save at {filename}", 5000)
             except Exception as e:
-                self.gui.setStatus(f"An error occured: {str(e)}", 10000, False)
+                self.gui.setStatus(f"An error occured: {e}", 10000, False)
 
     def openMonitor(self):
         """ This function open the monitor associated to this variable. """
@@ -722,7 +728,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         else:
             monitor = self.gui.monitors[id(self)]
             monitor.setWindowState(
-                monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+                monitor.windowState()
+                & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             monitor.activateWindow()
 
     def openSlider(self):
@@ -735,7 +742,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         else:
             slider = self.gui.sliders[id(self)]
             slider.setWindowState(
-                slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+                slider.windowState()
+                & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             slider.activateWindow()
 
     def clearMonitor(self):

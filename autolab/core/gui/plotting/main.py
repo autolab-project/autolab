@@ -18,7 +18,7 @@ from .data import DataManager
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..icons import icons
-from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_utilities import get_font_size, setLineEditBackground, MyLineEdit
 from ...devices import list_devices
 from ...config import load_config
 
@@ -109,6 +109,11 @@ class Plotter(QtWidgets.QMainWindow):
             self.variableChanged)
 
         if self.mainGui is not None:
+            self.device_lineEdit = MyLineEdit()
+            self.device_lineEdit.skip_has_eval = True
+            self.device_lineEdit.only_devices = True
+            self.device_lineEdit.setToolTip('Variable address e.g. ct400.scan.data')
+            self.layout_device.addWidget(self.device_lineEdit, 1, 2)
             self.device_lineEdit.setText(f'{self.dataManager.deviceValue}')
             self.device_lineEdit.returnPressed.connect(self.deviceChanged)
             self.device_lineEdit.textEdited.connect(lambda: setLineEditBackground(

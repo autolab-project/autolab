@@ -14,7 +14,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from .monitoring.main import Monitor
 from .slider import Slider
-from .GUI_utilities import setLineEditBackground
+from .GUI_utilities import setLineEditBackground, MyLineEdit
 from .icons import icons
 from ..devices import DEVICES
 from ..utilities import data_to_str, str_to_data, clean_string
@@ -39,30 +39,34 @@ class VariablesDialog(QtWidgets.QDialog):
         hbox = QtWidgets.QHBoxLayout(self)
         hbox.addStretch()
         hbox.addWidget(variablesButton)
-        hbox.setContentsMargins(10,0,10,10)
+        hbox.setContentsMargins(0, 0, 0, 0)
 
         widget = QtWidgets.QWidget(self)
         widget.setLayout(hbox)
 
-        dialog = QtWidgets.QInputDialog(self)
-        dialog.setLabelText(f"Set {name} value")
-        dialog.setInputMode(QtWidgets.QInputDialog.TextInput)
-        dialog.setWindowFlags(dialog.windowFlags() & ~QtCore.Qt.Dialog)
-
-        lineEdit = dialog.findChild(QtWidgets.QLineEdit)
+        lineEdit = MyLineEdit()
         lineEdit.setMaxLength(10000000)
-        dialog.setTextValue(defaultValue)
+        lineEdit.setText(defaultValue)
+
+        # Add OK and Cancel buttons
+        button_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+            self)
+
+        # Connect buttons
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(dialog)
+        layout.addWidget(QtWidgets.QLabel(f"Set {name} value"))
+        layout.addWidget(lineEdit)
+        layout.addWidget(button_box)
         layout.addWidget(widget)
         layout.addStretch()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(10, 5, 10, 10)
 
-        self.exec_ = dialog.exec_
-        self.textValue = dialog.textValue
-        self.setTextValue = dialog.setTextValue
+        self.textValue = lineEdit.text
+        self.setTextValue = lineEdit.setText
 
     def variablesButtonClicked(self):
         if self.variablesMenu is None:
@@ -135,7 +139,8 @@ class VariablesMenu(QtWidgets.QMainWindow):
         header.resizeSection(4, 50)
         header.resizeSection(5, 100)
         self.variablesWidget.itemDoubleClicked.connect(self.variableActivated)
-        self.variablesWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.variablesWidget.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
         self.variablesWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.variablesWidget.customContextMenuRequested.connect(self.rightClick)
 
@@ -279,8 +284,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
             MyQTreeWidgetItem(self.variablesWidget, var_name, variable, self)
 
         self.devicesWidget.clear()
-        for device_name in DEVICES:
-            device = DEVICES[device_name]
+        for device_name, device in DEVICES.items():
             deviceItem = QtWidgets.QTreeWidgetItem(
                 self.devicesWidget, [device_name])
             deviceItem.setBackground(0, QtGui.QColor('#9EB7F5'))  # blue
@@ -313,6 +317,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         if self.gui is None:
             QtWidgets.QApplication.quit()  # close the variable app
 
+
 class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
     def __init__(self, itemParent, name, variable, gui):
@@ -338,7 +343,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         self.gui.variablesWidget.setItemWidget(self, 1, nameWidget)
         self.nameWidget = nameWidget
 
-        rawValueWidget = QtWidgets.QLineEdit()
+        rawValueWidget = MyLineEdit()
         rawValueWidget.setMaxLength(10000000)
         rawValueWidget.setAlignment(QtCore.Qt.AlignCenter)
         rawValueWidget.returnPressed.connect(self.changeRawValue)

@@ -20,7 +20,7 @@ setup(
     version = version,  # Ideally should be same as your GitHub release tag varsion
     author = 'Quentin Chateiller & Bruno Garbin',
     author_email = 'autolab-project@googlegroups.com',
-    maintainer = 'Jonathan Peltier & Mathieu Jeannin'
+    maintainer = 'Jonathan Peltier & Mathieu Jeannin',
     maintainer_email = 'autolab-project@googlegroups.com',
     license = "GPL-3.0 license",
     description = 'Python package for scientific experiments interfacing and automation',

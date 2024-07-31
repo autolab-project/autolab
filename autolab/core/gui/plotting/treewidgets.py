@@ -13,7 +13,7 @@ import numpy as np
 
 from qtpy import QtCore, QtWidgets
 
-from ..GUI_utilities import qt_object_exists
+from ..GUI_utilities import qt_object_exists, MyLineEdit
 from ...paths import PATHS
 from ...config import get_control_center_config
 from ...utilities import SUPPORTED_EXTENSION
@@ -118,7 +118,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         # Main - Column 3 : QlineEdit if the action has a parameter
         if self.has_value:
-            self.valueWidget = QtWidgets.QLineEdit()
+            self.valueWidget = MyLineEdit()
             self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
             self.valueWidget.returnPressed.connect(self.execute)
@@ -179,8 +179,8 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 value = eval_variable(value)
                 value = self.action.type(value)
                 return value
-            except:
-                self.gui.setStatus(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000, False)
+            except Exception as e:
+                self.gui.setStatus(f"Action {self.action.name}: {e}", 10000, False)
 
     def execute(self):
         """ Start a new thread to execute the associated action """
@@ -232,7 +232,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if self.variable.type in [int, float, str, pd.DataFrame, np.ndarray]:
 
             if self.variable.writable:
-                self.valueWidget = QtWidgets.QLineEdit()
+                self.valueWidget = MyLineEdit()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
                 self.valueWidget.returnPressed.connect(self.write)
                 self.valueWidget.textEdited.connect(self.valueEdited)
@@ -319,8 +319,9 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     value = eval_variable(value)
                     value = self.variable.type(value)
                     return value
-                except:
-                    self.gui.setStatus(f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",10000, False)
+                except Exception as e:
+                    self.gui.setStatus(
+                        f"Variable {self.variable.name}: {e}", 10000, False)
 
         elif self.variable.type in [bool]:
             value = self.valueWidget.isChecked()
@@ -377,7 +378,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     f"Value of {self.variable.name} successfully read and save at {filename}",
                     5000)
             except Exception as e:
-                self.gui.setStatus(f"An error occured: {str(e)}", 10000, False)
+                self.gui.setStatus(f"An error occured: {e}", 10000, False)
 
 
 # Signals can be emitted only from QObjects

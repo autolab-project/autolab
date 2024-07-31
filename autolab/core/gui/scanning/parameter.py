@@ -12,7 +12,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from .display import DisplayValues
 from .customWidgets import parameterQFrame
-from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_utilities import get_font_size, setLineEditBackground, MyLineEdit
 from ..icons import icons
 from ...utilities import clean_string, str_to_array, array_to_str, create_array
 from ...variables import has_eval, has_variable, eval_safely
@@ -202,7 +202,7 @@ class ParameterManager:
 
         ### first grid widgets: values (hidden at start)
         labelValues = QtWidgets.QLabel("Values", frameScanRange_values)
-        values_lineEdit = QtWidgets.QLineEdit('[0,1,2,3]', frameScanRange_values)
+        values_lineEdit = MyLineEdit('[0,1,2,3]', frameScanRange_values)
         values_lineEdit.setToolTip('Values of the scan')
         values_lineEdit.setMinimumSize(0, 20)
         values_lineEdit.setMaximumSize(16777215, 20)

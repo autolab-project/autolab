@@ -110,6 +110,36 @@ class ControlCenter(QtWidgets.QMainWindow):
                     self.gui.scanner.activateWindow()
                 QtWidgets.QTreeWidget.startDrag(self, event)
 
+            def keyPressEvent(self, event):
+                if (event.key() == QtCore.Qt.Key_C
+                        and event.modifiers() == QtCore.Qt.ControlModifier):
+                    self.copy_item(event)
+                else:
+                    super().keyPressEvent(event)
+
+            def copy_item(self, event):
+                if len(self.selectedItems()) == 0:
+                    super().keyPressEvent(event)
+                    return None
+                item = self.selectedItems()[0]  # assume can select only one item
+                if hasattr(item, 'variable'):
+                    text = item.variable.address()
+                elif hasattr(item, 'action'):
+                    text = item.action.address()
+                elif hasattr(item, 'module'):
+                    if hasattr(item.module, 'address'):
+                        text = item.module.address()
+                    else:
+                        text = item.name
+                else:
+                    print(f'Should not be possible: {item}')
+                    super().keyPressEvent(event)
+                    return None
+
+                # Copy the text to the system clipboard
+                clipboard = QtWidgets.QApplication.clipboard()
+                clipboard.setText(text)
+
         self.tree = MyQTreeWidget(self)
         self.tree.last_drag = None
         self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])

@@ -14,6 +14,8 @@ from .elements import Module, Element
 # Storage of the devices
 DEVICES = {}
 
+# After DEVICES to avoid circular import
+from .variables import update_allowed_dict
 
 # =============================================================================
 # DEVICE CLASS
@@ -47,6 +49,7 @@ class Device(Module):
         except: pass
 
         del DEVICES[self.name]
+        update_allowed_dict()
 
     def __dir__(self):
         """ For auto-completion """
@@ -110,6 +113,7 @@ def get_device(device_name: str, **kwargs) -> Device:
             **{k: v for k, v in device_config.items() if k not in [
                 'driver', 'connection']})
         DEVICES[device_name] = Device(device_name, instance, device_config)
+        update_allowed_dict()
 
     return DEVICES[device_name]
 

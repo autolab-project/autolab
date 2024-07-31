@@ -13,6 +13,7 @@ from qtpy import QtCore, QtWidgets
 from ..GUI_utilities import qt_object_exists
 from ...devices import get_final_device_config, list_loaded_devices, DEVICES, Device
 from ...drivers import load_driver_lib, get_driver
+from ...variables import update_allowed_dict
 
 
 class ThreadManager:
@@ -158,6 +159,7 @@ class InteractionThread(QtCore.QThread):
                         **driver_kwargs)
                     DEVICES[device_name] = Device(
                         device_name, instance, device_config)
+                    update_allowed_dict()
 
                 self.item.gui.threadDeviceDict[id(self.item)] = DEVICES[device_name]
 

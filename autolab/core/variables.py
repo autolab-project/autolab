@@ -170,10 +170,13 @@ def update_from_config(variables: List[Tuple[str, Any]]):
 
 def has_variable(value: str) -> bool:
     if not isinstance(value, str): return False
-    pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?'
+    if has_eval(value): value = value[len(EVAL): ]
+
+    pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*'
+    pattern_match = [var.split('.')[0] for var in re.findall(pattern, value)]
 
     for key in (list(DEVICES) + list(VARIABLES)):
-        if key in [var.split('.')[0] for var in re.findall(pattern, value)]:
+        if key in pattern_match:
             return True
     return False
 

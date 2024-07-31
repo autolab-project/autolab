@@ -158,7 +158,7 @@
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
-           <layout class="QGridLayout" name="gridLayout_5">
+           <layout class="QGridLayout" name="layout_device">
             <item row="2" column="3">
              <widget class="QCheckBox" name="auto_plotDataButton">
               <property name="text">
@@ -178,16 +178,6 @@
               </property>
               <property name="text">
                <string>Get data</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="2">
-             <widget class="QLineEdit" name="device_lineEdit">
-              <property name="toolTip">
-               <string>Variable address i.g. ct400.scan.data</string>
-              </property>
-              <property name="text">
-               <string/>
               </property>
              </widget>
             </item>
@@ -463,7 +453,6 @@
   <tabstop>clear_pushButton</tabstop>
   <tabstop>data_comboBox</tabstop>
   <tabstop>overwriteDataButton</tabstop>
-  <tabstop>device_lineEdit</tabstop>
   <tabstop>plotDataButton</tabstop>
   <tabstop>delay_lineEdit</tabstop>
   <tabstop>auto_plotDataButton</tabstop>

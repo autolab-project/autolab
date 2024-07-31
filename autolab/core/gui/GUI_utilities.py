@@ -5,16 +5,20 @@ Created on Thu Apr 11 20:13:46 2024
 @author: jonathan
 """
 
-from typing import Tuple
+import re
 import os
 import sys
+from typing import Tuple, List
+from collections import defaultdict
 
 import numpy as np
+import pandas as pd
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
 from ..config import get_GUI_config
-
+from ..devices import DEVICES, get_element_by_address
+from ..variables import has_eval, EVAL, VARIABLES
 
 # Fixes pyqtgraph/issues/3018 for pg<=0.13.7 (before pyqtgraph/pull/3070)
 from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
@@ -326,3 +330,229 @@ def pyqtgraph_image() -> Tuple[myImageView, QtWidgets.QWidget]:
     """ Return a formated ImageView and pyqtgraph widget for image plotting """
     imageView = myImageView()
     return imageView, imageView.centralWidget
+
+
+class MyLineEdit(QtWidgets.QLineEdit):
+    """https://stackoverflow.com/questions/28956693/pyqt5-qtextedit-auto-completion"""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.skip_has_eval = False
+        self.only_devices = False
+        self.completer = None
+
+    def create_keywords(self) -> list[str]:
+        """ Returns a list of all available keywords for completion """
+        list_keywords = []
+
+        if not self.only_devices:
+            list_keywords += list(VARIABLES)
+            ## Could use this to see attributes of Variable like .raw .value
+            # list_keywords += [f'{name}.{item}'
+            #                     for name, var in VARIABLES.items()
+            #                     for item in dir(var)
+            #                     if not (item.startswith('_') and item.isupper())]
+
+        list_keywords += [str(get_element_by_address(elements[0]).address())
+                      for device in DEVICES.values()
+                      if device.name not in list_keywords
+                      for elements in device.get_structure()]
+
+        if not self.only_devices:
+            if 'np' not in list_keywords:
+                list_keywords += ['np']
+                list_keywords += [f'np.{item}'
+                                   for item in dir(np)
+                                   if not (item.startswith('_') and item.isupper())]
+
+            if 'pd' not in list_keywords:
+                list_keywords += ['pd']
+                list_keywords += [f'pd.{item}'
+                                   for item in dir(pd)
+                                   if not (item.startswith('_') and item.isupper())]
+        return list_keywords
+
+    def eventFilter(self, obj, event):
+        """ Used when installEventFilter active """
+        if (event.type() == QtCore.QEvent.KeyPress
+                and event.key() == QtCore.Qt.Key_Tab):
+            self.keyPressEvent(event)
+            return True
+        return super().eventFilter(obj, event)
+
+    def setCustomCompleter(self):
+        self.setCompleter(QtWidgets.QCompleter(self.create_keywords()))
+
+    def setCompleter(self, completer: QtWidgets.QCompleter):
+        """ Sets/removes completer """
+        if self.completer:
+            self.completer.popup().close()
+            try:
+                self.completer.disconnect()  # PyQT
+            except TypeError:
+                self.completer.disconnect(self) # Pyside
+
+        if not completer:
+            self.removeEventFilter(self)
+            self.completer = None
+            return None
+
+        self.installEventFilter(self)
+        completer.setWidget(self)
+        completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+        self.completer = completer
+        self.completer.activated.connect(self.insertCompletion)
+
+    def getCompletion(self) -> List[str]:
+        model = self.completer.model()
+        return model.stringList() if isinstance(
+            model, QtCore.QStringListModel) else []
+
+    def insertCompletion(self, completion: str, prefix: bool = True):
+        cursor_pos = self.cursorPosition()
+        text = self.text()
+
+        prefix_length = (len(self.completer.completionPrefix())
+                         if (prefix and self.completer) else 0)
+
+        # Replace the current word with the completion
+        new_text = (text[:cursor_pos - prefix_length]
+                    + completion
+                    + text[cursor_pos:])
+        self.setText(new_text)
+        self.setCursorPosition(cursor_pos - prefix_length + len(completion))
+
+    def textUnderCursor(self) -> str:
+        text = self.text()
+        cursor_pos = self.cursorPosition()
+        start = text.rfind(' ', 0, cursor_pos) + 1
+        return text[start:cursor_pos]
+
+    def focusInEvent(self, event):
+        if self.completer:
+            self.completer.setWidget(self)
+        super().focusInEvent(event)
+
+    def keyPressEvent(self, event):
+        controlPressed = event.modifiers() == QtCore.Qt.ControlModifier
+        tabPressed = event.key() == QtCore.Qt.Key_Tab
+        specialTabPressed = tabPressed and controlPressed
+        enterPressed = event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return)
+        specialEnterPressed = enterPressed and controlPressed
+
+        if specialTabPressed:
+            self.insertCompletion('\t', prefix=False)
+            return None
+
+        if specialEnterPressed:
+            self.insertCompletion('\n', prefix=False)
+            return None
+
+        if not self.completer or not tabPressed:
+            if (self.completer and enterPressed and self.completer.popup().isVisible()):
+                self.completer.activated.emit(self.completer.popup().currentIndex().data())
+            else:
+                super().keyPressEvent(event)
+
+        if self.skip_has_eval or has_eval(self.text()):
+            if not self.completer: self.setCustomCompleter()
+        else:
+            if self.completer: self.setCompleter(None)
+
+        if not self.completer or not tabPressed:
+            if self.completer: self.completer.popup().close()
+            return None
+
+        completion_prefix = self.format_completion_prefix(self.textUnderCursor())
+
+        new_keywords = self.create_new_keywords(self.create_keywords(), completion_prefix)
+        keywords = self.getCompletion()
+
+        if new_keywords != keywords:
+            keywords = new_keywords
+            self.setCompleter(QtWidgets.QCompleter(keywords))
+
+        if completion_prefix != self.completer.completionPrefix():
+            self.completer.setCompletionPrefix(completion_prefix)
+            self.completer.popup().setCurrentIndex(self.completer.completionModel().index(0, 0))
+
+        if self.completer.completionModel().rowCount() == 1:
+            self.completer.setCompletionMode(
+                QtWidgets.QCompleter.InlineCompletion)
+            self.completer.complete()
+
+            self.completer.activated.emit(self.completer.currentCompletion())
+            self.completer.setCompletionMode(
+                QtWidgets.QCompleter.PopupCompletion)
+        else:
+            cr = self.cursorRect()
+            cr.setWidth(self.completer.popup().sizeHintForColumn(0)
+                        + self.completer.popup().verticalScrollBar().sizeHint().width())
+            self.completer.complete(cr)
+
+    @staticmethod
+    def format_completion_prefix(completion_prefix: str) -> str:
+        """ Returns a simplified prefix for completion """
+        if has_eval(completion_prefix):
+            completion_prefix = completion_prefix[len(EVAL):]
+
+        pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*'
+        temp = [var for var in re.findall(pattern, completion_prefix)]
+
+        if len(temp) > 0:
+            position = completion_prefix.rfind(temp[-1])
+            if position != -1:
+                completion_prefix = completion_prefix[position:]
+
+        special_char = ('(', '[', ',', ':', '-', '+', '^', '*', '/', '|')
+        if completion_prefix.endswith(special_char):
+            completion_prefix = ''
+
+        return completion_prefix
+
+    @staticmethod
+    def create_new_keywords(list_keywords: List[str],
+                            completion_prefix: str) -> List[str]:
+        """ Returns a list with all available keywords and possible decomposition """
+        # Create ordered list with all attributes and sub attributes
+        master_list = []
+        master_list.append(list_keywords)
+        list_temp = list_keywords
+        while len(list_temp) > 1:
+            list_temp = list(set(
+                [var[:-len(var.split('.')[-1])-1]
+                 for var in list_temp if len(var.split('.')) != 0]))
+            if '' in list_temp: list_temp.remove('')
+            master_list.append(list_temp)
+
+        # Filter attributes that contained completion_prefix and remove doublons
+        flat_list = list(set(item
+                             for sublist in master_list
+                             for item in sublist
+                             if item.startswith(completion_prefix)))
+
+        # Group items by the number of dots
+        dot_groups = defaultdict(list)
+        for item in flat_list:
+            dot_count = item.count('.')
+            dot_groups[dot_count].append(item)
+
+        # Sort the groups by the number of dots
+        sorted_groups = sorted(
+            dot_groups.items(), key=lambda x: x[0], reverse=True)
+
+        # Extract items from each group and return as a list with sorted sublist
+        sorted_list = [sorted(group) for _, group in sorted_groups]
+
+        # Create list of all available keywords and possible decomposition
+        new_keywords = []
+        good = False
+        for level in reversed(sorted_list):
+            for item in level:
+                if completion_prefix in item:
+                    new_keywords.append(item)
+                    good = True
+            if good: break
+
+        return new_keywords
