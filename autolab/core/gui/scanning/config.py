@@ -9,7 +9,7 @@ import json
 import datetime
 import os
 import math as m
-from typing import Any, Tuple, List, Dict
+from typing import Any, Tuple, List, Dict, Union
 from collections import OrderedDict
 
 import numpy as np
@@ -17,6 +17,8 @@ import pandas as pd
 from qtpy import QtWidgets, QtCore
 
 from ...config import get_scanner_config
+from ...elements import Variable as Variable_og
+from ...elements import Action
 from ...devices import DEVICES, Device, list_loaded_devices, get_element_by_address
 from ...utilities import (boolean, str_to_array, array_to_str, create_array,
                           str_to_dataframe, dataframe_to_str, str_to_data)
@@ -308,7 +310,7 @@ class ConfigManager:
             self.addNewConfig()
 
     def setParameter(self, recipe_name: str, param_name: str,
-                     element: Device, newName: str = None):
+                     element: Variable_og, newName: str = None):
         """ Sets the element provided as the new parameter of the scan.
         Add a parameter is no existing parameter """
         if not self.gui.scanManager.isStarted():
@@ -601,7 +603,8 @@ class ConfigManager:
 
     def getParameterPosition(self, recipe_name: str, param_name: str) -> int:
         """ Returns the position of a parameter """
-        return [i for i, param in enumerate(self.parameterList(recipe_name)) if param['name'] == param_name][0]
+        return [i for i, param in enumerate(self.parameterList(recipe_name))
+                if param['name'] == param_name][0]
 
     def parameterList(self, recipe_name: str) -> List[dict]:
         """ Returns the list of parameters in the recipe """
@@ -609,12 +612,11 @@ class ConfigManager:
 
     def parameterNameList(self, recipe_name: str) -> List[str]:
         """ Returns the list of parameter names in the recipe """
-        if recipe_name in self.config:
-            return [param['name'] for param in self.parameterList(recipe_name)]
-        else:
-            return []
+        return [param['name'] for param in self.parameterList(recipe_name)] if (
+            recipe_name in self.config) else []
 
-    def getParameterElement(self, recipe_name: str, param_name: str) -> Device:
+    def getParameterElement(
+            self, recipe_name: str, param_name: str) -> Union[None, Variable_og]:
         """ Returns the element of a parameter """
         param = self.getParameter(recipe_name, param_name)
         return param['element']
@@ -667,7 +669,8 @@ class ConfigManager:
         """ Returns the list of steps in the recipe """
         return self.config[recipe_name]['recipe']
 
-    def getRecipeStepElement(self, recipe_name: str, name: str) -> Device:
+    def getRecipeStepElement(
+            self, recipe_name: str, name: str) -> Union[Variable_og, Action]:
         """ Returns the element of a recipe step """
         pos = self.getRecipeStepPosition(recipe_name, name)
         return self.stepList(recipe_name)[pos]['element']

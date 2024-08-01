@@ -352,7 +352,7 @@ class MyLineEdit(QtWidgets.QLineEdit):
             # list_keywords += [f'{name}.{item}'
             #                     for name, var in VARIABLES.items()
             #                     for item in dir(var)
-            #                     if not (item.startswith('_') and item.isupper())]
+            #                     if not item.startswith('_') and not item.isupper()]
 
         list_keywords += [str(get_element_by_address(elements[0]).address())
                       for device in DEVICES.values()
@@ -364,13 +364,13 @@ class MyLineEdit(QtWidgets.QLineEdit):
                 list_keywords += ['np']
                 list_keywords += [f'np.{item}'
                                    for item in dir(np)
-                                   if not (item.startswith('_') and item.isupper())]
+                                   if not item.startswith('_') and not item.isupper()]
 
             if 'pd' not in list_keywords:
                 list_keywords += ['pd']
                 list_keywords += [f'pd.{item}'
                                    for item in dir(pd)
-                                   if not (item.startswith('_') and item.isupper())]
+                                   if not item.startswith('_') and not item.isupper()]
         return list_keywords
 
     def eventFilter(self, obj, event):
@@ -451,7 +451,8 @@ class MyLineEdit(QtWidgets.QLineEdit):
 
         if not self.completer or not tabPressed:
             if (self.completer and enterPressed and self.completer.popup().isVisible()):
-                self.completer.activated.emit(self.completer.popup().currentIndex().data())
+                self.completer.activated.emit(
+                    self.completer.popup().currentIndex().data())
             else:
                 super().keyPressEvent(event)
 
@@ -466,7 +467,8 @@ class MyLineEdit(QtWidgets.QLineEdit):
 
         completion_prefix = self.format_completion_prefix(self.textUnderCursor())
 
-        new_keywords = self.create_new_keywords(self.create_keywords(), completion_prefix)
+        new_keywords = self.create_new_keywords(
+            self.create_keywords(), completion_prefix)
         keywords = self.getCompletion()
 
         if new_keywords != keywords:
@@ -475,7 +477,8 @@ class MyLineEdit(QtWidgets.QLineEdit):
 
         if completion_prefix != self.completer.completionPrefix():
             self.completer.setCompletionPrefix(completion_prefix)
-            self.completer.popup().setCurrentIndex(self.completer.completionModel().index(0, 0))
+            self.completer.popup().setCurrentIndex(
+                self.completer.completionModel().index(0, 0))
 
         if self.completer.completionModel().rowCount() == 1:
             self.completer.setCompletionMode(

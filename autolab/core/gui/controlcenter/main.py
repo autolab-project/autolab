@@ -12,7 +12,7 @@ import sys
 import queue
 import time
 import uuid
-from typing import Any, Type
+from typing import Any, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,8 @@ from ..icons import icons
 from ...paths import PATHS
 from ...devices import (list_devices, list_loaded_devices, Device, close,
                         get_final_device_config)
+from ...elements import Variable as Variable_og
+from ...elements import Action
 from ...drivers import (list_drivers, load_driver_lib, get_connection_names,
                         get_driver_class, get_connection_class, get_class_args)
 from ...config import (get_control_center_config, get_all_devices_configs,
@@ -561,7 +563,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         open_file(PATHS['plotter_config'])
 
     def setScanParameter(self, recipe_name: str, param_name: str,
-                         variable: Device):
+                         variable: Variable_og):
         """ Set the selected variable has parameter for the recipe """
         if self.scanner is None:
             self.openScanner()
@@ -569,7 +571,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.scanner.configManager.setParameter(recipe_name, param_name, variable)
 
     def addStepToScanRecipe(self, recipe_name: str, stepType: str,
-                            element: Device):
+                            element: Union[Variable_og, Action]):
         """ Add the selected variable has a step for the recipe """
         if self.scanner is None:
             self.openScanner()
@@ -801,6 +803,10 @@ class addDeviceWindow(QtWidgets.QMainWindow):
         device_name = self.deviceNickname.text()
         driver_name = self.driversComboBox.currentText()
         conn = self.connectionComboBox.currentText()
+
+        if device_name == '':
+            self.setStatus('Need device name', 10000, False)
+            return None
 
         device_dict = {}
         device_dict['driver'] = driver_name

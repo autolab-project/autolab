@@ -4,6 +4,7 @@ Created on Sun Sep 29 18:21:49 2019
 
 @author: qchat
 """
+from typing import Union
 import time
 import threading
 from queue import Queue
@@ -12,7 +13,8 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
 
-from ...devices import Device
+from ...variables import Variable
+from ...elements import Variable as Variable_og
 
 
 class MonitorManager:
@@ -67,7 +69,7 @@ class MonitorThread(QtCore.QThread):
 
     errorSignal = QtCore.Signal(object)
 
-    def __init__(self, variable: Device, queue: Queue):
+    def __init__(self, variable: Union[Variable, Variable_og], queue: Queue):
 
         super().__init__()
         self.variable = variable

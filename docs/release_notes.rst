@@ -17,8 +17,8 @@ General Features
 
 - Driver Management:
 
-  - Shifted drivers to a dedicated repository: autolab-drivers.
-  - Drivers are now located in a local folder instead of in the main package.
+  - Shifted drivers to a dedicated GitHub repository: https://github.com/autolab-project/autolab-drivers.
+  - Drivers are now located in the local "<username>/autolab/drivers/official" folder instead of the main package.
   - Added the ability to download drivers from GitHub using the GUI, allowing selective driver installation.
 
 - Documentation:
@@ -33,6 +33,7 @@ GUI Enhancements
   - Switched from matplotlib to pyqtgraph for better performance and compatibility.
   - Enhanced plotting capabilities in the monitor and scanner, including support for 1D and 2D arrays and images.
   - Added $eval: special tag to execute Python code in the GUI to perform custom operations.
+  - Added autocompletion for variables using tabulation.
   - Added sliders to variables to tune values.
 
 - Control Panel:
@@ -57,7 +58,7 @@ GUI Enhancements
 
 - Plotter:
 
-  - Implemented a plotter, allowing opening of back scan data, connecting to instrument variables, and performing data analysis.
+  - Implementation of a plotter to open previous scan data, connect to instrument variables and perform data analysis.
 
 - Usability Improvements:
 
@@ -67,7 +68,9 @@ GUI Enhancements
 
 - Standalone GUI Utilities:
 
-  - Added autolab.about(), autolab.slider(variable), and autolab.variables_menu().
+  - Added autolab.about() for autolab information.
+  - Added autolab.slider(variable) to change a variable value.
+  - Added autolab.variables_menu() to control variables, monitor or use slider.
   - Added autolab.add_device() for adding devices to the config file.
   - Added autolab.monitor(variable) for monitoring variables.
   - Added autolab.plotter() to open the plotter directly.
@@ -87,7 +90,7 @@ Miscellaneous Improvements
 - Code Quality and Compatibility:
 
   - Numerous bug fixes to ensure stability and usability across different modules and functionalities.
-  - Compatibility updates for Python 3.6 up to 3.12.
+  - Compatibility from Python 3.6 up to 3.12.
   - Switched from PyQt5 to qtpy to enable extensive compatibility (Qt5, Qt6, PySide2, Pyside6).
   - Extensive code cleanup, PEP8 compliance, and added type hints.
 
