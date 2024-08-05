@@ -165,12 +165,12 @@ def data_to_dataframe(data: Any) -> pd.DataFrame:
         pass  # OPTIMIZE: This happens when there is identical column name
 
     if len(data) != 0:
-        assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
+        assert not data.isnull().values.all(), f"Datatype '{data_type}' is not supported"
         if data.iloc[-1].isnull().values.all():  # if last line is full of nan, remove it
             data = data[:-1]
 
     if data.shape[1] == 1:
-        data.rename(columns = {'0':'1'}, inplace=True)
+        data.rename(columns = {'0': '1'}, inplace=True)
         data.insert(0, "0", range(data.shape[0]))
 
     return data

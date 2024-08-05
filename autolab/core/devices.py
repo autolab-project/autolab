@@ -168,4 +168,5 @@ def close(device: Union[str, Device] = "all"):
             print(f"No device '{device}' in {list_loaded_devices()}")
 
     else:
-        print(f"Warning, {device} with type '{str(type(device).__name__)}' is not a reconized device")
+        var_type = str(type(device)).split("'")[1]
+        print(f"Warning, {device} with type '{var_type}' is not a reconized device")

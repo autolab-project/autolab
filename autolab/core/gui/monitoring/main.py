@@ -4,6 +4,7 @@ Created on Fri Sep 20 22:08:29 2019
 
 @author: qchat
 """
+from typing import Union
 import os
 import sys
 import queue
@@ -15,17 +16,20 @@ from .figure import FigureManager
 from .monitor import MonitorManager
 from ..icons import icons
 from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_instances import clearMonitor
 from ...paths import PATHS
 from ...utilities import SUPPORTED_EXTENSION
+from ...elements import Variable as Variable_og
+from ...variables import Variable
 
 
 class Monitor(QtWidgets.QMainWindow):
 
-    def __init__(self, item: QtWidgets.QTreeWidgetItem):
-        self.gui = item if isinstance(item, QtWidgets.QTreeWidgetItem) else None
-        self.item = item
-        self.variable = item.variable
-
+    def __init__(self,
+                 variable: Union[Variable, Variable_og],
+                 has_parent: bool = False):
+        self.has_parent = has_parent  # Only for closeEvent
+        self.variable = variable
         self._font_size = get_font_size() + 1
 
         # Configuration of the window
@@ -179,11 +183,12 @@ class Monitor(QtWidgets.QMainWindow):
         """ This function does some steps before the window is really killed """
         self.monitorManager.close()
         self.timer.stop()
-        if hasattr(self.item, 'clearMonitor'): self.item.clearMonitor()
         self.figureManager.fig.deleteLater()  # maybe not useful for monitor but was source of crash in scanner if didn't close
         self.figureManager.figMap.deleteLater()
 
-        if self.gui is None:
+        clearMonitor(self.variable)
+
+        if not self.has_parent:
             import pyqtgraph as pg
             try:
                 # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
@@ -197,7 +202,7 @@ class Monitor(QtWidgets.QMainWindow):
             children.deleteLater()
         super().closeEvent(event)
 
-        if self.gui is None:
+        if not self.has_parent:
             QtWidgets.QApplication.quit()  # close the monitor app
 
     def windowLengthChanged(self):

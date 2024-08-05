@@ -18,8 +18,8 @@ from .parameter import ParameterManager
 from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
-from ..GUI_variables import VariablesMenu
 from ..icons import icons
+from ..GUI_instances import openVariablesMenu
 from ...paths import PATHS
 from ...utilities import boolean, SUPPORTED_EXTENSION
 from ...config import get_scanner_config
@@ -40,7 +40,6 @@ class Scanner(QtWidgets.QMainWindow):
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
         self.setAcceptDrops(True)
         self.recipeDict = {}
-        self.variablesMenu = None
         self._append = False  # option for import config
 
         # Loading of the different centers
@@ -55,6 +54,7 @@ class Scanner(QtWidgets.QMainWindow):
         self.importAction = configMenu.addAction('Import configuration')
         self.importAction.setIcon(QtGui.QIcon(icons['import']))
         self.importAction.triggered.connect(self.importActionClicked)
+        self.importAction.setStatusTip("Import configuration file")
 
         self.openRecentMenu = configMenu.addMenu('Import recent configuration')
         self.populateOpenRecent()
@@ -64,6 +64,7 @@ class Scanner(QtWidgets.QMainWindow):
         exportAction = configMenu.addAction('Export current configuration')
         exportAction.setIcon(QtGui.QIcon(icons['export']))
         exportAction.triggered.connect(self.exportActionClicked)
+        exportAction.setStatusTip("Export current configuration file")
 
         # Edition menu
         editMenu = self.menuBar.addMenu('Edit')
@@ -71,13 +72,16 @@ class Scanner(QtWidgets.QMainWindow):
         self.undo.setIcon(QtGui.QIcon(icons['undo']))
         self.undo.triggered.connect(self.configManager.undoClicked)
         self.undo.setEnabled(False)
+        self.undo.setStatusTip("Revert recipe changes")
         self.redo = editMenu.addAction('Redo')
         self.redo.setIcon(QtGui.QIcon(icons['redo']))
         self.redo.triggered.connect(self.configManager.redoClicked)
         self.redo.setEnabled(False)
+        self.redo.setStatusTip("Reapply recipe changes")
 
-        variablesMenuAction = self.menuBar.addAction('Variable')
-        variablesMenuAction.triggered.connect(self.openVariablesMenu)
+        variablesMenuAction = self.menuBar.addAction('Variables')
+        variablesMenuAction.triggered.connect(lambda: openVariablesMenu(True))
+        variablesMenuAction.setStatusTip("Open the variable menu in another window")
 
         self.configManager.addRecipe("recipe")  # add one recipe by default
         self.configManager.undoClicked() # avoid false history
@@ -161,17 +165,6 @@ class Scanner(QtWidgets.QMainWindow):
         self.dataframe_comboBox.hide()
         self.scan_recipe_comboBox.setCurrentIndex(0)
         self.scan_recipe_comboBox.hide()
-
-    def openVariablesMenu(self):
-        if self.variablesMenu is None:
-            self.variablesMenu = VariablesMenu(self)
-            self.variablesMenu.show()
-        else:
-            self.variablesMenu.refresh()
-
-    def clearVariablesMenu(self):
-        """ This clear the variables menu instance reference when quitted """
-        self.variablesMenu = None
 
     def _addRecipe(self, recipe_name: str):
         """ Adds recipe to managers. Called by configManager """
@@ -458,7 +451,6 @@ class Scanner(QtWidgets.QMainWindow):
         # Stop datamanager timer
         self.dataManager.timer.stop()
 
-        # Delete reference of this window in the control center
         self.mainGui.clearScanner()
 
         for recipe in self.recipeDict.values():
@@ -473,9 +465,6 @@ class Scanner(QtWidgets.QMainWindow):
         # Remove scan variables from VARIABLES
         try: self.configManager.updateVariableConfig([])
         except: pass
-
-        if self.variablesMenu is not None:
-            self.variablesMenu.close()
 
         super().closeEvent(event)
 

@@ -19,7 +19,7 @@ from qtpy import QtWidgets, QtCore
 from ...config import get_scanner_config
 from ...elements import Variable as Variable_og
 from ...elements import Action
-from ...devices import DEVICES, Device, list_loaded_devices, get_element_by_address
+from ...devices import DEVICES, list_loaded_devices, get_element_by_address
 from ...utilities import (boolean, str_to_array, array_to_str, create_array,
                           str_to_dataframe, dataframe_to_str, str_to_data)
 from ...variables import (get_variable, has_eval, is_Variable, eval_variable,

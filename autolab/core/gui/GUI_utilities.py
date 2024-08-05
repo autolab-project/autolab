@@ -335,31 +335,33 @@ def pyqtgraph_image() -> Tuple[myImageView, QtWidgets.QWidget]:
 class MyLineEdit(QtWidgets.QLineEdit):
     """https://stackoverflow.com/questions/28956693/pyqt5-qtextedit-auto-completion"""
 
+    skip_has_eval = False
+    use_variables = True
+    use_devices = True
+    use_np_pd = True
+    completer: QtWidgets.QCompleter = None
+
     def __init__(self, *args):
         super().__init__(*args)
-
-        self.skip_has_eval = False
-        self.only_devices = False
-        self.completer = None
 
     def create_keywords(self) -> list[str]:
         """ Returns a list of all available keywords for completion """
         list_keywords = []
 
-        if not self.only_devices:
+        if self.use_variables:
             list_keywords += list(VARIABLES)
             ## Could use this to see attributes of Variable like .raw .value
             # list_keywords += [f'{name}.{item}'
             #                     for name, var in VARIABLES.items()
             #                     for item in dir(var)
             #                     if not item.startswith('_') and not item.isupper()]
+        if self.use_devices:
+            list_keywords += [str(get_element_by_address(elements[0]).address())
+                          for device in DEVICES.values()
+                          if device.name not in list_keywords
+                          for elements in device.get_structure()]
 
-        list_keywords += [str(get_element_by_address(elements[0]).address())
-                      for device in DEVICES.values()
-                      if device.name not in list_keywords
-                      for elements in device.get_structure()]
-
-        if not self.only_devices:
+        if self.use_np_pd:
             if 'np' not in list_keywords:
                 list_keywords += ['np']
                 list_keywords += [f'np.{item}'

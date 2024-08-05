@@ -42,15 +42,15 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         # Submodules
         subModuleNames = self.module.list_modules()
         for subModuleName in subModuleNames:
-            subModule = getattr(self.module,subModuleName)
-            item = TreeWidgetItemModule(self, subModuleName,subModuleName,self.gui)
+            subModule = getattr(self.module, subModuleName)
+            item = TreeWidgetItemModule(self, subModuleName, subModuleName, self.gui)
             item.load(subModule)
 
         # Variables
         varNames = self.module.list_variables()
         for varName in varNames:
             variable = getattr(self.module,varName)
-            TreeWidgetItemVariable(self, variable,self.gui)
+            TreeWidgetItemVariable(self, variable, self.gui)
 
         # Actions
         actNames = self.module.list_actions()
@@ -126,7 +126,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         # Tooltip
         if self.action._help is None: tooltip = 'No help available for this action'
         else: tooltip = self.action._help
-        self.setToolTip(0,tooltip)
+        self.setToolTip(0, tooltip)
 
     def readGui(self):
         """ This function returns the value in good format of the value in the GUI """
@@ -186,7 +186,8 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         """ Start a new thread to execute the associated action """
         if self.has_value:
             value = self.readGui()
-            if value is not None: self.gui.threadManager.start(self, 'execute', value=value)
+            if value is not None:
+                self.gui.threadManager.start(self, 'execute', value=value)
         else:
             self.gui.threadManager.start(self, 'execute')
 

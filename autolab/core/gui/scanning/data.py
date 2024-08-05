@@ -40,7 +40,7 @@ class DataManager:
         self.timer.setInterval(33) #30fps
         self.timer.timeout.connect(self.sync)
 
-    def getData(self, nbDataset: int, var_list: list,
+    def getData(self, nbDataset: int, var_list: List[str],
                 selectedData: int = 0, data_name: str = "Scan",
                 filter_condition: List[dict] = []) -> List[pd.DataFrame]:
         """ Returns the required data """
@@ -334,7 +334,7 @@ class Dataset():
                        )
         self.data = pd.DataFrame(columns=self.header)
 
-    def getData(self, var_list: list, data_name: str = "Scan",
+    def getData(self, var_list: List[str], data_name: str = "Scan",
                 dataID: int = 0, filter_condition: List[dict] = []) -> pd.DataFrame:
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """

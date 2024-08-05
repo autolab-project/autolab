@@ -264,6 +264,7 @@ def _install_drivers_custom(_print=True, parent=None):
                 _download_driver(official_url, driver_name, official_folder, _print=_print)
     else:
 
+        # OPTIMIZE: move to core.gui
         class DriverInstaller(QtWidgets.QMainWindow):
 
             def __init__(self, url, list_driver, OUTPUT_DIR, parent=None):
@@ -276,7 +277,7 @@ def _install_drivers_custom(_print=True, parent=None):
 
                 super().__init__(parent)
 
-                self.setWindowTitle("Autolab - Driver Installer")
+                self.setWindowTitle("AUTOLAB - Driver Installer")
                 self.setFocus()
                 self.activateWindow()
 

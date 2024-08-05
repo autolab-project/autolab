@@ -20,29 +20,14 @@ quentin.chateiller@c2n.upsaclay.fr
 #        t.start()
 
 
-def _create_item(var):
-    from ..variables import Variable
-    from ..elements import Variable as Variable_og
-
-    class temp:
-        gui = None
-
-    assert isinstance(var, (Variable, Variable_og)), f'Need type {Variable} ' \
-        f'or {Variable_og}, but given type is {type(var)}'
-
-    item = temp()
-    item.variable = var
-    return item
-
-
 def gui():
     """ Open the Autolab GUI """
     _start('gui')
 
 
-def plotter():
-    """ Open the Autolab Plotter """
-    _start('plotter')
+def plotter(var = None):
+    """ Open the Autolab Plotter with optional variable capture """
+    _start('plotter', var=var)
 
 
 def monitor(var):
@@ -55,9 +40,9 @@ def slider(var):
     _start('slider', var=var)
 
 
-def add_device():
-    """ Open the utility to add a device """
-    _start('add_device')
+def add_device(name: str = ''):
+    """ Open the utility to add a device or modify the given device name """
+    _start('add_device', var=name)
 
 
 def about():
@@ -117,39 +102,36 @@ conda install -c conda-forge pyside6
             font.setPointSize(int(GUI_config['font_size']))
             app.setFont(font)
 
+        var = kwargs.get('var')
+
         if gui == 'gui':
             from .controlcenter.main import ControlCenter
             gui = ControlCenter()
             gui.initialize()
+            gui.show()
         elif gui == 'plotter':
-            from .plotting.main import Plotter
-            gui = Plotter(None)
+            from .GUI_instances import openPlotter
+            openPlotter(variable=var)
         elif gui == 'monitor':
-            var = kwargs.get('var')
-            item = _create_item(var)
-            assert var.readable, f"The variable {var.address()} is not readable"
-            from .monitoring.main import Monitor
-            gui = Monitor(item)
+            from .GUI_instances import openMonitor
+            openMonitor(var)
         elif gui == 'slider':
-            var = kwargs.get('var')
-            item = _create_item(var)
-            assert var.writable, f"The variable {var.address()} is not writable"
-            from .slider import Slider
-            gui = Slider(item.variable, item)
+            from .GUI_instances import openSlider
+            openSlider(var)
         elif gui == 'add_device':
-            from .controlcenter.main import addDeviceWindow
-            gui = addDeviceWindow()
+            from .GUI_instances import openAddDevice
+            openAddDevice(name=var)
         elif gui == 'about':
-            from .controlcenter.main import AboutWindow
-            gui = AboutWindow()
+            from .GUI_instances import openAbout
+            openAbout()
         elif gui == 'variables_menu':
-            from .GUI_variables import VariablesMenu
-            gui = VariablesMenu()
+            from .GUI_instances import openVariablesMenu
+            openVariablesMenu()
         else:
             raise ValueError("gui accept either 'main', 'plotter', 'monitor'," \
                              "'slider, add_device', 'about' or 'variables_menu'" \
                              f". Given {gui}")
-        gui.show()
+
         app.exec()
 
 

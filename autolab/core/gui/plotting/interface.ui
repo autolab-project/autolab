@@ -203,7 +203,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Device :</string>
+               <string>Variable:</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

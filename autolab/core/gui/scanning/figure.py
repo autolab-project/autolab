@@ -461,7 +461,7 @@ class FigureManager:
         else:
             var_to_display = [variable_x, variable_y]
 
-        can_filter = var_to_display != ['', '']  # Allows to differentiate images from scan or arrays. Works only because on dataframe_comboBoxCurrentChanged, updateDisplayableResults is called
+        can_filter = var_to_display not in (['', ''], ['', '', ''])  # Allows to differentiate images from scan or arrays. Works only because on dataframe_comboBoxCurrentChanged, updateDisplayableResults is called
         filter_condition = self.filter_condition if (
             self.gui.checkBoxFilter.isChecked() and can_filter) else {}
 
@@ -486,6 +486,9 @@ class FigureManager:
 
             # If plot scan as image
             if data_name == "Scan" and self.displayed_as_image:
+
+                if not self.gui.frameAxis.isVisible():
+                    self.gui.frameAxis.show()
 
                 if not self.gui.variable_x2_comboBox.isVisible():
                     self.gui.variable_x2_comboBox.show()

@@ -13,10 +13,9 @@ import pandas as pd
 import numpy as np
 from qtpy import QtCore, QtWidgets, QtGui
 
-from ..slider import Slider
-from ..monitoring.main import Monitor
 from ..icons import icons
 from ..GUI_utilities import qt_object_exists, MyLineEdit
+from ..GUI_instances import openMonitor, openSlider, openPlotter, openAddDevice
 from ...paths import PATHS
 from ...config import get_control_center_config
 from ...variables import eval_variable
@@ -254,7 +253,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                 choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
                 if choice == modifyDeviceChoice:
-                    self.gui.openAddDevice(self)
+                    openAddDevice(gui=self.gui, name=self.name)
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
@@ -652,6 +651,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             menu = CustomMenu(self.gui)
             monitoringAction = menu.addAction("Start monitoring")
             monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
+            plottingAction = menu.addAction("Capture to plotter")
+            plottingAction.setIcon(QtGui.QIcon(icons['plotter']))
             menu.addSeparator()
             sliderAction = menu.addAction("Create a slider")
             sliderAction.setIcon(QtGui.QIcon(icons['slider']))
@@ -671,6 +672,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             monitoringAction.setEnabled(
                 self.variable.readable and self.variable.type in [
                     int, float, np.ndarray, pd.DataFrame])
+            plottingAction.setEnabled(monitoringAction.isEnabled())
             sliderAction.setEnabled((self.variable.writable
                                      #and self.variable.readable
                                      and self.variable.type in [int, float]))
@@ -684,8 +686,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
             if choice is None: choice = menu.selected_action
 
-            if choice == monitoringAction: self.openMonitor()
-            elif choice == sliderAction: self.openSlider()
+            if choice == monitoringAction:
+                openMonitor(self.variable, has_parent=True)
+            if choice == plottingAction:
+                openPlotter(variable=self.variable, has_parent=True)
+            elif choice == sliderAction:
+                openSlider(self.variable, gui=self.gui, item=self)
             elif choice == scanParameterAction:
                 recipe_name = self.gui.getRecipeName()
                 param_name = self.gui.getParameterName()
@@ -717,44 +723,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     f"and save at {filename}", 5000)
             except Exception as e:
                 self.gui.setStatus(f"An error occured: {e}", 10000, False)
-
-    def openMonitor(self):
-        """ This function open the monitor associated to this variable. """
-        # If the monitor is not already running, create one
-        if id(self) not in self.gui.monitors.keys():
-            self.gui.monitors[id(self)] = Monitor(self)
-            self.gui.monitors[id(self)].show()
-        # If the monitor is already running, just make as the front window
-        else:
-            monitor = self.gui.monitors[id(self)]
-            monitor.setWindowState(
-                monitor.windowState()
-                & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            monitor.activateWindow()
-
-    def openSlider(self):
-        """ This function open the slider associated to this variable. """
-        # If the slider is not already running, create one
-        if id(self) not in self.gui.sliders.keys():
-            self.gui.sliders[id(self)] = Slider(self.variable, self)
-            self.gui.sliders[id(self)].show()
-        # If the slider is already running, just make as the front window
-        else:
-            slider = self.gui.sliders[id(self)]
-            slider.setWindowState(
-                slider.windowState()
-                & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            slider.activateWindow()
-
-    def clearMonitor(self):
-        """ This clear monitor instances reference when quitted """
-        if id(self) in self.gui.monitors.keys():
-            self.gui.monitors.pop(id(self))
-
-    def clearSlider(self):
-        """ This clear the slider instances reference when quitted """
-        if id(self) in self.gui.sliders.keys():
-            self.gui.sliders.pop(id(self))
 
 
 # Signals can be emitted only from QObjects

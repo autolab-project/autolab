@@ -5,6 +5,7 @@ Created on Mon Mar  4 14:54:41 2024
 @author: Jonathan
 """
 
+from typing import Union
 import sys
 import re
 
@@ -12,16 +13,19 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
-from .monitoring.main import Monitor
-from .slider import Slider
 from .GUI_utilities import setLineEditBackground, MyLineEdit
 from .icons import icons
 from ..devices import DEVICES
 from ..utilities import data_to_str, str_to_data, clean_string
-from ..variables import (VARIABLES, get_variable, set_variable,
+from ..variables import (VARIABLES, get_variable, set_variable, Variable,
                          rename_variable, remove_variable, is_Variable,
                          has_variable, has_eval, eval_variable, EVAL)
+from ..elements import Variable as Variable_og
 from ..devices import get_element_by_address
+from .GUI_instances import (openMonitor, openSlider, openPlotter,
+                            closeMonitors, closeSliders, closePlotter,
+                            clearVariablesMenu)
+
 
 class VariablesDialog(QtWidgets.QDialog):
 
@@ -31,18 +35,19 @@ class VariablesDialog(QtWidgets.QDialog):
         self.setWindowTitle(name)
         self.setWindowModality(QtCore.Qt.ApplicationModal)  # block GUI interaction
 
-        self.variablesMenu = None
-        # ORDER of creation mater to have button OK selected instead of Variables
-        variablesButton = QtWidgets.QPushButton('Variables', self)
-        variablesButton.clicked.connect(self.variablesButtonClicked)
+        # OPTIMIZE: decided to remove Variable menu from here, was not ideal and only advantages that was double clicking on variable to put name in combobox was not clear and now autocompletion can be used instead
+        # self.variablesMenu = None
+        # # ORDER of creation mater to have button OK selected instead of Variables
+        # variablesButton = QtWidgets.QPushButton('Variables', self)
+        # variablesButton.clicked.connect(self.variablesButtonClicked)
 
-        hbox = QtWidgets.QHBoxLayout(self)
-        hbox.addStretch()
-        hbox.addWidget(variablesButton)
-        hbox.setContentsMargins(0, 0, 0, 0)
+        # hbox = QtWidgets.QHBoxLayout(self)
+        # hbox.addStretch()
+        # hbox.addWidget(variablesButton)
+        # hbox.setContentsMargins(0, 0, 0, 0)
 
-        widget = QtWidgets.QWidget(self)
-        widget.setLayout(hbox)
+        # widget = QtWidgets.QWidget(self)
+        # widget.setLayout(hbox)
 
         lineEdit = MyLineEdit()
         lineEdit.setMaxLength(10000000)
@@ -61,46 +66,42 @@ class VariablesDialog(QtWidgets.QDialog):
         layout.addWidget(QtWidgets.QLabel(f"Set {name} value"))
         layout.addWidget(lineEdit)
         layout.addWidget(button_box)
-        layout.addWidget(widget)
+        # layout.addWidget(widget)
         layout.addStretch()
         layout.setContentsMargins(10, 5, 10, 10)
 
         self.textValue = lineEdit.text
         self.setTextValue = lineEdit.setText
 
-    def variablesButtonClicked(self):
-        if self.variablesMenu is None:
-            self.variablesMenu = VariablesMenu(self)
-            self.variablesMenu.setWindowTitle(
-                self.windowTitle()+": "+self.variablesMenu.windowTitle())
+    # def variablesButtonClicked(self):
+    #     if self.variablesMenu is None:
+    #         self.variablesMenu = VariablesMenu(self)
+    #         self.variablesMenu.setWindowTitle(
+    #             self.windowTitle()+": "+self.variablesMenu.windowTitle())
 
-            self.variablesMenu.variableSignal.connect(self.toggleVariableName)
-            self.variablesMenu.deviceSignal.connect(self.toggleDeviceName)
-            self.variablesMenu.show()
-        else:
-            self.variablesMenu.refresh()
+    #         self.variablesMenu.variableSignal.connect(self.toggleVariableName)
+    #         self.variablesMenu.deviceSignal.connect(self.toggleDeviceName)
+    #         self.variablesMenu.show()
+    #     else:
+    #         self.variablesMenu.refresh()
 
-    def clearVariablesMenu(self):
-        """ This clear the variables menu instance reference when quitted """
-        self.variablesMenu = None
+    # def toggleVariableName(self, name):
+    #     value = self.textValue()
+    #     if name in VARIABLES: name += '()'
 
-    def toggleVariableName(self, name):
-        value = self.textValue()
-        if name in VARIABLES: name += '()'
+    #     if value in ('0', "''"): value = ''
+    #     if not has_eval(value): value = EVAL + value
 
-        if value in ('0', "''"): value = ''
-        if not has_eval(value): value = EVAL + value
+    #     if value.endswith(name): value = value[:-len(name)]
+    #     else: value += name
 
-        if value.endswith(name): value = value[:-len(name)]
-        else: value += name
+    #     if value == EVAL: value = ''
 
-        if value == EVAL: value = ''
+    #     self.setTextValue(value)
 
-        self.setTextValue(value)
-
-    def toggleDeviceName(self, name):
-        name += '()'
-        self.toggleVariableName(name)
+    # def toggleDeviceName(self, name):
+    #     name += '()'
+    #     self.toggleVariableName(name)
 
     def closeEvent(self, event):
         for children in self.findChildren(QtWidgets.QWidget):
@@ -113,12 +114,12 @@ class VariablesMenu(QtWidgets.QMainWindow):
     variableSignal = QtCore.Signal(object)
     deviceSignal = QtCore.Signal(object)
 
-    def __init__(self, parent: QtWidgets.QMainWindow = None):
+    def __init__(self, has_parent: bool = False):
 
-        super().__init__(parent)
-        self.gui = parent
-        self.setWindowTitle('Variables manager')
-        if self.gui is None: self.setWindowIcon(QtGui.QIcon(icons['autolab']))
+        super().__init__()
+        self.has_parent = has_parent  # Only for closeEvent
+        self.setWindowTitle('AUTOLAB - Variables manager')
+        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
 
         self.statusBar = self.statusBar()
 
@@ -197,8 +198,6 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.resize(550, 300)
         self.refresh()
 
-        self.monitors = {}
-        self.sliders = {}
         # self.timer = QtCore.QTimer(self)
         # self.timer.setInterval(400) # ms
         # self.timer.timeout.connect(self.refresh_new)
@@ -300,32 +299,41 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         # self.timer.stop()
-        if hasattr(self.gui, 'clearVariablesMenu'):
-            self.gui.clearVariablesMenu()
+        clearVariablesMenu()
 
-        for monitor in list(self.monitors.values()):
-            monitor.close()
-
-        for slider in list(self.sliders.values()):
-            slider.close()
-
-        for children in self.findChildren(QtWidgets.QWidget):
-            children.deleteLater()
+        self.variablesWidget.clear()
+        self.devicesWidget.clear()
 
         super().closeEvent(event)
 
-        if self.gui is None:
+        if not self.has_parent:
+            import pyqtgraph as pg
+            try:
+                # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
+                for view in pg.ViewBox.AllViews.copy().keys():
+                    pg.ViewBox.forgetView(id(view), view)
+                    # OPTIMIZE: forget only view used in monitor/gui
+                pg.ViewBox.quit()
+            except: pass
+
+            closePlotter()
+            closeMonitors()
+            closeSliders()
             QtWidgets.QApplication.quit()  # close the variable app
 
 
 class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
-    def __init__(self, itemParent, name, variable, gui):
+    def __init__(self,
+                 itemParent: Union[QtWidgets.QTreeWidget,
+                                   QtWidgets.QTreeWidgetItem],
+                 name: str,
+                 variable: Union[Variable, Variable_og],
+                 gui: QtWidgets.QMainWindow):
 
-        self.itemParent = itemParent
-        self.gui = gui
         self.name = name
         self.variable = variable
+        self.gui = gui
 
         if is_Variable(self.variable):
             super().__init__(itemParent, ['', name])
@@ -386,6 +394,10 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
                      self.variable.value, (int, float, np.ndarray, pd.DataFrame)))
                  ))
 
+        plottingAction = menu.addAction("Capture to plotter")
+        plottingAction.setIcon(QtGui.QIcon(icons['plotter']))
+        plottingAction.setEnabled(monitoringAction.isEnabled())
+
         menu.addSeparator()
         sliderAction = menu.addAction("Create a slider")
         sliderAction.setIcon(QtGui.QIcon(icons['slider']))
@@ -394,45 +406,14 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
              and self.variable.writable
              and self.variable.type in (int, float)))
 
-        choice = menu.exec_(self.gui.variablesWidget.viewport().mapToGlobal(position))
-        if choice == monitoringAction: self.openMonitor()
-        elif choice == sliderAction: self.openSlider()
-
-    def openMonitor(self):
-        """ This function open the monitor associated to this variable. """
-        # If the monitor is not already running, create one
-        if id(self) not in self.gui.monitors:
-            self.gui.monitors[id(self)] = Monitor(self)
-            self.gui.monitors[id(self)].show()
-        # If the monitor is already running, just make as the front window
-        else:
-            monitor = self.gui.monitors[id(self)]
-            monitor.setWindowState(
-                monitor.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            monitor.activateWindow()
-
-    def openSlider(self):
-        """ This function open the slider associated to this variable. """
-        # If the slider is not already running, create one
-        if id(self) not in self.gui.sliders:
-            self.gui.sliders[id(self)] = Slider(self.variable, self)
-            self.gui.sliders[id(self)].show()
-        # If the slider is already running, just make as the front window
-        else:
-            slider = self.gui.sliders[id(self)]
-            slider.setWindowState(
-                slider.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            slider.activateWindow()
-
-    def clearMonitor(self):
-        """ This clear monitor instances reference when quitted """
-        if id(self) in self.gui.monitors:
-            self.gui.monitors.pop(id(self))
-
-    def clearSlider(self):
-        """ This clear the slider instances reference when quitted """
-        if id(self) in self.gui.sliders:
-            self.gui.sliders.pop(id(self))
+        choice = menu.exec_(
+            self.gui.variablesWidget.viewport().mapToGlobal(position))
+        if choice == monitoringAction:
+            openMonitor(self.variable, has_parent=True)
+        if choice == plottingAction:
+            openPlotter(variable=self.variable, has_parent=True)
+        elif choice == sliderAction:
+            openSlider(self.variable, gui=self.gui, item=self)
 
     def renameVariable(self) -> None:
         new_name = self.nameWidget.text()
@@ -482,7 +463,8 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         value_str = data_to_str(value)
 
         self.valueWidget.setText(value_str)
-        self.typeWidget.setText(str(type(value).__name__))
+        self.typeWidget.setText(str(type(value)).split("'")[1])
+
 
     def changeRawValue(self):
         name = self.name
@@ -522,5 +504,5 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
             value_str = data_to_str(value)
 
             self.valueWidget.setText(value_str)
-            self.typeWidget.setText(str(type(value).__name__))
+            self.typeWidget.setText(str(type(value)).split("'")[1])
             # self.gui.refresh()  # OPTIMIZE replace by each variable send update signal
