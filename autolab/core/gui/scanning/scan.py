@@ -16,10 +16,10 @@ from itertools import product
 import numpy as np
 from qtpy import QtCore, QtWidgets
 
-from .. import variables
-from ... import paths
-from ..GUI_utilities import qt_object_exists
-from ...utilities import create_array, SUPPORTED_EXTENSION
+from ..GUI_utilities import qt_object_exists, MyInputDialog, MyFileDialog
+from ...paths import PATHS
+from ...variables import eval_variable, set_variable, has_eval
+from ...utilities import create_array
 
 
 class ScanManager:
@@ -114,41 +114,8 @@ class ScanManager:
 
         if unit in ("open-file", "save-file"):
 
-            class FileDialog(QtWidgets.QDialog):
-
-                def __init__(self, parent: QtWidgets.QMainWindow, name: str,
-                             mode: QtWidgets.QFileDialog):
-
-                    super().__init__(parent)
-                    if mode == QtWidgets.QFileDialog.AcceptOpen:
-                        self.setWindowTitle(f"Open file - {name}")
-                    elif mode == QtWidgets.QFileDialog.AcceptSave:
-                        self.setWindowTitle(f"Save file - {name}")
-
-                    file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
-                    file_dialog.setAcceptMode(mode)
-                    file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
-                    file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
-                    file_dialog.setDirectory(paths.USER_LAST_CUSTOM_FOLDER)
-                    file_dialog.setNameFilters(SUPPORTED_EXTENSION.split(";;"))
-
-                    layout = QtWidgets.QVBoxLayout(self)
-                    layout.addWidget(file_dialog)
-                    layout.addStretch()
-                    layout.setSpacing(0)
-                    layout.setContentsMargins(0,0,0,0)
-
-                    self.exec_ = file_dialog.exec_
-                    self.selectedFiles = file_dialog.selectedFiles
-
-                def closeEvent(self, event):
-                    for children in self.findChildren(QtWidgets.QWidget):
-                        children.deleteLater()
-
-                    super().closeEvent(event)
-
             if unit == "open-file":
-                self.main_dialog = FileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptOpen)
+                self.main_dialog = MyFileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptOpen)
                 self.main_dialog.show()
 
                 if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -157,7 +124,7 @@ class ScanManager:
                     filename = ''
 
             elif unit == "save-file":
-                self.main_dialog = FileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptSave)
+                self.main_dialog = MyFileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptSave)
                 self.main_dialog.show()
 
                 if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -167,43 +134,13 @@ class ScanManager:
 
             if filename != '':
                 path = os.path.dirname(filename)
-                paths.USER_LAST_CUSTOM_FOLDER = path
+                PATHS['last_folder'] = path
 
             if qt_object_exists(self.main_dialog): self.main_dialog.deleteLater()
             if self.thread is not None: self.thread.user_response = filename
 
         elif unit == 'user-input':
-
-            class InputDialog(QtWidgets.QDialog):
-
-                def __init__(self, parent: QtWidgets.QMainWindow, name: str):
-
-                    super().__init__(parent)
-                    self.setWindowTitle(name)
-
-                    input_dialog = QtWidgets.QInputDialog(self)
-                    input_dialog.setLabelText(f"Set {name} value")
-                    input_dialog.setInputMode(QtWidgets.QInputDialog.TextInput)
-                    input_dialog.setWindowFlags(input_dialog.windowFlags() & ~QtCore.Qt.Dialog)
-
-                    lineEdit = input_dialog.findChild(QtWidgets.QLineEdit)
-                    lineEdit.setMaxLength(10000000)
-
-                    layout = QtWidgets.QVBoxLayout(self)
-                    layout.addWidget(input_dialog)
-                    layout.addStretch()
-                    layout.setSpacing(0)
-                    layout.setContentsMargins(0,0,0,0)
-
-                    self.exec_ = input_dialog.exec_
-                    self.textValue = input_dialog.textValue
-
-                def closeEvent(self, event):
-                    for children in self.findChildren(QtWidgets.QWidget):
-                        children.deleteLater()
-                    super().closeEvent(event)
-
-            self.main_dialog = InputDialog(self.gui, name)
+            self.main_dialog = MyInputDialog(self.gui, name)
             self.main_dialog.show()
 
             if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -212,6 +149,14 @@ class ScanManager:
                 response = ''
 
             if qt_object_exists(self.main_dialog): self.main_dialog.deleteLater()
+
+            if has_eval(response):
+                try:
+                    response = eval_variable(response)
+                except Exception as e:
+                    self.thread.errorSignal.emit(e)
+                    self.thread.stopFlag.set()
+
             if self.thread is not None: self.thread.user_response = response
         else:
             if self.thread is not None: self.thread.user_response = f"Unknown unit '{unit}'"
@@ -245,7 +190,8 @@ class ScanManager:
         self.thread.stopFlag.set()
         self.thread.user_response = 'Close'  # needed to stop scan
         self.resume()
-        if self.main_dialog is not None and qt_object_exists(self.main_dialog): self.main_dialog.deleteLater()
+        if self.main_dialog and qt_object_exists(self.main_dialog):
+            self.main_dialog.deleteLater()
         self.thread.wait()
 
     # SIGNALS
@@ -360,7 +306,7 @@ class ScanThread(QtCore.QThread):
             if 'values' in parameter:
                 paramValues = parameter['values']
                 try:
-                    paramValues = variables.eval_variable(paramValues)
+                    paramValues = eval_variable(paramValues)
                     paramValues = create_array(paramValues)
                 except Exception as e:
                     self.errorSignal.emit(e)
@@ -376,7 +322,7 @@ class ScanThread(QtCore.QThread):
                 else:
                     paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
 
-            variables.set_variable(param_name, paramValues[0])
+            set_variable(param_name, paramValues[0])
             paramValues_list.append(paramValues)
 
         ID = 0
@@ -394,7 +340,7 @@ class ScanThread(QtCore.QThread):
                 try:
                     self._source_of_error = None
                     ID += 1
-                    variables.set_variable('ID', ID)
+                    set_variable('ID', ID)
 
                     for parameter, paramValue in zip(
                             self.config[recipe_name]['parameter'], paramValueList):
@@ -402,7 +348,7 @@ class ScanThread(QtCore.QThread):
                         element = parameter['element']
                         param_name = parameter['name']
 
-                        variables.set_variable(param_name, element.type(
+                        set_variable(param_name, element.type(
                                 paramValue) if element is not None else paramValue)
 
                         # Set the parameter value
@@ -482,9 +428,9 @@ class ScanThread(QtCore.QThread):
 
         if stepType == 'measure':
             result = element()
-            variables.set_variable(stepInfos['name'], result)
+            set_variable(stepInfos['name'], result)
         elif stepType == 'set':
-            value = variables.eval_variable(stepInfos['value'])
+            value = eval_variable(stepInfos['value'])
             if element.type in [np.ndarray]: value = create_array(value)
             element(value)
         elif stepType == 'action':
@@ -499,7 +445,7 @@ class ScanThread(QtCore.QThread):
                         element(self.user_response)
                     self.user_response = None
                 else:
-                    value = variables.eval_variable(stepInfos['value'])
+                    value = eval_variable(stepInfos['value'])
                     element(value)
             else:
                 element()

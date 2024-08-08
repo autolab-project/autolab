@@ -11,14 +11,15 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
+import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
 from qtpy import QtWidgets, QtGui, QtCore
 
 from .display import DisplayValues
 from ..GUI_utilities import (get_font_size, setLineEditBackground,
                              pyqtgraph_fig_ax, pyqtgraph_image)
 from ..slider import Slider
-from ..variables import Variable
 from ..icons import icons
+from ...variables import Variable
 
 
 if hasattr(pd.errors, 'UndefinedVariableError'):
@@ -461,7 +462,7 @@ class FigureManager:
         else:
             var_to_display = [variable_x, variable_y]
 
-        can_filter = var_to_display != ['', '']  # Allows to differentiate images from scan or arrays. Works only because on dataframe_comboBoxCurrentChanged, updateDisplayableResults is called
+        can_filter = var_to_display not in (['', ''], ['', '', ''])  # Allows to differentiate images from scan or arrays. Works only because on dataframe_comboBoxCurrentChanged, updateDisplayableResults is called
         filter_condition = self.filter_condition if (
             self.gui.checkBoxFilter.isChecked() and can_filter) else {}
 
@@ -486,6 +487,9 @@ class FigureManager:
 
             # If plot scan as image
             if data_name == "Scan" and self.displayed_as_image:
+
+                if not self.gui.frameAxis.isVisible():
+                    self.gui.frameAxis.show()
 
                 if not self.gui.variable_x2_comboBox.isVisible():
                     self.gui.variable_x2_comboBox.show()

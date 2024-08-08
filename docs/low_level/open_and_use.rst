@@ -7,7 +7,7 @@ The low-level interface provides a raw access to the drivers implemented in Auto
 
 .. attention::
 
-	The Autolab drivers may contains internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. **The authors declines any responsibility for the consequences of an incorrect use of the drivers**. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the use of the :ref:`highlevel`.
+	Autolab drivers may contain internal functions, that are not dedicated to be called by the user, and some functions requires particular types of inputs. **The authors decline any responsibility for the consequences of an incorrect use of the drivers**. To avoid any problems, make sure you have a real understanding of what you are doing, or prefer the use of the :ref:`highlevel`.
 
 To see the list of available drivers in Autolab, call the ``list_drivers`` function.
 
@@ -25,7 +25,7 @@ Load and close a Driver
 
 
 
-The instantiation of a *Driver* object is done through the function ``get_driver`` of Autolab, and requires a particular configuration:
+The instantiation of a *Driver* object is done using the ``get_driver`` function of Autolab, and requires a particular configuration:
 
 * The name of the driver: one of the name appearing in the ``list_drivers`` function (ex: 'yenista_TUNICS').
 * The connection parameters as keywords arguments: the connection type to use to communicate with the instrument ('VISA', 'TELNET', ...), the address, the port, the slots, ...
@@ -34,13 +34,13 @@ The instantiation of a *Driver* object is done through the function ``get_driver
 
 	>>> laserSource = autolab.get_driver('yenista_TUNICS', 'VISA', address='GPIB0::12::INSTR')
 
-To know what is the required configuration to interact with a given instrument, call the function ``config_help`` with the name of the driver.
+To know what is the required configuration to interact with a given instrument, call the ``config_help`` function with the name of the driver.
 
 .. code-block:: python
 
 	>>> autolab.config_help('yenista_TUNICS')
 
-To close properly the connection to the instrument, simply call its the function ``close`` of the **Driver**.
+To close properly the connection to the instrument, simply call the ``close`` function of the **Driver**.
 
 .. code-block:: python
 
@@ -57,7 +57,7 @@ You are now ready to use the functions implemented in the **Driver**:
 	>>> laserSource.get_wavelength()
 	1550
 
-You can get the list of the available functions by calling the function ``autolab.explore_driver`` with the instance of your **Driver**. Once again, note that some of these functions are note supposed to be used directly, some of them may be internal functions.
+You can get the list of the available functions by calling the ``autolab.explore_driver`` function with the instance of your **Driver**. Once again, note that some of these functions are not supposed to be used directly, some of them may be internal functions.
 
 	>>> autolab.explore_driver(laserSource)
 

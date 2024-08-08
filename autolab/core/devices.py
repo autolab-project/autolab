@@ -7,13 +7,15 @@ Created on Thu Jun 13 10:25:49 2019
 
 from typing import List, Union
 
-from . import drivers
-from . import config
+from .drivers import get_driver_path, get_driver
+from .config import list_all_devices_configs, get_device_config
 from .elements import Module, Element
 
 # Storage of the devices
 DEVICES = {}
 
+# After DEVICES to avoid circular import
+from .variables import update_allowed_dict
 
 # =============================================================================
 # DEVICE CLASS
@@ -25,7 +27,7 @@ class Device(Module):
         """ device_config is returned by :meth:`get_final_device_config` """
 
         self.device_config = device_config  # hidden from completion
-        self.driver_path = drivers.get_driver_path(device_config["driver"])
+        self.driver_path = get_driver_path(device_config["driver"])
 
         super().__init__(None, {'name': device_name, 'object': instance,
                                 'help': f'Device {device_name} at {self.driver_path}'})
@@ -47,6 +49,7 @@ class Device(Module):
         except: pass
 
         del DEVICES[self.name]
+        update_allowed_dict()
 
     def __dir__(self):
         """ For auto-completion """
@@ -77,10 +80,10 @@ def get_element_by_address(address: str) -> Union[Element, None]:
 
 def get_final_device_config(device_name: str, **kwargs) -> dict:
     ''' Returns a valid device config from configuration file overwritten by kwargs '''
-    assert device_name in config.list_all_devices_configs(), f"Device name {device_name} not found in devices_config.ini"
+    assert device_name in list_all_devices_configs(), f"Device name '{device_name}' not found in devices_config.ini"
 
     # Load config object
-    device_config = dict(config.get_device_config(device_name))
+    device_config = dict(get_device_config(device_name))
 
     # Overwrite config with provided configuration in kwargs
     for key, value in kwargs.items():
@@ -105,11 +108,12 @@ def get_device(device_name: str, **kwargs) -> Device:
         assert device_config == DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
 
     else:
-        instance = drivers.get_driver(
+        instance = get_driver(
             device_config['driver'], device_config['connection'],
             **{k: v for k, v in device_config.items() if k not in [
                 'driver', 'connection']})
         DEVICES[device_name] = Device(device_name, instance, device_config)
+        update_allowed_dict()
 
     return DEVICES[device_name]
 
@@ -119,13 +123,13 @@ def get_device(device_name: str, **kwargs) -> Device:
 # =============================================================================
 
 def list_loaded_devices() -> List[str]:
-    ''' Returns the list of the loaded devices '''
+    ''' Returns the list of loaded device names '''
     return list(DEVICES)
 
 
 def list_devices() -> List[str]:
-    ''' Returns the list of all configured devices '''
-    return config.list_all_devices_configs()
+    ''' Returns the list of all configured device names '''
+    return list_all_devices_configs()
 
 
 def get_devices_status() -> dict:
@@ -149,19 +153,20 @@ def close(device: Union[str, Device] = "all"):
             try:
                 DEVICES[device_name].close()
             except Exception:
-                print(f"Warning: device \"{device_name}\" has not been closed properly")
+                print(f"Warning: device '{device_name}' has not been closed properly")
 
     elif isinstance(device, Device):
         if device.name in DEVICES:
             device.close()
         else:
-            print(f"No device {device.name} in {list_loaded_devices()}")
+            print(f"No device '{device.name}' in {list_loaded_devices()}")
 
     elif isinstance(device, str):
         if device in DEVICES:
             DEVICES[device].close()
         else:
-            print(f"No device {device} in {list_loaded_devices()}")
+            print(f"No device '{device}' in {list_loaded_devices()}")
 
     else:
-        print(f"Warning, {device} is not a reconized device")
+        var_type = str(type(device)).split("'")[1]
+        print(f"Warning, {device} with type '{var_type}' is not a reconized device")

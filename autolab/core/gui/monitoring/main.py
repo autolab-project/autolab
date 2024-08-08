@@ -4,6 +4,7 @@ Created on Fri Sep 20 22:08:29 2019
 
 @author: qchat
 """
+from typing import Union
 import os
 import sys
 import queue
@@ -14,25 +15,28 @@ from .data import DataManager
 from .figure import FigureManager
 from .monitor import MonitorManager
 from ..icons import icons
-from ... import paths
 from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_instances import clearMonitor
+from ...paths import PATHS
 from ...utilities import SUPPORTED_EXTENSION
+from ...elements import Variable as Variable_og
+from ...variables import Variable
 
 
 class Monitor(QtWidgets.QMainWindow):
 
-    def __init__(self, item: QtWidgets.QTreeWidgetItem):
-        self.gui = item if isinstance(item, QtWidgets.QTreeWidgetItem) else None
-        self.item = item
-        self.variable = item.variable
-
+    def __init__(self,
+                 variable: Union[Variable, Variable_og],
+                 has_parent: bool = False):
+        self.has_parent = has_parent  # Only for closeEvent
+        self.variable = variable
         self._font_size = get_font_size() + 1
 
         # Configuration of the window
         super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
-        self.setWindowTitle(f"AUTOLAB - Monitor: Variable {self.variable.address()}")
+        self.setWindowTitle(f"AUTOLAB - Monitor: {self.variable.address()}")
         self.setWindowIcon(QtGui.QIcon(icons['monitor']))
         # Queue
         self.queue = queue.Queue()
@@ -48,7 +52,7 @@ class Monitor(QtWidgets.QMainWindow):
         setLineEditBackground(
             self.windowLength_lineEdit, 'synced', self._font_size)
 
-        self.xlabel = ''  # defined in data according to data type
+        self.xlabel = 'Time(s)'  # Is changed to x if ndarray or dataframe
         self.ylabel = f'{self.variable.address()}'  # OPTIMIZE: could depend on 1D or 2D
 
         if self.variable.unit is not None:
@@ -126,14 +130,14 @@ class Monitor(QtWidgets.QMainWindow):
         # Ask the filename of the output data
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             self, caption="Save data", directory=os.path.join(
-                paths.USER_LAST_CUSTOM_FOLDER,
+                PATHS['last_folder'],
                 f'{self.variable.address()}_monitor.txt'),
             filter=SUPPORTED_EXTENSION)
 
         path = os.path.dirname(filename)
         # Save the given path for future, the data and the figure if the path provided is valid
         if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
             self.setStatus('Saving data...', 5000)
 
             try:
@@ -179,11 +183,12 @@ class Monitor(QtWidgets.QMainWindow):
         """ This function does some steps before the window is really killed """
         self.monitorManager.close()
         self.timer.stop()
-        if hasattr(self.item, 'clearMonitor'): self.item.clearMonitor()
         self.figureManager.fig.deleteLater()  # maybe not useful for monitor but was source of crash in scanner if didn't close
         self.figureManager.figMap.deleteLater()
 
-        if self.gui is None:
+        clearMonitor(self.variable)
+
+        if not self.has_parent:
             import pyqtgraph as pg
             try:
                 # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
@@ -197,7 +202,7 @@ class Monitor(QtWidgets.QMainWindow):
             children.deleteLater()
         super().closeEvent(event)
 
-        if self.gui is None:
+        if not self.has_parent:
             QtWidgets.QApplication.quit()  # close the monitor app
 
     def windowLengthChanged(self):
@@ -240,7 +245,7 @@ class Monitor(QtWidgets.QMainWindow):
         self.delay_lineEdit.setText(f'{value:g}')
         setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
-    def setStatus(self, message: str, timeout: int  = 0, stdout: bool = True):
+    def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
         self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)

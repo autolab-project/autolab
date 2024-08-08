@@ -5,13 +5,14 @@ Created on Mon Jan 15 14:42:16 2024
 @author: Jonathan
 """
 
-from typing import List
+from typing import List, Union
 
 from qtpy import QtCore, QtWidgets, QtGui
 
 from ..icons import icons
-from ...devices import Device
 from ...utilities import clean_string
+from ...elements import Variable as Variable_og
+from ...elements import Action
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
@@ -143,7 +144,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     elif variable.readable:
                         gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
                     elif variable.writable:
-                        gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+                        value = variable.value if variable.type in [tuple] else None
+                        gui.addStepToScanRecipe(
+                            self.recipe_name, 'set', variable, value=value)
                 elif variable._element_type == "action":
                     gui.addStepToScanRecipe(self.recipe_name, 'action', variable)
 
@@ -187,7 +190,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         self.setGraphicsEffect(None)
 
     def menu(self, gui: QtWidgets.QMainWindow,
-             variable: Device, position: QtCore.QPoint):
+             variable: Union[Variable_og, Action], position: QtCore.QPoint):
         """ Provides the menu when the user right click on an item """
         menu = QtWidgets.QMenu()
         scanMeasureStepAction = menu.addAction("Measure in scan recipe")
@@ -201,7 +204,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
 
         elif choice == scanSetStepAction:
-            gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+            value = variable.value if variable.type in [tuple] else None
+            gui.addStepToScanRecipe(
+                self.recipe_name, 'set', variable, value=value)
 
 
 class MyQTabWidget(QtWidgets.QTabWidget):

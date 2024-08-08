@@ -13,10 +13,11 @@ import numpy as np
 
 from qtpy import QtCore, QtWidgets
 
-from .. import variables
-from ..GUI_utilities import qt_object_exists
-from ... import paths, config
+from ..GUI_utilities import qt_object_exists, MyLineEdit, MyQCheckBox
+from ...paths import PATHS
+from ...config import get_control_center_config
 from ...utilities import SUPPORTED_EXTENSION
+from ...variables import eval_variable
 
 
 class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
@@ -41,15 +42,15 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
         # Submodules
         subModuleNames = self.module.list_modules()
         for subModuleName in subModuleNames:
-            subModule = getattr(self.module,subModuleName)
-            item = TreeWidgetItemModule(self, subModuleName,subModuleName,self.gui)
+            subModule = getattr(self.module, subModuleName)
+            item = TreeWidgetItemModule(self, subModuleName, subModuleName, self.gui)
             item.load(subModule)
 
         # Variables
         varNames = self.module.list_variables()
         for varName in varNames:
             variable = getattr(self.module,varName)
-            TreeWidgetItemVariable(self, variable,self.gui)
+            TreeWidgetItemVariable(self, variable, self.gui)
 
         # Actions
         actNames = self.module.list_actions()
@@ -80,6 +81,9 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                 for i in range(self.childCount()):
                     self.removeChild(self.child(0))
                 self.loaded = False
+
+                if not self.gui.active_plugin_dict:
+                    self.gui.timerQueue.stop()
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
@@ -117,7 +121,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         # Main - Column 3 : QlineEdit if the action has a parameter
         if self.has_value:
-            self.valueWidget = QtWidgets.QLineEdit()
+            self.valueWidget = MyLineEdit()
             self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
             self.valueWidget.returnPressed.connect(self.execute)
@@ -125,7 +129,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         # Tooltip
         if self.action._help is None: tooltip = 'No help available for this action'
         else: tooltip = self.action._help
-        self.setToolTip(0,tooltip)
+        self.setToolTip(0, tooltip)
 
     def readGui(self):
         """ This function returns the value in good format of the value in the GUI """
@@ -142,17 +146,17 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 if self.action.unit == "open-file":
                     filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                         self.gui, caption=f"Open file - {self.action.name}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
                 elif self.action.unit == "save-file":
                     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                         self.gui, caption=f"Save file - {self.action.name}",
-                        directory=paths.USER_LAST_CUSTOM_FOLDER,
+                        directory=PATHS['last_folder'],
                         filter=SUPPORTED_EXTENSION)
 
                 if filename != '':
                     path = os.path.dirname(filename)
-                    paths.USER_LAST_CUSTOM_FOLDER = path
+                    PATHS['last_folder'] = path
                     return filename
                 else:
                     self.gui.setStatus(
@@ -175,17 +179,18 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                     10000, False)
         else:
             try:
-                value = variables.eval_variable(value)
+                value = eval_variable(value)
                 value = self.action.type(value)
                 return value
-            except:
-                self.gui.setStatus(f"Action {self.action.name}: Impossible to convert {value} in type {self.action.type.__name__}",10000, False)
+            except Exception as e:
+                self.gui.setStatus(f"Action {self.action.name}: {e}", 10000, False)
 
     def execute(self):
         """ Start a new thread to execute the associated action """
         if self.has_value:
             value = self.readGui()
-            if value is not None: self.gui.threadManager.start(self, 'execute', value=value)
+            if value is not None:
+                self.gui.threadManager.start(self, 'execute', value=value)
         else:
             self.gui.threadManager.start(self, 'execute')
 
@@ -207,7 +212,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.variable = variable
 
         # Import Autolab config
-        control_center_config = config.get_control_center_config()
+        control_center_config = get_control_center_config()
         self.precision = int(control_center_config['precision'])
 
         # Signal creation and associations in autolab devices instances
@@ -231,7 +236,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if self.variable.type in [int, float, str, pd.DataFrame, np.ndarray]:
 
             if self.variable.writable:
-                self.valueWidget = QtWidgets.QLineEdit()
+                self.valueWidget = MyLineEdit()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
                 self.valueWidget.returnPressed.connect(self.write)
                 self.valueWidget.textEdited.connect(self.valueEdited)
@@ -250,17 +255,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         ## QCheckbox for boolean variables
         elif self.variable.type in [bool]:
-
-            class MyQCheckBox(QtWidgets.QCheckBox):
-
-                def __init__(self, parent):
-                    self.parent = parent
-                    super().__init__()
-
-                def mouseReleaseEvent(self, event):
-                    super().mouseReleaseEvent(event)
-                    self.parent.valueEdited()
-                    self.parent.write()
 
             self.valueWidget = MyQCheckBox(self)
             # self.valueWidget = QtWidgets.QCheckBox()
@@ -315,11 +309,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     10000, False)
             else:
                 try:
-                    value = variables.eval_variable(value)
+                    value = eval_variable(value)
                     value = self.variable.type(value)
                     return value
-                except:
-                    self.gui.setStatus(f"Variable {self.variable.name}: Impossible to convert {value} in type {self.variable.type.__name__}",10000, False)
+                except Exception as e:
+                    self.gui.setStatus(
+                        f"Variable {self.variable.name}: {e}", 10000, False)
 
         elif self.variable.type in [bool]:
             value = self.valueWidget.isChecked()
@@ -362,12 +357,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
     def saveValue(self):
         filename = QtWidgets.QFileDialog.getSaveFileName(
             self.gui, f"Save {self.variable.name} value", os.path.join(
-                paths.USER_LAST_CUSTOM_FOLDER,f'{self.variable.address()}.txt'),
+                PATHS['last_folder'],f'{self.variable.address()}.txt'),
             filter=SUPPORTED_EXTENSION)[0]
 
         path = os.path.dirname(filename)
         if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
             try:
                 self.gui.setStatus(
                     f"Saving value of {self.variable.name}...", 5000)
@@ -376,7 +371,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     f"Value of {self.variable.name} successfully read and save at {filename}",
                     5000)
             except Exception as e:
-                self.gui.setStatus(f"An error occured: {str(e)}", 10000, False)
+                self.gui.setStatus(f"An error occured: {e}", 10000, False)
 
 
 # Signals can be emitted only from QObjects

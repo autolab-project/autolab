@@ -9,9 +9,9 @@ import inspect
 
 from qtpy import QtCore
 
-from ... import devices
-from ... import drivers
 from ..GUI_utilities import qt_object_exists
+from ...devices import get_final_device_config, Device
+from ...drivers import load_driver_lib, get_driver
 
 
 class ThreadManager :
@@ -132,19 +132,19 @@ class InteractionThread(QtCore.QThread):
             elif self.intType == 'load' :
                 # Note that threadItemDict needs to be updated outside of thread to avoid timing error
                 plugin_name = self.item.name
-                device_config = devices.get_final_device_config(plugin_name)
+                device_config = get_final_device_config(plugin_name)
 
                 driver_kwargs = { k:v for k,v in device_config.items() if k not in ['driver','connection']}
-                driver_lib = drivers.load_driver_lib(device_config['driver'])
+                driver_lib = load_driver_lib(device_config['driver'])
 
                 if hasattr(driver_lib, 'Driver') and 'gui' in [param.name for param in inspect.signature(driver_lib.Driver.__init__).parameters.values()]:
 
                         driver_kwargs['gui'] = self.item.gui
 
-                instance = drivers.get_driver(device_config['driver'],
+                instance = get_driver(device_config['driver'],
                                               device_config['connection'],
                                               **driver_kwargs)
-                module = devices.Device(plugin_name, instance, device_config)
+                module = Device(plugin_name, instance, device_config)
                 self.item.gui.threadDeviceDict[id(self.item)] = module
         except Exception as e:
             error = e

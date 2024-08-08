@@ -3,9 +3,11 @@
 import socket
 import pickle
 import threading
-from . import config, devices
 import datetime as dt
 from functools import partial
+
+from .config import get_server_config
+from .devices import get_devices_status, get_device
 
 
 class Driver_SOCKET():
@@ -110,14 +112,14 @@ class ClientThread(threading.Thread, Driver_SOCKET):
             if command == 'CLOSE_CONNECTION':
                 self.stop_flag.set()
             elif command == 'DEVICES_STATUS?':
-                return self.write(devices.get_devices_status())
+                return self.write(get_devices_status())
         else:
             if command['command'] == 'get_device_model':
                 device_name = command['device_name']
-                structure = devices.get_device(device_name).get_structure()
+                structure = get_device(device_name).get_structure()
                 self.write(structure)
             elif command['command'] == 'request':
-                devices.get_devices(device_name).get_by_adress(command['element_adress'])
+                get_device(device_name).get_by_adress(command['element_adress'])
                 # element_address --> my_yenista::submodule::wavelength
                 wavelength()
 
@@ -148,7 +150,7 @@ class Server():
         self.active_connection_thread = None
 
         # Load server config in autolab_config.ini
-        server_config = config.get_server_config()
+        server_config = get_server_config()
         if not port: port = int(server_config['port'])
         self.port = port
 

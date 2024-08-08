@@ -48,7 +48,8 @@ class DataManager:
 
         if isinstance(y, (np.ndarray, pd.DataFrame)):
             if self.gui.windowLength_lineEdit.isVisible():
-                self.gui.figureManager.setLabel('x', 'x')
+                self.gui.xlabel = 'x'
+                self.gui.figureManager.setLabel('x', self.gui.xlabel)
                 self.gui.windowLength_lineEdit.hide()
                 self.gui.windowLength_label.hide()
                 self.gui.dataDisplay.hide()
@@ -62,7 +63,8 @@ class DataManager:
                 self._addArray(y.values.T)
         else:
             if not self.gui.windowLength_lineEdit.isVisible():
-                self.gui.figureManager.setLabel('x', 'Time [s]')
+                self.gui.xlabel = 'Time(s)'
+                self.gui.figureManager.setLabel('x', self.gui.xlabel)
                 self.gui.windowLength_lineEdit.show()
                 self.gui.windowLength_label.show()
                 self.gui.dataDisplay.show()
