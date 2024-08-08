@@ -11,11 +11,11 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from .customWidgets import MyQTreeWidget, MyQTabWidget
 from ..icons import icons
-from ..GUI_variables import VariablesDialog
+from ..GUI_utilities import MyInputDialog
 from ...config import get_scanner_config
 from ...variables import has_eval
 from ...utilities import (clean_string, str_to_array, array_to_str,
-                          str_to_dataframe, dataframe_to_str)
+                          str_to_dataframe, dataframe_to_str, str_to_tuple)
 
 
 class RecipeManager:
@@ -38,7 +38,8 @@ class RecipeManager:
 
         # Tree configuration
         self.tree = MyQTreeWidget(frameRecipe, self.gui, self.recipe_name)
-        self.tree.setHeaderLabels(['Step name', 'Action', 'Element address', 'Type', 'Value', 'Unit'])
+        self.tree.setHeaderLabels(['Step name', 'Action', 'Element address',
+                                   'Type', 'Value', 'Unit'])
         header = self.tree.header()
         header.setMinimumSectionSize(20)
         # header.resizeSections(QtWidgets.QHeaderView.ResizeToContents)
@@ -57,7 +58,8 @@ class RecipeManager:
         self.tree.setDropIndicatorShown(True)
         self.tree.setAlternatingRowColors(True)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.tree.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+        self.tree.setSizePolicy(
+            QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.tree.customContextMenuRequested.connect(self.rightClick)
         self.tree.setMinimumSize(0, 200)
         self.tree.setMaximumSize(16777215, 16777215)
@@ -95,7 +97,8 @@ class RecipeManager:
         self._frame.setTabEnabled(0, bool(active))
 
     def orderChanged(self, event):
-        newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
+        newOrder = [self.tree.topLevelItem(i).text(0)
+                    for i in range(self.tree.topLevelItemCount())]
         self.gui.configManager.setRecipeStepOrder(self.recipe_name, newOrder)
 
     def refresh(self):
@@ -289,7 +292,9 @@ class RecipeManager:
                 except (ValueError, TypeError):
                     defaultValue = f'{value}'
 
-        main_dialog = VariablesDialog(self.gui, name, defaultValue)
+        main_dialog = MyInputDialog(self.gui, name)
+        main_dialog.setWindowModality(QtCore.Qt.ApplicationModal)  # block GUI interaction
+        main_dialog.setTextValue(defaultValue)
         main_dialog.show()
 
         if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -312,8 +317,8 @@ class RecipeManager:
                         value = int(value)
                         assert value in [0, 1]
                         value = bool(value)
-                    # elif element.type in [tuple]:
-                    #     pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
+                    elif element.type in [tuple]:
+                        value = str_to_tuple(value)
                     # OPTIMIZE: bad with large data (truncate), but nobody will use it for large data right?
                     elif element.type in [np.ndarray]:
                         value = str_to_array(value)

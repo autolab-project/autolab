@@ -159,7 +159,6 @@ class Plotter(QtWidgets.QMainWindow):
         self.timerQueue = QtCore.QTimer(self)
         self.timerQueue.setInterval(int(50)) # ms
         self.timerQueue.timeout.connect(self._queueDriverHandler)
-        self.timerQueue.start()  # OPTIMIZE: should be started only when needed but difficult to know it before openning device which occurs in a diff thread! (can't start timer on diff thread)
 
         self.processPlugin()
 
@@ -242,6 +241,7 @@ class Plotter(QtWidgets.QMainWindow):
             self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
             self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerPlugin.start()
+            self.timerQueue.start()
 
     def rightClick(self, position):
         """ Function called when a right click has been detected in the tree """

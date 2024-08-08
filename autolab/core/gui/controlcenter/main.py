@@ -269,7 +269,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.timerQueue = QtCore.QTimer(self)
         self.timerQueue.setInterval(int(50)) # ms
         self.timerQueue.timeout.connect(self._queueDriverHandler)
-        self.timerQueue.start()  # OPTIMIZE: should be started only when needed but difficult to know it before openning device which occurs in a diff thread! (can't start timer on diff thread)
 
         # Import Autolab config
         control_center_config = get_control_center_config()
@@ -437,6 +436,7 @@ class ControlCenter(QtWidgets.QMainWindow):
             self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
             self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerDevice.start()
+            self.timerQueue.start()
 
     def itemCanceled(self, item):
         """ Cancel the device openning. Can be used to avoid GUI blocking
@@ -519,12 +519,14 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.scanner.configManager.setParameter(recipe_name, param_name, variable)
 
     def addStepToScanRecipe(self, recipe_name: str, stepType: str,
-                            element: Union[Variable_og, Action]):
+                            element: Union[Variable_og, Action],
+                            value: Any = None):
         """ Add the selected variable has a step for the recipe """
         if self.scanner is None:
             self.openScanner()
 
-        self.scanner.configManager.addRecipeStep(recipe_name, stepType, element)
+        self.scanner.configManager.addRecipeStep(
+            recipe_name, stepType, element, value=value)
 
     def getRecipeName(self) -> str:
         """ Returns the name of the recipe that will receive the variables

@@ -14,14 +14,16 @@ import numpy as np
 from qtpy import QtCore, QtWidgets, QtGui
 
 from ..icons import icons
-from ..GUI_utilities import qt_object_exists, MyLineEdit
+from ..GUI_utilities import (MyLineEdit, MyInputDialog, MyQCheckBox, MyQComboBox,
+                             qt_object_exists)
 from ..GUI_instances import openMonitor, openSlider, openPlotter, openAddDevice
 from ...paths import PATHS
 from ...config import get_control_center_config
-from ...variables import eval_variable
-from ...devices import close
+from ...variables import eval_variable, has_eval
+from ...devices import close, list_loaded_devices
 from ...utilities import (SUPPORTED_EXTENSION, str_to_array, array_to_str,
-                          dataframe_to_str, str_to_dataframe, create_array)
+                          dataframe_to_str, str_to_dataframe, create_array,
+                          str_to_tuple)
 
 
 class CustomMenu(QtWidgets.QMenu):
@@ -236,6 +238,9 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                         self.removeChild(self.child(0))
 
                     self.loaded = False
+
+                if not list_loaded_devices():
+                    self.gui.timerQueue.stop()
             elif id(self) in self.gui.threadManager.threads_conn:
                 menu = QtWidgets.QMenu()
                 cancelDevice = menu.addAction('Cancel loading')
@@ -333,10 +338,16 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                         f"Action {self.action.address()} cancel filename selection",
                         10000)
             elif self.action.unit == "user-input":
-                response, _ = QtWidgets.QInputDialog.getText(
-                    self.gui, self.action.address(),
-                    f"Set {self.action.address()} value",
-                    QtWidgets.QLineEdit.Normal)
+                main_dialog = MyInputDialog(self.gui, self.action.address())
+                main_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+                main_dialog.show()
+
+                if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                    response = main_dialog.textValue()
+                else:
+                    response = ''
+
+                if qt_object_exists(main_dialog): main_dialog.deleteLater()
 
                 if response != '':
                     return response
@@ -469,17 +480,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         ## QCheckbox for boolean variables
         elif self.variable.type in [bool]:
 
-            class MyQCheckBox(QtWidgets.QCheckBox):
-
-                def __init__(self, parent):
-                    self.parent = parent
-                    super().__init__()
-
-                def mouseReleaseEvent(self, event):
-                    super().mouseReleaseEvent(event)
-                    self.parent.valueEdited()
-                    self.parent.write()
-
             self.valueWidget = MyQCheckBox(self)
             hbox = QtWidgets.QHBoxLayout()
             hbox.addWidget(self.valueWidget)
@@ -496,30 +496,13 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         ## Combobox for tuples: Tuple[List[str], int]
         elif self.variable.type in [tuple]:
 
-            class MyQComboBox(QtWidgets.QComboBox):
-                def __init__(self):
-                    super().__init__()
-                    self.readonly = False
-                    self.wheel = True
-                    self.key = True
-
-                def mousePressEvent(self, event):
-                    if not self.readonly:
-                        super().mousePressEvent(event)
-
-                def keyPressEvent(self, event):
-                    if not self.readonly and self.key:
-                        super().keyPressEvent(event)
-
-                def wheelEvent(self, event):
-                    if not self.readonly and self.wheel:
-                        super().wheelEvent(event)
-
             if self.variable.writable:
                 self.valueWidget = MyQComboBox()
                 self.valueWidget.wheel = False  # prevent changing value by mistake
                 self.valueWidget.key = False
                 self.valueWidget.activated.connect(self.write)
+                self.valueWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                self.valueWidget.customContextMenuRequested.connect(self.openInputDialog)
             elif self.variable.readable:
                 self.valueWidget = MyQComboBox()
                 self.valueWidget.readonly = True
@@ -545,6 +528,44 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         # disable read button if array/dataframe
         if hasattr(self, 'readButtonCheck'): self.readButtonCheckEdited()
+
+    def openInputDialog(self, position: QtCore.QPoint):
+        """ Only used for tuple """
+        menu = QtWidgets.QMenu()
+        modifyTuple = menu.addAction("Modify tuple")
+        modifyTuple.setIcon(QtGui.QIcon(icons['tuple']))
+
+        choice = menu.exec_(self.valueWidget.mapToGlobal(position))
+
+        if choice == modifyTuple:
+            main_dialog = MyInputDialog(self.gui, self.variable.address())
+            main_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+            if self.variable.type in [tuple]:
+                main_dialog.setTextValue(str(self.variable.value))
+            main_dialog.show()
+
+            if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                response = main_dialog.textValue()
+            else:
+                response = ''
+
+            if qt_object_exists(main_dialog): main_dialog.deleteLater()
+
+            if response != '':
+                try:
+                    if has_eval(response):
+                        response = eval_variable(response)
+                    if self.variable.type in [tuple]:
+                        response = str_to_tuple(str(response))
+                except Exception as e:
+                    self.gui.setStatus(
+                        f"Variable {self.variable.address()}: {e}", 10000, False)
+                    return None
+
+                self.variable(response)
+
+                if self.variable.readable:
+                    self.variable()
 
     def writeGui(self, value):
         """ This function displays a new value in the GUI """
@@ -679,9 +700,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             scanParameterAction.setEnabled(self.variable.parameter_allowed)
             scanMeasureStepAction.setEnabled(self.variable.readable)
             saveAction.setEnabled(self.variable.readable)
-            scanSetStepAction.setEnabled(
-                self.variable.writable if self.variable.type not in [
-                    tuple] else False)  # OPTIMIZE: forbid setting tuple to scanner
+            scanSetStepAction.setEnabled(self.variable.writable)
 
             choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
             if choice is None: choice = menu.selected_action
@@ -701,7 +720,9 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.gui.addStepToScanRecipe(recipe_name, 'measure', self.variable)
             elif choice == scanSetStepAction:
                 recipe_name = self.gui.getRecipeName()
-                self.gui.addStepToScanRecipe(recipe_name, 'set', self.variable)
+                value = self.variable.value if self.variable.type in [tuple] else None
+                self.gui.addStepToScanRecipe(
+                    recipe_name, 'set', self.variable, value=value)
             elif choice == saveAction: self.saveValue()
 
     def saveValue(self):

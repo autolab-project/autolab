@@ -13,7 +13,7 @@ import numpy as np
 
 from qtpy import QtCore, QtWidgets
 
-from ..GUI_utilities import qt_object_exists, MyLineEdit
+from ..GUI_utilities import qt_object_exists, MyLineEdit, MyQCheckBox
 from ...paths import PATHS
 from ...config import get_control_center_config
 from ...utilities import SUPPORTED_EXTENSION
@@ -81,6 +81,9 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                 for i in range(self.childCount()):
                     self.removeChild(self.child(0))
                 self.loaded = False
+
+                if not self.gui.active_plugin_dict:
+                    self.gui.timerQueue.stop()
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
@@ -252,17 +255,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         ## QCheckbox for boolean variables
         elif self.variable.type in [bool]:
-
-            class MyQCheckBox(QtWidgets.QCheckBox):
-
-                def __init__(self, parent):
-                    self.parent = parent
-                    super().__init__()
-
-                def mouseReleaseEvent(self, event):
-                    super().mouseReleaseEvent(event)
-                    self.parent.valueEdited()
-                    self.parent.write()
 
             self.valueWidget = MyQCheckBox(self)
             # self.valueWidget = QtWidgets.QCheckBox()

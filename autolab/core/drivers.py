@@ -8,7 +8,7 @@ import os
 import sys
 import inspect
 import importlib
-from typing import Type, List
+from typing import Type, List, Tuple
 from types import ModuleType
 
 from .paths import PATHS, DRIVERS_PATHS, DRIVER_SOURCES
@@ -356,7 +356,7 @@ def explore_driver(instance: Type, _print: bool = True) -> str:
     return s
 
 
-def get_instance_methods(instance: Type) -> Type:
+def get_instance_methods(instance: Type) -> List[Tuple[str, Type]]:
     ''' Returns the list of all the methods (and their args) in that class '''
     methods = []
 
@@ -372,7 +372,7 @@ def get_instance_methods(instance: Type) -> Type:
         try:  # explicit to avoid visa and inspect.getmembers issue
             for name, _ in inspect.getmembers(val, inspect.ismethod):
                 if name != '__init__':
-                    attr = getattr(getattr(instance, key), name)
+                    attr = getattr(val, name)
                     args = list(inspect.signature(attr).parameters)
                     methods.append([f'{key}.{name}', args])
         except: pass

@@ -11,6 +11,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
+import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
 from qtpy import QtWidgets, QtGui, QtCore
 
 from .display import DisplayValues

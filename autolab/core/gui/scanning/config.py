@@ -21,7 +21,8 @@ from ...elements import Variable as Variable_og
 from ...elements import Action
 from ...devices import DEVICES, list_loaded_devices, get_element_by_address
 from ...utilities import (boolean, str_to_array, array_to_str, create_array,
-                          str_to_dataframe, dataframe_to_str, str_to_data)
+                          str_to_dataframe, dataframe_to_str, str_to_data,
+                          str_to_tuple)
 from ...variables import (get_variable, has_eval, is_Variable, eval_variable,
                           remove_from_config, update_from_config, VARIABLES)
 from ...paths import PATHS
@@ -199,7 +200,9 @@ class ConfigManager:
             if new_recipe_name == existing_recipe_name:
                 return
             if existing_recipe_name not in self.recipeNameList():
-                raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.recipeNameList()}')
+                raise ValueError(
+                    'should not be possible to select a non existing recipe_name: ' \
+                        f'{existing_recipe_name} not in {self.recipeNameList()}')
 
             new_recipe_name = self.getUniqueNameRecipe(new_recipe_name)
             old_config = self.config
@@ -243,9 +246,11 @@ class ConfigManager:
                     for step in recipe_i['recipe']:
                         if step['stepType'] == 'recipe':
                             has_sub_recipe = True
-                            assert step['element'] in self.config, f"Recipe {step['element']} doesn't exist in {recipe_name}!"
+                            assert step['element'] in self.config, (
+                                f"Recipe {step['element']} doesn't exist in {recipe_name}!")
                             other_recipe = self.config[step['element']]
-                            assert len(other_recipe['recipe']) > 0, f"Recipe {step['element']} is empty!"
+                            assert len(other_recipe['recipe']) > 0, (
+                                f"Recipe {step['element']} is empty!")
                             list_recipe_new.append(other_recipe)
 
                     list_recipe_new.remove(recipe_i)
@@ -440,7 +445,8 @@ class ConfigManager:
             recipe_name = self.lastRecipeName()
 
         if not self.gui.scanManager.isStarted():
-            assert recipe_name in self.recipeNameList(), f'{recipe_name} not in {self.recipeNameList()}'
+            assert recipe_name in self.recipeNameList(), (
+                f'{recipe_name} not in {self.recipeNameList()}')
 
             if name is None:
                 name = self.getUniqueName(recipe_name, element.name)
@@ -465,6 +471,7 @@ class ConfigManager:
                     elif element.type in [pd.DataFrame]: value = pd.DataFrame()
                     elif element.type in [np.ndarray]: value = np.array([])
                     elif element.type in [bool]: value = False
+                    elif element.type in [tuple]: value = ([], -1)
                 step['value'] = value
 
             self.stepList(recipe_name).append(step)
@@ -653,7 +660,8 @@ class ConfigManager:
 
             # Creates the array of values for the parameter
             if logScale:
-                paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+                paramValues = np.logspace(
+                    m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
             else:
                 paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
 
@@ -800,6 +808,8 @@ class ConfigManager:
                                 valueStr = f'{value:.{self.precision}g}'
                             except:
                                 valueStr = f'{value}'
+                        else:  # for tuple and safety
+                            valueStr = f'{value}'
 
                     pars_recipe_i['recipe'][f'{i+1}_value'] = valueStr
 
@@ -817,10 +827,11 @@ class ConfigManager:
             if var is not None:
                 assert is_Variable(var)
                 value_raw = var.raw
-                if isinstance(value_raw, np.ndarray): valueStr = array_to_str(
+                if isinstance(value_raw, np.ndarray):
+                    valueStr = array_to_str(
                         value_raw, threshold=1000000, max_line_width=9000000)
-                elif isinstance(value_raw, pd.DataFrame): valueStr = dataframe_to_str(
-                        value_raw, threshold=1000000)
+                elif isinstance(value_raw, pd.DataFrame):
+                    valueStr = dataframe_to_str(value_raw, threshold=1000000)
                 elif isinstance(value_raw, (int, float, str)):
                     try: valueStr = f'{value_raw:.{self.precision}g}'
                     except: valueStr = f'{value_raw}'
@@ -842,12 +853,16 @@ class ConfigManager:
                     try:
                         with open(filename, "r") as read_file:
                             configPars = json.load(read_file)
-                    except Exception as error:
-                        self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
+                    except Exception as e:
+                        self.gui.setStatus(
+                            f"Impossible to load configuration file: {e}",
+                            10000, False)
                         return None
                 else:
-                    print("ConfigParser depreciated, now use json. Will convert this config to json if save it.")
-                    configPars = {s: dict(legacy_configPars.items(s)) for s in legacy_configPars.sections()}
+                    print("ConfigParser depreciated, now use json. " \
+                          "Will convert this config to json if save it.")
+                    configPars = {s: dict(legacy_configPars.items(s))
+                                  for s in legacy_configPars.sections()}
 
                 path = os.path.dirname(filename)
                 PATHS['last_folder'] = path
@@ -856,7 +871,8 @@ class ConfigManager:
 
                 if not self._got_error: self.addNewConfig()
             else:
-                self.gui.setStatus(f"Configuration file {filename} doesn't exists", 5000)
+                self.gui.setStatus(
+                    f"Configuration file {filename} doesn't exists", 5000)
 
     def load_configPars(self, configPars: dict, append: bool = False):
         """ Creates a config representing a scan form a configPars """
@@ -905,7 +921,9 @@ class ConfigManager:
 
             # Config
             config = OrderedDict()
-            recipeNameList = [i for i in list(configPars) if i != 'autolab' and i != 'variables']  # to remove 'autolab' from recipe list
+            # to remove 'autolab' and 'variables' from recipe list
+            recipeNameList = [i for i in list(configPars)
+                              if i not in ('autolab', 'variables')]
 
             for recipe_num_name in recipeNameList:
 
@@ -957,7 +975,8 @@ class ConfigManager:
                         else:
                             values = str_to_array(param_pars['values'])
                         if not has_eval(values):
-                            assert np.ndim(values) == 1, f"Values must be one dimension array in parameter: {param['name']}"
+                            assert np.ndim(values) == 1, (
+                                f"Values must be one dimension array in parameter: {param['name']}")
                         param['values'] = values
                     else:
                         for key in ['nbpts', 'start_value', 'end_value', 'log']:
@@ -988,30 +1007,36 @@ class ConfigManager:
                         step['name'] = pars_recipe[f'{i}_name']
                         name = step['name']
 
-                        assert f'{i}_steptype' in pars_recipe, f"Missing stepType in step {i} ({name})."
+                        assert f'{i}_steptype' in pars_recipe, (
+                            f"Missing stepType in step {i} ({name}).")
                         step['stepType'] = pars_recipe[f'{i}_steptype']
 
-                        assert f'{i}_address' in pars_recipe, f"Missing address in step {i} ({name})."
+                        assert f'{i}_address' in pars_recipe, (
+                            f"Missing address in step {i} ({name}).")
                         address = pars_recipe[f'{i}_address']
 
                         if step['stepType'] == 'recipe':
-                            assert step['stepType'] != 'recipe', "Removed the recipe in recipe feature!"
+                            assert step['stepType'] != 'recipe', (
+                                "Removed the recipe in recipe feature!")
                             element = address
                         else:
                             element = get_element_by_address(address)
 
-                        assert element is not None, f"Address {address} not found for step {i} ({name})."
+                        assert element is not None, (
+                            f"Address {address} not found for step {i} ({name}).")
                         step['element'] = element
 
                         if (step['stepType'] == 'set') or (
                                 step['stepType'] == 'action' and element.type in [
                                     int, float, str, np.ndarray, pd.DataFrame]):
-                            assert f'{i}_value' in pars_recipe, f"Missing value in step {i} ({name})."
+                            assert f'{i}_value' in pars_recipe, (
+                                f"Missing value in step {i} ({name}).")
                             value = pars_recipe[f'{i}_value']
 
                             try:
                                 try:
-                                    assert has_eval(value), "Need $eval: to evaluate the given string"
+                                    assert has_eval(value), (
+                                        "Need $eval: to evaluate the given string")
                                 except:
                                     # Type conversions
                                     if element.type in [int]:
@@ -1022,12 +1047,15 @@ class ConfigManager:
                                         value = str(value)
                                     elif element.type in [bool]:
                                         value = boolean(value)
+                                    elif element.type in [tuple]:
+                                        value = str_to_tuple(value)
                                     elif element.type in [np.ndarray]:
                                         value = str_to_array(value)
                                     elif element.type in [pd.DataFrame]:
                                         value = str_to_dataframe(value)
                                     else:
-                                        assert has_eval(value), "Need $eval: to evaluate the given string"
+                                        assert has_eval(value), (
+                                            "Need $eval: to evaluate the given string")
                             except:
                                 raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
 
@@ -1064,14 +1092,16 @@ class ConfigManager:
 
         except Exception as error:
             self._got_error = True
-            self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
+            self.gui.setStatus(
+                f"Impossible to load configuration file: {error}", 10000, False)
             self.config = previous_config
         else:
             self.gui._resetRecipe()
             self.gui.setStatus("Configuration file loaded successfully", 5000)
 
             for device in (set(list_loaded_devices()) - set(already_loaded_devices)):
-                item_list = self.gui.mainGui.tree.findItems(device, QtCore.Qt.MatchExactly, 0)
+                item_list = self.gui.mainGui.tree.findItems(
+                    device, QtCore.Qt.MatchExactly, 0)
 
                 if len(item_list) == 1:
                     item = item_list[0]

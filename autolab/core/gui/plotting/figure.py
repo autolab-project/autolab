@@ -7,7 +7,7 @@ Created on Oct 2022
 import os
 
 import pyqtgraph as pg
-import pyqtgraph.exporters
+import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
 
 from qtpy import QtWidgets
 

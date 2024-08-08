@@ -66,6 +66,7 @@ def _start(gui: str, **kwargs):
         os.environ['QT_API'] = str(GUI_config['QT_API'])
     try:
         import pyqtgraph as pg
+        import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
         from qtpy import QtWidgets
     except ModuleNotFoundError as e:
         print(f"""Can't use GUI, package(s) missing: {e}

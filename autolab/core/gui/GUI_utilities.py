@@ -16,9 +16,11 @@ import pandas as pd
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
+from ..paths import PATHS
 from ..config import get_GUI_config
 from ..devices import DEVICES, get_element_by_address
 from ..variables import has_eval, EVAL, VARIABLES
+from ..utilities import SUPPORTED_EXTENSION
 
 # Fixes pyqtgraph/issues/3018 for pg<=0.13.7 (before pyqtgraph/pull/3070)
 from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
@@ -344,7 +346,7 @@ class MyLineEdit(QtWidgets.QLineEdit):
     def __init__(self, *args):
         super().__init__(*args)
 
-    def create_keywords(self) -> list[str]:
+    def create_keywords(self) -> List[str]:
         """ Returns a list of all available keywords for completion """
         list_keywords = []
 
@@ -561,3 +563,105 @@ class MyLineEdit(QtWidgets.QLineEdit):
             if good: break
 
         return new_keywords
+
+
+class MyInputDialog(QtWidgets.QDialog):
+
+    def __init__(self, parent: QtWidgets.QMainWindow, name: str):
+
+        super().__init__(parent)
+        self.setWindowTitle(name)
+
+        lineEdit = MyLineEdit()
+        lineEdit.setMaxLength(10000000)
+
+        # Add OK and Cancel buttons
+        button_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+            self)
+
+        # Connect buttons
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(QtWidgets.QLabel(f"Set {name} value"))
+        layout.addWidget(lineEdit)
+        layout.addWidget(button_box)
+        layout.addStretch()
+        layout.setContentsMargins(10, 5, 10, 10)
+
+        self.textValue = lineEdit.text
+        self.setTextValue = lineEdit.setText
+        self.resize(self.minimumSizeHint())
+
+    def closeEvent(self, event):
+        for children in self.findChildren(QtWidgets.QWidget):
+            children.deleteLater()
+        super().closeEvent(event)
+
+
+class MyFileDialog(QtWidgets.QDialog):
+
+    def __init__(self, parent: QtWidgets.QMainWindow, name: str,
+                 mode: QtWidgets.QFileDialog):
+
+        super().__init__(parent)
+        if mode == QtWidgets.QFileDialog.AcceptOpen:
+            self.setWindowTitle(f"Open file - {name}")
+        elif mode == QtWidgets.QFileDialog.AcceptSave:
+            self.setWindowTitle(f"Save file - {name}")
+
+        file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
+        file_dialog.setAcceptMode(mode)
+        file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+        file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
+        file_dialog.setDirectory(PATHS['last_folder'])
+        file_dialog.setNameFilters(SUPPORTED_EXTENSION.split(";;"))
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(file_dialog)
+        layout.addStretch()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
+
+        self.exec_ = file_dialog.exec_
+        self.selectedFiles = file_dialog.selectedFiles
+
+    def closeEvent(self, event):
+        for children in self.findChildren(QtWidgets.QWidget):
+            children.deleteLater()
+
+        super().closeEvent(event)
+
+
+class MyQCheckBox(QtWidgets.QCheckBox):
+
+    def __init__(self, parent):
+        self.parent = parent
+        super().__init__()
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        self.parent.valueEdited()
+        self.parent.write()
+
+
+class MyQComboBox(QtWidgets.QComboBox):
+    def __init__(self):
+        super().__init__()
+        self.readonly = False
+        self.wheel = True
+        self.key = True
+
+    def mousePressEvent(self, event):
+        if not self.readonly:
+            super().mousePressEvent(event)
+
+    def keyPressEvent(self, event):
+        if not self.readonly and self.key:
+            super().keyPressEvent(event)
+
+    def wheelEvent(self, event):
+        if not self.readonly and self.wheel:
+            super().wheelEvent(event)

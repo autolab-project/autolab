@@ -1,4 +1,5 @@
 [![PyPi](https://img.shields.io/pypi/v/autolab)](https://pypi.org/project/autolab/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/autolab.svg?label=PyPI%20downloads)](https://pypi.org/project/autolab/)
 [![Documentation Status](https://readthedocs.org/projects/autolab/badge/?version=latest)](https://autolab.readthedocs.io/en/latest/?badge=latest)
 
 # Autolab

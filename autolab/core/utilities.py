@@ -4,7 +4,7 @@ Created on Fri Oct 18 23:09:51 2019
 
 @author: qchat
 """
-from typing import Any, List
+from typing import Any, List, Tuple
 import re
 import ast
 from io import StringIO
@@ -80,6 +80,21 @@ def str_to_value(s: str) -> Any:
     # If none of the above works, return the string itself
     return s
 
+
+def str_to_tuple(s: str) -> Tuple[List[str], int]:
+    ''' Convert string to Tuple[List[str], int] '''
+    e = "Input string does not match the required format Tuple[List[str], int]"
+    try:
+        result = ast.literal_eval(s)
+        e = f"{result} does not match the required format Tuple[List[str], int]"
+        assert (isinstance(result, (tuple, list))
+                and len(result) == 2
+                and isinstance(result[0], (list, tuple))
+                and isinstance(result[1], int)), e
+        result = ([str(res) for res in result[0]], result[1])
+        return result
+    except Exception:
+        raise Exception(e)
 
 def create_array(value: Any) -> np.ndarray:
     ''' Format an int, float, list or numpy array to a numpy array with minimal one dimension '''

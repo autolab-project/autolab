@@ -44,6 +44,8 @@ class Variable(Element):
         assert 'type' in config, f"Variable {self.address()}: Missing variable type"
         assert config['type'] in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame], f"Variable {self.address()} configuration: Variable type not supported in autolab"
         self.type = config['type']
+        if self.type in [tuple]:
+            self.value = ([], -1)
 
         # Read and write function
         assert 'read' in config or 'write' in config, f"Variable {self.address()} configuration: no 'read' nor 'write' functions provided"
@@ -51,7 +53,7 @@ class Variable(Element):
         # Read function
         self.read_function = None
         self.read_init = False
-        if config['type'] in [tuple]: assert 'read' in config, f"Variable {self.address()} configuration: Must provide a read function"
+        # if config['type'] in [tuple]: assert 'read' in config, f"Variable {self.address()} configuration: Must provide a read function"
         if 'read' in config:
             assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
@@ -145,6 +147,8 @@ class Variable(Element):
             assert self.readable, f"The variable {self.address()} is not readable"
             answer = self.read_function()
             if self._read_signal is not None: self._read_signal.emit_read(answer)
+            if self.type in [tuple]:  # OPTIMIZE: could be generalized to any variable but fear could lead to memory issue
+                self.value = answer
             return answer
 
         # SET FUNCTION
@@ -154,6 +158,8 @@ class Variable(Element):
             value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
         else:
             value = self.type(value)
+        if self.type in [tuple]:  # OPTIMIZE: could be generalized to any variable but fear could lead to memory issue
+            self.value = value
         self.write_function(value)
         if self._write_signal is not None: self._write_signal.emit_write()
         return None

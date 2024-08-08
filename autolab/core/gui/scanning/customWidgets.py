@@ -144,7 +144,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     elif variable.readable:
                         gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
                     elif variable.writable:
-                        gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+                        value = variable.value if variable.type in [tuple] else None
+                        gui.addStepToScanRecipe(
+                            self.recipe_name, 'set', variable, value=value)
                 elif variable._element_type == "action":
                     gui.addStepToScanRecipe(self.recipe_name, 'action', variable)
 
@@ -202,7 +204,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
 
         elif choice == scanSetStepAction:
-            gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+            value = variable.value if variable.type in [tuple] else None
+            gui.addStepToScanRecipe(
+                self.recipe_name, 'set', variable, value=value)
 
 
 class MyQTabWidget(QtWidgets.QTabWidget):

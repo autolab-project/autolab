@@ -9,7 +9,7 @@ import os
 
 import numpy as np
 import pyqtgraph as pg
-import pyqtgraph.exporters
+import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
 from qtpy import QtWidgets
 
 from ..GUI_utilities import pyqtgraph_fig_ax, pyqtgraph_image
