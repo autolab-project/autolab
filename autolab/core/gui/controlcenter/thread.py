@@ -10,6 +10,7 @@ import inspect
 from typing import Any
 
 from qtpy import QtCore, QtWidgets
+
 from ..GUI_utilities import qt_object_exists
 from ...devices import get_final_device_config, list_loaded_devices, DEVICES, Device
 from ...drivers import load_driver_lib, get_driver
@@ -30,20 +31,15 @@ class ThreadManager:
         # GUI disabling
         item.setDisabled(True)
 
-        if hasattr(item, "execButton"):
-            if qt_object_exists(item.execButton):
-                item.execButton.setEnabled(False)
-        if hasattr(item, "readButton"):
-            if qt_object_exists(item.readButton):
-                item.readButton.setEnabled(False)
-        if hasattr(item, "valueWidget"):
-            if qt_object_exists(item.valueWidget):
-                item.valueWidget.setEnabled(False)
+        if hasattr(item, "execButton") and qt_object_exists(item.execButton):
+            item.execButton.setEnabled(False)
+        if hasattr(item, "readButton") and qt_object_exists(item.readButton):
+            item.readButton.setEnabled(False)
+        if hasattr(item, "valueWidget") and qt_object_exists(item.valueWidget):
+            item.valueWidget.setEnabled(False)
 
         # disabling valueWidget deselect item and select next one, need to disable all items and reenable item
-        list_item = self.gui.tree.selectedItems()
-
-        for item_selected in list_item:
+        for item_selected in self.gui.tree.selectedItems():
             item_selected.setSelected(False)
 
         item.setSelected(True)
@@ -92,15 +88,15 @@ class ThreadManager:
         if qt_object_exists(item):
             item.setDisabled(False)
 
-        if hasattr(item, "execButton"):
-            if qt_object_exists(item.execButton):
-                item.execButton.setEnabled(True)
-        if hasattr(item, "readButton"):
-            if qt_object_exists(item.readButton):
-                item.readButton.setEnabled(True)
-        if hasattr(item, "valueWidget"):
-            if qt_object_exists(item.valueWidget):
-                item.valueWidget.setEnabled(True)
+        if hasattr(item, "execButton") and qt_object_exists(item.execButton):
+            item.execButton.setEnabled(True)
+        if hasattr(item, "readButton") and qt_object_exists(item.readButton):
+            item.readButton.setEnabled(True)
+        if hasattr(item, "valueWidget") and qt_object_exists(item.valueWidget):
+            item.valueWidget.setEnabled(True)
+            # Put back focus if item still selected (item.isSelected() doesn't work)
+            if item in self.gui.tree.selectedItems():
+                item.valueWidget.setFocus()
 
     def delete(self, tid: int):
         """ This function is called when a thread is about to be deleted.

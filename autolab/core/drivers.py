@@ -167,7 +167,7 @@ def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
 
     driver_instance = create_default_driver_conn(driver_lib, connection)
     if driver_instance is not None:
-        print(f'Warning, {connection} not find in {driver_lib.__name__} but will try to connect using default connection')
+        print(f'Warning, connection {connection} not find in driver {driver_lib.__name__} but will try to connect using default connection')
         return driver_instance
 
     assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
