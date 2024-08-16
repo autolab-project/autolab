@@ -406,7 +406,13 @@ class Dataset():
                 dest_folder = os.path.join(dataset_folder, array_name)
 
                 if os.path.exists(tmp_folder):
-                    shutil.copytree(tmp_folder, dest_folder, dirs_exist_ok=True)
+                    try:
+                        shutil.copytree(tmp_folder, dest_folder,
+                                        dirs_exist_ok=True)  # python >=3.8 only
+                    except:
+                        if os.path.exists(dest_folder):
+                            shutil.rmtree(dest_folder, ignore_errors=True)
+                        shutil.copytree(tmp_folder, dest_folder)
                 else:
                     # This is only executed if no temp folder is set
                     if not os.path.exists(dest_folder): os.mkdir(dest_folder)

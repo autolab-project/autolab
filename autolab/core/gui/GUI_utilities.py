@@ -211,6 +211,13 @@ class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         self.img = img
         self.ax.addItem(self.img)
 
+    def dragLeaveEvent(self, event):
+        # Pyside6 triggers a leave event resuling in error:
+        # QGraphicsView::dragLeaveEvent: drag leave received before drag enter
+        pass
+        # super().dragLeaveEvent(event)
+
+
 
 def pyqtgraph_fig_ax() -> Tuple[MyGraphicsLayoutWidget, pg.PlotItem]:
     """ Return a formated fig and ax pyqtgraph for a basic plot """

@@ -362,16 +362,17 @@ def get_instance_methods(instance: Type) -> List[Tuple[str, Type]]:
 
     # LEVEL 1
     for name, _ in inspect.getmembers(instance, inspect.ismethod):
-        if name != '__init__':
+        if not name.startswith('_'):
             attr = getattr(instance, name)
             args = list(inspect.signature(attr).parameters)
             methods.append([name, args])
 
     # LEVEL 2
     for key, val in vars(instance).items():
+        if key.startswith('_'): continue
         try:  # explicit to avoid visa and inspect.getmembers issue
             for name, _ in inspect.getmembers(val, inspect.ismethod):
-                if name != '__init__':
+                if not name.startswith('_'):
                     attr = getattr(val, name)
                     args = list(inspect.signature(attr).parameters)
                     methods.append([f'{key}.{name}', args])

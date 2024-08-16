@@ -39,7 +39,7 @@ _config.add_extra_driver_repo_url()
 # Add drivers folder to sys (allows a driver to import another driver)
 import sys
 # Order of append between local and official matter for priority
-for folder in reversed(DRIVER_SOURCES.values()):
+for folder in reversed(list(DRIVER_SOURCES.values())):
     sys.path.append(folder)
 del sys
 del folder

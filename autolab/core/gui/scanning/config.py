@@ -944,28 +944,46 @@ class ConfigManager:
                 else:
                     recipe_i['active'] = True  # LEGACY <= 1.2.1
 
-                assert 'parameter' in pars_recipe_i, f'Missing parameter in {recipe_name}'
+                assert 'parameter' in pars_recipe_i, (
+                    f'Missing parameter in {recipe_name}')
 
                 param_list = recipe_i['parameter'] = []
 
                 # LEGACY <= 1.2.1
                 if len(pars_recipe_i['parameter']) != 0:
-                    if type(list(pars_recipe_i['parameter'].values())[0]) is not dict:
-                        pars_recipe_i['parameter'] = {'parameter_1': pars_recipe_i['parameter']}
+                    if not isinstance(
+                            list(pars_recipe_i['parameter'].values())[0],
+                            dict):
+                        pars_recipe_i['parameter'] = {
+                            'parameter_1': pars_recipe_i['parameter']}
 
                 for param_pars_name in pars_recipe_i['parameter']:
                     param_pars = pars_recipe_i['parameter'][param_pars_name]
 
                     param = {}
 
-                    assert 'name' in param_pars, f"Missing name to {param_pars}"
+                    assert 'name' in param_pars, (
+                        f"Missing name to {param_pars}")
                     param['name'] = param_pars['name']
 
-                    assert 'address' in param_pars, f"Missing address to {param_pars}"
+                    assert 'address' in param_pars, (
+                        f"Missing address to {param_pars}")
                     if param_pars['address'] == "None": element = None
                     else:
+                        device_name = param_pars['address'].split('.')[0]
+                        if device_name not in DEVICES:
+                            msg_box = QtWidgets.QMessageBox(self.gui)
+                            msg_box.setWindowTitle("Import AUTOLAB configuration file")
+                            msg_box.setText(f"Instantiate device {device_name}?")
+                            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok
+                                                       | QtWidgets.QMessageBox.Cancel)
+                            msg_box.show()
+                            if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
+                                raise ValueError('Cancel config import')
+
                         element = get_element_by_address(param_pars['address'])
-                        assert element is not None, f"Parameter {param_pars['address']} not found."
+                        assert element is not None, (
+                            f"Parameter {param_pars['address']} not found.")
 
                     param['element'] = element
 
@@ -1020,6 +1038,16 @@ class ConfigManager:
                                 "Removed the recipe in recipe feature!")
                             element = address
                         else:
+                            device_name = address.split('.')[0]
+                            if device_name not in DEVICES:
+                                msg_box = QtWidgets.QMessageBox(self.gui)
+                                msg_box.setWindowTitle("Import AUTOLAB configuration file")
+                                msg_box.setText(f"Instantiate device {device_name}?")
+                                msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok
+                                                           | QtWidgets.QMessageBox.Cancel)
+                                msg_box.show()
+                                if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
+                                    raise ValueError('Cancel config import')
                             element = get_element_by_address(address)
 
                         assert element is not None, (
