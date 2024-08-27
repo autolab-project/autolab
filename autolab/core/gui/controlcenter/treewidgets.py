@@ -423,7 +423,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.readSignal.read.connect(self.writeGui)
         self.variable._read_signal = self.readSignal
         self.writeSignal = WriteSignal()
-        self.writeSignal.writed.connect(self.valueEdited)
+        self.writeSignal.writed.connect(self.valueWrited)
         self.variable._write_signal = self.writeSignal
 
         # Main - Column 2 : Creation of a READ button if the variable is readable
@@ -650,6 +650,19 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             if value is not None:
                 self.gui.threadManager.start(self, 'write', value=value)
 
+    def valueWrited(self, value: Any):
+        """ Function call when the value displayed in not sure anymore.
+            The value has been modified either in the GUI (but not sent)
+            or by command line.
+            If variable not readable, write the value sent to the GUI """
+        # BUG: I got an error when changing emit_write to set value, need to reproduce it
+        try:
+            self.writeGui(value)
+            self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+        except Exception as e:
+            self.gui.setStatus(f"SHOULD NOT RAISE ERROR: {e}", 10000, False)
+
+
     def valueEdited(self):
         """ Function call when the value displayed in not sure anymore.
             The value has been modified either in the GUI (but not sent)
@@ -754,6 +767,6 @@ class ReadSignal(QtCore.QObject):
         self.read.emit(value)
 
 class WriteSignal(QtCore.QObject):
-    writed = QtCore.Signal()
-    def emit_write(self):
-        self.writed.emit()
+    writed = QtCore.Signal(object)
+    def emit_write(self, value):
+        self.writed.emit(value)

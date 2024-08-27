@@ -392,12 +392,10 @@ class MyLineEdit(QtWidgets.QLineEdit):
             return True
         return super().eventFilter(obj, event)
 
-    def setCustomCompleter(self):
-        self.setCompleter(QtWidgets.QCompleter(self.create_keywords()))
-
     def setCompleter(self, completer: QtWidgets.QCompleter):
         """ Sets/removes completer """
         if self.completer:
+            if self.completer.popup().isVisible(): return None
             self.completer.popup().close()
             try:
                 self.completer.disconnect()  # PyQT
@@ -446,6 +444,7 @@ class MyLineEdit(QtWidgets.QLineEdit):
         super().focusInEvent(event)
 
     def keyPressEvent(self, event):
+        # OPTIMIZE: fixe this: if do $eval:, pressEnter, select text and press enter -> disable selection
         controlPressed = event.modifiers() == QtCore.Qt.ControlModifier
         tabPressed = event.key() == QtCore.Qt.Key_Tab
         specialTabPressed = tabPressed and controlPressed
@@ -468,9 +467,11 @@ class MyLineEdit(QtWidgets.QLineEdit):
                 super().keyPressEvent(event)
 
         if self.skip_has_eval or has_eval(self.text()):
-            if not self.completer: self.setCustomCompleter()
+            if not self.completer:
+                self.setCompleter(QtWidgets.QCompleter(self.create_keywords()))
         else:
-            if self.completer: self.setCompleter(None)
+            if self.completer:
+                self.setCompleter(None)
 
         if not self.completer or not tabPressed:
             if self.completer: self.completer.popup().close()

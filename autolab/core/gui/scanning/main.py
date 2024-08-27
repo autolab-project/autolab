@@ -86,7 +86,8 @@ class Scanner(QtWidgets.QMainWindow):
         self.configManager.addRecipe("recipe")  # add one recipe by default
         self.configManager.undoClicked() # avoid false history
         self.setStatus("")
-        self.addRecipe_pushButton.clicked.connect(lambda: self.configManager.addRecipe("recipe"))
+        self.addRecipe_pushButton.clicked.connect(
+            lambda: self.configManager.addRecipe("recipe"))
 
         self.selectRecipe_comboBox.activated.connect(self._updateSelectParameter)
 
@@ -105,7 +106,8 @@ class Scanner(QtWidgets.QMainWindow):
         self.openRecentMenu.clear()
 
         if os.path.exists(PATHS['history_config']):
-            with open(PATHS['history_config'], 'r') as f: filenames = f.readlines()
+            with open(PATHS['history_config'], 'r') as f:
+                filenames = f.readlines()
             for filename in reversed(filenames):
                 filename = filename.rstrip('\n')
                 action = QtWidgets.QAction(filename, self)
@@ -122,14 +124,17 @@ class Scanner(QtWidgets.QMainWindow):
     def addOpenRecent(self, filename: str):
 
         if not os.path.exists(PATHS['history_config']):
-            with open(PATHS['history_config'], 'w') as f: f.write(filename + '\n')
+            with open(PATHS['history_config'], 'w') as f:
+                f.write(filename + '\n')
         else:
-            with open(PATHS['history_config'], 'r') as f: lines = f.readlines()
+            with open(PATHS['history_config'], 'r') as f:
+                lines = f.readlines()
             lines.append(filename)
             lines = [line.rstrip('\n')+'\n' for line in lines]
             lines = list(reversed(list(dict.fromkeys(reversed(lines)))))  # unique names
             lines = lines[-10:]
-            with open(PATHS['history_config'], 'w') as f: f.writelines(lines)
+            with open(PATHS['history_config'], 'w') as f:
+                f.writelines(lines)
 
         self.populateOpenRecent()
 
@@ -169,7 +174,8 @@ class Scanner(QtWidgets.QMainWindow):
     def _addRecipe(self, recipe_name: str):
         """ Adds recipe to managers. Called by configManager """
         self._update_recipe_combobox()  # recreate all and display first index
-        self.selectRecipe_comboBox.setCurrentIndex(self.selectRecipe_comboBox.count()-1)  # display last index
+        self.selectRecipe_comboBox.setCurrentIndex(
+            self.selectRecipe_comboBox.count()-1)  # display last index
 
         self.recipeDict[recipe_name] = {}  # order of creation matter
         self.recipeDict[recipe_name]['recipeManager'] = RecipeManager(self, recipe_name)
@@ -223,7 +229,8 @@ class Scanner(QtWidgets.QMainWindow):
         layoutAll.insertWidget(layoutAll.count()-1, new_ParameterManager.mainFrame)
 
         self._updateSelectParameter()
-        self.selectParameter_comboBox.setCurrentIndex(self.selectParameter_comboBox.count()-1)
+        self.selectParameter_comboBox.setCurrentIndex(
+            self.selectParameter_comboBox.count()-1)
 
     def _removeParameter(self, recipe_name: str, param_name: str):
         """ Removes parameter from managers. Called by configManager """
@@ -241,14 +248,17 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.selectParameter_comboBox.clear()
         if recipe_name != "":
-            self.selectParameter_comboBox.addItems(self.configManager.parameterNameList(recipe_name))
+            self.selectParameter_comboBox.addItems(
+                self.configManager.parameterNameList(recipe_name))
             self.selectParameter_comboBox.setCurrentIndex(prev_index)
 
         if self.selectParameter_comboBox.currentText() == "":
-            self.selectParameter_comboBox.setCurrentIndex(self.selectParameter_comboBox.count()-1)
+            self.selectParameter_comboBox.setCurrentIndex(
+                self.selectParameter_comboBox.count()-1)
 
         #Shows parameter combobox if multi parameters else hide
-        if recipe_name != "" and len(self.configManager.parameterList(recipe_name)) > 1:
+        if (recipe_name != ""
+            and len(self.configManager.parameterList(recipe_name)) > 1):
             self.selectParameter_comboBox.show()
             self.label_selectRecipeParameter.show()
         else:
@@ -269,7 +279,8 @@ class Scanner(QtWidgets.QMainWindow):
                 recipeDictParam[newName].changeName(newName)
                 recipeDictParam[newName].refresh()
             else:
-                print(f"Error: Can't refresh parameter '{param_name}', not found in recipeDictParam '{recipeDictParam}'")
+                print(f"Error: Can't refresh parameter '{param_name}', not found in recipeDictParam '{recipeDictParam}'",
+                      file=sys.stderr)
 
         self._updateSelectParameter()
 
@@ -340,7 +351,9 @@ class Scanner(QtWidgets.QMainWindow):
                 once_or_append = self._append and len(filenames) != 0
 
                 for filename in filenames:
-                    if filename != '': self.configManager.import_configPars(filename, append=self._append)
+                    if filename != '':
+                        self.configManager.import_configPars(
+                            filename, append=self._append)
             else:
                 once_or_append = False
 
@@ -360,7 +373,9 @@ class Scanner(QtWidgets.QMainWindow):
 
             try:
                 self.configManager.export(filename)
-                self.setStatus(f"Current configuration successfully saved at {filename}", 5000)
+                self.setStatus(
+                    f"Current configuration successfully saved at {filename}",
+                    5000)
             except Exception as e:
                 self.setStatus(f"An error occured: {str(e)}", 10000, False)
             else:
@@ -403,7 +418,8 @@ class Scanner(QtWidgets.QMainWindow):
                     shutil.copy(config_name, new_configname)
                 else:
                     if datasets is not self.dataManager.getLastDataset():
-                        print("Warning: Can't find config for this dataset, save latest config instead", file=sys.stderr)
+                        print("Warning: Can't find config for this dataset, save latest config instead",
+                              file=sys.stderr)
                     self.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
 
                 self.addOpenRecent(new_configname)

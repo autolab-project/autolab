@@ -17,7 +17,7 @@ General Features
 
 - Driver Management:
 
-  - Shifted drivers to a dedicated GitHub repository: https://github.com/autolab-project/autolab-drivers.
+  - Moved drivers to a dedicated GitHub repository: https://github.com/autolab-project/autolab-drivers.
   - Drivers are now located in the local "<username>/autolab/drivers/official" folder instead of the main package.
   - Added the ability to download drivers from GitHub using the GUI, allowing selective driver installation.
 

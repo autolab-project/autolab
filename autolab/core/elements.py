@@ -161,7 +161,7 @@ class Variable(Element):
         if self.type in [tuple]:  # OPTIMIZE: could be generalized to any variable but fear could lead to memory issue
             self.value = value
         self.write_function(value)
-        if self._write_signal is not None: self._write_signal.emit_write()
+        if self._write_signal is not None: self._write_signal.emit_write(value)
         return None
 
 

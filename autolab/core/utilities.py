@@ -97,11 +97,17 @@ def str_to_tuple(s: str) -> Tuple[List[str], int]:
         raise Exception(e)
 
 def create_array(value: Any) -> np.ndarray:
-    ''' Format an int, float, list or numpy array to a numpy array with minimal one dimension '''
-    # ndim=1 to avoid having float if 0D
-    array = np.array(value, ndmin=1, dtype=float)  # check validity of array
-    array = np.array(value, ndmin=1, copy=False)  # keep original dtype
-    return array
+    ''' Format an int, float, list or numpy array to a numpy array with at least
+    one dimension '''
+    # check validity of array, raise error if dtype not int or float
+    np.array(value, ndmin=1, dtype=float)
+    # Convert to ndarray and keep original dtype
+    value = np.asarray(value)
+
+    # want ndim >= 1 to avoid having float if 0D
+    while value.ndim < 1:
+        value = np.expand_dims(value, axis=0)
+    return value
 
 
 def str_to_array(s: str) -> np.ndarray:
@@ -122,7 +128,6 @@ def array_to_str(value: Any, threshold: int = None, max_line_width: int = None) 
 def str_to_dataframe(s: str) -> pd.DataFrame:
     ''' Convert a string to a pandas DataFrame '''
     value_io = StringIO(s)
-    # TODO: find sep (use \t to be compatible with excel but not nice to write by hand)
     df = pd.read_csv(value_io, sep="\t")
     return df
 

@@ -5,7 +5,7 @@ Created on Sun Sep 29 18:29:07 2019
 @author: qchat
 """
 
-
+from typing import Any
 import os
 
 import pandas as pd
@@ -220,7 +220,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         self.readSignal.read.connect(self.writeGui)
         self.variable._read_signal = self.readSignal
         self.writeSignal = WriteSignal()
-        self.writeSignal.writed.connect(self.valueEdited)
+        self.writeSignal.writed.connect(self.valueWrited)
         self.variable._write_signal = self.writeSignal
 
         # Main - Column 2 : Creation of a READ button if the variable is readable
@@ -336,6 +336,17 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if value is not None:
             self.gui.threadManager.start(self, 'write', value=value)
 
+    def valueWrited(self, value: Any):
+        """ Function call when the value displayed in not sure anymore.
+            The value has been modified either in the GUI (but not sent)
+            or by command line.
+            If variable not readable, write the value sent to the GUI """
+        if self.variable.readable:
+            self.valueEdited()
+        else:
+            self.writeGui(value)
+            self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+
     def valueEdited(self):
         """ Function call when the value displayed in not sure anymore.
             The value has been modified either in the GUI (but not sent) or by command line """
@@ -382,6 +393,6 @@ class ReadSignal(QtCore.QObject):
         self.read.emit(value)
 
 class WriteSignal(QtCore.QObject):
-    writed = QtCore.Signal()
-    def emit_write(self):
-        self.writed.emit()
+    writed = QtCore.Signal(object)
+    def emit_write(self, value):
+        self.writed.emit(value)
