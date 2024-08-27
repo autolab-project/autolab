@@ -444,7 +444,6 @@ class MyLineEdit(QtWidgets.QLineEdit):
         super().focusInEvent(event)
 
     def keyPressEvent(self, event):
-        # OPTIMIZE: fixe this: if do $eval:, pressEnter, select text and press enter -> disable selection
         controlPressed = event.modifiers() == QtCore.Qt.ControlModifier
         tabPressed = event.key() == QtCore.Qt.Key_Tab
         specialTabPressed = tabPressed and controlPressed
@@ -457,6 +456,11 @@ class MyLineEdit(QtWidgets.QLineEdit):
 
         if specialEnterPressed:
             self.insertCompletion('\n', prefix=False)
+            return None
+
+        # Fixe issue if press control after an eval (issue appears if do self.completer = None)
+        if self.completer and controlPressed:
+            super().keyPressEvent(event)
             return None
 
         if not self.completer or not tabPressed:
@@ -473,8 +477,10 @@ class MyLineEdit(QtWidgets.QLineEdit):
             if self.completer:
                 self.setCompleter(None)
 
+        if self.completer and not tabPressed:
+            self.completer.popup().close()
+
         if not self.completer or not tabPressed:
-            if self.completer: self.completer.popup().close()
             return None
 
         completion_prefix = self.format_completion_prefix(self.textUnderCursor())
