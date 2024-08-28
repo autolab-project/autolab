@@ -257,17 +257,15 @@ class ConfigManager:
 
         assert one_recipe_active, "Need at least one active recipe!"
 
-        # Replace closed devices by reopenned one
+        # Replace closed devices by reopened one
         for recipe_name in self.recipeNameList():
-            for i, step in enumerate(self.config[recipe_name]['recipe']):
-                if (step['element']._parent.name in DEVICES
-                        and not step['element']._parent in DEVICES.values()):
-                    module_name = step['element']._parent.name
-                    module = self.gui.mainGui.tree.findItems(
-                        module_name, QtCore.Qt.MatchExactly)[0].module
-                    var = module.get_variable(
-                        self.config[recipe_name]['recipe'][i]['element'].name)
-                    self.config[recipe_name]['recipe'][i]['element'] = var
+            for step in (self.stepList(recipe_name)
+                          + self.parameterList(recipe_name)):
+                if step['element']:
+                    device_name = step['element'].address().split('.')[0]
+                    assert device_name in DEVICES, (
+                        f"{device_name} device is closed")
+                    step['element'] = get_element_by_address(step['element'].address())
 
     def lastRecipeName(self) -> str:
         """ Returns last recipe name """
