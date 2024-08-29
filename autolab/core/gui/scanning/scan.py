@@ -17,6 +17,7 @@ import numpy as np
 from qtpy import QtCore, QtWidgets
 
 from ..GUI_utilities import qt_object_exists, MyInputDialog, MyFileDialog
+from ..GUI_instances import instances
 from ...paths import PATHS
 from ...variables import eval_variable, set_variable, has_eval
 from ...utilities import create_array
@@ -65,6 +66,16 @@ class ScanManager:
             self.gui.setStatus(f'ERROR The scan cannot start with the current configuration: {str(e)}', 10000, False)
         # Only if current config is valid to start a scan
         else:
+            # Pause monitors if option selected in monitors
+            for var_id in [id(step['element'])
+                           for recipe in config.values()
+                           for step in recipe['recipe']]:
+                if var_id in instances['monitors']:
+                    monitor = instances['monitors'][var_id]
+                    if (monitor.pause_on_scan
+                            and not monitor.monitorManager.isPaused()):
+                        monitor.pauseButtonClicked()
+
             # Prepare a new dataset in the datacenter
             self.gui.dataManager.newDataset(config)
 
@@ -431,12 +442,13 @@ class ScanThread(QtCore.QThread):
             set_variable(stepInfos['name'], result)
         elif stepType == 'set':
             value = eval_variable(stepInfos['value'])
+            if element.type in [bytes] and isinstance(value, str): value = value.encode()
             if element.type in [np.ndarray]: value = create_array(value)
             element(value)
         elif stepType == 'action':
             if stepInfos['value'] is not None:
                 # Open dialog for open file, save file or input text
-                if stepInfos['value'] == '':
+                if isinstance(stepInfos['value'], str) and stepInfos['value'] == '':
                     self.userSignal.emit(stepInfos)
                     while (not self.stopFlag.is_set()
                            and self.user_response is None):
@@ -446,6 +458,8 @@ class ScanThread(QtCore.QThread):
                     self.user_response = None
                 else:
                     value = eval_variable(stepInfos['value'])
+                    if element.type in [bytes] and isinstance(value, str): value = value.encode()
+                    if element.type in [np.ndarray]: value = create_array(value)
                     element(value)
             else:
                 element()

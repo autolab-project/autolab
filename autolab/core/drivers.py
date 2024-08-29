@@ -187,7 +187,8 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
 
     if connection == 'VISA':
         class Driver_VISA(Driver):
-            def __init__(self, address='GPIB0::2::INSTR', **kwargs):
+            def __init__(self, address: str = 'GPIB0::2::INSTR',
+                         **kwargs):
                 import pyvisa as visa
 
                 self.TIMEOUT = 15000  # ms
@@ -202,40 +203,47 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
                 try: self.controller.close()
                 except: pass
 
-            def query(self, command):
+            def query(self, command: str) -> str:
                 result = self.controller.query(command)
                 result = result.strip('\n')
                 return result
 
-            def write(self, command):
+            def write(self, command: str):
                 self.controller.write(command)
 
-            def read(self):
+            def write_raw(self, command: bytes):
+                self.controller.write_raw(command)
+
+            def read(self) -> str:
                 return self.controller.read()
+
+            def read_raw(self, memory: int = 100000000) -> bytes:
+                return self.controller.read_raw(memory)
 
         return Driver_VISA
 
     if connection == 'GPIB':
         class Driver_GPIB(Driver):
-            def __init__(self, address=23, board_index=0, **kwargs):
+            def __init__(self, address: int = 23, board_index: int = 0,
+                         **kwargs):
                 import Gpib
 
-                self.inst = Gpib.Gpib(int(board_index), int(address))
+                self.controller = Gpib.Gpib(int(board_index), int(address))
                 Driver.__init__(self)
 
-            def query(self, query):
-                self.write(query)
+            def query(self, command: str) -> str:
+                self.write(command)
                 return self.read()
 
-            def write(self, query):
-                self.inst.write(query)
+            def write(self, command: str):
+                self.controller.write(command)
 
-            def read(self, length=1000000000):
-                return self.inst.read().decode().strip('\n')
+            def read(self, length=1000000000) -> str:
+                return self.controller.read(length).decode().strip('\n')
 
             def close(self):
                 """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
-                #Gpib.gpib.close(self.inst.id)
+                #Gpib.gpib.close(self.controller.id)
                 pass
 
         return Driver_GPIB
@@ -280,27 +288,43 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
     if connection == 'SOCKET':
         class Driver_SOCKET(Driver):
 
-            def __init__(self, address='192.168.0.8', **kwargs):
+            BUFFER_SIZE: int = 40000
+
+            def __init__(self, address: str = '192.168.0.8', port: int = 5005,
+                         **kwargs):
 
                 import socket
 
                 self.ADDRESS = address
-                self.PORT = 5005
-                self.BUFFER_SIZE = 40000
+                self.PORT = port
 
                 self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+                self.s.settimeout(5)
+
                 self.controller.connect((self.ADDRESS, int(self.PORT)))
 
-                Driver.__init__(self)
+                Driver.__init__(self, **kwargs)
 
-            def write(self, command):
+            def write(self, command: str):
                 self.controller.send(command.encode())
                 self.controller.recv(self.BUFFER_SIZE)
 
-            def query(self, command):
+            def write_raw(self, command: bytes):
+                self.controller.send(command)
+
+            def query(self, command: str) -> str:
                 self.controller.send(command.encode())
                 data = self.controller.recv(self.BUFFER_SIZE)
                 return data.decode()
+
+            def read(self, memory: int = BUFFER_SIZE) -> str:
+                rep = self.controller.recv(memory).decode()
+                return rep
+
+            def read_raw(self, memory: int = BUFFER_SIZE) -> bytes:
+                rep = self.controller.recv(memory)
+                return rep
 
             def close(self):
                 try: self.controller.close()
@@ -321,13 +345,15 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
                 self.controller = Controller()
                 self.controller.timeout = 5000
 
-            def write(self, value):
+            def write(self, value: str):
                 pass
-            def read(self):
+            def write_raw(self, value: bytes):
+                pass
+            def read(self) -> str:
                 return '1'
-            def read_raw(self):
+            def read_raw(self) -> bytes:
                 return b'1'
-            def query(self, value):
+            def query(self, value: str) -> str:
                 self.write(value)
                 return self.read()
 

@@ -5,9 +5,8 @@ Created on Sun Sep 29 18:29:07 2019
 @author: qchat
 """
 
-
-import os
 from typing import Any, Union
+import os
 
 import pandas as pd
 import numpy as np
@@ -37,13 +36,15 @@ class CustomMenu(QtWidgets.QMenu):
 
         self.recipe_cb = self.gui.scanner.selectRecipe_comboBox if (
             self.gui.scanner) else None
-        self.recipe_names = [self.recipe_cb.itemText(i) for i in range(
-            self.recipe_cb.count())] if self.recipe_cb else []
+        self.recipe_names = [self.recipe_cb.itemText(i)
+                             for i in range(self.recipe_cb.count())
+                             ] if self.recipe_cb else []
         self.param_cb = self.gui.scanner.selectParameter_comboBox if (
             self.gui.scanner) else None
 
         self.HAS_RECIPE = len(self.recipe_names) > 1
-        self.HAS_PARAM = (self.param_cb.count() > 1 if self.param_cb is not None
+        self.HAS_PARAM = (self.param_cb.count() > 1
+                          if self.param_cb is not None
                           else False)
 
     def addAnyAction(self, action_text='', icon_name='',
@@ -87,8 +88,8 @@ class CustomMenu(QtWidgets.QMenu):
                 recipe_menu.close()
 
                 if param_menu_active:
-                    param_items = [self.param_cb.itemText(i) for i in range(
-                        self.param_cb.count())]
+                    param_items = [self.param_cb.itemText(i)
+                                   for i in range(self.param_cb.count())]
 
                     if len(param_items) > 1:
                         self.current_menu = 2
@@ -109,8 +110,8 @@ class CustomMenu(QtWidgets.QMenu):
             action_button.setMenu(recipe_menu)
 
         def setup_menu_parameter(param_menu: QtWidgets.QMenu):
-            param_items = [self.param_cb.itemText(i) for i in range(
-                self.param_cb.count())]
+            param_items = [self.param_cb.itemText(i)
+                           for i in range(self.param_cb.count())]
             param_name = self.param_cb.currentText()
 
             param_menu.clear()
@@ -121,8 +122,8 @@ class CustomMenu(QtWidgets.QMenu):
             action_button.showMenu()
 
         def update_parameter(name: str):
-            param_items = [self.param_cb.itemText(i) for i in range(
-                self.param_cb.count())]
+            param_items = [self.param_cb.itemText(i)
+                           for i in range(self.param_cb.count())]
             self.param_cb.setCurrentIndex(param_items.index(name))
             self.gui.scanner._updateSelectParameter()
 
@@ -276,8 +277,12 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         self.gui = gui
         self.action = action
 
+        # Import Autolab config
+        control_center_config = get_control_center_config()
+        self.precision = int(control_center_config['precision'])
+
         if self.action.has_parameter:
-            if self.action.type in [int, float, str, np.ndarray, pd.DataFrame]:
+            if self.action.type in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]:
                 self.executable = True
                 self.has_value = True
             else:
@@ -296,91 +301,208 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         # Main - Column 3 : QlineEdit if the action has a parameter
         if self.has_value:
-            self.valueWidget = MyLineEdit()
-            self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
-            self.gui.tree.setItemWidget(self, 3, self.valueWidget)
-            self.valueWidget.returnPressed.connect(self.execute)
+            if self.action.type in [int, float, str, bytes, np.ndarray, pd.DataFrame]:
+                self.valueWidget = MyLineEdit()
+                self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
+                self.gui.tree.setItemWidget(self, 3, self.valueWidget)
+                self.valueWidget.returnPressed.connect(self.execute)
+                self.valueWidget.textEdited.connect(self.valueEdited)
+
+            ## QCheckbox for boolean variables
+            elif self.action.type in [bool]:
+                self.valueWidget = MyQCheckBox(self)
+                hbox = QtWidgets.QHBoxLayout()
+                hbox.addWidget(self.valueWidget)
+                hbox.setAlignment(QtCore.Qt.AlignCenter)
+                hbox.setSpacing(0)
+                hbox.setContentsMargins(0,0,0,0)
+                widget = QtWidgets.QWidget()
+                widget.setLayout(hbox)
+
+                self.gui.tree.setItemWidget(self, 3, widget)
+
+            ## Combobox for tuples: Tuple[List[str], int]
+            elif self.action.type in [tuple]:
+                self.valueWidget = MyQComboBox()
+                self.valueWidget.wheel = False  # prevent changing value by mistake
+                self.valueWidget.key = False
+                self.valueWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                self.valueWidget.customContextMenuRequested.connect(self.openInputDialog)
+
+                self.gui.tree.setItemWidget(self, 3, self.valueWidget)
+
+        # Main - column 4 : indicator (status of the actual value : known or not known)
+        self.indicator = QtWidgets.QLabel()
+        self.gui.tree.setItemWidget(self, 4, self.indicator)
 
         # Tooltip
         if self.action._help is None: tooltip = 'No help available for this action'
         else: tooltip = self.action._help
         self.setToolTip(0, tooltip)
 
+        self.writeSignal = WriteSignal()
+        self.writeSignal.writed.connect(self.valueWrited)
+        self.action._write_signal = self.writeSignal
+
+    def openInputDialog(self, position: QtCore.QPoint):
+        """ Only used for tuple """
+        menu = QtWidgets.QMenu()
+        modifyTuple = menu.addAction("Modify tuple")
+        modifyTuple.setIcon(QtGui.QIcon(icons['tuple']))
+
+        choice = menu.exec_(self.valueWidget.mapToGlobal(position))
+
+        if choice == modifyTuple:
+            main_dialog = MyInputDialog(self.gui, self.action.address())
+            main_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+            if self.action.type in [tuple]:
+                main_dialog.setTextValue(str(self.action.value))
+            main_dialog.show()
+
+            if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                response = main_dialog.textValue()
+            else:
+                response = ''
+
+            if qt_object_exists(main_dialog): main_dialog.deleteLater()
+
+            if response != '':
+                try:
+                    if has_eval(response):
+                        response = eval_variable(response)
+                    if self.action.type in [tuple]:
+                        response = str_to_tuple(str(response))
+                except Exception as e:
+                    self.gui.setStatus(
+                        f"Variable {self.action.address()}: {e}", 10000, False)
+                    return None
+
+                self.action.value = response
+                self.valueWrited(response)
+                self.valueEdited()
+
+    def writeGui(self, value):
+        """ This function displays a new value in the GUI """
+        if hasattr(self, 'valueWidget') and qt_object_exists(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finished)
+            # Update value
+            if self.action.type in [int, float]:
+                self.valueWidget.setText(f'{value:.{self.precision}g}') # default is .6g
+            elif self.action.type in [str]:
+                self.valueWidget.setText(value)
+            elif self.action.type in [bytes]:
+                self.valueWidget.setText(value.decode())
+            elif self.action.type in [bool]:
+                self.valueWidget.setChecked(value)
+            elif self.action.type in [tuple]:
+                items = [self.valueWidget.itemText(i)
+                         for i in range(self.valueWidget.count())]
+                if value[0] != items:
+                    self.valueWidget.clear()
+                    self.valueWidget.addItems(value[0])
+                self.valueWidget.setCurrentIndex(value[1])
+            elif self.action.type in [np.ndarray]:
+                self.valueWidget.setText(array_to_str(value))
+            elif self.action.type in [pd.DataFrame]:
+                self.valueWidget.setText(dataframe_to_str(value))
+            else:
+                self.valueWidget.setText(value)
+
     def readGui(self) -> Any:
         """ This function returns the value in good format of the value in the GUI """
-        value = self.valueWidget.text()
+        if self.action.type in [int, float, str, bytes, np.ndarray, pd.DataFrame]:
+            value = self.valueWidget.text()
 
-        if value == '':
-            if self.action.unit in ('open-file', 'save-file', 'filename'):
-                if self.action.unit == "filename":  # TODO: LEGACY (to remove later)
-                    self.gui.setStatus("Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
-                                       f"\nUpdate driver '{self.action.address().split('.')[0]}' to remove this warning",
-                                       10000, False)
-                    self.action.unit = "open-file"
+            if value == '':
+                if self.action.unit in ('open-file', 'save-file', 'filename'):
+                    if self.action.unit == "filename":  # TODO: LEGACY (to remove later)
+                        self.gui.setStatus("Using 'filename' as unit is depreciated in favor of 'open-file' and 'save-file'" \
+                                           f"\nUpdate driver '{self.action.address().split('.')[0]}' to remove this warning",
+                                           10000, False)
+                        self.action.unit = "open-file"
 
-                if self.action.unit == "open-file":
-                    filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                        self.gui, caption=f"Open file - {self.action.address()}",
-                        directory=PATHS['last_folder'],
-                        filter=SUPPORTED_EXTENSION)
-                elif self.action.unit == "save-file":
-                    filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                        self.gui, caption=f"Save file - {self.action.address()}",
-                        directory=PATHS['last_folder'],
-                        filter=SUPPORTED_EXTENSION)
+                    if self.action.unit == "open-file":
+                        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                            self.gui, caption=f"Open file - {self.action.address()}",
+                            directory=PATHS['last_folder'],
+                            filter=SUPPORTED_EXTENSION)
+                    elif self.action.unit == "save-file":
+                        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                            self.gui, caption=f"Save file - {self.action.address()}",
+                            directory=PATHS['last_folder'],
+                            filter=SUPPORTED_EXTENSION)
 
-                if filename != '':
-                    path = os.path.dirname(filename)
-                    PATHS['last_folder'] = path
-                    return filename
+                    if filename != '':
+                        path = os.path.dirname(filename)
+                        PATHS['last_folder'] = path
+                        return filename
+                    else:
+                        self.gui.setStatus(
+                            f"Action {self.action.address()} cancel filename selection",
+                            10000)
+                elif self.action.unit == "user-input":
+                    main_dialog = MyInputDialog(self.gui, self.action.address())
+                    main_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+                    main_dialog.show()
+
+                    if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
+                        response = main_dialog.textValue()
+                    else:
+                        response = ''
+
+                    if qt_object_exists(main_dialog): main_dialog.deleteLater()
+
+                    if response != '':
+                        return response
+                    else:
+                        self.gui.setStatus(
+                            f"Action {self.action.address()} cancel user input",
+                            10000)
                 else:
                     self.gui.setStatus(
-                        f"Action {self.action.address()} cancel filename selection",
-                        10000)
-            elif self.action.unit == "user-input":
-                main_dialog = MyInputDialog(self.gui, self.action.address())
-                main_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
-                main_dialog.show()
-
-                if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
-                    response = main_dialog.textValue()
-                else:
-                    response = ''
-
-                if qt_object_exists(main_dialog): main_dialog.deleteLater()
-
-                if response != '':
-                    return response
-                else:
-                    self.gui.setStatus(
-                        f"Action {self.action.address()} cancel user input",
-                        10000)
+                        f"Action {self.action.address()} requires a value for its parameter",
+                        10000, False)
             else:
-                self.gui.setStatus(
-                    f"Action {self.action.address()} requires a value for its parameter",
-                    10000, False)
-        else:
-            try:
-                value = eval_variable(value)
-                if self.action.type in [np.ndarray]:
-                    if isinstance(value, str): value = str_to_array(value)
-                elif self.action.type in [pd.DataFrame]:
-                    if isinstance(value, str): value = str_to_dataframe(value)
-                else:
-                    value = self.action.type(value)
-                return value
-            except Exception as e:
-                self.gui.setStatus(
-                    f"Action {self.action.address()}: {e}",
-                    10000, False)
+                try:
+                    value = eval_variable(value)
+                    if self.action.type in [int]:
+                        value = int(float(value))
+                    if self.action.type in [bytes]:
+                        value = value.encode()
+                    elif self.action.type in [np.ndarray]:
+                        value = str_to_array(value) if isinstance(
+                            value, str) else create_array(value)
+                    elif self.action.type in [pd.DataFrame]:
+                        if isinstance(value, str):
+                            value = str_to_dataframe(value)
+                    else:
+                        value = self.action.type(value)
+                    return value
+                except Exception as e:
+                    self.gui.setStatus(
+                        f"Action {self.action.address()}: {e}",
+                        10000, False)
+        elif self.action.type in [bool]:
+            value = self.valueWidget.isChecked()
+            return value
+        elif self.action.type in [tuple]:
+            items = [self.valueWidget.itemText(i)
+                     for i in range(self.valueWidget.count())]
+            value = (items, self.valueWidget.currentIndex())
+            return value
+
+    def setValueKnownState(self, state: Union[bool, float]):
+        """ Turn the color of the indicator depending of the known state of the value """
+        if state == 0.5: self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+        elif state: self.indicator.setStyleSheet("background-color:#70db70")  # green
+        else: self.indicator.setStyleSheet("background-color:#ff8c1a")  # orange
 
     def execute(self):
         """ Start a new thread to execute the associated action """
         if not self.isDisabled():
             if self.has_value:
                 value = self.readGui()
-                if value is not None: self.gui.threadManager.start(
-                    self, 'execute', value=value)
+                if value is not None:
+                    self.gui.threadManager.start(self, 'execute', value=value)
             else:
                 self.gui.threadManager.start(self, 'execute')
 
@@ -396,7 +518,22 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
             if choice == scanRecipe:
                 recipe_name = self.gui.getRecipeName()
-                self.gui.addStepToScanRecipe(recipe_name, 'action', self.action)
+                value = self.action.value if self.action.type in [tuple] else None
+                self.gui.addStepToScanRecipe(
+                    recipe_name, 'action', self.action, value=value)
+
+    def valueEdited(self):
+        """ Change indicator state when editing action parameter """
+        self.setValueKnownState(False)
+
+    def valueWrited(self, value: Any):
+        """ Called when action parameter written """
+        try:
+            if self.has_value:
+                self.writeGui(value)
+            self.setValueKnownState(0.5)
+        except Exception as e:
+            self.gui.setStatus(f"SHOULD NOT RAISE ERROR: {e}", 10000, False)
 
 
 class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
@@ -428,7 +565,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         # Main - Column 2 : Creation of a READ button if the variable is readable
         if self.variable.readable and self.variable.type in [
-                int, float, bool, str, tuple, np.ndarray, pd.DataFrame]:
+                int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]:
             self.readButton = QtWidgets.QPushButton()
             self.readButton.setText("Read")
             self.readButton.clicked.connect(self.read)
@@ -456,7 +593,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # Main - column 3 : Creation of a VALUE widget, depending on the type
 
         ## QLineEdit or QLabel
-        if self.variable.type in [int, float, str, np.ndarray, pd.DataFrame]:
+        if self.variable.type in [int, float, str, bytes, np.ndarray, pd.DataFrame]:
             if self.variable.writable:
                 self.valueWidget = MyLineEdit()
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
@@ -479,7 +616,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         ## QCheckbox for boolean variables
         elif self.variable.type in [bool]:
-
             self.valueWidget = MyQCheckBox(self)
             hbox = QtWidgets.QHBoxLayout()
             hbox.addWidget(self.valueWidget)
@@ -495,7 +631,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         ## Combobox for tuples: Tuple[List[str], int]
         elif self.variable.type in [tuple]:
-
             if self.variable.writable:
                 self.valueWidget = MyQComboBox()
                 self.valueWidget.wheel = False  # prevent changing value by mistake
@@ -513,10 +648,8 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             self.gui.tree.setItemWidget(self, 3, self.valueWidget)
 
         # Main - column 4 : indicator (status of the actual value : known or not known)
-        if self.variable.type in [
-                int, float, str, bool, tuple, np.ndarray, pd.DataFrame]:
-            self.indicator = QtWidgets.QLabel()
-            self.gui.tree.setItemWidget(self, 4, self.indicator)
+        self.indicator = QtWidgets.QLabel()
+        self.gui.tree.setItemWidget(self, 4, self.indicator)
 
         # Tooltip
         if self.variable._help is None: tooltip = 'No help available for this variable'
@@ -569,12 +702,14 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
     def writeGui(self, value):
         """ This function displays a new value in the GUI """
-        if qt_object_exists(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finished)
+        if hasattr(self, 'valueWidget') and qt_object_exists(self.valueWidget):  # avoid crash if device closed and try to write gui (if close device before reading finished)
             # Update value
             if self.variable.numerical:
                 self.valueWidget.setText(f'{value:.{self.precision}g}') # default is .6g
             elif self.variable.type in [str]:
                 self.valueWidget.setText(value)
+            elif self.variable.type in [bytes]:
+                self.valueWidget.setText(value.decode())
             elif self.variable.type in [bool]:
                 self.valueWidget.setChecked(value)
             elif self.variable.type in [tuple]:
@@ -585,7 +720,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     self.valueWidget.addItems(value[0])
                 self.valueWidget.setCurrentIndex(value[1])
             elif self.variable.type in [np.ndarray, pd.DataFrame]:
-
                 if self.variable.writable or self.readButtonCheck.isChecked():
                     if self.variable.type in [np.ndarray]:
                         self.valueWidget.setText(array_to_str(value))
@@ -596,12 +730,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
             # Change indicator light to green
             if self.variable.type in [
-                    int, float, bool, str, tuple, np.ndarray, pd.DataFrame]:
+                    int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]:
                 self.setValueKnownState(True)
 
     def readGui(self):
         """ This function returns the value in good format of the value in the GUI """
-        if self.variable.type in [int, float, str, np.ndarray, pd.DataFrame]:
+        if self.variable.type in [int, float, str, bytes, np.ndarray, pd.DataFrame]:
             value = self.valueWidget.text()
             if value == '':
                 self.gui.setStatus(
@@ -610,7 +744,11 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             else:
                 try:
                     value = eval_variable(value)
-                    if self.variable.type in [np.ndarray]:
+                    if self.variable.type in [int]:
+                        value = int(float(value))
+                    if self.variable.type in [bytes]:
+                        value = value.encode()
+                    elif self.variable.type in [np.ndarray]:
                         if isinstance(value, str): value = str_to_array(value)
                         else: value = create_array(value)
                     elif self.variable.type in [pd.DataFrame]:
@@ -632,9 +770,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             value = (items, self.valueWidget.currentIndex())
             return value
 
-    def setValueKnownState(self, state: bool):
+    def setValueKnownState(self, state: Union[bool, float]):
         """ Turn the color of the indicator depending of the known state of the value """
-        if state: self.indicator.setStyleSheet("background-color:#70db70")  # green
+        if state == 0.5: self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+        elif state: self.indicator.setStyleSheet("background-color:#70db70")  # green
         else: self.indicator.setStyleSheet("background-color:#ff8c1a")  # orange
 
     def read(self):
@@ -658,10 +797,9 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         # BUG: I got an error when changing emit_write to set value, need to reproduce it
         try:
             self.writeGui(value)
-            self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+            self.setValueKnownState(0.5)
         except Exception as e:
             self.gui.setStatus(f"SHOULD NOT RAISE ERROR: {e}", 10000, False)
-
 
     def valueEdited(self):
         """ Function call when the value displayed in not sure anymore.
@@ -671,13 +809,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
     def readButtonCheckEdited(self):
         state = bool(self.readButtonCheck.isChecked())
-
         self.readButton.setEnabled(state)
-
-        # if not self.variable.writable:
-        #     self.valueWidget.setVisible(state) # doesn't work on instantiation, but not problem if start with visible
-
-            # if not state: self.valueWidget.setText('')
 
     def menu(self, position: QtCore.QPoint):
         """ This function provides the menu when the user right click on an item """
@@ -708,7 +840,6 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                     int, float, np.ndarray, pd.DataFrame])
             plottingAction.setEnabled(monitoringAction.isEnabled())
             sliderAction.setEnabled((self.variable.writable
-                                     #and self.variable.readable
                                      and self.variable.type in [int, float]))
             scanParameterAction.setEnabled(self.variable.parameter_allowed)
             scanMeasureStepAction.setEnabled(self.variable.readable)

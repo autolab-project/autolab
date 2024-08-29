@@ -28,10 +28,8 @@ from ...config import load_config
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
 
-    reorderSignal = QtCore.Signal(object)
-
-    def __init__(self, parent, plotter):
-        self.plotter = plotter
+    def __init__(self, gui, parent=None):
+        self.gui = gui
         super().__init__(parent)
 
         self.setAcceptDrops(True)
@@ -40,7 +38,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         """ This function is used to add a plugin to the plotter """
         variable = event.source().last_drag
         if isinstance(variable, str):
-            self.plotter.addPlugin(variable)
+            self.gui.addPlugin(variable)
         self.setGraphicsEffect(None)
 
     def dragEnterEvent(self, event):
@@ -58,6 +56,35 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
     def dragLeaveEvent(self, event):
         self.setGraphicsEffect(None)
 
+    def keyPressEvent(self, event):
+        if (event.key() == QtCore.Qt.Key_C
+                and event.modifiers() == QtCore.Qt.ControlModifier):
+            self.copy_item(event)
+        else:
+            super().keyPressEvent(event)
+
+    def copy_item(self, event):
+        if len(self.selectedItems()) == 0:
+            super().keyPressEvent(event)
+            return None
+        item = self.selectedItems()[0]  # assume can select only one item
+        if hasattr(item, 'variable'):
+            text = item.variable.address()
+        elif hasattr(item, 'action'):
+            text = item.action.address()
+        elif hasattr(item, 'module'):
+            if hasattr(item.module, 'address'):
+                text = item.module.address()
+            else:
+                text = item.name
+        else:
+            print(f'Should not be possible: {item}')
+            super().keyPressEvent(event)
+            return None
+
+        # Copy the text to the system clipboard
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(text)
 
 class Plotter(QtWidgets.QMainWindow):
 
@@ -265,10 +292,11 @@ class Plotter(QtWidgets.QMainWindow):
         label.setFont(font)
 
         # Tree widget configuration
-        self.tree = MyQTreeWidget(self.frame, self)
+        self.tree = MyQTreeWidget(self, self.frame)
         layout.addWidget(self.tree)
         self.tree.setHeaderLabels(['Plugin', 'Type', 'Actions', 'Values', ''])
         self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
+        self.tree.header().setMinimumSectionSize(15)
         self.tree.header().resizeSection(0, 170)
         self.tree.header().hideSection(1)
         self.tree.header().resizeSection(2, 50)

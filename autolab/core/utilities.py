@@ -127,8 +127,11 @@ def array_to_str(value: Any, threshold: int = None, max_line_width: int = None) 
 
 def str_to_dataframe(s: str) -> pd.DataFrame:
     ''' Convert a string to a pandas DataFrame '''
-    value_io = StringIO(s)
-    df = pd.read_csv(value_io, sep="\t")
+    if s == '\r\n':  # empty
+        df = pd.DataFrame()
+    else:
+        value_io = StringIO(s)
+        df = pd.read_csv(value_io, sep="\t")
     return df
 
 

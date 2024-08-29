@@ -71,6 +71,52 @@ class OutputWrapper(QtCore.QObject):
             pass
 
 
+# Tree widget configuration
+class MyQTreeWidget(QtWidgets.QTreeWidget):
+
+    def __init__(self, gui, parent=None):
+        self.gui = gui
+        super().__init__(parent)
+
+    def startDrag(self, event):
+
+        if self.gui.scanner is not None:
+            self.gui.scanner.setWindowState(
+                self.gui.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.gui.scanner.activateWindow()
+        QtWidgets.QTreeWidget.startDrag(self, event)
+
+    def keyPressEvent(self, event):
+        if (event.key() == QtCore.Qt.Key_C
+                and event.modifiers() == QtCore.Qt.ControlModifier):
+            self.copy_item(event)
+        else:
+            super().keyPressEvent(event)
+
+    def copy_item(self, event):
+        if len(self.selectedItems()) == 0:
+            super().keyPressEvent(event)
+            return None
+        item = self.selectedItems()[0]  # assume can select only one item
+        if hasattr(item, 'variable'):
+            text = item.variable.address()
+        elif hasattr(item, 'action'):
+            text = item.action.address()
+        elif hasattr(item, 'module'):
+            if hasattr(item.module, 'address'):
+                text = item.module.address()
+            else:
+                text = item.name
+        else:
+            print(f'Should not be possible: {item}')
+            super().keyPressEvent(event)
+            return None
+
+        # Copy the text to the system clipboard
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(text)
+
+
 class ControlCenter(QtWidgets.QMainWindow):
     """ Main Qt window, Used to control devices, open scanner... """
 
@@ -89,52 +135,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.close_device_on_exit = True
 
         # Main frame configuration: centralWidget(verticalLayout(splitter(tree)))
-
-        # Tree widget configuration
-        class MyQTreeWidget(QtWidgets.QTreeWidget):
-
-            def __init__(self, gui, parent=None):
-                self.gui = gui
-                super().__init__(parent)
-
-            def startDrag(self, event):
-
-                if self.gui.scanner is not None:
-                    self.gui.scanner.setWindowState(
-                        self.gui.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                    self.gui.scanner.activateWindow()
-                QtWidgets.QTreeWidget.startDrag(self, event)
-
-            def keyPressEvent(self, event):
-                if (event.key() == QtCore.Qt.Key_C
-                        and event.modifiers() == QtCore.Qt.ControlModifier):
-                    self.copy_item(event)
-                else:
-                    super().keyPressEvent(event)
-
-            def copy_item(self, event):
-                if len(self.selectedItems()) == 0:
-                    super().keyPressEvent(event)
-                    return None
-                item = self.selectedItems()[0]  # assume can select only one item
-                if hasattr(item, 'variable'):
-                    text = item.variable.address()
-                elif hasattr(item, 'action'):
-                    text = item.action.address()
-                elif hasattr(item, 'module'):
-                    if hasattr(item.module, 'address'):
-                        text = item.module.address()
-                    else:
-                        text = item.name
-                else:
-                    print(f'Should not be possible: {item}')
-                    super().keyPressEvent(event)
-                    return None
-
-                # Copy the text to the system clipboard
-                clipboard = QtWidgets.QApplication.clipboard()
-                clipboard.setText(text)
-
         self.tree = MyQTreeWidget(self)
         self.tree.last_drag = None
         self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])

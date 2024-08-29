@@ -459,13 +459,15 @@ class ConfigManager:
                 assert element != recipe_name, "Can't have a recipe in itself: {element}"  # safeguard but should be stopped before arriving here
             if stepType == 'set': setValue = True
             elif stepType == 'action' and element.type in [
-                    int, float, str, np.ndarray, pd.DataFrame]: setValue = True
+                    int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]:
+                setValue = True
             else: setValue = False
 
             if setValue:
                 if value is None:
                     if element.type in [int, float]: value = 0
                     elif element.type in [str]: value = ''
+                    elif element.type in [bytes]: value = b''
                     elif element.type in [pd.DataFrame]: value = pd.DataFrame()
                     elif element.type in [np.ndarray]: value = np.array([])
                     elif element.type in [bool]: value = False
@@ -789,7 +791,7 @@ class ConfigManager:
 
                 if stepType == 'set' or (stepType == 'action'
                                          and config_step['element'].type in [
-                                             int, float, str,
+                                             int, float, bool, str, bytes, tuple,
                                              np.ndarray, pd.DataFrame]):
                     value = config_step['value']
 
@@ -806,6 +808,8 @@ class ConfigManager:
                                 valueStr = f'{value:.{self.precision}g}'
                             except:
                                 valueStr = f'{value}'
+                        elif config_step['element'].type in [bytes]:
+                            valueStr = f'{value.decode()}'
                         else:  # for tuple and safety
                             valueStr = f'{value}'
 
@@ -1054,7 +1058,8 @@ class ConfigManager:
 
                         if (step['stepType'] == 'set') or (
                                 step['stepType'] == 'action' and element.type in [
-                                    int, float, str, np.ndarray, pd.DataFrame]):
+                                    int, float, bool, str, bytes, tuple,
+                                    np.ndarray, pd.DataFrame]):
                             assert f'{i}_value' in pars_recipe, (
                                 f"Missing value in step {i} ({name}).")
                             value = pars_recipe[f'{i}_value']
@@ -1071,6 +1076,8 @@ class ConfigManager:
                                         value = float(value)
                                     elif element.type in [str]:
                                         value = str(value)
+                                    elif element.type in [bytes]:
+                                        value = value.encode()
                                     elif element.type in [bool]:
                                         value = boolean(value)
                                     elif element.type in [tuple]:
@@ -1092,7 +1099,6 @@ class ConfigManager:
                         recipe.append(step)
                     else:
                         break
-
             if append:
                 for conf in config.values():
                     recipe_name = conf['name']

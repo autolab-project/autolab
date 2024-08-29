@@ -156,6 +156,8 @@ class RecipeManager:
                     try:
                         if step['element'].type in [bool, str, tuple]:
                             item.setText(4, f'{value}')
+                        elif step['element'].type in [bytes]:
+                            item.setText(4, f"{value.decode()}")
                         elif step['element'].type in [np.ndarray]:
                             value = array_to_str(
                                 value, threshold=1000000, max_line_width=100)
@@ -204,7 +206,7 @@ class RecipeManager:
                 menuActions['rename'].setIcon(QtGui.QIcon(icons['rename']))
 
                 if stepType == 'set' or (stepType == 'action' and element.type in [
-                        int, float, str, np.ndarray, pd.DataFrame]):
+                        int, float, bool, str, tuple, np.ndarray, pd.DataFrame]):
                     menuActions['setvalue'] = menu.addAction("Set value")
                     menuActions['setvalue'].setIcon(QtGui.QIcon(icons['write']))
 
@@ -277,7 +279,7 @@ class RecipeManager:
             self.recipe_name, name)
         value = self.gui.configManager.getRecipeStepValue(
             self.recipe_name, name)
-
+        print('recp', value)
         # Default value displayed in the QInputDialog
         if has_eval(value):
             defaultValue = f'{value}'
@@ -286,6 +288,8 @@ class RecipeManager:
                 defaultValue = array_to_str(value, threshold=1000000, max_line_width=100)
             elif element.type in [pd.DataFrame]:
                 defaultValue = dataframe_to_str(value, threshold=1000000)
+            if element.type in [bytes] and isinstance(value, bytes):
+                defaultValue = f'{value.decode()}'
             else:
                 try:
                     defaultValue = f'{value:.{self.precision}g}'
@@ -311,6 +315,8 @@ class RecipeManager:
                         value = float(value)
                     elif element.type in [str]:
                         value = str(value)
+                    elif element.type in [bytes]:
+                        value = value.encode()
                     elif element.type in [bool]:
                         if value == "False": value = False
                         elif value == "True": value = True
@@ -346,7 +352,7 @@ class RecipeManager:
                 self.renameStep(name)
             elif column == 4:
                 if stepType == 'set' or (stepType == 'action' and element.type in [
-                        int, float, str, np.ndarray, pd.DataFrame]):
+                        int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]):
                     self.setStepValue(name)
 
     def setStepProcessingState(self, name: str, state: str):

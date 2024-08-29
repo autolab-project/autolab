@@ -193,6 +193,12 @@ class Action(Element):
 
         self.has_parameter = self.type is not None
 
+        if self.type in [tuple]:
+            self.value = ([], -1)
+
+        # Signals for GUI
+        self._write_signal = None
+
     def help(self):
         """ This function prints informations for the user about the current variable """
         print(self)
@@ -220,7 +226,10 @@ class Action(Element):
         assert self.function is not None, f"The action {self.address()} is not configured to be actionable"
         if self.has_parameter:
             if value is not None:
-                value = self.type(value)
+                if isinstance(value, np.ndarray):
+                    value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
+                else:
+                    value = self.type(value)
                 self.function(value)
             elif self.unit in ('open-file', 'save-file', 'filename'):
                 if self.unit == 'filename':  # LEGACY (may be removed later)
@@ -246,7 +255,8 @@ class Action(Element):
                 if filename != '':
                     path = os.path.dirname(filename)
                     PATHS['last_folder'] = path
-                    self.function(filename)
+                    value = filename
+                    self.function(value)
                 else:
                     print(f"Action '{self.address()}' cancel filename selection")
 
@@ -260,12 +270,17 @@ class Action(Element):
                     QtWidgets.QLineEdit.Normal)
 
                 if response != '':
-                    self.function(response)
+                    value = filename
+                    self.function(value)
             else:
                 assert value is not None, f"The action {self.address()} requires an argument"
         else:
             assert value is None, f"The action {self.address()} doesn't require an argument"
             self.function()
+
+        if self.type in [tuple]:  # OPTIMIZE: could be generalized to any variable but fear could lead to memory issue
+            self.value = value
+        if self._write_signal is not None: self._write_signal.emit_write(value)
 
 
 class Module(Element):

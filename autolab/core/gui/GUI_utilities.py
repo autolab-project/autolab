@@ -10,6 +10,7 @@ import os
 import sys
 from typing import Tuple, List
 from collections import defaultdict
+import inspect
 
 import numpy as np
 import pandas as pd
@@ -658,7 +659,11 @@ class MyQCheckBox(QtWidgets.QCheckBox):
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
         self.parent.valueEdited()
-        self.parent.write()
+        try:
+            inspect.signature(self.parent.write)
+        except ValueError: pass  # For built-in method (occurs for boolean for action parameter)
+        else:
+            self.parent.write()
 
 
 class MyQComboBox(QtWidgets.QComboBox):

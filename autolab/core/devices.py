@@ -43,6 +43,8 @@ class Device(Module):
                     if struc[1] == 'variable':
                         element._read_signal = None
                         element._write_signal = None
+                    if struc[1] == 'action':
+                        element._write_signal = None
         except: pass
 
         try: self.instance.close()
