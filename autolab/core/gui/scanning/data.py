@@ -473,6 +473,12 @@ class Dataset():
         self.data = pd.DataFrame(self._data_temp, columns=self.header)
 
         if self.save_temp:
+            if not os.path.exists(self.folder_dataset_temp):
+                print(f'Warning: {self.folder_dataset_temp} has been created ' \
+                      'but should have been created earlier. ' \
+                      'Check that you have not lost any data',
+                      file=sys.stderr)
+                os.mkdir(self.folder_dataset_temp)
             if ID == 1:
                 self.data.tail(1).to_csv(
                     os.path.join(self.folder_dataset_temp, 'data.txt'),

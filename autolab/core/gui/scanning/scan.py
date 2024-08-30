@@ -58,66 +58,75 @@ class ScanManager:
 
     def start(self):
         """ Starts a scan """
-
         try:
             self.gui.configManager.checkConfig()  #  raise error if config not valid
             config = self.gui.configManager.config
         except Exception as e:
             self.gui.setStatus(f'ERROR The scan cannot start with the current configuration: {str(e)}', 10000, False)
+            return None
+
+        # Should not be possible
+        if self.thread is not None:
+            self.gui.setStatus('ERROR: A scan thread already exists!', 10000, False)
+            try: self.thread.finished()
+            except: pass
+            self.thread = None
+            return None
+
         # Only if current config is valid to start a scan
-        else:
-            # Pause monitors if option selected in monitors
-            for var_id in [id(step['element'])
-                           for recipe in config.values()
-                           for step in recipe['recipe']]:
-                if var_id in instances['monitors']:
-                    monitor = instances['monitors'][var_id]
-                    if (monitor.pause_on_scan
-                            and not monitor.monitorManager.isPaused()):
-                        monitor.pauseButtonClicked()
 
-            # Prepare a new dataset in the datacenter
-            self.gui.dataManager.newDataset(config)
+        # Pause monitors if option selected in monitors
+        for var_id in [id(step['element'])
+                       for recipe in config.values()
+                       for step in recipe['recipe']]:
+            if var_id in instances['monitors']:
+                monitor = instances['monitors'][var_id]
+                if (monitor.pause_on_scan
+                        and not monitor.monitorManager.isPaused()):
+                    monitor.pauseButtonClicked()
 
-            # put dataset id onto the combobox and associate data to it
-            dataSet_id = len(self.gui.dataManager.datasets)
-            self.gui.data_comboBox.addItem(f'Scan{dataSet_id}')
-            self.gui.data_comboBox.setCurrentIndex(int(dataSet_id)-1)  # trigger the currentIndexChanged event but don't trigger activated
+        # Prepare a new dataset in the datacenter
+        self.gui.dataManager.newDataset(config)
 
-            # Start a new thread
-            ## Opening
-            self.thread = ScanThread(self.gui.dataManager.queue, config)
-            ## Signal connections
-            self.thread.errorSignal.connect(self.error)
-            self.thread.userSignal.connect(self.handler_user_input)
+        # put dataset id onto the combobox and associate data to it
+        dataSet_id = len(self.gui.dataManager.datasets)
+        self.gui.data_comboBox.addItem(f'Scan{dataSet_id}')
+        self.gui.data_comboBox.setCurrentIndex(int(dataSet_id)-1)  # trigger the currentIndexChanged event but don't trigger activated
 
-            self.thread.startParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'started'))
-            self.thread.finishParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'finished'))
-            self.thread.parameterCompletedSignal.connect(lambda recipe_name, param_name: self.resetParameterProcessingState(recipe_name, param_name))
+        # Start a new thread
+        ## Opening
+        self.thread = ScanThread(self.gui.dataManager.queue, config)
+        ## Signal connections
+        self.thread.errorSignal.connect(self.error)
+        self.thread.userSignal.connect(self.handler_user_input)
 
-            self.thread.startStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'started'))
-            self.thread.finishStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'finished'))
-            self.thread.recipeCompletedSignal.connect(lambda recipe_name: self.resetStepsProcessingState(recipe_name))
-            self.thread.scanCompletedSignal.connect(self.scanCompleted)
+        self.thread.startParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'started'))
+        self.thread.finishParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'finished'))
+        self.thread.parameterCompletedSignal.connect(lambda recipe_name, param_name: self.resetParameterProcessingState(recipe_name, param_name))
 
-            self.thread.finished.connect(self.finished)
+        self.thread.startStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'started'))
+        self.thread.finishStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'finished'))
+        self.thread.recipeCompletedSignal.connect(lambda recipe_name: self.resetStepsProcessingState(recipe_name))
+        self.thread.scanCompletedSignal.connect(self.scanCompleted)
 
-            # Starting
-            self.thread.start()
+        self.thread.finished.connect(self.finished)
 
-            # Start data center timer
-            self.gui.dataManager.timer.start()
+        # Starting
+        self.thread.start()
 
-            # Update gui
-            self.gui.start_pushButton.setText('Stop')
-            self.gui.pause_pushButton.setEnabled(True)
-            self.gui.clear_pushButton.setEnabled(False)
-            self.gui.progressBar.setValue(0)
-            self.gui.importAction.setEnabled(False)
-            self.gui.openRecentMenu.setEnabled(False)
-            self.gui.undo.setEnabled(False)
-            self.gui.redo.setEnabled(False)
-            self.gui.setStatus('Scan started!', 5000)
+        # Start data center timer
+        self.gui.dataManager.timer.start()
+
+        # Update gui
+        self.gui.start_pushButton.setText('Stop')
+        self.gui.pause_pushButton.setEnabled(True)
+        self.gui.clear_pushButton.setEnabled(False)
+        self.gui.progressBar.setValue(0)
+        self.gui.importAction.setEnabled(False)
+        self.gui.openRecentMenu.setEnabled(False)
+        self.gui.undo.setEnabled(False)
+        self.gui.redo.setEnabled(False)
+        self.gui.setStatus('Scan started!', 5000)
 
     def handler_user_input(self, stepInfos: dict):
         unit = stepInfos['element'].unit

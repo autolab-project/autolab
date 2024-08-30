@@ -42,7 +42,7 @@ You will be prompted to select the path of the output file.
 The colored displayed at the end of a line corresponds to the state of the displayed value:
 
 	* The orange color means that the currently displayed value is not necessarily the current value of the **Variable** in the instrument. The user should click the **Read** button to update the value in the interface.
-    * The yellow color indicates that the currently displayed value is the last value written to the instrument, but it has not been read back to verify.
+	* The yellow color indicates that the currently displayed value is the last value written to the instrument, but it has not been read back to verify.
 	* The green color means that the currently displayed value is up to date (except if the user modified its value directly on the instrument. In that case, click the **Read** button to update the value in the interface).
 
 Monitoring
