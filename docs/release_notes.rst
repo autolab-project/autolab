@@ -39,6 +39,8 @@ GUI Enhancements
 - Control Panel:
 
   - Added the ability to display and set arrays and dataframes in the control panel.
+  - Added possibility to use variable with type bytes and action that have parameters with type bool, bytes, tuple, array or dataframe.
+  - Added yellow indicator for written but not read elements.
   - Introduced a checkbox option to optionally display arrays and dataframes in the control panel.
   - Added sub-menus for selecting recipes and parameters.
   - Improved device connection management with options to modify or cancel connections.

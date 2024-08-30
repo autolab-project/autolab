@@ -15,7 +15,8 @@ def process_all_changes():
 
 def rename_old_devices_config_file():
     ''' Rename local_config.ini into devices_config.ini'''
-    if os.path.exists(os.path.join(PATHS['user_folder'], 'local_config.ini')):
+    if (not os.path.exists(os.path.join(PATHS['user_folder'], 'devices_config.ini'))
+            and os.path.exists(os.path.join(PATHS['user_folder'], 'local_config.ini'))):
         os.rename(os.path.join(PATHS['user_folder'], 'local_config.ini'),
                   os.path.join(PATHS['user_folder'], 'devices_config.ini'))
 

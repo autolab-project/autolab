@@ -1131,15 +1131,15 @@ class ConfigManager:
             self.gui._resetRecipe()
             self.gui.setStatus("Configuration file loaded successfully", 5000)
 
-            for device in (set(list_loaded_devices()) - set(already_loaded_devices)):
-                item_list = self.gui.mainGui.tree.findItems(
-                    device, QtCore.Qt.MatchExactly, 0)
-
-                if len(item_list) == 1:
-                    item = item_list[0]
-                    self.gui.mainGui.itemClicked(item)
-
         self.configHistory.active = True
+
+        for device in (set(list_loaded_devices()) - set(already_loaded_devices)):
+            item_list = self.gui.mainGui.tree.findItems(
+                device, QtCore.Qt.MatchExactly, 0)
+
+            if len(item_list) == 1:
+                item = item_list[0]
+                self.gui.mainGui.itemClicked(item)
 
     # UNDO REDO ACTIONS
     ###########################################################################

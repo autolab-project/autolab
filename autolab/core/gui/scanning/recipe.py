@@ -279,7 +279,6 @@ class RecipeManager:
             self.recipe_name, name)
         value = self.gui.configManager.getRecipeStepValue(
             self.recipe_name, name)
-        print('recp', value)
         # Default value displayed in the QInputDialog
         if has_eval(value):
             defaultValue = f'{value}'

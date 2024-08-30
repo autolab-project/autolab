@@ -62,8 +62,8 @@ def _start(gui: str, **kwargs):
     import os
     from ..config import get_GUI_config
     GUI_config = get_GUI_config()
-    if GUI_config['QT_API'] != 'default':
-        os.environ['QT_API'] = str(GUI_config['QT_API'])
+    if GUI_config['qt_api'] != 'default':
+        os.environ['QT_API'] = str(GUI_config['qt_api'])
     try:
         import pyqtgraph as pg
         import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter

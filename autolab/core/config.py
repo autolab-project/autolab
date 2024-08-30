@@ -119,7 +119,7 @@ def check_autolab_config():
 
     autolab_dict = {
         'server': {'port': 4001},
-        'GUI': {'QT_API': "default",
+        'GUI': {'qt_api': "default",
                 'font_size': "default",
                 'image_background': 'w',
                 'image_foreground': 'k'},
@@ -150,7 +150,13 @@ def check_autolab_config():
 
         autolab_config[section_key] = conf
 
-    autolab_config.set('GUI', '# QT_API -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
+    # added in 2.0 for retrocompatibilty with 1.1.12
+    if 'QT_API' in autolab_config['GUI']:
+        value = autolab_config.get('GUI', 'QT_API')
+        autolab_config.remove_option('GUI', 'QT_API')
+        autolab_config.set('GUI', 'qt_api', value)
+
+    autolab_config.set('GUI', '# qt_api -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
 
     autolab_config.set('scanner', '# Think twice before using save_temp = False')
 
@@ -182,7 +188,7 @@ def get_server_config() -> configparser.SectionProxy:
 
 
 def get_GUI_config() -> configparser.SectionProxy:
-    ''' Returns section QT_API from autolab_config.ini '''
+    ''' Returns section qt_api from autolab_config.ini '''
     return get_config('GUI')
 
 def get_control_center_config() -> configparser.SectionProxy:

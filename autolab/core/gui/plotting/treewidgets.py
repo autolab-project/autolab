@@ -321,9 +321,15 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
     def setValueKnownState(self, state: Union[bool, float]):
         """ Turn the color of the indicator depending of the known state of the value """
-        if state == 0.5: self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
-        elif state: self.indicator.setStyleSheet("background-color:#70db70")  # green
-        else: self.indicator.setStyleSheet("background-color:#ff8c1a")  # orange
+        if state == 0.5:
+            self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+            self.indicator.setToolTip('Value written but not read')
+        elif state:
+            self.indicator.setStyleSheet("background-color:#70db70")  # green
+            self.indicator.setToolTip('Value read')
+        else:
+            self.indicator.setStyleSheet("background-color:#ff8c1a")  # orange
+            self.indicator.setToolTip('Value not up-to-date')
 
     def execute(self):
         """ Start a new thread to execute the associated action """
@@ -582,9 +588,15 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
     def setValueKnownState(self, state: Union[bool, float]):
         """ Turn the color of the indicator depending of the known state of the value """
-        if state == 0.5: self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
-        elif state: self.indicator.setStyleSheet("background-color:#70db70")  # green
-        else: self.indicator.setStyleSheet("background-color:#ff8c1a")  # orange
+        if state == 0.5:
+            self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+            self.indicator.setToolTip('Value written but not read')
+        elif state:
+            self.indicator.setStyleSheet("background-color:#70db70")  # green
+            self.indicator.setToolTip('Value read')
+        else:
+            self.indicator.setStyleSheet("background-color:#ff8c1a")  # orange
+            self.indicator.setToolTip('Value not up-to-date')
 
     def read(self):
         """ Start a new thread to READ the associated variable """
