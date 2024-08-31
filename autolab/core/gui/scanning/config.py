@@ -983,9 +983,10 @@ class ConfigManager:
                             if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
                                 raise ValueError('Cancel config import')
 
-                        element = get_element_by_address(param_pars['address'])
-                        assert element is not None, (
-                            f"Parameter {param_pars['address']} not found.")
+                        try:
+                            element = get_element_by_address(param_pars['address'])
+                        except Exception:
+                            raise AttributeError(f"Parameter {param_pars['address']} not found.")
 
                     param['element'] = element
 
@@ -1050,10 +1051,11 @@ class ConfigManager:
                                 msg_box.show()
                                 if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
                                     raise ValueError('Cancel config import')
-                            element = get_element_by_address(address)
+                            try:
+                                element = get_element_by_address(address)
+                            except Exception:
+                                raise AttributeError(f"Address {address} not found for step {i} ({name}).")
 
-                        assert element is not None, (
-                            f"Address {address} not found for step {i} ({name}).")
                         step['element'] = element
 
                         if (step['stepType'] == 'set') or (

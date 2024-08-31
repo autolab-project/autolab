@@ -186,9 +186,7 @@ class DataManager:
             variable = get_variable(name)
         elif device in list_devices():
             assert device in DEVICES, f"Device '{device}' is closed"
-            variable = get_element_by_address(name)
-            assert variable, f"Device '{device}' has not attribute ' " \
-                f"'{'.'.join(name.split('.')[1:])}'"
+            variable = get_element_by_address(name)  # Can raise 'name' not found in module 'device'
             assert isinstance(variable, Variable_og), (
                 f"Need a variable but '{name}' is a {str(type(variable).__name__)}")
             assert variable.readable, f"Variable '{name}' is not readable"

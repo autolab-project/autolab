@@ -331,7 +331,7 @@ class Plotter(QtWidgets.QMainWindow):
             item = TreeWidgetItemModule(self.tree,plugin_name,plugin_nickname,self)
             item.setBackground(0, QtGui.QColor('#9EB7F5'))  # blue
 
-            self.itemClicked(item)
+            # self.itemClicked(item)  # Don't think it is good to start plugin on creation
         else:
             self.setStatus(
                 f"Error: plugin {plugin_name} not found in devices_config.ini",

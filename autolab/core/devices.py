@@ -63,21 +63,18 @@ class Device(Module):
 # DEVICE GET FUNCTION
 # =============================================================================
 
-def get_element_by_address(address: str) -> Union[Element, None]:
-    """ Returns the Element located at the provided address if exists """
+def get_element_by_address(address: str) -> Element:
+    """ Returns the Element located at the provided address """
     address = address.split('.')
-    try:
-        device_name = address[0]
-        if device_name in DEVICES:
-            element = DEVICES[device_name]
-        else:
-            # This should not be used on autolab closing to avoid access violation due to config opening
-            element = get_device(device_name)
-        for addressPart in address[1: ]:
-            element = getattr(element, addressPart.replace(" ", ""))
-        return element
-    except:
-        return None
+    device_name = address[0]
+    if device_name in DEVICES:
+        element = DEVICES[device_name]
+    else:
+        # This should not be used on autolab closing to avoid access violation due to config opening
+        element = get_device(device_name)
+    for addressPart in address[1: ]:
+        element = getattr(element, addressPart.replace(" ", ""))
+    return element
 
 
 def get_final_device_config(device_name: str, **kwargs) -> dict:
