@@ -154,7 +154,7 @@ class Variable(Element):
         # SET FUNCTION
         assert self.writable, f"The variable {self.address()} is not writable"
 
-        if isinstance(value, np.ndarray):
+        if isinstance(value, np.ndarray) or self.type in [np.ndarray]:
             value = np.array(value, ndmin=1)  # ndim=1 to avoid having float if 0D
         else:
             value = self.type(value)
@@ -270,7 +270,7 @@ class Action(Element):
                     QtWidgets.QLineEdit.Normal)
 
                 if response != '':
-                    value = filename
+                    value = response
                     self.function(value)
             else:
                 assert value is not None, f"The action {self.address()} requires an argument"

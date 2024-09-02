@@ -49,11 +49,11 @@ class FigureManager:
         self.figMap.hide()
 
         self.gui.variable_x_comboBox.activated.connect(
-            self.variableChanged)
+            self.axisChanged)
         self.gui.variable_x2_comboBox.activated.connect(
-            self.variableChanged)
+            self.axisChanged)
         self.gui.variable_y_comboBox.activated.connect(
-            self.variableChanged)
+            self.axisChanged)
 
         pgv = pg.__version__.split('.')
         if int(pgv[0]) == 0 and int(pgv[1]) < 12:
@@ -643,7 +643,7 @@ class FigureManager:
                     curve.setAlpha(alpha, False)
                     self.curves.append(curve)
 
-    def variableChanged(self, index):
+    def axisChanged(self, index):
         """ This function is called when the displayed result has been changed
         in the combo box. It proceeds to the change. """
         if (self.gui.variable_x_comboBox.currentIndex() != -1

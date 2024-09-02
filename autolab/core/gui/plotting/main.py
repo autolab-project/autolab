@@ -36,9 +36,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
 
     def dropEvent(self, event):
         """ This function is used to add a plugin to the plotter """
-        variable = event.source().last_drag
-        if isinstance(variable, str):
-            self.gui.addPlugin(variable)
+        plugin_name = event.source().last_drag
+        if isinstance(plugin_name, str):
+            self.gui.addPlugin(plugin_name, plugin_name)
         self.setGraphicsEffect(None)
 
     def dragEnterEvent(self, event):
@@ -136,21 +136,21 @@ class Plotter(QtWidgets.QMainWindow):
         setLineEditBackground(self.nbTraces_lineEdit, 'synced', self._font_size)
 
         self.variable_x_comboBox.currentIndexChanged.connect(
-            self.variableChanged)
+            self.axisChanged)
         self.variable_y_comboBox.currentIndexChanged.connect(
-            self.variableChanged)
+            self.axisChanged)
 
-        # Device frame
-        self.device_lineEdit = MyLineEdit()
-        self.device_lineEdit.skip_has_eval = True
-        self.device_lineEdit.use_np_pd = False
-        self.device_lineEdit.setToolTip('Variable address e.g. ct400.scan.data')
-        self.layout_device.addWidget(self.device_lineEdit, 1, 2)
-        self.device_lineEdit.setText(f'{self.dataManager.variable_address}')
-        self.device_lineEdit.returnPressed.connect(self.deviceChanged)
-        self.device_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            self.device_lineEdit, 'edited', self._font_size))
-        setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
+        # Variable frame
+        self.variable_lineEdit = MyLineEdit()
+        self.variable_lineEdit.skip_has_eval = True
+        self.variable_lineEdit.use_np_pd = False
+        self.variable_lineEdit.setToolTip('Variable address e.g. ct400.scan.data')
+        self.layout_variable.addWidget(self.variable_lineEdit, 1, 2)
+        self.variable_lineEdit.setText(f'{self.dataManager.variable_address}')
+        self.variable_lineEdit.returnPressed.connect(self.variableChanged)
+        self.variable_lineEdit.textEdited.connect(lambda: setLineEditBackground(
+            self.variable_lineEdit, 'edited', self._font_size))
+        setLineEditBackground(self.variable_lineEdit, 'synced', self._font_size)
 
         # Plot button
         self.plotDataButton.clicked.connect(lambda state: self.refreshPlotData())
@@ -169,7 +169,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.delay_lineEdit.textEdited.connect(lambda: setLineEditBackground(
             self.delay_lineEdit, 'edited', self._font_size))
         setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
-        # / Device frame
+        # / Variable frame
 
         self.overwriteDataButton.clicked.connect(self.overwriteDataChanged)
 
@@ -188,6 +188,9 @@ class Plotter(QtWidgets.QMainWindow):
         self.timerQueue.timeout.connect(self._queueDriverHandler)
 
         self.processPlugin()
+
+        self.splitter.setSizes([600, 100])  # height
+        self.splitter_2.setSizes([310, 310, 310])  # width
 
     def createWidget(self, widget: Type, *args, **kwargs):
         """ Function used by a driver to add a widget.
@@ -276,20 +279,32 @@ class Plotter(QtWidgets.QMainWindow):
         if hasattr(item,'menu'):
             item.menu(position)
 
-    def processPlugin(self):
+    def hide_plugin_frame(self):
+        sizes = self.splitter_3.sizes()
+        self.splitter_3.setSizes([0, sizes[0]])
 
+    def processPlugin(self):
         # Create frame
         self.frame = QtWidgets.QFrame()
-        self.splitter_2.insertWidget(1, self.frame)
+        self.splitter_3.insertWidget(0, self.frame)
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         layout = QtWidgets.QVBoxLayout(self.frame)
 
+        layout2 = QtWidgets.QHBoxLayout(self.frame)
+
         label = QtWidgets.QLabel('Plugin:', self.frame)
         label.setToolTip("Drag and drop a device from the control panel to add a plugin to the plugin tree")
-        layout.addWidget(label)
+        layout2.addWidget(label)
         font = QtGui.QFont()
         font.setBold(True)
         label.setFont(font)
+
+        hide_plugin_button = QtWidgets.QPushButton('-')
+        hide_plugin_button.setMaximumSize(40, 23)
+        hide_plugin_button.clicked.connect(self.hide_plugin_frame)
+        layout2.addWidget(hide_plugin_button)
+
+        layout.addLayout(layout2)
 
         # Tree widget configuration
         self.tree = MyQTreeWidget(self, self.frame)
@@ -297,7 +312,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.tree.setHeaderLabels(['Plugin', 'Type', 'Actions', 'Values', ''])
         self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
         self.tree.header().setMinimumSectionSize(15)
-        self.tree.header().resizeSection(0, 170)
+        self.tree.header().resizeSection(0, 160)
         self.tree.header().hideSection(1)
         self.tree.header().resizeSection(2, 50)
         self.tree.header().resizeSection(3, 70)
@@ -311,27 +326,20 @@ class Plotter(QtWidgets.QMainWindow):
 
         plotter_config = load_config("plotter_config")
 
-        if 'plugin' in plotter_config.sections() and len(plotter_config['plugin']) != 0:
-            self.splitter_2.setSizes([200,300,80,80])
-            for plugin_nickname in plotter_config['plugin']:
-                plugin_name = plotter_config['plugin'][plugin_nickname]
+        self.splitter_3.setSizes([275, 800])
+
+        if ('plugin' in plotter_config.sections()
+                and len(plotter_config['plugin']) != 0):
+            for plugin_nickname, plugin_name in plotter_config['plugin'].items():
                 self.addPlugin(plugin_name, plugin_nickname)
-        else:
-            self.splitter.setSizes([400,40])
-            self.splitter_2.setSizes([200,80,80,80])
 
-    def addPlugin(self, plugin_name, plugin_nickname=None):
-
-        if plugin_nickname is None:
-            plugin_nickname = plugin_name
+    def addPlugin(self, plugin_name: str, plugin_nickname: str):
 
         if plugin_name in list_devices():
             plugin_nickname = self.getUniqueName(plugin_nickname)
             self.all_plugin_list.append(plugin_nickname)
             item = TreeWidgetItemModule(self.tree,plugin_name,plugin_nickname,self)
             item.setBackground(0, QtGui.QColor('#9EB7F5'))  # blue
-
-            # self.itemClicked(item)  # Don't think it is good to start plugin on creation
         else:
             self.setStatus(
                 f"Error: plugin {plugin_name} not found in devices_config.ini",
@@ -457,12 +465,12 @@ class Plotter(QtWidgets.QMainWindow):
         except Exception as e:
             self.setStatus(f"Can't refresh data: {e}", 10000, False)
 
-    def deviceChanged(self):
+    def variableChanged(self):
         """ This function start the update of the target value in the data manager
         when a changed has been detected """
         # Send the new value
         try:
-            value = str(self.device_lineEdit.text())
+            value = str(self.variable_lineEdit.text())
             self.dataManager.set_variable_address(value)
         except Exception as e:
             self.setStatus(f"Can't change variable name: {e}", 10000, False)
@@ -474,10 +482,10 @@ class Plotter(QtWidgets.QMainWindow):
         """ This function ask the current value of the target value in the data
         manager, and then update the GUI """
         value = self.dataManager.get_variable_address()
-        self.device_lineEdit.setText(f'{value}')
-        setLineEditBackground(self.device_lineEdit, 'synced', self._font_size)
+        self.variable_lineEdit.setText(f'{value}')
+        setLineEditBackground(self.variable_lineEdit, 'synced', self._font_size)
 
-    def variableChanged(self, index):
+    def axisChanged(self, index):
         """ This function is called when the displayed result has been changed in
         the combo box. It proceeds to the change. """
         self.figureManager.clearData()
