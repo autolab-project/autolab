@@ -88,7 +88,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                 self.loaded = False
 
                 if not self.gui.active_plugin_dict:
-                    self.gui.timerQueue.stop()
+                    self.gui._stop_timerQueue = True
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):

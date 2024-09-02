@@ -241,7 +241,8 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                     self.loaded = False
 
                 if not list_loaded_devices():
-                    self.gui.timerQueue.stop()
+                    self.gui._stop_timerQueue = True
+
             elif id(self) in self.gui.threadManager.threads_conn:
                 menu = QtWidgets.QMenu()
                 cancelDevice = menu.addAction('Cancel loading')

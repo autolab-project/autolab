@@ -186,6 +186,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.timerQueue = QtCore.QTimer(self)
         self.timerQueue.setInterval(int(50)) # ms
         self.timerQueue.timeout.connect(self._queueDriverHandler)
+        self._stop_timerQueue = False
 
         self.processPlugin()
 
@@ -241,6 +242,10 @@ class Plotter(QtWidgets.QMainWindow):
                             try: self.figureManager.ax.removeItem(widget)
                             except Exception as e:
                                 self.setStatus(str(e), 10000, False)
+
+        if self._stop_timerQueue:
+            self.timerQueue.stop()
+            self._stop_timerQueue = False
 
     def timerAction(self):
         """ This function checks if a module has been loaded and put to the queue.

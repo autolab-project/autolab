@@ -269,6 +269,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.timerQueue = QtCore.QTimer(self)
         self.timerQueue.setInterval(int(50)) # ms
         self.timerQueue.timeout.connect(self._queueDriverHandler)
+        self._stop_timerQueue = False
 
         # Import Autolab config
         control_center_config = get_control_center_config()
@@ -357,6 +358,10 @@ class ControlCenter(QtWidgets.QMainWindow):
                         widget_name = list(d)[widget_pos]
                         widget = d.get(widget_name)
                         if widget is not None: d.pop(widget_name)
+
+        if self._stop_timerQueue:
+            self.timerQueue.stop()
+            self._stop_timerQueue = False
 
     def handleOutput(self, text: str, stdout: bool):
         if not stdout: self.logger.setTextColor(QtCore.Qt.red)
