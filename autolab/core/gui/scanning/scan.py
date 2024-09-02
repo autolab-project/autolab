@@ -76,9 +76,9 @@ class ScanManager:
         # Only if current config is valid to start a scan
 
         # Pause monitors if option selected in monitors
-        for var_id in [id(step['element'])
+        for var_id in set([id(step['element'])
                        for recipe in config.values()
-                       for step in recipe['recipe']]:
+                       for step in recipe['recipe']+recipe['parameter']]):
             if var_id in instances['monitors']:
                 monitor = instances['monitors'][var_id]
                 if (monitor.pause_on_scan
