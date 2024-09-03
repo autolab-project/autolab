@@ -42,11 +42,10 @@ ONCE = False
 
 def get_font_size() -> int:
     GUI_config = get_GUI_config()
-    if GUI_config['font_size'] != 'default':
-        font_size = int(GUI_config['font_size'])
-    else:
-        font_size = QtWidgets.QApplication.instance().font().pointSize()
-        return font_size
+
+    return (int(GUI_config['font_size'])
+                 if GUI_config['font_size'] != 'default'
+                 else QtWidgets.QApplication.instance().font().pointSize())
 
 
 def setLineEditBackground(obj, state: str, font_size: int = None):
@@ -55,7 +54,6 @@ def setLineEditBackground(obj, state: str, font_size: int = None):
     if state == 'edited': color='#FFE5AE' # orange
 
     if font_size is None:
-
         obj.setStyleSheet(
             "QLineEdit:enabled {background-color: %s}" % (
                 color))

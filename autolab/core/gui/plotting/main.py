@@ -290,14 +290,16 @@ class Plotter(QtWidgets.QMainWindow):
 
     def processPlugin(self):
         # Create frame
-        self.frame = QtWidgets.QFrame()
-        self.splitter_3.insertWidget(0, self.frame)
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        layout = QtWidgets.QVBoxLayout(self.frame)
+        frame = QtWidgets.QFrame()
+        self.splitter_3.insertWidget(0, frame)
+        frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        layout = QtWidgets.QVBoxLayout(frame)
 
-        layout2 = QtWidgets.QHBoxLayout(self.frame)
+        frame2 = QtWidgets.QFrame()
+        layout2 = QtWidgets.QHBoxLayout(frame2)
+        layout2.setContentsMargins(0,0,0,0)
 
-        label = QtWidgets.QLabel('Plugin:', self.frame)
+        label = QtWidgets.QLabel('Plugin:', frame)
         label.setToolTip("Drag and drop a device from the control panel to add a plugin to the plugin tree")
         layout2.addWidget(label)
         font = QtGui.QFont()
@@ -309,10 +311,10 @@ class Plotter(QtWidgets.QMainWindow):
         hide_plugin_button.clicked.connect(self.hide_plugin_frame)
         layout2.addWidget(hide_plugin_button)
 
-        layout.addLayout(layout2)
+        layout.addWidget(frame2)
 
         # Tree widget configuration
-        self.tree = MyQTreeWidget(self, self.frame)
+        self.tree = MyQTreeWidget(self, frame)
         layout.addWidget(self.tree)
         self.tree.setHeaderLabels(['Plugin', 'Type', 'Actions', 'Values', ''])
         self.tree.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
@@ -331,7 +333,7 @@ class Plotter(QtWidgets.QMainWindow):
 
         plotter_config = load_config("plotter_config")
 
-        self.splitter_3.setSizes([275, 800])
+        self.splitter_3.setSizes([280, 800])
 
         if ('plugin' in plotter_config.sections()
                 and len(plotter_config['plugin']) != 0):
