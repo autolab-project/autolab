@@ -193,6 +193,19 @@ class Plotter(QtWidgets.QMainWindow):
         self.splitter.setSizes([600, 100])  # height
         self.splitter_2.setSizes([310, 310, 310])  # width
 
+        for splitter in (self.splitter, self.splitter_2, self.splitter_3):
+            for i in range(splitter.count()):
+                handle = splitter.handle(i)
+                handle.setStyleSheet("background-color: #DDDDDD;")
+                handle.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Enter:
+            obj.setStyleSheet("background-color: #AAAAAA;")  # Hover color
+        elif event.type() == QtCore.QEvent.Leave:
+            obj.setStyleSheet("background-color: #DDDDDD;")  # Normal color
+        return super().eventFilter(obj, event)
+
     def createWidget(self, widget: Type, *args, **kwargs):
         """ Function used by a driver to add a widget.
         Mainly used to open a figure outside the GUI from a driver. """

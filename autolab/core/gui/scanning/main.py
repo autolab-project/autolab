@@ -101,6 +101,19 @@ class Scanner(QtWidgets.QMainWindow):
         self.variable_x2_comboBox.hide()
         self.label_scan_2D.hide()
 
+        for splitter in (self.splitter, self.splitterGraph):
+            for i in range(splitter.count()):
+                handle = splitter.handle(i)
+                handle.setStyleSheet("background-color: #DDDDDD;")
+                handle.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Enter:
+            obj.setStyleSheet("background-color: #AAAAAA;")  # Hover color
+        elif event.type() == QtCore.QEvent.Leave:
+            obj.setStyleSheet("background-color: #DDDDDD;")  # Normal color
+        return super().eventFilter(obj, event)
+
     def populateOpenRecent(self):
         """ https://realpython.com/python-menus-toolbars/#populating-python-menus-dynamically """
         self.openRecentMenu.clear()
