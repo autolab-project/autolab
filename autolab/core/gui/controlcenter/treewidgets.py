@@ -339,6 +339,9 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         # Tooltip
         if self.action._help is None: tooltip = 'No help available for this action'
         else: tooltip = self.action._help
+        if hasattr(self.action, "type") and self.action.type is not None:
+            action_type = str(self.action.type).split("'")[1]
+            tooltip += f" ({action_type})"
         self.setToolTip(0, tooltip)
 
         self.writeSignal = WriteSignal()
