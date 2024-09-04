@@ -192,6 +192,16 @@ class ScanManager:
             self.gui.progressBar.setMaximum(1)
             self.gui.progressBar.setValue(1)
 
+            # Start monitors if option selected in monitors
+            for var_id in set([id(step['element'])
+                           for recipe in self.thread.config.values()
+                           for step in recipe['recipe']+recipe['parameter']]):
+                if var_id in instances['monitors']:
+                    monitor = instances['monitors'][var_id]
+                    if (monitor.start_on_scan
+                            and monitor.monitorManager.isPaused()):
+                        monitor.pauseButtonClicked()
+
     def setStepProcessingState(self, recipe_name: str, stepName: str, state: str):
         self.gui.recipeDict[recipe_name]['recipeManager'].setStepProcessingState(stepName, state)
 

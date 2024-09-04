@@ -96,11 +96,15 @@ class Monitor(QtWidgets.QMainWindow):
 
         # Use to pause monitor on scan start
         self.pause_on_scan = False
+        self.start_on_scan = False
         if self.has_parent:
             self.pause_on_scan_checkBox.clicked.connect(
                 self.pause_on_scan_checkBoxClicked)
+            self.start_on_scan_checkBox.clicked.connect(
+                self.start_on_scan_checkBoxClicked)
         else:
             self.pause_on_scan_checkBox.hide()
+            self.start_on_scan_checkBox.hide()
 
     def sync(self):
         """ This function updates the data and then the figure.
@@ -190,6 +194,10 @@ class Monitor(QtWidgets.QMainWindow):
     def pause_on_scan_checkBoxClicked(self):
         """ Change pause_on_scan variable """
         self.pause_on_scan = self.pause_on_scan_checkBox.isChecked()
+
+    def start_on_scan_checkBoxClicked(self):
+        """ Change start_on_scan variable """
+        self.start_on_scan = self.start_on_scan_checkBox.isChecked()
 
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
