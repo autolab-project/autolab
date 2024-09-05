@@ -47,8 +47,6 @@ class VariablesMenu(QtWidgets.QMainWindow):
             ['', 'Name', 'Value', 'Evaluated value', 'Type', 'Action'])
         self.variablesWidget.setAlternatingRowColors(True)
         self.variablesWidget.setIndentation(0)
-        self.variablesWidget.setStyleSheet(
-            "QHeaderView::section { background-color: lightgray; }")
         header = self.variablesWidget.header()
         header.setMinimumSectionSize(20)
         header.resizeSection(0, 20)
@@ -73,13 +71,14 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.devicesWidget.setHeaderLabels(['Name'])
         self.devicesWidget.setAlternatingRowColors(True)
         self.devicesWidget.setIndentation(10)
-        self.devicesWidget.setStyleSheet("QHeaderView::section { background-color: lightgray; }")
         self.devicesWidget.itemDoubleClicked.connect(self.deviceActivated)
         self.devicesWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.devicesWidget.customContextMenuRequested.connect(self.rightClickDevice)
 
         # Main layout creation
         layoutWindow = QtWidgets.QVBoxLayout()
+        layoutWindow.setContentsMargins(0,0,0,0)
+        layoutWindow.setSpacing(0)
         layoutTab = QtWidgets.QVBoxLayout()
         layoutWindow.addLayout(layoutTab)
 
@@ -281,8 +280,10 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         valueWidget = QtWidgets.QLineEdit()
         valueWidget.setMaxLength(10000000)
         valueWidget.setReadOnly(True)
-        valueWidget.setStyleSheet(
-            "QLineEdit {border: 1px solid #a4a4a4; background-color: #f4f4f4}")
+        palette = valueWidget.palette()
+        palette.setColor(QtGui.QPalette.Base,
+                         palette.color(QtGui.QPalette.Base).darker(107))
+        valueWidget.setPalette(palette)
         valueWidget.setAlignment(QtCore.Qt.AlignCenter)
         self.gui.variablesWidget.setItemWidget(self, 3, valueWidget)
         self.valueWidget = valueWidget

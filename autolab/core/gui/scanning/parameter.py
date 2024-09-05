@@ -12,7 +12,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 from .display import DisplayValues
 from .customWidgets import parameterQFrame
-from ..GUI_utilities import get_font_size, setLineEditBackground, MyLineEdit
+from ..GUI_utilities import get_font_size, setLineEditBackground, MyLineEdit, MyQComboBox
 from ..icons import icons
 from ...utilities import clean_string, str_to_array, array_to_str, create_array
 from ...variables import has_eval, has_variable, eval_safely
@@ -132,7 +132,7 @@ class ParameterManager:
         startEndGridLayout.addWidget(labelEnd, 1, 0)
         startEndGridLayout.addWidget(end_lineEdit, 1, 1)
 
-        startEndGridWidget = QtWidgets.QWidget(frameScanRange_linLog)
+        startEndGridWidget = QtWidgets.QFrame(frameScanRange_linLog)
         startEndGridWidget.setLayout(startEndGridLayout)
 
         ### second grid widgets: mean, width
@@ -152,12 +152,13 @@ class ParameterManager:
 
         ### second grid layout: mean, width
         meanWidthGridLayout = QtWidgets.QGridLayout(frameScanRange_linLog)
-        meanWidthGridWidget = QtWidgets.QWidget(frameScanRange_linLog)
-        meanWidthGridWidget.setLayout(meanWidthGridLayout)
         meanWidthGridLayout.addWidget(labelMean, 0, 0)
         meanWidthGridLayout.addWidget(mean_lineEdit, 0, 1)
         meanWidthGridLayout.addWidget(labelWidth, 1, 0)
         meanWidthGridLayout.addWidget(width_lineEdit, 1, 1)
+
+        meanWidthGridWidget = QtWidgets.QFrame(frameScanRange_linLog)
+        meanWidthGridWidget.setLayout(meanWidthGridLayout)
 
         ### third grid widgets: npts, step, log
         labelNbpts = QtWidgets.QLabel("Nb points", frameScanRange_linLog)
@@ -177,12 +178,13 @@ class ParameterManager:
 
         ### third grid layout: npts, step, log
         nptsStepGridLayout = QtWidgets.QGridLayout(frameScanRange_linLog)
-        nptsStepGridWidget = QtWidgets.QWidget(frameScanRange_linLog)
-        nptsStepGridWidget.setLayout(nptsStepGridLayout)
         nptsStepGridLayout.addWidget(labelNbpts, 0, 0)
         nptsStepGridLayout.addWidget(nbpts_lineEdit, 0, 1)
         nptsStepGridLayout.addWidget(labelStep, 1, 0)
         nptsStepGridLayout.addWidget(step_lineEdit, 1, 1)
+
+        nptsStepGridWidget = QtWidgets.QFrame(frameScanRange_linLog)
+        nptsStepGridWidget.setLayout(nptsStepGridLayout)
 
         ## 2nd row layout: Range
         layoutScanRange = QtWidgets.QHBoxLayout(frameScanRange_linLog)
@@ -219,8 +221,10 @@ class ParameterManager:
         evaluatedValues_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         evaluatedValues_lineEdit.setMaxLength(10000000)
         evaluatedValues_lineEdit.setReadOnly(True)
-        evaluatedValues_lineEdit.setStyleSheet(
-            "QLineEdit {border: 1px solid #a4a4a4; background-color: #f4f4f4}")
+        palette = evaluatedValues_lineEdit.palette()
+        palette.setColor(QtGui.QPalette.Base,
+                         palette.color(QtGui.QPalette.Base).darker(107))
+        evaluatedValues_lineEdit.setPalette(palette)
         self.evaluatedValues_lineEdit = evaluatedValues_lineEdit
 
         ### first grid layout: values (hidden at start)
@@ -230,7 +234,7 @@ class ParameterManager:
         valuesGridLayout.addWidget(labelEvaluatedValues, 1, 0)
         valuesGridLayout.addWidget(evaluatedValues_lineEdit, 1, 1)
 
-        valuesGridWidget = QtWidgets.QWidget(frameScanRange_values)
+        valuesGridWidget = QtWidgets.QFrame(frameScanRange_values)
         valuesGridWidget.setLayout(valuesGridLayout)
 
         ## 2nd row bis layout: Values (hidden at start)
@@ -246,7 +250,9 @@ class ParameterManager:
         self.frameScanRange_choice = frameScanRange_choice
 
         ### first grid widgets: choice
-        comboBoxChoice = QtWidgets.QComboBox(frameScanRange_choice)
+        comboBoxChoice = MyQComboBox(frameScanRange_choice)
+        comboBoxChoice.wheel = False
+        comboBoxChoice.key = False
         comboBoxChoice.addItems(['Linear', 'Log', 'Custom'])
         self.comboBoxChoice = comboBoxChoice
 
@@ -254,7 +260,7 @@ class ParameterManager:
         choiceGridLayout = QtWidgets.QGridLayout(frameScanRange_choice)
         choiceGridLayout.addWidget(comboBoxChoice, 0, 0)
 
-        choiceGridWidget = QtWidgets.QWidget(frameScanRange_choice)
+        choiceGridWidget = QtWidgets.QFrame(frameScanRange_choice)
         choiceGridWidget.setLayout(choiceGridLayout)
 
         ## 3rd row layout: choice

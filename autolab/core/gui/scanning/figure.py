@@ -403,7 +403,8 @@ class FigureManager:
         """ This function changes the label of the given axis """
         axes = {'x':'bottom', 'y':'left'}
         if value == '': value = ' '
-        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
+        self.ax.setLabel(axes[axe], value, **{'color': pg.getConfigOption("foreground"),
+                                              'font-size': '12pt'})
 
     # PLOT DATA
     ###########################################################################
@@ -632,7 +633,7 @@ class FigureManager:
                         color = 'r'
                         alpha = 1
                     else:
-                        color = 'k'
+                        color = pg.getConfigOption("foreground")
                         alpha = (true_nbtraces - (len(data) - 1 - i)) / true_nbtraces
 
                     # Plot

@@ -424,8 +424,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.valueWidget = QtWidgets.QLineEdit()
                 self.valueWidget.setMaxLength(10000000)
                 self.valueWidget.setReadOnly(True)
-                self.valueWidget.setStyleSheet(
-                    "QLineEdit {border: 1px solid #a4a4a4; background-color: #f4f4f4}")
+                palette = self.valueWidget.palette()
+                palette.setColor(QtGui.QPalette.Base,
+                                 palette.color(QtGui.QPalette.Base).darker(107))
+                self.valueWidget.setPalette(palette)
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
             else:
                 self.valueWidget = QtWidgets.QLabel()

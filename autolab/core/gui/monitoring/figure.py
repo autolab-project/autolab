@@ -41,9 +41,9 @@ class FigureManager:
         self.plot = self.ax.plot([], [], symbol='x', pen='r', symbolPen='r',
                                  symbolSize=10, symbolBrush='r')
         self.plot_mean = self.ax.plot([], [], pen=pg.mkPen(
-            color=0.4, width=2, style=pg.QtCore.Qt.DashLine))
-        self.plot_min = self.ax.plot([], [], pen=pg.mkPen(color=0.4, width=2))
-        self.plot_max = self.ax.plot([], [], pen=pg.mkPen(color=0.4, width=2))
+            color=pg.getConfigOption("foreground"), width=2, style=pg.QtCore.Qt.DashLine))
+        self.plot_min = self.ax.plot([], [], pen=pg.mkPen(color=pg.getConfigOption("foreground"), width=2))
+        self.plot_max = self.ax.plot([], [], pen=pg.mkPen(color=pg.getConfigOption("foreground"), width=2))
         self.ymin = None
         self.ymax = None
 
@@ -125,7 +125,8 @@ class FigureManager:
         """ This function changes the label of the given axis """
         axes = {'x':'bottom', 'y':'left'}
         if value == '': value = ' '
-        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
+        self.ax.setLabel(axes[axe], value, **{'color': pg.getConfigOption("foreground"),
+                                              'font-size': '12pt'})
 
     def clear(self):
         self.ymin = None

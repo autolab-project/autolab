@@ -59,6 +59,8 @@ class AboutWindow(QtWidgets.QMainWindow):
         layoutWindow = QtWidgets.QVBoxLayout()
         layoutTab = QtWidgets.QHBoxLayout()
         layoutWindow.addLayout(layoutTab)
+        layoutWindow.setContentsMargins(0,0,0,0)
+        layoutWindow.setSpacing(0)
 
         centralWidget = QtWidgets.QWidget()
         centralWidget.setLayout(layoutWindow)

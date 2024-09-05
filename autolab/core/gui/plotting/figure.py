@@ -70,7 +70,8 @@ class FigureManager:
         """ This function changes the label of the given axis """
         axes = {'x': 'bottom', 'y': 'left'}
         if value == '': value = ' '
-        self.ax.setLabel(axes[axe], value, **{'color': 0.4, 'font-size': '12pt'})
+        self.ax.setLabel(axes[axe], value, **{'color': pg.getConfigOption("foreground"),
+                                              'font-size': '12pt'})
 
 
     # PLOT DATA
@@ -123,7 +124,7 @@ class FigureManager:
                     y = subdata.loc[:,variable_y]
 
                     # Apprearance:
-                    color = 'k'
+                    color = pg.getConfigOption("foreground")
                     alpha = (self.nbtraces - abs(data_id - 1 - i)) / self.nbtraces
                     if alpha < 0: alpha = 0
 

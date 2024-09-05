@@ -120,6 +120,7 @@ def check_autolab_config():
     autolab_dict = {
         'server': {'port': 4001},
         'GUI': {'qt_api': "default",
+                'theme': "default",
                 'font_size': "default",
                 'image_background': 'w',
                 'image_foreground': 'k'},
@@ -157,6 +158,7 @@ def check_autolab_config():
         autolab_config.set('GUI', 'qt_api', value)
 
     autolab_config.set('GUI', '# qt_api -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
+    autolab_config.set('GUI', '# theme -> Choose between default and dark')
 
     autolab_config.set('scanner', '# Think twice before using save_temp = False')
 

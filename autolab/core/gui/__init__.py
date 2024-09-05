@@ -58,8 +58,8 @@ def variables_menu():
 def _start(gui: str, **kwargs):
     """ Open the Autolab GUI if gui='gui', the Plotter if gui='plotter'
     or the Monitor if gui='monitor' """
-
     import os
+    from .theme import get_theme, create_stylesheet
     from ..config import get_GUI_config
     GUI_config = get_GUI_config()
     if GUI_config['qt_api'] != 'default':
@@ -89,14 +89,27 @@ no PyQt6 anaconda version available
 conda install -c conda-forge pyside6
 """)
     else:
-        background = GUI_config['image_background']
-        foreground = GUI_config['image_foreground']
-        pg.setConfigOptions(background=background, foreground=foreground)
-        pg.setConfigOption('imageAxisOrder', 'row-major')
-
         app = QtWidgets.QApplication.instance()
         if app is None:
             app = QtWidgets.QApplication([])
+
+        background = GUI_config['image_background']
+        foreground = GUI_config['image_foreground']
+
+        theme_name = GUI_config['theme']
+        if theme_name != 'default':
+            sheet = get_theme(theme_name)
+            if sheet:
+                stylesheet = create_stylesheet(sheet)
+                app.setStyleSheet(stylesheet)
+                if theme_name == 'dark':
+                    background = sheet['secondary_color']
+                    foreground = sheet['text_color']
+            else:
+                print(f"Theme '{theme_name}' doesn't exists! Theme must be 'default' or 'dark'. Switched to 'default'")
+
+        pg.setConfigOptions(background=background, foreground=foreground)
+        pg.setConfigOption('imageAxisOrder', 'row-major')
 
         if GUI_config['font_size'] != 'default':
             font = app.font()
@@ -132,7 +145,6 @@ conda install -c conda-forge pyside6
             raise ValueError("gui accept either 'main', 'plotter', 'monitor'," \
                              "'slider, add_device', 'about' or 'variables_menu'" \
                              f". Given {gui}")
-
         app.exec()
 
 

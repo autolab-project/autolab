@@ -1,0 +1,170 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Sep  5 18:45:37 2024
+
+@author: jonathan
+"""
+
+from typing import Dict
+
+
+theme = {
+    'dark': {
+        'text_color': "#f0f0f0",
+        'text_disabled_color': "#a0a0a0",
+        'default': "#3c3c3c",
+        'primary_color': "#3c3c3c",
+        'secondary_color': "#2c2c2c",
+        'tertiary_color': "#2e2e2e",
+        'hover_color': "#555555",
+        'pressed_color': "#666666",
+        'selected_color': "#005777",
+        'border_color': "#5c5c5c",
+        'main_hover': "#005777",
+        }
+    }
+
+
+def get_theme(theme_name: str) -> Dict[str, str]:
+    return theme.get(theme_name)
+
+
+def create_stylesheet(theme: Dict[str, str]) -> str:
+    stylesheet = f"""
+        QWidget {{
+            background-color: {theme['default']};
+            color: {theme['text_color']};
+        }}
+        QFrame {{
+            background-color: {theme['primary_color']};
+        }}
+        QPushButton {{
+            background-color: {theme['secondary_color']};
+            border: 1px solid {theme['border_color']};
+            padding: 3px;
+        }}
+        QPushButton:hover {{
+            background-color: {theme['hover_color']};
+            border: 1px solid {theme['border_color']};
+        }}
+        QPushButton:pressed {{
+            background-color: {theme['pressed_color']};
+        }}
+        QPushButton:disabled {{
+            background-color: {theme['primary_color']};
+            color: {theme['text_disabled_color']};
+            border: 1px solid {theme['border_color']};
+        }}
+        QCheckBox {{
+            background-color: {theme['primary_color']};
+        }}
+        QLineEdit, QTextEdit {{
+            background-color: {theme['secondary_color']};
+            border: 1px solid {theme['border_color']};
+        }}
+        QLineEdit[readOnly="true"] {{
+            background-color: {theme['primary_color']};
+            color: {theme['text_disabled_color']};
+            border: 1px solid {theme['border_color']};
+        }}
+        QComboBox {{
+            background-color: {theme['secondary_color']};
+            padding: 3px;
+        }}
+        QTreeView {{
+            alternate-background-color: {theme['secondary_color']};
+        }}
+        QHeaderView::section {{
+            background-color: {theme['secondary_color']};
+            border: 1px solid {theme['primary_color']};
+        }}
+        QTabWidget::pane {{
+            border: 1px solid {theme['border_color']};
+        }}
+        QTabBar::tab {{
+            background-color: {theme['tertiary_color']};
+            border: 1px solid {theme['border_color']};
+            padding: 5px;
+        }}
+        QTabBar::tab:hover {{
+            background-color: {theme['primary_color']};
+            border: 1px solid {theme['hover_color']};
+        }}
+        QTabBar::tab:selected {{
+            background-color: {theme['primary_color']};
+            border: 1px solid {theme['hover_color']};
+            margin-top: -2px;
+        }}
+        QTabBar::tab:selected:hover {{
+            background-color: {theme['primary_color']};
+            border: 1px solid {theme['hover_color']};
+            margin-top: -2px;
+        }}
+        QTabBar::tab:!selected {{
+            margin-top: 2px;
+        }}
+        QMenuBar {{
+            background-color: {theme['secondary_color']};
+        }}
+        QMenuBar::item {{
+            background-color: transparent;
+            padding: 4px 10px;
+        }}
+        QMenuBar::item:selected {{
+            background-color: {theme['primary_color']};
+            border: 1px solid {theme['pressed_color']};
+        }}
+        QMenu {{
+            background-color: {theme['secondary_color']};
+            border: 1px solid {theme['border_color']};
+        }}
+        QMenu::item {{
+            background-color: {theme['secondary_color']};
+            padding: 4px 10px;
+        }}
+        QMenu::item:selected {{
+            background-color: {theme['primary_color']};
+        }}
+        QMenu::item:disabled {{
+            background-color: {theme['primary_color']};
+            color: {theme['text_disabled_color']};
+        }}
+        QTreeWidget {{
+            background-color: {theme['tertiary_color']};
+            alternate-background-color: {theme['primary_color']};
+        }}
+        QTreeWidget::item {{
+            border: none;
+        }}
+        QTreeWidget::item:hover {{
+            background-color: {theme['main_hover']};
+        }}
+        QTreeWidget::item:selected {{
+            background-color: {theme['selected_color']};
+        }}
+        QTreeWidget::item:selected:hover {{
+            background-color: {theme['main_hover']};
+        }}
+        QScrollBar:vertical {{
+            border: 1px solid {theme['primary_color']};
+            background-color: {theme['tertiary_color']};
+            width: 16px;
+        }}
+        QScrollBar:horizontal {{
+            border: 1px solid {theme['primary_color']};
+            background-color: {theme['tertiary_color']};
+            height: 16px;
+        }}
+        QScrollBar::handle {{
+            background-color: {theme['border_color']};
+            border: 1px solid {theme['pressed_color']};
+        }}
+        QScrollBar::handle:hover {{
+            background-color: {theme['pressed_color']};
+        }}
+        QScrollBar::add-line, QScrollBar::sub-line {{
+            background-color: {theme['primary_color']};
+        }}
+    """
+
+    return stylesheet

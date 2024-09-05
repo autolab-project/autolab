@@ -55,11 +55,11 @@ def setLineEditBackground(obj, state: str, font_size: int = None):
 
     if font_size is None:
         obj.setStyleSheet(
-            "QLineEdit:enabled {background-color: %s}" % (
+            "QLineEdit:enabled {background-color: %s; color: #000000;}" % (
                 color))
     else:
         obj.setStyleSheet(
-            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
+            "QLineEdit:enabled {background-color: %s; font-size: %ipt; color: #000000;}" % (
                 color, font_size))
 
 
@@ -103,8 +103,10 @@ class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         ax = self.addPlot()
         self.ax = ax
 
-        ax.setLabel("bottom", ' ', **{'color':0.4, 'font-size': '12pt'})
-        ax.setLabel("left", ' ', **{'color':0.4, 'font-size': '12pt'})
+        ax.setLabel("bottom", ' ', **{'color': pg.getConfigOption("foreground"),
+                                      'font-size': '12pt'})
+        ax.setLabel("left", ' ', **{'color': pg.getConfigOption("foreground"),
+                                    'font-size': '12pt'})
 
         # Set your custom font for both axes
         my_font = QtGui.QFont('Arial', 12)
@@ -114,14 +116,14 @@ class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         ax.getAxis("bottom").setTickFont(my_font_tick)
         ax.getAxis("left").setTickFont(my_font_tick)
         ax.showGrid(x=True, y=True)
-        ax.setContentsMargins(10., 10., 10., 10.)
 
         vb = ax.getViewBox()
         vb.enableAutoRange(enable=True)
-        vb.setBorder(pg.mkPen(color=0.4))
+        vb.setBorder(pg.mkPen(color=pg.getConfigOption("foreground")))
 
         ## Text label for the data coordinates of the mouse pointer
-        dataLabel = pg.LabelItem(color='k', parent=ax.getAxis('bottom'))
+        dataLabel = pg.LabelItem(color=pg.getConfigOption("foreground"),
+                                 parent=ax.getAxis('bottom'))
         dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
 
         def mouseMoved(point):
@@ -235,7 +237,7 @@ class myImageView(pg.ImageView):
 
         self.figLineROI, self.axLineROI = pyqtgraph_fig_ax()
         self.figLineROI.hide()
-        self.plot = self.axLineROI.plot([], [], pen='k')
+        self.plot = self.axLineROI.plot([], [], pen=pg.getConfigOption("foreground"))
 
         self.lineROI = pg.LineSegmentROI([[0, 100], [100, 100]], pen='r')
         self.lineROI.sigRegionChanged.connect(self.updateLineROI)
@@ -665,8 +667,8 @@ class MyQCheckBox(QtWidgets.QCheckBox):
 
 
 class MyQComboBox(QtWidgets.QComboBox):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.readonly = False
         self.wheel = True
         self.key = True

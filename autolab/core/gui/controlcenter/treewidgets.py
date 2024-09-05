@@ -129,7 +129,7 @@ class CustomMenu(QtWidgets.QMenu):
 
         def add_radio_button_to_menu(item_name: str, current_name: str,
                                      target_menu: QtWidgets.QMenu):
-            widget = QtWidgets.QWidget()
+            widget = QtWidgets.QFrame()
             radio_button = QtWidgets.QRadioButton(item_name, widget)
             action = QtWidgets.QWidgetAction(self.gui)
             action.setDefaultWidget(radio_button)
@@ -317,7 +317,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
                 hbox.setAlignment(QtCore.Qt.AlignCenter)
                 hbox.setSpacing(0)
                 hbox.setContentsMargins(0,0,0,0)
-                widget = QtWidgets.QWidget()
+                widget = QtWidgets.QFrame()
                 widget.setLayout(hbox)
 
                 self.gui.tree.setItemWidget(self, 3, widget)
@@ -615,8 +615,10 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
                 self.valueWidget = QtWidgets.QLineEdit()
                 self.valueWidget.setMaxLength(10000000)
                 self.valueWidget.setReadOnly(True)
-                self.valueWidget.setStyleSheet(
-                    "QLineEdit {border: 1px solid #a4a4a4; background-color: #f4f4f4}")
+                palette = self.valueWidget.palette()
+                palette.setColor(QtGui.QPalette.Base,
+                                 palette.color(QtGui.QPalette.Base).darker(107))
+                self.valueWidget.setPalette(palette)
                 self.valueWidget.setAlignment(QtCore.Qt.AlignCenter)
             else:
                 self.valueWidget = QtWidgets.QLabel()
@@ -632,7 +634,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
             hbox.setAlignment(QtCore.Qt.AlignCenter)
             hbox.setSpacing(0)
             hbox.setContentsMargins(0,0,0,0)
-            widget = QtWidgets.QWidget()
+            widget = QtWidgets.QFrame()
             widget.setLayout(hbox)
             if not self.variable.writable:  # Disable interaction is not writable
                 self.valueWidget.setEnabled(False)
