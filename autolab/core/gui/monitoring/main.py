@@ -106,6 +106,19 @@ class Monitor(QtWidgets.QMainWindow):
             self.pause_on_scan_checkBox.hide()
             self.start_on_scan_checkBox.hide()
 
+        for splitter in (self.splitter, ):
+            for i in range(splitter.count()):
+                handle = splitter.handle(i)
+                handle.setStyleSheet("background-color: #DDDDDD;")
+                handle.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Enter:
+            obj.setStyleSheet("background-color: #AAAAAA;")  # Hover color
+        elif event.type() == QtCore.QEvent.Leave:
+            obj.setStyleSheet("background-color: #DDDDDD;")  # Normal color
+        return super().eventFilter(obj, event)
+
     def sync(self):
         """ This function updates the data and then the figure.
         Function called by the time """

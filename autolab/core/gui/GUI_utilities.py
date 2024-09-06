@@ -288,6 +288,19 @@ class myImageView(pg.ImageView):
         centralWidget.setLayout(verticalLayoutMain)
         self.centralWidget = centralWidget
 
+        for splitter in (splitter, ):
+            for i in range(splitter.count()):
+                handle = splitter.handle(i)
+                handle.setStyleSheet("background-color: #DDDDDD;")
+                handle.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Enter:
+            obj.setStyleSheet("background-color: #AAAAAA;")  # Hover color
+        elif event.type() == QtCore.QEvent.Leave:
+            obj.setStyleSheet("background-color: #DDDDDD;")  # Normal color
+        return super().eventFilter(obj, event)
+
     def update_ticks(self):
         for tick in self.ui.histogram.gradient.ticks:
             tick.pen = pg.mkPen(pg.getConfigOption("foreground"))
