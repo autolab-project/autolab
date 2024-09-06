@@ -105,6 +105,7 @@ Miscellaneous Improvements
 
   - Added an "About" window showing versions, authors, license, and project URLs.
   - Implemented various fixes for thread handling and error prevention.
+  - Add dark theme option for GUI.
 
 1.1.12
 ######

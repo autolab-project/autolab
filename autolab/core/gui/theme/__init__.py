@@ -37,11 +37,14 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
         }}
         QFrame {{
             background-color: {theme['primary_color']};
+            border-radius: 8px;
         }}
         QPushButton {{
             background-color: {theme['secondary_color']};
             border: 1px solid {theme['border_color']};
-            padding: 3px;
+            border-radius: 6px;
+            padding: 4px;
+            margin: 2px;
         }}
         QPushButton:hover {{
             background-color: {theme['hover_color']};
@@ -54,25 +57,31 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
             background-color: {theme['primary_color']};
             color: {theme['text_disabled_color']};
             border: 1px solid {theme['border_color']};
+            border-radius: 6px;
         }}
         QCheckBox {{
             background-color: {theme['primary_color']};
+            border-radius: 4px;
         }}
         QLineEdit, QTextEdit {{
             background-color: {theme['secondary_color']};
             border: 1px solid {theme['border_color']};
+            border-radius: 4px;
         }}
         QLineEdit[readOnly="true"] {{
             background-color: {theme['primary_color']};
             color: {theme['text_disabled_color']};
             border: 1px solid {theme['border_color']};
+            border-radius: 4px;
         }}
         QComboBox {{
             background-color: {theme['secondary_color']};
             padding: 3px;
+            border-radius: 5px;
         }}
         QTreeView {{
             alternate-background-color: {theme['secondary_color']};
+            border-radius: 6px;
         }}
         QHeaderView::section {{
             background-color: {theme['secondary_color']};
@@ -80,11 +89,13 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
         }}
         QTabWidget::pane {{
             border: 1px solid {theme['border_color']};
+            border-radius: 5px;
         }}
         QTabBar::tab {{
             background-color: {theme['tertiary_color']};
             border: 1px solid {theme['border_color']};
             padding: 5px;
+            border-radius: 4px;
         }}
         QTabBar::tab:hover {{
             background-color: {theme['primary_color']};
@@ -94,6 +105,7 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
             background-color: {theme['primary_color']};
             border: 1px solid {theme['hover_color']};
             margin-top: -2px;
+            border-radius: 4px;
         }}
         QTabBar::tab:selected:hover {{
             background-color: {theme['primary_color']};
@@ -105,10 +117,12 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
         }}
         QMenuBar {{
             background-color: {theme['secondary_color']};
+            border-radius: 5px;
         }}
         QMenuBar::item {{
             background-color: transparent;
             padding: 4px 10px;
+            border-radius: 4px;
         }}
         QMenuBar::item:selected {{
             background-color: {theme['primary_color']};
@@ -117,10 +131,10 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
         QMenu {{
             background-color: {theme['secondary_color']};
             border: 1px solid {theme['border_color']};
+            border-radius: 6px;
         }}
         QMenu::item {{
             background-color: {theme['secondary_color']};
-            padding: 4px 10px;
         }}
         QMenu::item:selected {{
             background-color: {theme['primary_color']};
@@ -149,15 +163,18 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
             border: 1px solid {theme['primary_color']};
             background-color: {theme['tertiary_color']};
             width: 16px;
+            border-radius: 6px;
         }}
         QScrollBar:horizontal {{
             border: 1px solid {theme['primary_color']};
             background-color: {theme['tertiary_color']};
             height: 16px;
+            border-radius: 6px;
         }}
         QScrollBar::handle {{
             background-color: {theme['border_color']};
             border: 1px solid {theme['pressed_color']};
+            border-radius: 6px;
         }}
         QScrollBar::handle:hover {{
             background-color: {theme['pressed_color']};
