@@ -8,7 +8,7 @@ Created on Thu Apr 11 20:13:46 2024
 import re
 import os
 import sys
-from typing import Tuple, List
+from typing import Tuple, List, Union, Callable
 from collections import defaultdict
 import inspect
 
@@ -17,6 +17,7 @@ import pandas as pd
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
+from .icons import icons
 from ..paths import PATHS
 from ..config import get_GUI_config
 from ..devices import DEVICES, get_element_by_address
@@ -602,6 +603,7 @@ class MyInputDialog(QtWidgets.QDialog):
 
         lineEdit = MyLineEdit()
         lineEdit.setMaxLength(10000000)
+        self.lineEdit = lineEdit
 
         # Add OK and Cancel buttons
         button_box = QtWidgets.QDialogButtonBox(
@@ -622,6 +624,12 @@ class MyInputDialog(QtWidgets.QDialog):
         self.textValue = lineEdit.text
         self.setTextValue = lineEdit.setText
         self.resize(self.minimumSizeHint())
+
+    def showEvent(self, event):
+        """Focus and select the text in the lineEdit."""
+        super().showEvent(event)
+        self.lineEdit.setFocus()
+        self.lineEdit.selectAll()
 
     def closeEvent(self, event):
         for children in self.findChildren(QtWidgets.QWidget):
@@ -697,3 +705,182 @@ class MyQComboBox(QtWidgets.QComboBox):
     def wheelEvent(self, event):
         if not self.readonly and self.wheel:
             super().wheelEvent(event)
+
+
+class CustomMenu(QtWidgets.QMenu):
+    """ Menu with action containing sub-menu for recipe and parameter selection """
+    def __init__(self,
+                 gui: QtWidgets.QMainWindow,
+                 main_combobox: QtWidgets.QComboBox = None,
+                 second_combobox: QtWidgets.QComboBox = None,
+                 update_gui: Callable[[None], None] = None):
+
+        super().__init__()
+        self.gui = gui  #  gui is scanner
+        self.main_combobox = main_combobox
+        self.second_combobox = second_combobox
+        self.update_gui = update_gui
+
+        self.current_menu = 1
+        self.selected_action = None
+
+        self.recipe_names = [self.main_combobox.itemText(i)
+                             for i in range(self.main_combobox.count())
+                             ] if self.main_combobox else []
+
+        self.HAS_RECIPE = len(self.recipe_names) > 1
+
+        self.HAS_PARAM = (self.second_combobox.count() > 1
+                          if self.second_combobox
+                          else False)
+
+        # To only show parameter if only one recipe
+        if not self.HAS_RECIPE and self.HAS_PARAM:
+            self.main_combobox = second_combobox
+            self.second_combobox = None
+
+            self.recipe_names = [self.main_combobox.itemText(i)
+                                 for i in range(self.main_combobox.count())
+                                 ] if self.main_combobox else []
+
+
+    def addAnyAction(self, action_text='', icon_name='',
+                     param_menu_active=False) -> Union[QtWidgets.QWidgetAction,
+                                                       QtWidgets.QAction]:
+
+        if self.HAS_RECIPE or (self.HAS_PARAM and param_menu_active):
+            action = self.addCustomAction(action_text, icon_name,
+                                          param_menu_active=param_menu_active)
+        else:
+            action = self.addAction(action_text)
+            if icon_name != '':
+                action.setIcon(QtGui.QIcon(icons[icon_name]))
+
+        return action
+
+    def addCustomAction(self, action_text='', icon_name='',
+                        param_menu_active=False) -> QtWidgets.QWidgetAction:
+        """ Create an action with a sub menu for selecting a recipe and parameter """
+
+        def close_menu():
+            self.selected_action = action_widget
+            self.close()
+
+        def handle_hover():
+            """ Fixe bad hover behavior and refresh radio_button """
+            self.setActiveAction(action_widget)
+            recipe_name = self.main_combobox.currentText()
+            action = recipe_menu.actions()[self.recipe_names.index(recipe_name)]
+            radio_button = action.defaultWidget()
+
+            if not radio_button.isChecked():
+                radio_button.setChecked(True)
+
+        def handle_radio_click(name):
+            """ Update parameters available, open parameter menu if available
+            and close main menu to validate the action """
+            if self.current_menu == 1:
+                self.main_combobox.setCurrentIndex(self.recipe_names.index(name))
+                if self.update_gui:
+                    self.update_gui()
+                recipe_menu.close()
+
+                if param_menu_active:
+                    param_items = [self.second_combobox.itemText(i)
+                                   for i in range(self.second_combobox.count())
+                                   ] if self.second_combobox else []
+
+                    if len(param_items) > 1:
+                        self.current_menu = 2
+                        setup_menu_parameter(param_menu)
+                        return None
+            else:
+                update_parameter(name)
+                param_menu.close()
+                self.current_menu = 1
+                action_button.setMenu(recipe_menu)
+
+            close_menu()
+
+        def reset_menu(button: QtWidgets.QToolButton):
+            QtWidgets.QApplication.sendEvent(
+                button, QtCore.QEvent(QtCore.QEvent.Leave))
+            self.current_menu = 1
+            action_button.setMenu(recipe_menu)
+
+        def setup_menu_parameter(param_menu: QtWidgets.QMenu):
+            param_items = [self.second_combobox.itemText(i)
+                           for i in range(self.second_combobox.count())]
+            param_name = self.second_combobox.currentText()
+
+            param_menu.clear()
+            for param_name_i in param_items:
+                add_radio_button_to_menu(param_name_i, param_name, param_menu)
+
+            action_button.setMenu(param_menu)
+            action_button.showMenu()
+
+        def update_parameter(name: str):
+            param_items = [self.second_combobox.itemText(i)
+                           for i in range(self.second_combobox.count())]
+            self.second_combobox.setCurrentIndex(param_items.index(name))
+            if self.update_gui:
+                self.update_gui()
+
+        def add_radio_button_to_menu(item_name: str, current_name: str,
+                                     target_menu: QtWidgets.QMenu):
+            widget = QtWidgets.QFrame()
+            radio_button = QtWidgets.QRadioButton(item_name, widget)
+            action = QtWidgets.QWidgetAction(self.gui)
+            action.setDefaultWidget(radio_button)
+            target_menu.addAction(action)
+
+            if item_name == current_name:
+                radio_button.setChecked(True)
+
+            radio_button.clicked.connect(
+                lambda: handle_radio_click(item_name))
+
+        # Add custom action
+        action_button = QtWidgets.QToolButton()
+        action_button.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        action_button.setText(f"   {action_text}")
+        action_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        action_button.setAutoRaise(True)
+        action_button.clicked.connect(close_menu)
+        action_button.enterEvent = lambda event: handle_hover()
+        if icon_name != '':
+            action_button.setIcon(QtGui.QIcon(icons[icon_name]))
+
+        action_widget = QtWidgets.QWidgetAction(action_button)
+        action_widget.setDefaultWidget(action_button)
+        self.addAction(action_widget)
+
+        recipe_menu = QtWidgets.QMenu()
+        # recipe_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+        recipe_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        if param_menu_active:
+            param_menu = QtWidgets.QMenu()
+            # param_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+            param_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        recipe_name = self.main_combobox.currentText()
+
+        for recipe_name_i in self.recipe_names:
+            add_radio_button_to_menu(recipe_name_i, recipe_name, recipe_menu)
+
+        action_button.setMenu(recipe_menu)
+
+        return action_widget
+
+
+class RecipeMenu(CustomMenu):
+
+    def __init__(self, gui: QtWidgets.QMainWindow):  # gui is scanner
+
+        main_combobox = gui.selectRecipe_comboBox if gui else None
+        second_combobox = gui.selectParameter_comboBox if gui else None
+        update_gui = gui._updateSelectParameter if gui else None
+
+        super().__init__(gui, main_combobox, second_combobox, update_gui)
