@@ -95,7 +95,7 @@ class Plotter(QtWidgets.QMainWindow):
         self.all_plugin_list = []
         self.active_plugin_dict = {}
 
-        self._font_size = get_font_size() + 1
+        self._font_size = get_font_size()
 
         # Configuration of the window
         super().__init__()

@@ -10,11 +10,6 @@
     <height>734</height>
    </rect>
   </property>
-  <property name="font">
-   <font>
-    <pointsize>9</pointsize>
-   </font>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_6">
     <property name="leftMargin">
@@ -76,11 +71,6 @@
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <item>
                <widget class="QPushButton" name="openButton">
-                <property name="font">
-                 <font>
-                  <pointsize>9</pointsize>
-                 </font>
-                </property>
                 <property name="toolTip">
                  <string>Open data</string>
                 </property>
@@ -197,11 +187,6 @@
            <layout class="QGridLayout" name="layout_variable">
             <item row="1" column="3">
              <widget class="QPushButton" name="plotDataButton">
-              <property name="font">
-               <font>
-                <pointsize>9</pointsize>
-               </font>
-              </property>
               <property name="toolTip">
                <string>Display data from the given variable address</string>
               </property>
@@ -286,11 +271,6 @@
             </item>
             <item row="2" column="1">
              <widget class="QLabel" name="label_2">
-              <property name="font">
-               <font>
-                <pointsize>9</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Delay [s] :</string>
               </property>
@@ -404,6 +384,12 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
                   </property>
                   <property name="toolTip">
                    <string>Number of visible traces</string>

@@ -30,7 +30,7 @@ class Monitor(QtWidgets.QMainWindow):
                  has_parent: bool = False):
         self.has_parent = has_parent  # Only for closeEvent
         self.variable = variable
-        self._font_size = get_font_size() + 1
+        self._font_size = get_font_size()
 
         # Configuration of the window
         super().__init__()

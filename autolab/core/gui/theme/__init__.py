@@ -39,6 +39,9 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
             background-color: {theme['primary_color']};
             border-radius: 8px;
         }}
+        QFrame[frameShape='1'], QFrame[frameShape='2'], QFrame[frameShape='3'], QFrame[frameShape='6'] {{
+            border: 1px solid {theme['border_color']};
+        }}
         QPushButton {{
             background-color: {theme['secondary_color']};
             border: 1px solid {theme['border_color']};

@@ -39,7 +39,7 @@ class FigureManager:
         self.curves = []
         self.filter_condition = []
 
-        self._font_size = get_font_size() + 1
+        self._font_size = get_font_size()
 
         # Configure and initialize the figure in the GUI
         self.fig, self.ax = pyqtgraph_fig_ax()
@@ -115,8 +115,9 @@ class FigureManager:
         self.filter_condition.clear()
 
         if self.gui.checkBoxFilter.isChecked():
-            for i in range(self.gui.layoutFilter.count()-1):  # last is buttons
-                layout = self.gui.layoutFilter.itemAt(i).layout()
+            # OPTIMIZE: Should never based code on widget/layout position. Can instead create dict or other with all information about filter widgets
+            for i in range(self.gui.layoutFilter.count()):
+                layout = self.gui.layoutFilter.itemAt(i).widget().layout()
 
                 if layout.count() == 5:
                     enable = bool(layout.itemAt(0).widget().isChecked())
@@ -165,51 +166,6 @@ class FigureManager:
 
                 self.filter_condition.append(filter_i)
 
-            # Change minimum size
-            min_width = 6
-            min_height = 6
-
-            for i in range(self.gui.layoutFilter.count()):
-                layout = self.gui.layoutFilter.itemAt(i).layout()
-                min_width_temp = 6
-                min_height_temp = 6
-
-                for j in range(layout.count()):
-                    item = layout.itemAt(j)
-                    widget = item.widget()
-
-                    if widget is not None:
-                        min_size = widget.minimumSizeHint()
-
-                        min_width_temp_2 = min_size.width()
-                        min_height_temp_2 = min_size.height()
-
-                        if min_width_temp_2 == 0: min_width_temp_2 = 21
-                        if min_height_temp_2 == 0: min_height_temp_2 = 21
-
-                        min_width_temp += min_width_temp_2 + 6
-                        min_height_temp_2 += min_height_temp_2 + 6
-
-                        if min_height_temp_2 > min_height_temp:
-                            min_height_temp = min_height_temp_2
-
-                min_height += min_height_temp
-
-                if min_width_temp > min_width:
-                    min_width = min_width_temp
-
-            min_width += 12
-
-            if min_width > 500: min_width = 500
-            if min_height < 85: min_height = 85
-            if min_height > 210: min_height = 210
-
-            self.gui.frameAxis.setMinimumHeight(min_height)
-            self.gui.scrollArea_filter.setMinimumWidth(min_width)
-        else:
-            self.gui.frameAxis.setMinimumHeight(65)
-            self.gui.scrollArea_filter.setMinimumWidth(0)
-
         self.reloadData()
 
     def refresh_filter_combobox(self, comboBox):
@@ -227,11 +183,11 @@ class FigureManager:
 
     def addFilterClicked(self, filter_type):
         """ Add filter condition """
-        conditionLayout = QtWidgets.QHBoxLayout()
+        conditionWidget = QtWidgets.QFrame()
+        conditionWidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        conditionLayout = QtWidgets.QHBoxLayout(conditionWidget)
 
         filterCheckBox = QtWidgets.QCheckBox()
-        filterCheckBox.setMinimumSize(0, 21)
-        filterCheckBox.setMaximumSize(16777215, 21)
         filterCheckBox.setToolTip('Toggle filter')
         filterCheckBox.setCheckState(QtCore.Qt.Checked)
         filterCheckBox.stateChanged.connect(self.refresh_filters)
@@ -239,8 +195,6 @@ class FigureManager:
 
         if filter_type in ('standard', 'slider'):
             variableComboBox = QtWidgets.QComboBox()
-            variableComboBox.setMinimumSize(0, 21)
-            variableComboBox.setMaximumSize(16777215, 21)
 
             self.refresh_filter_combobox(variableComboBox)
             variableComboBox.activated.connect(self.refresh_filters)
@@ -249,8 +203,6 @@ class FigureManager:
             conditionLayout.addWidget(variableComboBox)
 
             filterComboBox = QtWidgets.QComboBox()
-            filterComboBox.setMinimumSize(0, 21)
-            filterComboBox.setMaximumSize(16777215, 21)
             items = ['==', '!=', '<', '<=', '>=', '>']
             filterComboBox.addItems(items)
             filterComboBox.activated.connect(self.refresh_filters)
@@ -258,8 +210,6 @@ class FigureManager:
 
             if filter_type == 'standard':
                 valueWidget = QtWidgets.QLineEdit()
-                valueWidget.setMinimumSize(0, 21)
-                valueWidget.setMaximumSize(16777215, 21)
                 valueWidget.setText('1')
                 valueWidget.returnPressed.connect(self.refresh_filters)
                 valueWidget.textEdited.connect(lambda: setLineEditBackground(
@@ -269,18 +219,15 @@ class FigureManager:
             elif filter_type == 'slider':
                 var = Variable('temp', 1.)
                 valueWidget = Slider(var)
-                min_size = valueWidget.minimumSizeHint()
-                valueWidget.setMinimumSize(min_size)
-                valueWidget.setMaximumSize(min_size)
                 valueWidget.minWidget.setText('1.0')
                 valueWidget.minWidgetValueChanged()
                 valueWidget.changed.connect(self.refresh_filters)
+                valueWidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                          QtWidgets.QSizePolicy.Fixed)
                 conditionLayout.addWidget(valueWidget)
 
         elif filter_type == 'custom':
             customConditionWidget = QtWidgets.QLineEdit()
-            customConditionWidget.setMinimumSize(0, 21)
-            customConditionWidget.setMaximumSize(16777215, 21)
             customConditionWidget.setToolTip(
                 "Filter condition can be 'id == 1' '1 <= amplitude <= 2' 'id in (1, 2)'")
             customConditionWidget.setText('id == 1')
@@ -292,22 +239,19 @@ class FigureManager:
             conditionLayout.addWidget(customConditionWidget)
 
         removePushButton = QtWidgets.QPushButton()
-        removePushButton.setMinimumSize(0, 21)
-        removePushButton.setMaximumSize(16777215, 21)
         removePushButton.setIcon(QtGui.QIcon(icons['remove']))
         removePushButton.clicked.connect(
-            lambda: self.remove_filter(conditionLayout))
+            lambda: self.remove_filter(conditionWidget))
         conditionLayout.addWidget(removePushButton)
 
-        self.gui.layoutFilter.insertLayout(
-            self.gui.layoutFilter.count()-1, conditionLayout)
+        self.gui.layoutFilter.addWidget(conditionWidget)
         self.refresh_filters()
 
-    def remove_filter(self, layout):
+    def remove_filter(self, widget):
         """ Remove filter condition """
-        for j in reversed(range(layout.count())):
-            layout.itemAt(j).widget().setParent(None)
-        layout.setParent(None)
+        for j in reversed(range(widget.layout().count())):
+            widget.layout().itemAt(j).widget().setParent(None)
+        widget.setParent(None)
         self.refresh_filters()
 
     def checkBoxFilterChanged(self):
@@ -465,8 +409,7 @@ class FigureManager:
 
         can_filter = var_to_display not in (['', ''], ['', '', ''])  # Allows to differentiate images from scan or arrays. Works only because on dataframe_comboBoxCurrentChanged, updateDisplayableResults is called
         filter_condition = self.filter_condition if (
-            self.gui.checkBoxFilter.isChecked() and can_filter) else {}
-
+            self.gui.checkBoxFilter.isChecked() and can_filter) else []
         data: List[pd.DataFrame] = self.gui.dataManager.getData(
             nbtraces_temp, var_to_display,
             selectedData=selectedData, data_name=data_name,

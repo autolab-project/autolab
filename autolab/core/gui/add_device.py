@@ -8,7 +8,6 @@ import sys
 
 from qtpy import QtCore, QtWidgets, QtGui
 
-from .GUI_utilities import get_font_size
 from .GUI_instances import clearAddDevice
 from .icons import icons
 from ..drivers import (list_drivers, load_driver_lib, get_connection_names,
@@ -36,8 +35,6 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         except:
             self.rm = None
 
-        self._font_size = get_font_size() + 1
-
         # Main layout creation
         layoutWindow = QtWidgets.QVBoxLayout()
         layoutWindow.setAlignment(QtCore.Qt.AlignTop)
@@ -51,8 +48,6 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         layoutWindow.addLayout(layoutDeviceNickname)
 
         label = QtWidgets.QLabel('Device')
-        label.setMinimumSize(60, 23)
-        label.setMaximumSize(60, 23)
 
         self.deviceNickname = QtWidgets.QLineEdit()
         self.deviceNickname.setText('my_device')
@@ -65,14 +60,15 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         layoutWindow.addLayout(layoutDriverName)
 
         label = QtWidgets.QLabel('Driver')
-        label.setMinimumSize(60, 23)
-        label.setMaximumSize(60, 23)
 
         self.driversComboBox = QtWidgets.QComboBox()
         self.driversComboBox.addItems(list_drivers())
         self.driversComboBox.activated.connect(self.driverChanged)
+        self.driversComboBox.setSizeAdjustPolicy(
+            QtWidgets.QComboBox.AdjustToContents)
 
         layoutDriverName.addWidget(label)
+        layoutDriverName.addStretch()
         layoutDriverName.addWidget(self.driversComboBox)
 
         # Driver connection
@@ -80,13 +76,14 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         layoutWindow.addLayout(layoutDriverConnection)
 
         label = QtWidgets.QLabel('Connection')
-        label.setMinimumSize(60, 23)
-        label.setMaximumSize(60, 23)
 
         self.connectionComboBox = QtWidgets.QComboBox()
         self.connectionComboBox.activated.connect(self.connectionChanged)
+        self.connectionComboBox.setSizeAdjustPolicy(
+            QtWidgets.QComboBox.AdjustToContents)
 
         layoutDriverConnection.addWidget(label)
+        layoutDriverConnection.addStretch()
         layoutDriverConnection.addWidget(self.connectionComboBox)
 
         # Driver arguments
@@ -105,8 +102,6 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         layoutWindow.addLayout(layoutButtonArg)
 
         addOptionalArg = QtWidgets.QPushButton('Add argument')
-        addOptionalArg.setMinimumSize(0, 23)
-        addOptionalArg.setMaximumSize(100, 23)
         addOptionalArg.setIcon(QtGui.QIcon(icons['add']))
         addOptionalArg.clicked.connect(lambda state: self.addOptionalArgClicked())
 
@@ -124,6 +119,8 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
 
         # update driver name combobox
         self.driverChanged()
+
+        self.resize(self.minimumSizeHint())
 
     def addOptionalArgClicked(self, key: str = None, val: str = None):
         """ Add new layout for optional argument """
@@ -212,7 +209,8 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
 
         index = self.connectionComboBox.findText(conn)
         self.connectionComboBox.setCurrentIndex(index)
-        self.connectionChanged()
+        if index != -1:
+            self.connectionChanged()
 
         # Used to remove default value
         try:
@@ -256,6 +254,9 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         driver_name = self.driversComboBox.currentText()
 
         if driver_name == self._prev_name: return None
+        if driver_name == '':
+            self.setStatus(f"Can't load driver associated with {self.deviceNickname.text()}", 10000, False)
+            return None
         self._prev_name = driver_name
 
         try:
@@ -334,7 +335,10 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         self._prev_conn = conn
 
         driver_name = self.driversComboBox.currentText()
-        driver_lib = load_driver_lib(driver_name)
+        try:
+            driver_lib = load_driver_lib(driver_name)
+        except:
+            return None
 
         connection_args = get_class_args(
             get_connection_class(driver_lib, conn))

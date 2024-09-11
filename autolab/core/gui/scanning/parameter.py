@@ -30,28 +30,33 @@ class ParameterManager:
 
         self.point_or_step = "point"
 
-        self._font_size = get_font_size() + 1
+        self._font_size = get_font_size()
 
         # Parameter frame
         mainFrame = parameterQFrame(self.gui, self.recipe_name, self.param_name)
         mainFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        mainFrame.setMinimumSize(0, 32+60)
-        mainFrame.setMaximumSize(16777215, 32+60)
+        mainFrame.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        mainFrame.customContextMenuRequested.connect(self.rightClick)
+        mainFrame.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                QtWidgets.QSizePolicy.Minimum)
         self.mainFrame = mainFrame
 
-        self.mainFrame.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.mainFrame.customContextMenuRequested.connect(self.rightClick)
+        # Parameter layout
+        parameterLayout = QtWidgets.QVBoxLayout(mainFrame)
+        parameterLayout.setContentsMargins(0,0,0,0)
+        parameterLayout.setSpacing(0)
 
-        ## 1st row frame: Parameter
-        frameParameter = QtWidgets.QFrame(mainFrame)
-        frameParameter.setMinimumSize(0, 32)
-        frameParameter.setMaximumSize(16777215, 32)
+        frameParameter = QtWidgets.QFrame()
         frameParameter.setToolTip(f"Drag and drop a variable or use the right click option of a variable from the control panel to add a recipe to the tree: {self.recipe_name}")
 
+        frameScanRange = QtWidgets.QFrame()
+
+        parameterLayout.addWidget(frameParameter)
+        parameterLayout.addWidget(frameScanRange)
+
+        ## 1st row frame: Parameter
         ### Name
-        parameterName_lineEdit = QtWidgets.QLineEdit('', frameParameter)
-        parameterName_lineEdit.setMinimumSize(0, 20)
-        parameterName_lineEdit.setMaximumSize(16777215, 20)
+        parameterName_lineEdit = QtWidgets.QLineEdit('')
         parameterName_lineEdit.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
         parameterName_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         parameterName_lineEdit.setToolTip('Name of the parameter, as it will displayed in the data')
@@ -62,30 +67,22 @@ class ParameterManager:
         self.parameterName_lineEdit = parameterName_lineEdit
 
         ### Address
-        parameterAddressIndicator_label = QtWidgets.QLabel("Address:", frameParameter)
-        parameterAddressIndicator_label.setMinimumSize(0, 20)
-        parameterAddressIndicator_label.setMaximumSize(16777215, 20)
+        parameterAddressIndicator_label = QtWidgets.QLabel("Address:")
         parameterAddressIndicator_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        parameterAddress_label = QtWidgets.QLabel("<variable>", frameParameter)
-        parameterAddress_label.setMinimumSize(0, 20)
-        parameterAddress_label.setMaximumSize(16777215, 20)
+        parameterAddress_label = QtWidgets.QLabel("<variable>")
         parameterAddress_label.setAlignment(QtCore.Qt.AlignCenter)
         parameterAddress_label.setToolTip('Address of the parameter')
         self.parameterAddress_label = parameterAddress_label
 
         ### Unit
-        unit_label = QtWidgets.QLabel("uA", frameParameter)
-        unit_label.setMinimumSize(0, 20)
-        unit_label.setMaximumSize(16777215, 20)
+        unit_label = QtWidgets.QLabel("uA")
         unit_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.unit_label = unit_label
 
         ### displayParameter button
         self.displayParameter = DisplayValues("Parameter", size=(250, 400))
         self.displayParameter.setWindowIcon(QtGui.QIcon(icons['ndarray']))
-        displayParameter_pushButton = QtWidgets.QPushButton("Parameter", frameParameter)
-        displayParameter_pushButton.setMinimumSize(0, 23)
-        displayParameter_pushButton.setMaximumSize(16777215, 23)
+        displayParameter_pushButton = QtWidgets.QPushButton("Parameter")
         self.displayParameter_pushButton = displayParameter_pushButton
         self.displayParameter_pushButton.clicked.connect(self.displayParameterButtonClicked)
 
@@ -97,30 +94,20 @@ class ParameterManager:
         layoutParameter.addWidget(parameterAddress_label)
         layoutParameter.addWidget(displayParameter_pushButton)
 
-        frameScanRange = QtWidgets.QFrame(mainFrame)
-        frameScanRange.setMinimumSize(0, 60)
-        frameScanRange.setMaximumSize(16777215, 60)
-        self.frameScanRange = frameScanRange
 
         ## 2nd row frame: Range
-        frameScanRange_linLog = QtWidgets.QFrame(frameScanRange)
-        frameScanRange_linLog.setMinimumSize(0, 60)
-        frameScanRange_linLog.setMaximumSize(16777215, 60)
+        frameScanRange_linLog = QtWidgets.QFrame()
         self.frameScanRange_linLog = frameScanRange_linLog
 
         ### first grid widgets: start, stop
         labelStart = QtWidgets.QLabel("Start", frameScanRange_linLog)
         start_lineEdit = QtWidgets.QLineEdit('0', frameScanRange_linLog)
         start_lineEdit.setToolTip('Start value of the scan')
-        start_lineEdit.setMinimumSize(0, 20)
-        start_lineEdit.setMaximumSize(16777215, 20)
         start_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.start_lineEdit = start_lineEdit
 
         labelEnd = QtWidgets.QLabel("End", frameScanRange_linLog)
         end_lineEdit = QtWidgets.QLineEdit('10', frameScanRange_linLog)
-        end_lineEdit.setMinimumSize(0, 20)
-        end_lineEdit.setMaximumSize(16777215, 20)
         end_lineEdit.setToolTip('End value of the scan')
         end_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.end_lineEdit = end_lineEdit
@@ -138,15 +125,11 @@ class ParameterManager:
         ### second grid widgets: mean, width
         labelMean = QtWidgets.QLabel("Mean", frameScanRange_linLog)
         mean_lineEdit = QtWidgets.QLineEdit('5', frameScanRange_linLog)
-        mean_lineEdit.setMinimumSize(0, 20)
-        mean_lineEdit.setMaximumSize(16777215, 20)
         mean_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.mean_lineEdit = mean_lineEdit
 
         labelWidth = QtWidgets.QLabel("Width", frameScanRange_linLog)
         width_lineEdit = QtWidgets.QLineEdit('10', frameScanRange_linLog)
-        width_lineEdit.setMinimumSize(0, 20)
-        width_lineEdit.setMaximumSize(16777215, 20)
         width_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.width_lineEdit = width_lineEdit
 
@@ -163,16 +146,12 @@ class ParameterManager:
         ### third grid widgets: npts, step, log
         labelNbpts = QtWidgets.QLabel("Nb points", frameScanRange_linLog)
         nbpts_lineEdit = QtWidgets.QLineEdit('11', frameScanRange_linLog)
-        nbpts_lineEdit.setMinimumSize(0, 20)
-        nbpts_lineEdit.setMaximumSize(16777215, 20)
         nbpts_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.nbpts_lineEdit = nbpts_lineEdit
 
         labelStep = QtWidgets.QLabel("Step", frameScanRange_linLog)
         self.labelStep = labelStep
         step_lineEdit = QtWidgets.QLineEdit('1', frameScanRange_linLog)
-        step_lineEdit.setMinimumSize(0, 20)
-        step_lineEdit.setMaximumSize(16777215, 20)
         step_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.step_lineEdit = step_lineEdit
 
@@ -197,17 +176,13 @@ class ParameterManager:
         layoutScanRange.addWidget(nptsStepGridWidget)
 
         ## 2nd row bis frame: Values (hidden at start)
-        frameScanRange_values = QtWidgets.QFrame(frameScanRange)
-        frameScanRange_values.setMinimumSize(0, 60)
-        frameScanRange_values.setMaximumSize(16777215, 60)
+        frameScanRange_values = QtWidgets.QFrame()
         self.frameScanRange_values = frameScanRange_values
 
         ### first grid widgets: values (hidden at start)
         labelValues = QtWidgets.QLabel("Values", frameScanRange_values)
         values_lineEdit = MyLineEdit('[0,1,2,3]', frameScanRange_values)
         values_lineEdit.setToolTip('Values of the scan')
-        values_lineEdit.setMinimumSize(0, 20)
-        values_lineEdit.setMaximumSize(16777215, 20)
         values_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         values_lineEdit.setMaxLength(10000000)
         self.values_lineEdit = values_lineEdit
@@ -216,8 +191,6 @@ class ParameterManager:
         self.labelEvaluatedValues = labelEvaluatedValues
         evaluatedValues_lineEdit = QtWidgets.QLineEdit('[0,1,2,3]', frameScanRange_values)
         evaluatedValues_lineEdit.setToolTip('Evaluated values of the scan')
-        evaluatedValues_lineEdit.setMinimumSize(0, 20)
-        evaluatedValues_lineEdit.setMaximumSize(16777215, 20)
         evaluatedValues_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
         evaluatedValues_lineEdit.setMaxLength(10000000)
         evaluatedValues_lineEdit.setReadOnly(True)
@@ -244,9 +217,7 @@ class ParameterManager:
         layoutScanRange_values.addWidget(valuesGridWidget)
 
         ## 3rd row frame: choice
-        frameScanRange_choice = QtWidgets.QFrame(frameScanRange)
-        frameScanRange_choice.setMinimumSize(0, 60)
-        frameScanRange_choice.setMaximumSize(16777215, 60)
+        frameScanRange_choice = QtWidgets.QFrame()
         self.frameScanRange_choice = frameScanRange_choice
 
         ### first grid widgets: choice
@@ -276,12 +247,6 @@ class ParameterManager:
         scanRangeLayout.addWidget(frameScanRange_values)  # hidden at start
         scanRangeLayout.addWidget(frameScanRange_choice)
 
-        # Parameter layout
-        parameterLayout = QtWidgets.QVBoxLayout(mainFrame)
-        parameterLayout.setContentsMargins(0,0,0,0)
-        parameterLayout.setSpacing(0)
-        parameterLayout.addWidget(frameParameter)
-        parameterLayout.addWidget(frameScanRange)
 
         # Widget 'return pressed' signal connections
         self.comboBoxChoice.activated.connect(self.scanRangeComboBoxChanged)
@@ -655,12 +620,12 @@ class ParameterManager:
         """ Sets the background color of the parameter address during the scan """
         if state == 'idle':
             self.parameterAddress_label.setStyleSheet(
-                f"font-size: {self._font_size+1}pt;")
+                f"font-size: {self._font_size}pt;")
         else:
             if state == 'started': color = '#ff8c1a'
             if state == 'finished': color = '#70db70'
             self.parameterAddress_label.setStyleSheet(
-                f"background-color: {color}; font-size: {self._font_size+1}pt;")
+                f"background-color: {color}; font-size: {self._font_size}pt;")
 
     def close(self):
         """ Called by scanner on closing """

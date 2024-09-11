@@ -44,7 +44,7 @@ class Slider(QtWidgets.QMainWindow):
         control_center_config = get_control_center_config()
         self.precision = int(control_center_config['precision'])
 
-        self._font_size = get_font_size() + 1
+        self._font_size = get_font_size()
 
         # Slider
         self.slider_instantaneous = True

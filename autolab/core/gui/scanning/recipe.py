@@ -75,7 +75,7 @@ class RecipeManager:
         layoutAll.setContentsMargins(0,0,0,0)
         layoutAll.setSpacing(0)
 
-        layoutAll.addWidget(frameRecipe)
+        layoutAll.addWidget(frameRecipe, stretch=1)
 
         frameAll2 = MyQTabWidget(frameAll, self.gui, self.recipe_name)
         self._frame = frameAll2

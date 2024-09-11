@@ -4,6 +4,7 @@ Created on Fri Sep 20 22:08:29 2019
 
 @author: qchat
 """
+from typing import List
 import os
 import sys
 import shutil
@@ -94,9 +95,12 @@ class Scanner(QtWidgets.QMainWindow):
         # Save button configuration
         self.save_pushButton.clicked.connect(self.saveButtonClicked)
         self.save_pushButton.setEnabled(False)
+        self.save_all_pushButton.clicked.connect(self.saveAllButtonClicked)
+        self.save_all_pushButton.setEnabled(False)
 
         # Clear button configuration
         self.clear_pushButton.clicked.connect(self.clear)
+        self.clear_pushButton.setEnabled(False)
 
         self.variable_x2_comboBox.hide()
         self.label_scan_2D.hide()
@@ -174,7 +178,9 @@ class Scanner(QtWidgets.QMainWindow):
         self.data_comboBox.clear()
         self.data_comboBox.hide()
         self.save_pushButton.setEnabled(False)
-        self.save_pushButton.setText('Save')
+        self.save_all_pushButton.setEnabled(False)
+        self.clear_pushButton.setEnabled(False)
+        self.save_pushButton.setText('Save scan1')
         self.progressBar.setValue(0)
         self.progressBar.setStyleSheet("")
         self.displayScanData_pushButton.hide()
@@ -183,6 +189,14 @@ class Scanner(QtWidgets.QMainWindow):
         self.dataframe_comboBox.hide()
         self.scan_recipe_comboBox.setCurrentIndex(0)
         self.scan_recipe_comboBox.hide()
+        self.refresh_widget(self.clear_pushButton)
+
+    @staticmethod
+    def refresh_widget(widget: QtWidgets.QWidget):
+        """ Avoid intermediate disabled state when badly refreshed """
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
+        widget.update()
 
     def _addRecipe(self, recipe_name: str):
         """ Adds recipe to managers. Called by configManager """
@@ -239,7 +253,8 @@ class Scanner(QtWidgets.QMainWindow):
         self.recipeDict[recipe_name]['parameterManager'][param_name] = new_ParameterManager
 
         layoutAll = self.recipeDict[recipe_name]['recipeManager']._layoutAll
-        layoutAll.insertWidget(layoutAll.count()-1, new_ParameterManager.mainFrame)
+        layoutAll.insertWidget(
+            layoutAll.count()-1, new_ParameterManager.mainFrame, stretch=0)
 
         self._updateSelectParameter()
         self.selectParameter_comboBox.setCurrentIndex(
@@ -394,7 +409,13 @@ class Scanner(QtWidgets.QMainWindow):
             else:
                 self.addOpenRecent(filename)
 
+    def saveAllButtonClicked(self):
+        self._saveData(self.dataManager.datasets)
+
     def saveButtonClicked(self):
+        self._saveData([self.dataManager.getLastSelectedDataset()])
+
+    def _saveData(self, all_data: List[dict]):
         """ This function is called when the save button is clicked.
         It asks a path and starts the procedure to save the data """
         filename = QtWidgets.QFileDialog.getSaveFileName(
@@ -403,45 +424,58 @@ class Scanner(QtWidgets.QMainWindow):
             filter=SUPPORTED_EXTENSION)[0]
         path = os.path.dirname(filename)
 
+        save_folder, extension = os.path.splitext(filename)
+
         if path != '':
             PATHS['last_folder'] = path
             self.setStatus('Saving data...', 5000)
-            datasets = self.dataManager.getLastSelectedDataset()
 
-            for dataset_name in datasets:
-                dataset = datasets[dataset_name]
+            for datasets in all_data:
+                i = self.dataManager.datasets.index(datasets)
+                scan_name = f'scan{i+1}'
 
-                if len(datasets) == 1:
-                    filename_recipe = filename
+                if len(all_data) == 1:
+                    scan_filename = save_folder
+                    new_configname = f'{save_folder}.conf'
                 else:
-                    dataset_folder, extension = os.path.splitext(filename)
-                    filename_recipe = f'{dataset_folder}_{dataset_name}{extension}'
-                dataset.save(filename_recipe)
+                    scan_filename = f'{save_folder}_{scan_name}'
+                    new_configname = f'{save_folder}_{scan_name}.conf'
 
-            scanner_config = get_scanner_config()
-            save_config = boolean(scanner_config["save_config"])
+                for recipe_name in datasets:
+                    dataset = datasets[recipe_name]
 
-            if save_config:
-                dataset_folder, extension = os.path.splitext(filename)
-                new_configname = dataset_folder + ".conf"
-                config_name = os.path.join(
-                    os.path.dirname(dataset.folder_dataset_temp), 'config.conf')
+                    if len(datasets) == 1:
+                        filename_recipe = f'{scan_filename}{extension}'
+                    else:
+                        filename_recipe = f'{scan_filename}_{recipe_name}{extension}'
+                    dataset.save(filename_recipe)
 
-                if os.path.exists(config_name):
-                    shutil.copy(config_name, new_configname)
-                else:
-                    if datasets is not self.dataManager.getLastDataset():
-                        print("Warning: Can't find config for this dataset, save latest config instead",
-                              file=sys.stderr)
-                    self.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
+                scanner_config = get_scanner_config()
+                save_config = boolean(scanner_config["save_config"])
 
-                self.addOpenRecent(new_configname)
+                if save_config:
+                    config_name = os.path.join(
+                        os.path.dirname(dataset.folder_dataset_temp), 'config.conf')
 
-            if boolean(scanner_config["save_figure"]):
-                self.figureManager.save(filename)
+                    if os.path.exists(config_name):
+                        shutil.copy(config_name, new_configname)
+                    else:
+                        if datasets is not self.dataManager.getLastDataset():
+                            print("Warning: Can't find config for this dataset, save latest config instead",
+                                  file=sys.stderr)
+                        self.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)
 
-            self.setStatus(
-                f'Last dataset successfully saved in {filename}', 5000)
+                    self.addOpenRecent(new_configname)
+
+                if len(all_data) == 1 and boolean(scanner_config["save_figure"]):
+                        self.figureManager.save(filename)
+
+            if len(all_data) == 1:
+                self.setStatus(
+                    f'{scan_name} successfully saved in {filename}', 5000)
+            else:
+                self.setStatus(
+                    f'All scans successfully saved as {save_folder}_[...].txt', 5000)
 
     def dropEvent(self, event):
         """ Imports config file if event has url of a file """

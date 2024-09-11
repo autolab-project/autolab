@@ -205,6 +205,8 @@ class DataManager:
             self.gui.progressBar.setValue(progress)
 
             self.gui.save_pushButton.setEnabled(True)
+            if len(self.datasets) != 1:
+                self.gui.save_all_pushButton.setEnabled(True)
 
             # Update plot
             self.gui.figureManager.data_comboBoxClicked()

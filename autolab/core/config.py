@@ -121,7 +121,7 @@ def check_autolab_config():
         'server': {'port': 4001},
         'GUI': {'qt_api': "default",
                 'theme': "default",
-                'font_size': "default",
+                'font_size': 10,
                 'image_background': 'w',
                 'image_foreground': 'k'},
         'control_center': {'precision': 7,

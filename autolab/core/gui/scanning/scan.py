@@ -31,6 +31,8 @@ class ScanManager:
 
         # Start / Stop button configuration
         self.gui.start_pushButton.clicked.connect(self.startButtonClicked)
+        self.gui.stop_pushButton.clicked.connect(self.stopButtonClicked)
+        self.gui.stop_pushButton.setEnabled(False)
 
         # Pause / Resume button configuration
         self.gui.pause_pushButton.clicked.connect(self.pauseButtonClicked)
@@ -48,9 +50,16 @@ class ScanManager:
     #############################################################################
 
     def startButtonClicked(self):
-        """ Called when the start/stop button is pressed.
+        """ Called when the start button is pressed.
         Do the expected action """
-        self.stop() if self.isStarted() else self.start()
+        if not self.isStarted():
+            self.start()
+
+    def stopButtonClicked(self):
+        """ Called when the stop button is pressed.
+        Do the expected action """
+        if self.isStarted():
+            self.stop()
 
     def isStarted(self):
         """ Returns True or False whether the scan is currently running or not """
@@ -100,13 +109,24 @@ class ScanManager:
         self.thread.errorSignal.connect(self.error)
         self.thread.userSignal.connect(self.handler_user_input)
 
-        self.thread.startParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'started'))
-        self.thread.finishParameterSignal.connect(lambda recipe_name, param_name: self.setParameterProcessingState(recipe_name, param_name, 'finished'))
-        self.thread.parameterCompletedSignal.connect(lambda recipe_name, param_name: self.resetParameterProcessingState(recipe_name, param_name))
+        self.thread.startParameterSignal.connect(
+            lambda recipe_name, param_name: self.setParameterProcessingState(
+                recipe_name, param_name, 'started'))
+        self.thread.finishParameterSignal.connect(
+            lambda recipe_name, param_name: self.setParameterProcessingState(
+                recipe_name, param_name, 'finished'))
+        self.thread.parameterCompletedSignal.connect(
+            lambda recipe_name, param_name: self.resetParameterProcessingState(
+                recipe_name, param_name))
 
-        self.thread.startStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'started'))
-        self.thread.finishStepSignal.connect(lambda recipe_name, stepName: self.setStepProcessingState(recipe_name, stepName, 'finished'))
-        self.thread.recipeCompletedSignal.connect(lambda recipe_name: self.resetStepsProcessingState(recipe_name))
+        self.thread.startStepSignal.connect(
+            lambda recipe_name, stepName: self.setStepProcessingState(
+                recipe_name, stepName, 'started'))
+        self.thread.finishStepSignal.connect(
+            lambda recipe_name, stepName: self.setStepProcessingState(
+                recipe_name, stepName, 'finished'))
+        self.thread.recipeCompletedSignal.connect(
+            lambda recipe_name: self.resetStepsProcessingState(recipe_name))
         self.thread.scanCompletedSignal.connect(self.scanCompleted)
 
         self.thread.finished.connect(self.finished)
@@ -118,7 +138,8 @@ class ScanManager:
         self.gui.dataManager.timer.start()
 
         # Update gui
-        self.gui.start_pushButton.setText('Stop')
+        self.gui.start_pushButton.setEnabled(False)
+        self.gui.stop_pushButton.setEnabled(True)
         self.gui.pause_pushButton.setEnabled(True)
         self.gui.clear_pushButton.setEnabled(False)
         self.gui.progressBar.setValue(0)
@@ -127,6 +148,7 @@ class ScanManager:
         self.gui.undo.setEnabled(False)
         self.gui.redo.setEnabled(False)
         self.gui.setStatus('Scan started!', 5000)
+        self.gui.refresh_widget(self.gui.start_pushButton)
 
     def handler_user_input(self, stepInfos: dict):
         unit = stepInfos['element'].unit
@@ -135,7 +157,8 @@ class ScanManager:
         if unit in ("open-file", "save-file"):
 
             if unit == "open-file":
-                self.main_dialog = MyFileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptOpen)
+                self.main_dialog = MyFileDialog(self.gui, name,
+                                                QtWidgets.QFileDialog.AcceptOpen)
                 self.main_dialog.show()
 
                 if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -144,7 +167,8 @@ class ScanManager:
                     filename = ''
 
             elif unit == "save-file":
-                self.main_dialog = MyFileDialog(self.gui, name, QtWidgets.QFileDialog.AcceptSave)
+                self.main_dialog = MyFileDialog(self.gui, name,
+                                                QtWidgets.QFileDialog.AcceptSave)
                 self.main_dialog.show()
 
                 if self.main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -231,7 +255,7 @@ class ScanManager:
         """ This function is called when the scan thread is finished.
         It restores the GUI in a ready mode, and start a new scan if in
         continuous mode """
-        self.gui.start_pushButton.setText('Start')
+        self.gui.stop_pushButton.setEnabled(False)
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
         self.gui.displayScanData_pushButton.setEnabled(True)
@@ -241,9 +265,12 @@ class ScanManager:
         self.gui.dataManager.timer.stop()
         self.gui.dataManager.sync() # once again to be sure we grabbed every data
         self.thread = None
+        self.gui.refresh_widget(self.gui.stop_pushButton)
 
         if self.isContinuousModeEnabled():
             self.start()
+        else:
+            self.gui.start_pushButton.setEnabled(True)
 
     def error(self, error: Exception):
         """ Called if an error occured during the scan.
@@ -280,6 +307,7 @@ class ScanManager:
         """ Pauses the scan """
         self.thread.pauseFlag.set()
         self.gui.dataManager.timer.stop()
+        self.gui.dataManager.sync() # once again to be sure we grabbed every data
         self.gui.pause_pushButton.setText('Resume')
 
     def resume(self):

@@ -311,7 +311,8 @@ def _install_drivers_custom(_print=True, parent=None):
                     0, QtWidgets.QHeaderView.ResizeToContents)
                 tab.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                   QtWidgets.QSizePolicy.Expanding)
-                tab.setSizeAdjustPolicy(tab.AdjustToContents)
+                tab.setSizeAdjustPolicy(
+                    QtWidgets.QAbstractScrollArea.AdjustToContents)
 
                 # Init checkBox
                 self.list_checkBox = []
