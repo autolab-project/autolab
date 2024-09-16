@@ -23,16 +23,25 @@ else:
     LeftButton = QtCore.Qt.LeftButton
 
 
+class ProxyStyle(QtWidgets.QProxyStyle):
+    """ https://stackoverflow.com/questions/67299834/pyqt-slider-not-come-to-a-specific-location-where-i-click-but-move-to-a-certain """
+    def styleHint(self, hint, opt=None, widget=None, returnData=None):
+        res = super().styleHint(hint, opt, widget, returnData)
+        if hint == QtWidgets.QStyle.SH_Slider_AbsoluteSetButtons:
+            res |= LeftButton
+        return res
+
+
 class Slider(QtWidgets.QMainWindow):
 
-    changed = QtCore.Signal()
+    changed = QtCore.Signal()  # Used by scanner to update filter when slider value changes
 
     def __init__(self,
                  variable: Union[Variable, Variable_og],
                  gui: QtWidgets.QMainWindow = None,
                  item: QtWidgets.QTreeWidgetItem = None):
         """ https://stackoverflow.com/questions/61717896/pyqt5-qslider-is-off-by-one-depending-on-which-direction-the-slider-is-moved """
-        self.gui = gui  # gui should have setStatus, threadManager
+        self.gui = gui  # gui can have setStatus, threadManager
         self.variable = variable
         self.item = item
         super().__init__()
@@ -48,6 +57,7 @@ class Slider(QtWidgets.QMainWindow):
 
         # Slider
         self.slider_instantaneous = True
+        self._last_moved = False  # Prevent double setting/readding after a slider has been moved with the slider_instantaneous=True
 
         if self.is_writable():
             self.true_min = self.variable.type(0)
@@ -70,7 +80,9 @@ class Slider(QtWidgets.QMainWindow):
         layoutWindow.addLayout(layoutBottomValues)
 
         self.instantCheckBox = QtWidgets.QCheckBox()
-        self.instantCheckBox.setToolTip("True: Changes instantaneously the value.\nFalse: Changes the value when click released.")
+        self.instantCheckBox.setToolTip(
+            "True: Changes instantaneously the value.\n" \
+            "False: Changes the value when click released.")
         self.instantCheckBox.setCheckState(QtCore.Qt.Checked)
         self.instantCheckBox.stateChanged.connect(self.instantChanged)
 
@@ -255,6 +267,10 @@ class Slider(QtWidgets.QMainWindow):
     def sliderReleased(self):
         """ Do something when the cursor is released """
         if self.is_writable():
+            if self.slider_instantaneous and self._last_moved:
+                self._last_moved = False
+                return None
+            self._last_moved = False
             value = self.sliderWidget.value()
             true_value = self.variable.type(
                 value*self.true_step + self.true_min)
@@ -269,6 +285,7 @@ class Slider(QtWidgets.QMainWindow):
     def valueChanged(self, value: Any):
         """ Do something with the slider value when the cursor is moved """
         if self.is_writable():
+            self._last_moved = True
             true_value = self.variable.type(
                 value*self.true_step + self.true_min)
             self.valueWidget.setText(f'{true_value:.{self.precision}g}')
@@ -286,10 +303,12 @@ class Slider(QtWidgets.QMainWindow):
 
     def minusClicked(self):
         self.sliderWidget.setSliderPosition(self.sliderWidget.value()-1)
+        self._last_moved = False
         if not self.slider_instantaneous: self.sliderReleased()
 
     def plusClicked(self):
         self.sliderWidget.setSliderPosition(self.sliderWidget.value()+1)
+        self._last_moved = False
         if not self.slider_instantaneous: self.sliderReleased()
 
     def badType(self):
@@ -307,12 +326,3 @@ class Slider(QtWidgets.QMainWindow):
 
         if self.gui is None:
             QtWidgets.QApplication.quit()  # close the slider app
-
-
-class ProxyStyle(QtWidgets.QProxyStyle):
-    """ https://stackoverflow.com/questions/67299834/pyqt-slider-not-come-to-a-specific-location-where-i-click-but-move-to-a-certain """
-    def styleHint(self, hint, opt=None, widget=None, returnData=None):
-        res = super().styleHint(hint, opt, widget, returnData)
-        if hint == QtWidgets.QStyle.SH_Slider_AbsoluteSetButtons:
-            res |= LeftButton
-        return res

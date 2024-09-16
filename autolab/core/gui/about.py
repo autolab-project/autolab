@@ -68,9 +68,11 @@ class AboutWindow(QtWidgets.QMainWindow):
 
         frameOverview = QtWidgets.QFrame()
         layoutOverview = QtWidgets.QVBoxLayout(frameOverview)
+        layoutOverview.setAlignment(QtCore.Qt.AlignTop)
 
         frameLegal = QtWidgets.QFrame()
         layoutLegal = QtWidgets.QVBoxLayout(frameLegal)
+        layoutLegal.setAlignment(QtCore.Qt.AlignTop)
 
         tab = QtWidgets.QTabWidget(self)
         tab.addTab(frameOverview, 'Overview')
