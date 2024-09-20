@@ -64,7 +64,8 @@ from .core.web import report, doc
 from .core.server import Server as server
 
 # GUI
-from .core.gui import gui, plotter, monitor, slider, add_device, about, variables_menu
+from .core.gui import (gui, plotter, monitor, slider, add_device, about,
+                       variables_menu, preferences)
 
 from .core.variables import get_variable, list_variables
 from .core.variables import set_variable as add_variable

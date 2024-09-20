@@ -49,10 +49,22 @@ class AboutWindow(QtWidgets.QMainWindow):
     def __init__(self, parent: QtWidgets.QMainWindow = None):
 
         super().__init__(parent)
-        self.has_gui = bool(parent)
+        self.mainGui = parent
         self.setWindowTitle('AUTOLAB - About')
         self.setWindowIcon(QtGui.QIcon(icons['autolab']))
 
+        self.init_ui()
+
+        self.adjustSize()
+
+        if self.mainGui:
+            x = (self.parent().geometry().x()
+                 + (self.parent().geometry().width() // 2)
+                 - (self.geometry().width() // 2)
+                 )
+            self.move(x, self.parent().geometry().y())
+
+    def init_ui(self):
         versions = get_versions()
 
         # Main layout creation
@@ -147,5 +159,5 @@ class AboutWindow(QtWidgets.QMainWindow):
         """ Does some steps before the window is really killed """
         clearAbout()
 
-        if not self.has_gui:
+        if not self.mainGui:
             QtWidgets.QApplication.quit()  # close the about app

@@ -270,8 +270,8 @@ def _install_drivers_custom(_print=True, parent=None):
             def __init__(self, url, list_driver, OUTPUT_DIR, parent=None):
                 """ GUI to select which driver to install from the official github repo """
 
-                self.gui = parent
-                self.url = url
+                self.mainGui = parent
+                self.url = url  # TODO: use dict DRIVER_REPOSITORY to have all urls
                 self.list_driver = list_driver
                 self.OUTPUT_DIR = OUTPUT_DIR
 
@@ -283,6 +283,18 @@ def _install_drivers_custom(_print=True, parent=None):
 
                 self.statusBar = self.statusBar()
 
+                self.init_ui()
+
+                self.adjustSize()
+
+                if self.mainGui:
+                    x = (self.parent().geometry().x()
+                         + (self.parent().geometry().width() // 2)
+                         - (self.geometry().width() // 2)
+                         )
+                    self.move(x, self.parent().geometry().y())
+
+            def init_ui(self):
                 centralWidget = QtWidgets.QWidget()
                 self.setCentralWidget(centralWidget)
 
@@ -364,7 +376,7 @@ def _install_drivers_custom(_print=True, parent=None):
                 """ This function does some steps before the window is really killed """
                 super().closeEvent(event)
 
-                if self.gui is None:
+                if not self.mainGui:
                     QtWidgets.QApplication.quit()  # close the app
 
             def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):

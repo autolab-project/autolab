@@ -108,7 +108,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
 
         # Import Autolab config
         control_center_config = get_control_center_config()
-        self.precision = int(control_center_config['precision'])
+        self.precision = int(float(control_center_config['precision']))
 
         if self.action.has_parameter:
             if self.action.type in [int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]:
@@ -372,7 +372,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
         # Import Autolab config
         control_center_config = get_control_center_config()
-        self.precision = int(control_center_config['precision'])
+        self.precision = int(float(control_center_config['precision']))
 
         # Signal creation and associations in autolab devices instances
         self.readSignal = ReadSignal()

@@ -25,6 +25,7 @@ MONITOR_ICON_NAME = os.path.join(icons_folder, 'monitor-icon.svg').replace("\\",
 PARAMETER_ICON_NAME = os.path.join(icons_folder, 'parameter-icon.svg').replace("\\", "/")
 PDF_ICON_NAME = os.path.join(icons_folder, 'pdf-icon.svg').replace("\\", "/")
 PLOTTER_ICON_NAME = os.path.join(icons_folder, 'plotter-icon.svg').replace("\\", "/")
+PREFERENCE_ICON_NAME = os.path.join(icons_folder, 'preference-icon.svg').replace("\\", "/")
 READ_SAVE_ICON_NAME = os.path.join(icons_folder, 'read-save-icon.svg').replace("\\", "/")
 READTHEDOCS_ICON_NAME = os.path.join(icons_folder, 'readthedocs-icon.svg').replace("\\", "/")
 RECIPE_ICON_NAME = os.path.join(icons_folder, 'recipe-icon.svg').replace("\\", "/")
@@ -52,8 +53,9 @@ icons = {'action': ACTION_ICON_NAME,
          'measure': MEASURE_ICON_NAME,
          'monitor': MONITOR_ICON_NAME,
          'parameter': PARAMETER_ICON_NAME,
-         'plotter': PLOTTER_ICON_NAME,
          'pdf': PDF_ICON_NAME,
+         'plotter': PLOTTER_ICON_NAME,
+         'preference': PREFERENCE_ICON_NAME,
          'read-save': READ_SAVE_ICON_NAME,
          'readthedocs': READTHEDOCS_ICON_NAME,
          'recipe': RECIPE_ICON_NAME,

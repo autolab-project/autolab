@@ -17,13 +17,17 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 import pyqtgraph as pg
+from pyqtgraph.dockarea.DockArea import DockArea
+from pyqtgraph.dockarea.Dock import Dock
+from pyqtgraph.console import ConsoleWidget
 
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
 from ..GUI_instances import (closePlotter, closeAbout, closeAddDevice,
                              closeMonitors, closeSliders, closeVariablesMenu,
-                             openPlotter, openAbout, openAddDevice, openVariablesMenu)
+                             openPlotter, openAbout, openAddDevice, openVariablesMenu,
+                             openPreferences, closePreferences)
 from ..icons import icons
 from ...paths import PATHS
 from ...devices import list_devices, list_loaded_devices, Device, close
@@ -134,7 +138,58 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         self.close_device_on_exit = True
 
+        # Thread manager
+        self.threadManager = ThreadManager(self)
+        self.threadDeviceDict = {}
+        self.threadItemDict = {}
+
+        # Scanner
+        self.scanner = None
+
+        # Timer for device instantiation
+        self.timerDevice = QtCore.QTimer(self)
+        self.timerDevice.setInterval(50) # ms
+        self.timerDevice.timeout.connect(self.timerAction)
+
+        # queue and timer to add/remove plot from driver
+        self.queue_driver = queue.Queue()
+        self.dict_widget = {}
+        self.timerQueue = QtCore.QTimer(self)
+        self.timerQueue.setInterval(int(50)) # ms
+        self.timerQueue.timeout.connect(self._queueDriverHandler)
+        self._stop_timerQueue = False
+
+        # Import Autolab config
+        control_center_config = get_control_center_config()
+        logger_active = boolean(control_center_config['logger'])
+        console_active = boolean(control_center_config['console'])
+
+        self._logger_area = None
+        self._console_area = None
+        self.stdout = None
+        self.stderr = None
+
+        self.init_ui()
+
+        if logger_active:
+            self.add_logger()
+
+        if console_active:
+            self.add_console()
+
+    def init_ui(self):
         # Main frame configuration: centralWidget(verticalLayout(splitter(tree)))
+        centralWidget = QtWidgets.QWidget()
+        self.setCentralWidget(centralWidget)
+
+        verticalLayout = QtWidgets.QVBoxLayout(centralWidget)
+        verticalLayout.setSpacing(0)
+        verticalLayout.setContentsMargins(0,0,0,0)
+
+        self.splitter = QtWidgets.QSplitter()
+        self.splitter.setOrientation(QtCore.Qt.Vertical)
+        verticalLayout.addWidget(self.splitter)
+
         self.tree = MyQTreeWidget(self)
         self.tree.last_drag = None
         self.tree.setHeaderLabels(['Objects', 'Type', 'Actions', 'Values', ''])
@@ -150,14 +205,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.tree.customContextMenuRequested.connect(self.rightClick)
         self.tree.setAlternatingRowColors(True)
 
-        self.splitter = QtWidgets.QSplitter()
-        self.splitter.setOrientation(QtCore.Qt.Vertical)
         self.splitter.addWidget(self.tree)
-
-        verticalLayout = QtWidgets.QVBoxLayout()
-        verticalLayout.setSpacing(0)
-        verticalLayout.setContentsMargins(0,0,0,0)
-        verticalLayout.addWidget(self.splitter)
 
         closeWidget = QtWidgets.QCheckBox('Disconnect devices on exit')
         closeWidget.setChecked(self.close_device_on_exit)
@@ -170,20 +218,13 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         verticalLayout.addLayout(horizontalLayout)
 
-        centralWidget = QtWidgets.QWidget()
-        centralWidget.setLayout(verticalLayout)
-        self.setCentralWidget(centralWidget)
-
         self.menuBar = self.menuBar()
         self.statusBar = self.statusBar()
 
-        # Thread manager
-        self.threadManager = ThreadManager(self)
-        self.threadDeviceDict = {}
-        self.threadItemDict = {}
-
-        # Scanner
-        self.scanner = None
+        style = QtWidgets.QApplication.style()
+        file_icon = style.standardIcon(QtWidgets.QStyle.SP_FileIcon)
+        folder_icon = style.standardIcon(QtWidgets.QStyle.SP_DirIcon)
+        reload_icon = style.standardIcon(QtWidgets.QStyle.SP_BrowserReload)
 
         # Menu
         scanAction = self.menuBar.addAction('Open Scanner')
@@ -200,34 +241,32 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         settingsMenu = self.menuBar.addMenu('Settings')
 
-        autolabConfig = settingsMenu.addAction('Autolab config')
-        autolabConfig.setIcon(QtGui.QIcon(icons['config']))
-        autolabConfig.triggered.connect(self.openAutolabConfig)
-        autolabConfig.setStatusTip("Open the Autolab configuration file")
+        Preferences = settingsMenu.addAction('Preferences')
+        Preferences.setIcon(QtGui.QIcon(icons['preference']))
+        Preferences.triggered.connect(lambda: openPreferences(gui=self))
+        Preferences.setStatusTip("Open the preferences window")
 
-        plotterConfig = settingsMenu.addAction('Plotter config')
-        plotterConfig.setIcon(QtGui.QIcon(icons['config']))
-        plotterConfig.triggered.connect(self.openPlotterConfig)
-        plotterConfig.setStatusTip("Open the plotter configuration file")
+        userFolder = settingsMenu.addAction('User folder')
+        userFolder.setIcon(folder_icon)
+        userFolder.triggered.connect(self.openUserFolder)
+        userFolder.setStatusTip("Open the user folder")
 
         settingsMenu.addSeparator()
 
         devicesConfig = settingsMenu.addAction('Devices config')
-        devicesConfig.setIcon(QtGui.QIcon(icons['config']))
+        devicesConfig.setIcon(file_icon)
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
 
-        addDeviceAction = settingsMenu.addAction('Add device')
-        addDeviceAction.setIcon(QtGui.QIcon(icons['add']))
-        addDeviceAction.triggered.connect(lambda: openAddDevice(gui=self))
-        addDeviceAction.setStatusTip("Open the utility to add a device")
-
         downloadDriverAction = settingsMenu.addAction('Download drivers')
-        downloadDriverAction.setIcon(QtGui.QIcon(icons['add']))
+        downloadDriverAction.setIcon(QtGui.QIcon(icons['read-save']))
         downloadDriverAction.triggered.connect(self.downloadDriver)
         downloadDriverAction.setStatusTip("Open the utility to download drivers")
 
+        settingsMenu.addSeparator()
+
         refreshAction = settingsMenu.addAction('Refresh devices')
+        refreshAction.setIcon(reload_icon)
         refreshAction.triggered.connect(self.initialize)
         refreshAction.setStatusTip('Reload devices setting')
 
@@ -258,69 +297,85 @@ class ControlCenter(QtWidgets.QMainWindow):
         aboutAction.setStatusTip('Information about Autolab')
         # / Menu
 
-        # Timer for device instantiation
-        self.timerDevice = QtCore.QTimer(self)
-        self.timerDevice.setInterval(50) # ms
-        self.timerDevice.timeout.connect(self.timerAction)
-
-        # queue and timer to add/remove plot from driver
-        self.queue_driver = queue.Queue()
-        self.dict_widget = {}
-        self.timerQueue = QtCore.QTimer(self)
-        self.timerQueue.setInterval(int(50)) # ms
-        self.timerQueue.timeout.connect(self._queueDriverHandler)
-        self._stop_timerQueue = False
-
-        # Import Autolab config
-        control_center_config = get_control_center_config()
-        logger_active = boolean(control_center_config['logger'])
-        console_active = boolean(control_center_config['console'])
-        print_active = boolean(control_center_config['print'])
-
-        # Prepare docker
-        if console_active or logger_active:
-            from pyqtgraph.dockarea.DockArea import DockArea
-            from pyqtgraph.dockarea.Dock import Dock
-
-        # Set logger
-        self.stdout = OutputWrapper(self, True, logger_active, print_active)
-        self.stderr = OutputWrapper(self, False, logger_active, print_active)
-
-        if logger_active:
-            area_1 = DockArea(self)
-            self.splitter.addWidget(area_1)
-
-            logger_dock = Dock("Logger")
-            area_1.addDock(logger_dock, 'bottom')
-            self._logger_dock = logger_dock
-
-            self.logger = QtWidgets.QTextBrowser(self)
-            self.loggerDefaultColor = self.logger.textColor()
-            self.stdout.outputWritten.connect(self.handleOutput)
-            self.stderr.outputWritten.connect(self.handleOutput)
-
-            logger_dock.addWidget(self.logger)
-
-        if console_active:
-            from pyqtgraph.console import ConsoleWidget
-            import autolab
-            namespace = {'np': np, 'pd': pd, 'autolab': autolab}
-            text = """ Packages imported: autolab, numpy as np, pandas as pd.\n"""
-            area_2 = DockArea(self)
-            self.splitter.addWidget(area_2)
-
-            console_dock = Dock("Console")
-            self._console_dock = console_dock
-            area_2.addDock(console_dock, 'bottom')
-
-            console_widget = ConsoleWidget(namespace=namespace, text=text)
-            console_dock.addWidget(console_widget)
-
+    def update_handle(self):
         for splitter in (self.splitter, ):
             for i in range(splitter.count()):
                 handle = splitter.handle(i)
                 handle.setStyleSheet("background-color: #DDDDDD;")
                 handle.installEventFilter(self)
+
+    def activate_logger(self, activate: bool):
+        if activate:
+            self.add_logger()
+        else:
+            self.remove_logger()
+
+    def add_logger(self):
+        self.remove_logger()
+
+        logger_area = DockArea(self)
+        self._logger_area = logger_area
+        self.splitter.addWidget(logger_area)
+
+        logger_dock = Dock("Logger")
+        logger_area.addDock(logger_dock, 'bottom')
+
+        self.logger = QtWidgets.QTextBrowser(self)
+        self.loggerDefaultColor = self.logger.textColor()
+
+        # Set logger
+        control_center_config = get_control_center_config()
+        print_active = boolean(control_center_config['print'])
+        self.stdout = OutputWrapper(self, True, True, print_active)
+        self.stderr = OutputWrapper(self, False, True, print_active)
+        self.stdout.outputWritten.connect(self.handleOutput)
+        self.stderr.outputWritten.connect(self.handleOutput)
+
+        logger_dock.addWidget(self.logger)
+
+        self.update_handle()
+
+    def remove_logger(self):
+        if self._logger_area:
+            self._logger_area.deleteLater()
+            self._logger_area = None
+
+            if self.stdout:
+                sys.stdout = self.stdout._stream
+                self.stdout = None
+
+            if self.stderr:
+                sys.stderr = self.stderr._stream
+                self.stderr = None
+
+    def activate_console(self, activate: bool):
+        if activate:
+            self.add_console()
+        else:
+            self.remove_console()
+
+    def add_console(self):
+        self.remove_console()
+
+        import autolab
+        namespace = {'np': np, 'pd': pd, 'autolab': autolab}
+        text = """ Packages imported: autolab, numpy as np, pandas as pd.\n"""
+        console_area = DockArea(self)
+        self._console_area = console_area
+        self.splitter.addWidget(console_area)
+
+        console_dock = Dock("Console")
+        console_area.addDock(console_dock, 'bottom')
+
+        console_widget = ConsoleWidget(namespace=namespace, text=text)
+        console_dock.addWidget(console_widget)
+
+        self.update_handle()
+
+    def remove_console(self):
+        if self._console_area:
+            self._console_area.deleteLater()
+            self._console_area = None
 
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.Enter:
@@ -514,19 +569,14 @@ class ControlCenter(QtWidgets.QMainWindow):
         _install_drivers_custom(parent=self)
 
     @staticmethod
-    def openAutolabConfig():
-        """ Open the Autolab configuration file """
-        open_file(PATHS['autolab_config'])
-
-    @staticmethod
     def openDevicesConfig():
         """ Open the devices configuration file """
         open_file(PATHS['devices_config'])
 
     @staticmethod
-    def openPlotterConfig():
-        """ Open the plotter configuration file """
-        open_file(PATHS['plotter_config'])
+    def openUserFolder():
+        """ Open the user folder """
+        open_file(PATHS['user_folder'])
 
     def setScanParameter(self, recipe_name: str, param_name: str,
                          variable: Variable_og):
@@ -573,18 +623,15 @@ class ControlCenter(QtWidgets.QMainWindow):
         closeMonitors()
         closeSliders()
         closeVariablesMenu()
+        closePreferences()
 
         if self.close_device_on_exit:
             close()  # close all devices
 
         QtWidgets.QApplication.quit()  # close the control center interface
 
-        if hasattr(self, 'stdout'):
-            sys.stdout = self.stdout._stream
-            sys.stderr = self.stderr._stream
-
-        if hasattr(self, '_logger_dock'): self._logger_dock.deleteLater()
-        if hasattr(self, '_console_dock'): self._console_dock.deleteLater()
+        self.remove_logger()
+        self.remove_console()
 
         try:
             # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui

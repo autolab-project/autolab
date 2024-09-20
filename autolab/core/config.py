@@ -14,9 +14,9 @@ from .paths import PATHS, DRIVER_SOURCES, DRIVER_REPOSITORY
 from .utilities import boolean
 
 
-# ==============================================================================
+# =============================================================================
 # GENERAL
-# ==============================================================================
+# =============================================================================
 
 def initialize_local_directory() -> bool:
     """ This function creates the default autolab local directory.
@@ -67,13 +67,13 @@ def initialize_local_directory() -> bool:
     return FIRST
 
 
-def save_config(config_name, config):
+def save_config(config_name: str, config: configparser.ConfigParser):
     """ This function saves the given config parser in the autolab configuration file """
     with open(PATHS[config_name], 'w') as file:
         config.write(file)
 
 
-def load_config(config_name) -> configparser.ConfigParser:
+def load_config(config_name: str) -> configparser.ConfigParser:
     """ This function loads the autolab configuration file in a config parser """
     config = configparser.ConfigParser(allow_no_value=True, delimiters='=')  # don't want ':' as delim, needed for path as key
     config.optionxform = str
@@ -82,6 +82,20 @@ def load_config(config_name) -> configparser.ConfigParser:
                     encoding='utf-8')
     except:
         config.read(PATHS[config_name])
+
+    return config
+
+
+def modify_config(config_name: str, config_dict: dict) -> configparser.ConfigParser:
+    """ Returns a modified config file structures using the input dict """
+    config = load_config(config_name)
+
+    for section_key, section_dic in config_dict.items():
+        conf = {}
+        for key, dic in section_dic.items():
+            conf[key] = str(dic)
+
+        config[section_key] = conf
 
     return config
 
@@ -109,43 +123,61 @@ def load_config(config_name) -> configparser.ConfigParser:
 #     return get_config_section(config,section_name)
 
 
-# ==============================================================================
+# =============================================================================
 # AUTOLAB CONFIG
-# ==============================================================================
+# =============================================================================
+
+autolab_dict = {
+    'server': {'port': 4001},
+    'GUI': {'qt_api': "default",
+            'theme': "default",
+            'font_size': 10,
+            'image_background': 'w',
+            'image_foreground': 'k'},
+    'control_center': {'precision': 7,
+                       'print': True,
+                       'logger': False,
+                       'console': False},
+    'monitor': {'precision': 4,
+                'save_figure': True},
+    'scanner': {'precision': 15,
+                'save_config': True,
+                'save_figure': True,
+                'save_temp': True},
+    'directories': {'temp_folder': 'default'},
+    'extra_driver_path': {},
+    'extra_driver_url_repo': {},
+}
+
+
+def change_autolab_config(config: configparser.ConfigParser):
+    """ Save the autolab config file structures with comments """
+    config.set('GUI', '# qt_api -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
+    config.set('GUI', '# theme -> Choose between default and dark')
+    config.set('scanner', '# Think twice before using save_temp = False')
+    config.set('extra_driver_path', r'# Example: onedrive = C:\Users\username\OneDrive\my_drivers')
+    config.set('extra_driver_url_repo', r'# Example: C:\Users\username\OneDrive\my_drivers = https://github.com/my_repo/my_drivers')
+
+    if not boolean(config['scanner']["save_temp"]):
+        print('Warning: save_temp in "autolab_config.ini" is disabled, ' \
+              'be aware that data will not be saved during the scan. ' \
+              'If a crash occurs during a scan, you will loose its data. ' \
+              'Disabling this option is only useful if you want to do fast ' \
+              'scan when plotting large dataframe (images for examples)')
+
+    save_config('autolab_config', config)
+
 
 def check_autolab_config():
-    """ This function checks config file structures """
+    """ Changes the autolab config file structures """
     autolab_config = load_config('autolab_config')
-
-    autolab_dict = {
-        'server': {'port': 4001},
-        'GUI': {'qt_api': "default",
-                'theme': "default",
-                'font_size': 10,
-                'image_background': 'w',
-                'image_foreground': 'k'},
-        'control_center': {'precision': 7,
-                           'print': True,
-                           'logger': False,
-                           'console': False},
-        'monitor': {'precision': 4,
-                    'save_figure': True},
-        'scanner': {'precision': 15,
-                    'save_config': True,
-                    'save_figure': True,
-                    'save_temp': True},
-        'directories': {'temp_folder': 'default'},
-        'extra_driver_path': {},
-        'extra_driver_url_repo': {},
-        # 'plotter': {'precision': 10},
-    }
 
     for section_key, section_dic in autolab_dict.items():
         if section_key in autolab_config.sections():
             conf = dict(autolab_config[section_key])
-            for key, dic in section_dic.items():
+            for key, value in section_dic.items():
                 if key not in conf:
-                    conf[key] = str(dic)
+                    conf[key] = str(value)
         else:
             conf = section_dic
 
@@ -157,30 +189,35 @@ def check_autolab_config():
         autolab_config.remove_option('GUI', 'QT_API')
         autolab_config.set('GUI', 'qt_api', value)
 
-    autolab_config.set('GUI', '# qt_api -> Choose between default, pyqt5, pyside2, pyqt6 and pyside6')
-    autolab_config.set('GUI', '# theme -> Choose between default and dark')
+    # Check and correct boolean, float and int
+    for section_key, section_dic in autolab_dict.items():
+        for key, value in section_dic.items():
+            # exception for default
+            if section_key == 'GUI' and key == 'font_size' and value == 'default':
+                continue
+            try:
+                if isinstance(value, bool):
+                    boolean(autolab_config[section_key][key])
+                elif isinstance(value, float):
+                    float(autolab_config[section_key][key])
+                elif isinstance(value, int):
+                    int(float(autolab_config[section_key][key]))
+            except:
+                autolab_config[section_key][key] = str(autolab_dict[section_key][key])
+                print(f'Wrong {section_key} {key} in config, change to default value')
 
-    autolab_config.set('scanner', '# Think twice before using save_temp = False')
+    # Check for specific values
+    if autolab_config['GUI']['theme'] not in ('default', 'dark'):
+        autolab_config['GUI']['theme'] = str(autolab_dict['GUI']['theme'])
+        print('Wrong GUI theme in config, change to default value')
 
-    if not boolean(autolab_config['scanner']["save_temp"]):
-        print('Warning: save_temp in "autolab_config.ini" is disabled, ' \
-              'be aware that data will not be saved during the scan. ' \
-              'If a crash occurs during a scan, you will loose its data. ' \
-              'Disabling this option is only useful if you want to do fast ' \
-              'scan when plotting large dataframe (images for examples)')
-
-    autolab_config.set('extra_driver_path', r'# Example: onedrive = C:\Users\username\OneDrive\my_drivers')
-
-    autolab_config.set('extra_driver_url_repo', r'# Example: C:\Users\username\OneDrive\my_drivers = https://github.com/my_repo/my_drivers')
-
-    save_config('autolab_config', autolab_config)
+    change_autolab_config(autolab_config)
 
 
-def get_config(section_name) -> configparser.SectionProxy:
+def get_config(section_name: str) -> configparser.SectionProxy:
     ''' Returns section from autolab_config.ini '''
     config = load_config('autolab_config')
     assert section_name in config.sections(), f'Missing {section_name} section in autolab_config.ini'
-
     return config[section_name]
 
 
@@ -192,6 +229,7 @@ def get_server_config() -> configparser.SectionProxy:
 def get_GUI_config() -> configparser.SectionProxy:
     ''' Returns section qt_api from autolab_config.ini '''
     return get_config('GUI')
+
 
 def get_control_center_config() -> configparser.SectionProxy:
     ''' Returns section control_center from autolab_config.ini '''
@@ -266,37 +304,41 @@ def add_extra_driver_repo_url():
             {driver_path_name: extra_driver_path[driver_path_name]})
 
 
-# ==============================================================================
+# =============================================================================
 # PLOTTER CONFIG
-# ==============================================================================
+# =============================================================================
+
+plotter_dict = {
+    'plugin': {'plotter': 'plotter'},
+    'device': {'address': 'dummy.array_1D'},
+}
+
+def change_plotter_config(config: configparser.ConfigParser):
+    """ Save the plotter config file structures with comments """
+    config.set('plugin', '# Usage: <PLUGIN_NAME> = <DEVICE_NAME>')
+    config.set('plugin', '# Example: plotter = plotter')
+    config.set('device', '# Usage: address = <DEVICE_VARIABLE>')
+    config.set('device', '# Example: address = dummy.array_1D')
+
+    save_config('plotter_config', config)
+
 
 def check_plotter_config():
     """ This function checks config file structures """
     plotter_config = load_config('plotter_config')
 
-    plotter_dict = {
-        'plugin': {'plotter': 'plotter'},
-        'device': {'address': 'dummy.array_1D'},
-    }
-
     for section_key, section_dic in plotter_dict.items():
         if section_key in plotter_config.sections():
             conf = dict(plotter_config[section_key])
-            for key, dic in section_dic.items():
+            for key, value in section_dic.items():
                 if key not in conf:
-                    conf[key] = str(dic)
+                    conf[key] = str(value)
         else:
             conf = section_dic
 
         plotter_config[section_key] = conf
 
-    plotter_config.set('plugin', '# Usage: <PLUGIN_NAME> = <DEVICE_NAME>')
-    plotter_config.set('plugin', '# Example: plotter = plotter')
-
-    plotter_config.set('device', '# Usage: address = <DEVICE_VARIABLE>')
-    plotter_config.set('device', '# Example: address = dummy.array_1D')
-
-    save_config('plotter_config', plotter_config)
+    change_plotter_config(plotter_config)
 
 
 # =============================================================================

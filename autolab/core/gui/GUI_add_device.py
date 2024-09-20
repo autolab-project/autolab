@@ -382,5 +382,5 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         """ Does some steps before the window is really killed """
         clearAddDevice()
 
-        if self.mainGui is None:
+        if not self.mainGui:
             QtWidgets.QApplication.quit()  # close the monitor app

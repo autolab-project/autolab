@@ -16,11 +16,11 @@ from ..variables import Variable
 
 # Contains local import:
 # from .monitoring.main import Monitor
-# from .slider import Slider
+# from .GUI_slider import Slider
 # from .GUI_variables import VariablesMenu
 # from .plotting.main import Plotter
-# from .add_device import AddDeviceWindow
-# from .about import AboutWindow
+# from .GUI_add_device import AddDeviceWindow
+# from .GUI_about import AboutWindow
 # Not yet or maybe never (too intertwined with mainGui) # from .scanning.main import Scanner
 
 
@@ -31,6 +31,7 @@ instances = {
     'plotter': None,
     'addDevice': None,
     'about': None,
+    'preferences': None,
     # 'scanner': None,
 }
 
@@ -78,7 +79,7 @@ def openSlider(variable: Union[Variable, Variable_og],
                gui: QtWidgets.QMainWindow = None,
                item: QtWidgets.QTreeWidgetItem = None):
     """ This function open the slider associated to this variable. """
-    from .slider import Slider  # Inside to avoid circular import
+    from .GUI_slider import Slider  # Inside to avoid circular import
 
     assert isinstance(variable, (Variable, Variable_og)), (
         f'Need type {Variable} or {Variable_og}, but given type is {type(variable)}')
@@ -180,7 +181,7 @@ def closePlotter():
 # =============================================================================
 def openAddDevice(gui: QtWidgets.QMainWindow = None, name: str = ''):
     """ This function open the add device window. """
-    from .add_device import AddDeviceWindow  # Inside to avoid circular import
+    from .GUI_add_device import AddDeviceWindow  # Inside to avoid circular import
     # If the add device window is not already running, create one
     if instances['addDevice'] is None:
         instances['addDevice'] = AddDeviceWindow(gui)
@@ -219,7 +220,7 @@ def closeAddDevice():
 def openAbout(gui: QtWidgets.QMainWindow = None):
     """ This function open the about window. """
     # If the about window is not already running, create one
-    from .about import AboutWindow  # Inside to avoid circular import
+    from .GUI_about import AboutWindow  # Inside to avoid circular import
     if instances['about'] is None:
         instances['about'] = AboutWindow(gui)
         instances['about'].show()
@@ -240,6 +241,35 @@ def clearAbout():
 def closeAbout():
     if instances['about'] is not None:
         instances['about'].close()
+
+
+# =============================================================================
+# Preferences
+# =============================================================================
+def openPreferences(gui: QtWidgets.QMainWindow = None):
+    """ This function open the preferences window. """
+    # If the about window is not already running, create one
+    from .GUI_preferences import PreferencesWindow  # Inside to avoid circular import
+    if instances['preferences'] is None:
+        instances['preferences'] = PreferencesWindow(gui)
+        instances['preferences'].show()
+        instances['preferences'].activateWindow()
+    # If the about window is already running, just make as the front window
+    else:
+        instances['preferences'].setWindowState(
+            instances['preferences'].windowState()
+            & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+        instances['preferences'].activateWindow()
+
+
+def clearPreferences():
+    """ This clear the preferences instance reference when quitted """
+    instances['preferences'] = None
+
+
+def closePreferences():
+    if instances['preferences'] is not None:
+        instances['preferences'].close()
 
 
 # =============================================================================

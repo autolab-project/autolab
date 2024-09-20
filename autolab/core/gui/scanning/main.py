@@ -28,9 +28,9 @@ from ...config import get_scanner_config
 
 class Scanner(QtWidgets.QMainWindow):
 
-    def __init__(self, mainGui: QtWidgets.QMainWindow):
+    def __init__(self, parent: QtWidgets.QMainWindow):
 
-        self.mainGui = mainGui
+        self.mainGui = parent
 
         # Configuration of the window
         super().__init__()

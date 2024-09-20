@@ -55,6 +55,11 @@ def variables_menu():
     _start('variables_menu')
 
 
+def preferences():
+    """ Open the preferences window """
+    _start('preferences')
+
+
 def _start(gui: str, **kwargs):
     """ Open the Autolab GUI if gui='gui', the Plotter if gui='plotter'
     or the Monitor if gui='monitor' """
@@ -113,7 +118,7 @@ conda install -c conda-forge pyside6
 
         if GUI_config['font_size'] != 'default':
             font = app.font()
-            font.setPointSize(int(GUI_config['font_size']))
+            font.setPointSize(int(float(GUI_config['font_size'])))
             app.setFont(font)
 
         var = kwargs.get('var')
@@ -141,6 +146,9 @@ conda install -c conda-forge pyside6
         elif gui == 'variables_menu':
             from .GUI_instances import openVariablesMenu
             openVariablesMenu()
+        elif gui == 'preferences':
+            from .GUI_instances import openPreferences
+            openPreferences()
         else:
             raise ValueError("gui accept either 'main', 'plotter', 'monitor'," \
                              "'slider, add_device', 'about' or 'variables_menu'" \

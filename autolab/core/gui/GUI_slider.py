@@ -51,7 +51,7 @@ class Slider(QtWidgets.QMainWindow):
 
         # Load configuration
         control_center_config = get_control_center_config()
-        self.precision = int(control_center_config['precision'])
+        self.precision = int(float(control_center_config['precision']))
 
         self._font_size = get_font_size()
 

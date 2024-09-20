@@ -17,7 +17,7 @@ from qtpy import QtWidgets, QtGui, QtCore
 from .display import DisplayValues
 from ..GUI_utilities import (get_font_size, setLineEditBackground,
                              pyqtgraph_fig_ax, pyqtgraph_image)
-from ..slider import Slider
+from ..GUI_slider import Slider
 from ..icons import icons
 from ...variables import Variable
 

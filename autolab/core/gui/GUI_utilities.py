@@ -44,7 +44,7 @@ ONCE = False
 def get_font_size() -> int:
     GUI_config = get_GUI_config()
 
-    return (int(GUI_config['font_size'])
+    return (int(float(GUI_config['font_size']))
                  if GUI_config['font_size'] != 'default'
                  else QtWidgets.QApplication.instance().font().pointSize())
 
