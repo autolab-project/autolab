@@ -71,7 +71,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>361</width>
+                <width>360</width>
                 <height>589</height>
                </rect>
               </property>
@@ -434,8 +434,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>282</width>
-                     <height>584</height>
+                     <width>283</width>
+                     <height>586</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -709,7 +709,7 @@
          </widget>
         </item>
         <item>
-         <widget class="Line" name="line_2">
+         <widget class="Line" name="line_H">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -762,12 +762,12 @@
               <string>Save data of the selected scan</string>
              </property>
              <property name="text">
-              <string>Save</string>
+              <string>Save scan1</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="Line" name="line">
+            <widget class="Line" name="line_V">
              <property name="minimumSize">
               <size>
                <width>10</width>
@@ -828,6 +828,16 @@
              </property>
              <property name="text">
               <string>Scan data</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="sendScanData_pushButton">
+             <property name="toolTip">
+              <string>Send scan recipe dataframe to Plotter</string>
+             </property>
+             <property name="text">
+              <string>Send to Plotter</string>
              </property>
             </widget>
            </item>

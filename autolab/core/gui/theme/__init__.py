@@ -42,6 +42,12 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
         QFrame[frameShape='1'], QFrame[frameShape='2'], QFrame[frameShape='3'], QFrame[frameShape='6'] {{
             border: 1px solid {theme['border_color']};
         }}
+        #line_V {{
+            border-left: 1px solid {theme['border_color']};
+        }}
+        #line_H {{
+            border-top: 1px solid {theme['border_color']};
+        }}
         QPushButton {{
             background-color: {theme['secondary_color']};
             border: 1px solid {theme['border_color']};
@@ -71,7 +77,7 @@ def create_stylesheet(theme: Dict[str, str]) -> str:
             border: 1px solid {theme['border_color']};
             border-radius: 4px;
         }}
-        QLineEdit[readOnly="true"] {{
+        QLineEdit:disabled, QLineEdit[readOnly="true"] {{
             background-color: {theme['primary_color']};
             color: {theme['text_disabled_color']};
             border: 1px solid {theme['border_color']};

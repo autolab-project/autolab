@@ -26,7 +26,7 @@ def gui():
 
 
 def plotter(var = None):
-    """ Open the Autolab Plotter with optional variable capture """
+    """ Open the Autolab Plotter with optional variable or dataframe """
     _start('plotter', var=var)
 
 

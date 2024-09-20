@@ -7,6 +7,7 @@ Created on Sat Aug  3 20:40:00 2024
 
 from typing import Union
 
+import pandas as pd
 from qtpy import QtWidgets, QtCore
 
 from ..devices import get_final_device_config
@@ -137,7 +138,7 @@ def closeVariablesMenu():
 # =============================================================================
 # Plotter
 # =============================================================================
-def openPlotter(variable: Union[Variable, Variable_og] = None,
+def openPlotter(variable: Union[Variable, Variable_og, pd.DataFrame] = None,
                 has_parent: bool = False):
     """ This function open the plotter. """
     from .plotting.main import Plotter  # Inside to avoid circular import
@@ -156,7 +157,7 @@ def openPlotter(variable: Union[Variable, Variable_og] = None,
             & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
         instances['plotter'].activateWindow()
 
-    if variable:
+    if variable is not None:
             instances['plotter'].refreshPlotData(variable)
 
 

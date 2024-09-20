@@ -238,10 +238,14 @@ class DataManager:
         path = os.path.dirname(filename)
         PATHS['last_folder'] = path
 
-    def importDeviceData(self, variable: Union[Variable, Variable_og]):
+    def importDeviceData(self, variable: Union[Variable, Variable_og, pd.DataFrame]):
         """ This function open the data of the provided device """
-        name = variable.address()
-        data = variable()  # read value
+        if isinstance(variable, pd.DataFrame):
+            name = variable.name if hasattr(variable, 'name') else 'dataframe'
+            data = variable
+        else:
+            name = variable.address()
+            data = variable()  # read value
         data = data_to_dataframe(data)  # format value
 
         if self.overwriteData:

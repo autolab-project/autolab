@@ -15,6 +15,7 @@ import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
 from qtpy import QtWidgets, QtGui, QtCore
 
 from .display import DisplayValues
+from ..GUI_instances import openPlotter
 from ..GUI_utilities import (get_font_size, setLineEditBackground,
                              pyqtgraph_fig_ax, pyqtgraph_image)
 from ..GUI_slider import Slider
@@ -78,11 +79,17 @@ class FigureManager:
             self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         # Window to show scan data
+        self.gui.displayScanData_pushButton.setIcon(QtGui.QIcon(icons['DataFrame']))
         self.gui.displayScanData_pushButton.clicked.connect(
             self.displayScanDataButtonClicked)
         self.gui.displayScanData_pushButton.hide()
         self.displayScan = DisplayValues("Scan", size=(500, 300))
         self.displayScan.setWindowIcon(QtGui.QIcon(icons['DataFrame']))
+
+        self.gui.sendScanData_pushButton.setIcon(QtGui.QIcon(icons['plotter']))
+        self.gui.sendScanData_pushButton.clicked.connect(
+            self.sendScanDataButtonClicked)
+        self.gui.sendScanData_pushButton.hide()
 
         # comboBox with scan id
         self.gui.data_comboBox.activated.connect(self.data_comboBoxClicked)
@@ -424,6 +431,7 @@ class FigureManager:
                 self.refreshDisplayScanData()
                 if not self.gui.displayScanData_pushButton.isVisible():
                     self.gui.displayScanData_pushButton.show()
+                    self.gui.sendScanData_pushButton.show()
 
                 for temp_data in data:
                     if temp_data is not None: break
@@ -631,9 +639,19 @@ class FigureManager:
             self.displayScan.refresh(datasets[recipe_name].data)
 
     def displayScanDataButtonClicked(self):
-        """ This function opens a window showing the scan data for the displayed scan id """
+        """ Opens a window showing the scan data for the displayed scan id """
         self.refreshDisplayScanData()
         self.displayScan.show()
+
+    def sendScanDataButtonClicked(self):
+        """ Sends the displayer scan data to plotter """
+        recipe_name = self.gui.scan_recipe_comboBox.currentText()
+        datasets = self.gui.dataManager.getLastSelectedDataset()
+        if datasets is not None and recipe_name in datasets:
+            data = datasets[recipe_name].data
+            scan_name = self.gui.data_comboBox.currentText()
+            data.name = f"{scan_name}_{recipe_name}"
+            openPlotter(variable=datasets[recipe_name].data, has_parent=True)
 
     # SAVE FIGURE
     ###########################################################################

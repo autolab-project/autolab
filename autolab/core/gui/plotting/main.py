@@ -11,6 +11,7 @@ import time
 import uuid
 from typing import Type, Union
 
+import pandas as pd
 from qtpy import QtCore, QtWidgets, uic, QtGui
 
 from .figure import FigureManager
@@ -473,7 +474,7 @@ class Plotter(QtWidgets.QMainWindow):
         # OPTIMIZE: timer should not call a heavy function, idealy just take data to plot
         self.refreshPlotData()
 
-    def refreshPlotData(self, variable: Union[Variable, Variable_og] = None):
+    def refreshPlotData(self, variable: Union[Variable, Variable_og, pd.DataFrame] = None):
         """ This function get the last dataset data and display it onto the Plotter GUI """
         try:
             if variable is None:

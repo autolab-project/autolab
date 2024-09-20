@@ -184,6 +184,7 @@ class Scanner(QtWidgets.QMainWindow):
         self.progressBar.setValue(0)
         self.progressBar.setStyleSheet("")
         self.displayScanData_pushButton.hide()
+        self.sendScanData_pushButton.hide()
         self.dataframe_comboBox.clear()
         self.dataframe_comboBox.addItems(["Scan"])
         self.dataframe_comboBox.hide()

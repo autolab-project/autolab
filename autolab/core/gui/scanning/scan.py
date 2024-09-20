@@ -99,7 +99,7 @@ class ScanManager:
 
         # put dataset id onto the combobox and associate data to it
         dataSet_id = len(self.gui.dataManager.datasets)
-        self.gui.data_comboBox.addItem(f'Scan{dataSet_id}')
+        self.gui.data_comboBox.addItem(f'scan{dataSet_id}')
         self.gui.data_comboBox.setCurrentIndex(int(dataSet_id)-1)  # trigger the currentIndexChanged event but don't trigger activated
 
         # Start a new thread
@@ -258,7 +258,6 @@ class ScanManager:
         self.gui.stop_pushButton.setEnabled(False)
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)
-        self.gui.displayScanData_pushButton.setEnabled(True)
         self.gui.importAction.setEnabled(True)
         self.gui.openRecentMenu.setEnabled(True)
         self.gui.configManager.updateUndoRedoButtons()

@@ -32,22 +32,31 @@ class ParameterManager:
 
         self._font_size = get_font_size()
 
+        self.init_ui()
+
+        # Do refresh at start
+        self.refresh()
+
+    def init_ui(self):
         # Parameter frame
-        mainFrame = parameterQFrame(self.gui, self.recipe_name, self.param_name)
-        mainFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        mainFrame.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        mainFrame.customContextMenuRequested.connect(self.rightClick)
-        mainFrame.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                QtWidgets.QSizePolicy.Minimum)
-        self.mainFrame = mainFrame
+        self.mainFrame = parameterQFrame(
+            self.gui, self.recipe_name, self.param_name)
+        self.mainFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.mainFrame.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.mainFrame.customContextMenuRequested.connect(self.rightClick)
+        self.mainFrame.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
 
         # Parameter layout
-        parameterLayout = QtWidgets.QVBoxLayout(mainFrame)
+        parameterLayout = QtWidgets.QVBoxLayout(self.mainFrame)
         parameterLayout.setContentsMargins(0,0,0,0)
         parameterLayout.setSpacing(0)
 
         frameParameter = QtWidgets.QFrame()
-        frameParameter.setToolTip(f"Drag and drop a variable or use the right click option of a variable from the control panel to add a recipe to the tree: {self.recipe_name}")
+        frameParameter.setToolTip(
+            "Drag and drop a variable or use the right click option of a " \
+            "variable from the control panel to add a recipe to the tree: " \
+            f"{self.recipe_name}")
 
         frameScanRange = QtWidgets.QFrame()
 
@@ -56,117 +65,112 @@ class ParameterManager:
 
         ## 1st row frame: Parameter
         ### Name
-        parameterName_lineEdit = QtWidgets.QLineEdit('')
-        parameterName_lineEdit.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
-        parameterName_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        parameterName_lineEdit.setToolTip('Name of the parameter, as it will displayed in the data')
-        parameterName_lineEdit.textEdited.connect(lambda: setLineEditBackground(
-            parameterName_lineEdit, 'edited', self._font_size))
-        parameterName_lineEdit.returnPressed.connect(self.nameChanged)
-        parameterName_lineEdit.setEnabled(False)
-        self.parameterName_lineEdit = parameterName_lineEdit
+        self.parameterName_lineEdit = QtWidgets.QLineEdit('')
+        self.parameterName_lineEdit.setSizePolicy(
+            QtWidgets.QSizePolicy(
+                QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed))
+        self.parameterName_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
+        self.parameterName_lineEdit.setToolTip(
+            'Name of the parameter, as it will displayed in the data')
+        self.parameterName_lineEdit.textEdited.connect(
+            lambda: setLineEditBackground(
+                self.parameterName_lineEdit, 'edited', self._font_size))
+        self.parameterName_lineEdit.returnPressed.connect(self.nameChanged)
+        self.parameterName_lineEdit.setEnabled(False)
 
         ### Address
         parameterAddressIndicator_label = QtWidgets.QLabel("Address:")
-        parameterAddressIndicator_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        parameterAddress_label = QtWidgets.QLabel("<variable>")
-        parameterAddress_label.setAlignment(QtCore.Qt.AlignCenter)
-        parameterAddress_label.setToolTip('Address of the parameter')
-        self.parameterAddress_label = parameterAddress_label
+        parameterAddressIndicator_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.parameterAddress_label = QtWidgets.QLabel("<variable>")
+        self.parameterAddress_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.parameterAddress_label.setToolTip('Address of the parameter')
 
         ### Unit
-        unit_label = QtWidgets.QLabel("uA")
-        unit_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        self.unit_label = unit_label
+        self.unit_label = QtWidgets.QLabel("uA")
+        self.unit_label.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         ### displayParameter button
         self.displayParameter = DisplayValues("Parameter", size=(250, 400))
         self.displayParameter.setWindowIcon(QtGui.QIcon(icons['ndarray']))
-        displayParameter_pushButton = QtWidgets.QPushButton("Parameter")
-        self.displayParameter_pushButton = displayParameter_pushButton
-        self.displayParameter_pushButton.clicked.connect(self.displayParameterButtonClicked)
+        self.displayParameter_pushButton = QtWidgets.QPushButton("Parameter")
+        self.displayParameter_pushButton.setIcon(QtGui.QIcon(icons['ndarray']))
+        self.displayParameter_pushButton.clicked.connect(
+            self.displayParameterButtonClicked)
 
         ## 1sr row layout: Parameter
         layoutParameter = QtWidgets.QHBoxLayout(frameParameter)
-        layoutParameter.addWidget(parameterName_lineEdit)
-        layoutParameter.addWidget(unit_label)
+        layoutParameter.addWidget(self.parameterName_lineEdit)
+        layoutParameter.addWidget(self.unit_label)
         layoutParameter.addWidget(parameterAddressIndicator_label)
-        layoutParameter.addWidget(parameterAddress_label)
-        layoutParameter.addWidget(displayParameter_pushButton)
-
+        layoutParameter.addWidget(self.parameterAddress_label)
+        layoutParameter.addWidget(self.displayParameter_pushButton)
 
         ## 2nd row frame: Range
-        frameScanRange_linLog = QtWidgets.QFrame()
-        self.frameScanRange_linLog = frameScanRange_linLog
+        self.frameScanRange_linLog = QtWidgets.QFrame()
 
         ### first grid widgets: start, stop
-        labelStart = QtWidgets.QLabel("Start", frameScanRange_linLog)
-        start_lineEdit = QtWidgets.QLineEdit('0', frameScanRange_linLog)
-        start_lineEdit.setToolTip('Start value of the scan')
-        start_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.start_lineEdit = start_lineEdit
+        labelStart = QtWidgets.QLabel("Start", self.frameScanRange_linLog)
+        self.start_lineEdit = QtWidgets.QLineEdit('0', self.frameScanRange_linLog)
+        self.start_lineEdit.setToolTip('Start value of the scan')
+        self.start_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
 
-        labelEnd = QtWidgets.QLabel("End", frameScanRange_linLog)
-        end_lineEdit = QtWidgets.QLineEdit('10', frameScanRange_linLog)
-        end_lineEdit.setToolTip('End value of the scan')
-        end_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.end_lineEdit = end_lineEdit
+        labelEnd = QtWidgets.QLabel("End", self.frameScanRange_linLog)
+        self.end_lineEdit = QtWidgets.QLineEdit('10', self.frameScanRange_linLog)
+        self.end_lineEdit.setToolTip('End value of the scan')
+        self.end_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
 
         ### first grid layout: start, stop
-        startEndGridLayout = QtWidgets.QGridLayout(frameScanRange_linLog)
+        startEndGridLayout = QtWidgets.QGridLayout(self.frameScanRange_linLog)
         startEndGridLayout.addWidget(labelStart, 0, 0)
-        startEndGridLayout.addWidget(start_lineEdit, 0, 1)
+        startEndGridLayout.addWidget(self.start_lineEdit, 0, 1)
         startEndGridLayout.addWidget(labelEnd, 1, 0)
-        startEndGridLayout.addWidget(end_lineEdit, 1, 1)
+        startEndGridLayout.addWidget(self.end_lineEdit, 1, 1)
 
-        startEndGridWidget = QtWidgets.QFrame(frameScanRange_linLog)
+        startEndGridWidget = QtWidgets.QFrame(self.frameScanRange_linLog)
         startEndGridWidget.setLayout(startEndGridLayout)
 
         ### second grid widgets: mean, width
-        labelMean = QtWidgets.QLabel("Mean", frameScanRange_linLog)
-        mean_lineEdit = QtWidgets.QLineEdit('5', frameScanRange_linLog)
-        mean_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.mean_lineEdit = mean_lineEdit
+        labelMean = QtWidgets.QLabel("Mean", self.frameScanRange_linLog)
+        self.mean_lineEdit = QtWidgets.QLineEdit('5', self.frameScanRange_linLog)
+        self.mean_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
 
-        labelWidth = QtWidgets.QLabel("Width", frameScanRange_linLog)
-        width_lineEdit = QtWidgets.QLineEdit('10', frameScanRange_linLog)
-        width_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.width_lineEdit = width_lineEdit
+        labelWidth = QtWidgets.QLabel("Width", self.frameScanRange_linLog)
+        self.width_lineEdit = QtWidgets.QLineEdit('10', self.frameScanRange_linLog)
+        self.width_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
 
         ### second grid layout: mean, width
-        meanWidthGridLayout = QtWidgets.QGridLayout(frameScanRange_linLog)
+        meanWidthGridLayout = QtWidgets.QGridLayout(self.frameScanRange_linLog)
         meanWidthGridLayout.addWidget(labelMean, 0, 0)
-        meanWidthGridLayout.addWidget(mean_lineEdit, 0, 1)
+        meanWidthGridLayout.addWidget(self.mean_lineEdit, 0, 1)
         meanWidthGridLayout.addWidget(labelWidth, 1, 0)
-        meanWidthGridLayout.addWidget(width_lineEdit, 1, 1)
+        meanWidthGridLayout.addWidget(self.width_lineEdit, 1, 1)
 
-        meanWidthGridWidget = QtWidgets.QFrame(frameScanRange_linLog)
+        meanWidthGridWidget = QtWidgets.QFrame(self.frameScanRange_linLog)
         meanWidthGridWidget.setLayout(meanWidthGridLayout)
 
         ### third grid widgets: npts, step, log
-        labelNbpts = QtWidgets.QLabel("Nb points", frameScanRange_linLog)
-        nbpts_lineEdit = QtWidgets.QLineEdit('11', frameScanRange_linLog)
-        nbpts_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.nbpts_lineEdit = nbpts_lineEdit
+        labelNbpts = QtWidgets.QLabel("Nb points", self.frameScanRange_linLog)
+        self.nbpts_lineEdit = QtWidgets.QLineEdit('11', self.frameScanRange_linLog)
+        self.nbpts_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
 
-        labelStep = QtWidgets.QLabel("Step", frameScanRange_linLog)
-        self.labelStep = labelStep
-        step_lineEdit = QtWidgets.QLineEdit('1', frameScanRange_linLog)
-        step_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.step_lineEdit = step_lineEdit
+        self.labelStep = QtWidgets.QLabel("Step", self.frameScanRange_linLog)
+        self.step_lineEdit = QtWidgets.QLineEdit('1', self.frameScanRange_linLog)
+        self.step_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
 
         ### third grid layout: npts, step, log
-        nptsStepGridLayout = QtWidgets.QGridLayout(frameScanRange_linLog)
+        nptsStepGridLayout = QtWidgets.QGridLayout(self.frameScanRange_linLog)
         nptsStepGridLayout.addWidget(labelNbpts, 0, 0)
-        nptsStepGridLayout.addWidget(nbpts_lineEdit, 0, 1)
-        nptsStepGridLayout.addWidget(labelStep, 1, 0)
-        nptsStepGridLayout.addWidget(step_lineEdit, 1, 1)
+        nptsStepGridLayout.addWidget(self.nbpts_lineEdit, 0, 1)
+        nptsStepGridLayout.addWidget(self.labelStep, 1, 0)
+        nptsStepGridLayout.addWidget(self.step_lineEdit, 1, 1)
 
-        nptsStepGridWidget = QtWidgets.QFrame(frameScanRange_linLog)
+        nptsStepGridWidget = QtWidgets.QFrame(self.frameScanRange_linLog)
         nptsStepGridWidget.setLayout(nptsStepGridLayout)
 
         ## 2nd row layout: Range
-        layoutScanRange = QtWidgets.QHBoxLayout(frameScanRange_linLog)
+        layoutScanRange = QtWidgets.QHBoxLayout(self.frameScanRange_linLog)
         layoutScanRange.setContentsMargins(0,0,0,0)
         layoutScanRange.setSpacing(0)
         layoutScanRange.addWidget(startEndGridWidget)
@@ -176,66 +180,62 @@ class ParameterManager:
         layoutScanRange.addWidget(nptsStepGridWidget)
 
         ## 2nd row bis frame: Values (hidden at start)
-        frameScanRange_values = QtWidgets.QFrame()
-        self.frameScanRange_values = frameScanRange_values
+        self.frameScanRange_values = QtWidgets.QFrame()
 
         ### first grid widgets: values (hidden at start)
-        labelValues = QtWidgets.QLabel("Values", frameScanRange_values)
-        values_lineEdit = MyLineEdit('[0,1,2,3]', frameScanRange_values)
-        values_lineEdit.setToolTip('Values of the scan')
-        values_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        values_lineEdit.setMaxLength(10000000)
-        self.values_lineEdit = values_lineEdit
+        labelValues = QtWidgets.QLabel("Values", self.frameScanRange_values)
+        self.values_lineEdit = MyLineEdit('[0,1,2,3]', self.frameScanRange_values)
+        self.values_lineEdit.setToolTip('Values of the scan')
+        self.values_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
+        self.values_lineEdit.setMaxLength(10000000)
         # TODO: keep eval in values, show evaluated in evaluated
-        labelEvaluatedValues = QtWidgets.QLabel("Evaluated values", frameScanRange_values)
-        self.labelEvaluatedValues = labelEvaluatedValues
-        evaluatedValues_lineEdit = QtWidgets.QLineEdit('[0,1,2,3]', frameScanRange_values)
-        evaluatedValues_lineEdit.setToolTip('Evaluated values of the scan')
-        evaluatedValues_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        evaluatedValues_lineEdit.setMaxLength(10000000)
-        evaluatedValues_lineEdit.setReadOnly(True)
-        palette = evaluatedValues_lineEdit.palette()
-        palette.setColor(QtGui.QPalette.Base,
-                         palette.color(QtGui.QPalette.Base).darker(107))
-        evaluatedValues_lineEdit.setPalette(palette)
-        self.evaluatedValues_lineEdit = evaluatedValues_lineEdit
+        self.labelEvaluatedValues = QtWidgets.QLabel(
+            "Evaluated values", self.frameScanRange_values)
+        self.evaluatedValues_lineEdit = QtWidgets.QLineEdit(
+            '[0,1,2,3]', self.frameScanRange_values)
+        self.evaluatedValues_lineEdit.setToolTip('Evaluated values of the scan')
+        self.evaluatedValues_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
+        self.evaluatedValues_lineEdit.setMaxLength(10000000)
+        self.evaluatedValues_lineEdit.setReadOnly(True)
+        palette = self.evaluatedValues_lineEdit.palette()
+        palette.setColor(
+            QtGui.QPalette.Base, palette.color(QtGui.QPalette.Base).darker(107))
+        self.evaluatedValues_lineEdit.setPalette(palette)
 
         ### first grid layout: values (hidden at start)
-        valuesGridLayout = QtWidgets.QGridLayout(frameScanRange_values)
+        valuesGridLayout = QtWidgets.QGridLayout(self.frameScanRange_values)
         valuesGridLayout.addWidget(labelValues, 0, 0)
-        valuesGridLayout.addWidget(values_lineEdit, 0, 1)
-        valuesGridLayout.addWidget(labelEvaluatedValues, 1, 0)
-        valuesGridLayout.addWidget(evaluatedValues_lineEdit, 1, 1)
+        valuesGridLayout.addWidget(self.values_lineEdit, 0, 1)
+        valuesGridLayout.addWidget(self.labelEvaluatedValues, 1, 0)
+        valuesGridLayout.addWidget(self.evaluatedValues_lineEdit, 1, 1)
 
-        valuesGridWidget = QtWidgets.QFrame(frameScanRange_values)
+        valuesGridWidget = QtWidgets.QFrame(self.frameScanRange_values)
         valuesGridWidget.setLayout(valuesGridLayout)
 
         ## 2nd row bis layout: Values (hidden at start)
-        layoutScanRange_values = QtWidgets.QHBoxLayout(frameScanRange_values)
+        layoutScanRange_values = QtWidgets.QHBoxLayout(self.frameScanRange_values)
         layoutScanRange_values.setContentsMargins(0,0,0,0)
         layoutScanRange_values.setSpacing(0)
         layoutScanRange_values.addWidget(valuesGridWidget)
 
         ## 3rd row frame: choice
-        frameScanRange_choice = QtWidgets.QFrame()
-        self.frameScanRange_choice = frameScanRange_choice
+        self.frameScanRange_choice = QtWidgets.QFrame()
 
         ### first grid widgets: choice
-        comboBoxChoice = MyQComboBox(frameScanRange_choice)
-        comboBoxChoice.wheel = False
-        comboBoxChoice.key = False
-        comboBoxChoice.addItems(['Linear', 'Log', 'Custom'])
-        self.comboBoxChoice = comboBoxChoice
+        self.comboBoxChoice = MyQComboBox(self.frameScanRange_choice)
+        self.comboBoxChoice.wheel = False
+        self.comboBoxChoice.key = False
+        self.comboBoxChoice.addItems(['Linear', 'Log', 'Custom'])
 
         ### first grid layout: choice
-        choiceGridLayout = QtWidgets.QGridLayout(frameScanRange_choice)
-        choiceGridLayout.addWidget(comboBoxChoice, 0, 0)
+        choiceGridLayout = QtWidgets.QGridLayout(self.frameScanRange_choice)
+        choiceGridLayout.addWidget(self.comboBoxChoice, 0, 0)
 
-        choiceGridWidget = QtWidgets.QFrame(frameScanRange_choice)
+        choiceGridWidget = QtWidgets.QFrame(self.frameScanRange_choice)
         choiceGridWidget.setLayout(choiceGridLayout)
 
         ## 3rd row layout: choice
-        layoutScanRange_choice = QtWidgets.QHBoxLayout(frameScanRange_choice)
+        layoutScanRange_choice = QtWidgets.QHBoxLayout(self.frameScanRange_choice)
         layoutScanRange_choice.setContentsMargins(0,0,0,0)
         layoutScanRange_choice.setSpacing(0)
         layoutScanRange_choice.addWidget(choiceGridWidget)
@@ -243,10 +243,9 @@ class ParameterManager:
         scanRangeLayout = QtWidgets.QHBoxLayout(frameScanRange)
         scanRangeLayout.setContentsMargins(0,0,0,0)
         scanRangeLayout.setSpacing(0)
-        scanRangeLayout.addWidget(frameScanRange_linLog)
-        scanRangeLayout.addWidget(frameScanRange_values)  # hidden at start
-        scanRangeLayout.addWidget(frameScanRange_choice)
-
+        scanRangeLayout.addWidget(self.frameScanRange_linLog)
+        scanRangeLayout.addWidget(self.frameScanRange_values)  # hidden at start
+        scanRangeLayout.addWidget(self.frameScanRange_choice)
 
         # Widget 'return pressed' signal connections
         self.comboBoxChoice.activated.connect(self.scanRangeComboBoxChanged)
@@ -273,9 +272,6 @@ class ParameterManager:
             self.width_lineEdit,'edited', self._font_size))
         self.values_lineEdit.textEdited.connect(lambda: setLineEditBackground(
             self.values_lineEdit,'edited', self._font_size))
-
-        # Do refresh at start
-        self.refresh()
 
     def _removeWidget(self):
         if hasattr(self, 'mainFrame'):
