@@ -78,7 +78,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
             if self.loaded:
                 menu = QtWidgets.QMenu()
                 disconnectDevice = menu.addAction(f"Disconnect {self.name}")
-                disconnectDevice.setIcon(QtGui.QIcon(icons['disconnect']))
+                disconnectDevice.setIcon(icons['disconnect'])
 
                 choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
@@ -96,7 +96,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
             elif id(self) in self.gui.threadManager.threads_conn:
                 menu = QtWidgets.QMenu()
                 cancelDevice = menu.addAction('Cancel loading')
-                cancelDevice.setIcon(QtGui.QIcon(icons['disconnect']))
+                cancelDevice.setIcon(icons['disconnect'])
 
                 choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
@@ -105,7 +105,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
             else:
                 menu = QtWidgets.QMenu()
                 modifyDeviceChoice = menu.addAction('Modify device')
-                modifyDeviceChoice.setIcon(QtGui.QIcon(icons['rename']))
+                modifyDeviceChoice.setIcon(icons['rename'])
 
                 choice = menu.exec_(self.gui.tree.viewport().mapToGlobal(position))
 
@@ -202,7 +202,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         """ Only used for tuple """
         menu = QtWidgets.QMenu()
         modifyTuple = menu.addAction("Modify tuple")
-        modifyTuple.setIcon(QtGui.QIcon(icons['tuple']))
+        modifyTuple.setIcon(icons['tuple'])
 
         choice = menu.exec_(self.valueWidget.mapToGlobal(position))
 
@@ -528,7 +528,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         """ Only used for tuple """
         menu = QtWidgets.QMenu()
         modifyTuple = menu.addAction("Modify tuple")
-        modifyTuple.setIcon(QtGui.QIcon(icons['tuple']))
+        modifyTuple.setIcon(icons['tuple'])
 
         choice = menu.exec_(self.valueWidget.mapToGlobal(position))
 
@@ -684,12 +684,12 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         if not self.isDisabled():
             menu = RecipeMenu(self.gui.scanner)
             monitoringAction = menu.addAction("Start monitoring")
-            monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
+            monitoringAction.setIcon(icons['monitor'])
             plottingAction = menu.addAction("Capture to plotter")
-            plottingAction.setIcon(QtGui.QIcon(icons['plotter']))
+            plottingAction.setIcon(icons['plotter'])
             menu.addSeparator()
             sliderAction = menu.addAction("Create a slider")
-            sliderAction.setIcon(QtGui.QIcon(icons['slider']))
+            sliderAction.setIcon(icons['slider'])
             menu.addSeparator()
 
             scanParameterAction = menu.addAnyAction(
@@ -701,7 +701,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
 
             menu.addSeparator()
             saveAction = menu.addAction("Read and save as...")
-            saveAction.setIcon(QtGui.QIcon(icons['read-save']))
+            saveAction.setIcon(icons['read-save'])
 
             monitoringAction.setEnabled(
                 self.variable.readable and self.variable.type in [

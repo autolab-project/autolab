@@ -37,7 +37,7 @@ class VariablesMenu(QtWidgets.QMainWindow):
         super().__init__()
         self.has_parent = has_parent  # Only for closeEvent
         self.setWindowTitle('AUTOLAB - Variables manager')
-        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
+        self.setWindowIcon(icons['autolab'])
 
         self.statusBar = self.statusBar()
 
@@ -221,9 +221,11 @@ class VariablesMenu(QtWidgets.QMainWindow):
         self.variablesWidget.clear()
         self.devicesWidget.clear()
 
-        super().closeEvent(event)
-
         if not self.has_parent:
+            closePlotter()
+            closeMonitors()
+            closeSliders()
+
             import pyqtgraph as pg
             try:
                 # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
@@ -233,10 +235,13 @@ class VariablesMenu(QtWidgets.QMainWindow):
                 pg.ViewBox.quit()
             except: pass
 
-            closePlotter()
-            closeMonitors()
-            closeSliders()
-            QtWidgets.QApplication.quit()  # close the variable app
+        for children in self.findChildren(QtWidgets.QWidget):
+            children.deleteLater()
+
+        super().closeEvent(event)
+
+        if not self.has_parent:
+            QtWidgets.QApplication.quit()  # close the app
 
 
 class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
@@ -302,7 +307,7 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
         """ This function provides the menu when the user right click on an item """
         menu = QtWidgets.QMenu()
         monitoringAction = menu.addAction("Start monitoring")
-        monitoringAction.setIcon(QtGui.QIcon(icons['monitor']))
+        monitoringAction.setIcon(icons['monitor'])
         monitoringAction.setEnabled(
             (hasattr(self.variable, 'readable')  # Action don't have readable
              and self.variable.readable
@@ -314,12 +319,12 @@ class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
                  ))
 
         plottingAction = menu.addAction("Capture to plotter")
-        plottingAction.setIcon(QtGui.QIcon(icons['plotter']))
+        plottingAction.setIcon(icons['plotter'])
         plottingAction.setEnabled(monitoringAction.isEnabled())
 
         menu.addSeparator()
         sliderAction = menu.addAction("Create a slider")
-        sliderAction.setIcon(QtGui.QIcon(icons['slider']))
+        sliderAction.setIcon(icons['slider'])
         sliderAction.setEnabled(
             (hasattr(self.variable, 'writable')
              and self.variable.writable

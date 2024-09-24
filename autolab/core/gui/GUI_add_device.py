@@ -6,7 +6,7 @@ Created on Mon Aug  5 14:39:02 2024
 """
 import sys
 
-from qtpy import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets
 
 from .GUI_instances import clearAddDevice
 from .icons import icons
@@ -22,7 +22,7 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.mainGui = parent
         self.setWindowTitle('AUTOLAB - Add device')
-        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
+        self.setWindowIcon(icons['autolab'])
 
         self.statusBar = self.statusBar()
 
@@ -102,7 +102,7 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         layoutWindow.addLayout(layoutButtonArg)
 
         addOptionalArg = QtWidgets.QPushButton('Add argument')
-        addOptionalArg.setIcon(QtGui.QIcon(icons['add']))
+        addOptionalArg.setIcon(icons['add'])
         addOptionalArg.clicked.connect(lambda state: self.addOptionalArgClicked())
 
         layoutButtonArg.addWidget(addOptionalArg)
@@ -134,7 +134,7 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         widget.setText(val)
         layout.addWidget(widget)
         widget = QtWidgets.QPushButton()
-        widget.setIcon(QtGui.QIcon(icons['remove']))
+        widget.setIcon(icons['remove'])
         widget.clicked.connect(lambda: self.removeOptionalArgClicked(layout))
         layout.addWidget(widget)
 

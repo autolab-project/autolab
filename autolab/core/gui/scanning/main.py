@@ -37,11 +37,12 @@ class Scanner(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
         self.setWindowTitle("AUTOLAB - Scanner")
-        self.setWindowIcon(QtGui.QIcon(icons['scanner']))
+        self.setWindowIcon(icons['scanner'])
         self.splitter.setSizes([500, 700])  # Set the width of the two main widgets
         self.setAcceptDrops(True)
         self.recipeDict = {}
         self._append = False  # option for import config
+        self._copy_step_info = None  # used by tree (in recipe) for copy paste step
 
         # Loading of the different centers
         self.figureManager = FigureManager(self)
@@ -53,7 +54,7 @@ class Scanner(QtWidgets.QMainWindow):
         configMenu = self.menuBar.addMenu('Configuration')
 
         self.importAction = configMenu.addAction('Import configuration')
-        self.importAction.setIcon(QtGui.QIcon(icons['import']))
+        self.importAction.setIcon(icons['import'])
         self.importAction.triggered.connect(self.importActionClicked)
         self.importAction.setStatusTip("Import configuration file")
 
@@ -63,19 +64,21 @@ class Scanner(QtWidgets.QMainWindow):
         configMenu.addSeparator()
 
         exportAction = configMenu.addAction('Export current configuration')
-        exportAction.setIcon(QtGui.QIcon(icons['export']))
+        exportAction.setIcon(icons['export'])
         exportAction.triggered.connect(self.exportActionClicked)
         exportAction.setStatusTip("Export current configuration file")
 
         # Edition menu
         editMenu = self.menuBar.addMenu('Edit')
         self.undo = editMenu.addAction('Undo')
-        self.undo.setIcon(QtGui.QIcon(icons['undo']))
+        self.undo.setIcon(icons['undo'])
+        self.undo.setShortcut(QtGui.QKeySequence("Ctrl+Z"))
         self.undo.triggered.connect(self.configManager.undoClicked)
         self.undo.setEnabled(False)
         self.undo.setStatusTip("Revert recipe changes")
         self.redo = editMenu.addAction('Redo')
-        self.redo.setIcon(QtGui.QIcon(icons['redo']))
+        self.redo.setIcon(icons['redo'])
+        self.redo.setShortcut(QtGui.QKeySequence("Ctrl+Y"))
         self.redo.triggered.connect(self.configManager.redoClicked)
         self.redo.setEnabled(False)
         self.redo.setStatusTip("Reapply recipe changes")
@@ -340,10 +343,20 @@ class Scanner(QtWidgets.QMainWindow):
 
                 self.append = append
 
+                urls = [
+                    QtCore.QUrl.fromLocalFile(QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.HomeLocation)),
+                    QtCore.QUrl.fromLocalFile(QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.DesktopLocation)),
+                    QtCore.QUrl.fromLocalFile(QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.DocumentsLocation)),
+                    QtCore.QUrl.fromLocalFile(QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.DownloadLocation)),
+                    QtCore.QUrl.fromLocalFile(os.environ['TEMP']),
+                ]
+
                 layout = QtWidgets.QVBoxLayout(self)
+                self.setLayout(layout)
 
                 file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
                 file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+                file_dialog.setSidebarUrls(urls)
                 file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
                 file_dialog.setDirectory(PATHS['last_folder'])
                 file_dialog.setNameFilters(["AUTOLAB configuration file (*.conf)", "Any Files (*)"])
@@ -356,8 +369,6 @@ class Scanner(QtWidgets.QMainWindow):
 
                 self.exec_ = file_dialog.exec_
                 self.selectedFiles = file_dialog.selectedFiles
-
-                self.setLayout(layout)
 
             def appendCheckChanged(self, event):
                 self.append = event
@@ -523,12 +534,12 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.figureManager.close()
 
-        for children in self.findChildren(QtWidgets.QWidget):
-            children.deleteLater()
-
         # Remove scan variables from VARIABLES
         try: self.configManager.updateVariableConfig([])
         except: pass
+
+        for children in self.findChildren(QtWidgets.QWidget):
+            children.deleteLater()
 
         super().closeEvent(event)
 

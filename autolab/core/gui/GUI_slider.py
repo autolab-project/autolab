@@ -8,7 +8,7 @@ from typing import Any, Union
 import sys
 
 import numpy as np
-from qtpy import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets
 
 from .icons import icons
 from .GUI_utilities import get_font_size, setLineEditBackground
@@ -47,7 +47,7 @@ class Slider(QtWidgets.QMainWindow):
         super().__init__()
         self.resize(self.minimumSizeHint())
         self.setWindowTitle(self.variable.address())
-        self.setWindowIcon(QtGui.QIcon(icons['slider']))
+        self.setWindowIcon(icons['slider'])
 
         # Load configuration
         control_center_config = get_control_center_config()

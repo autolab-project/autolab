@@ -20,9 +20,9 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="5.7692308"
-     inkscape:cx="21.493333"
-     inkscape:cy="35.013333"
+     inkscape:zoom="8.1589244"
+     inkscape:cx="18.200928"
+     inkscape:cy="33.215162"
      inkscape:window-width="1419"
      inkscape:window-height="1038"
      inkscape:window-x="485"
@@ -31,6 +31,11 @@
      inkscape:current-layer="svg50" />
   <defs
      id="defs1" />
+  <path
+     style="fill:#ffffff;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+     d="M 18.526007,5.3751299 V 2.3600936 h 10.947032 v 3.0150363 l 11.906761,1.28183 v 7.8092931 l -6.962411,1.357424 V 45.734106 H 13.581649 V 15.823677 L 6.6203388,14.466253 V 6.6569599 Z"
+     id="path1"
+     sodipodi:nodetypes="ccccccccccccc" />
   <path
      style="color:#000000;fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.560937;stroke-linecap:square;stroke-linejoin:round;-inkscape-stroke:none;paint-order:stroke fill markers"
      d="M 12.861856,14.382989 A 0.7201075,0.7201075 0 0 0 12.14206,15.102784 V 46.4539 a 0.7201075,0.7201075 0 0 0 0.719796,0.719797 H 35.13719 A 0.7201075,0.7201075 0 0 0 35.856984,46.4539 V 15.102784 A 0.7201075,0.7201075 0 0 0 35.13719,14.382989 Z m 0.719793,1.440688 h 20.83574 v 29.910429 h -20.83574 z"

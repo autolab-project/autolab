@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
-from qtpy import QtWidgets, QtGui, QtCore
+from qtpy import QtWidgets, QtCore
 
 from .display import DisplayValues
 from ..GUI_instances import openPlotter
@@ -79,14 +79,14 @@ class FigureManager:
             self.gui.nbTraces_lineEdit, 'synced', self._font_size)
 
         # Window to show scan data
-        self.gui.displayScanData_pushButton.setIcon(QtGui.QIcon(icons['DataFrame']))
+        self.gui.displayScanData_pushButton.setIcon(icons['DataFrame'])
         self.gui.displayScanData_pushButton.clicked.connect(
             self.displayScanDataButtonClicked)
         self.gui.displayScanData_pushButton.hide()
         self.displayScan = DisplayValues("Scan", size=(500, 300))
-        self.displayScan.setWindowIcon(QtGui.QIcon(icons['DataFrame']))
+        self.displayScan.setWindowIcon(icons['DataFrame'])
 
-        self.gui.sendScanData_pushButton.setIcon(QtGui.QIcon(icons['plotter']))
+        self.gui.sendScanData_pushButton.setIcon(icons['plotter'])
         self.gui.sendScanData_pushButton.clicked.connect(
             self.sendScanDataButtonClicked)
         self.gui.sendScanData_pushButton.hide()
@@ -246,7 +246,7 @@ class FigureManager:
             conditionLayout.addWidget(customConditionWidget)
 
         removePushButton = QtWidgets.QPushButton()
-        removePushButton.setIcon(QtGui.QIcon(icons['remove']))
+        removePushButton.setIcon(icons['remove'])
         removePushButton.clicked.connect(
             lambda: self.remove_filter(conditionWidget))
         conditionLayout.addWidget(removePushButton)

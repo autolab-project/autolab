@@ -25,7 +25,7 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.mainGui = parent
         self.setWindowTitle('AUTOLAB - Preferences')
-        self.setWindowIcon(QtGui.QIcon(icons['preference']))
+        self.setWindowIcon(icons['preference'])
 
         self.setFocus()
         self.activateWindow()
@@ -93,6 +93,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'qt_api'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QComboBox()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the GUI Qt binding')
         input_widget.addItems(['default', 'pyqt5', 'pyqt6', 'pyside2', 'pyside6'])
         index = input_widget.findText(saved_value)
@@ -103,6 +105,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'theme'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QComboBox()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the GUI theme')
         input_widget.addItems(['default', 'dark'])
         index = input_widget.findText(saved_value)
@@ -113,6 +117,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'font_size'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QSpinBox()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the GUI text font size')
         input_widget.setValue(int(float(saved_value)))
         self.inputs_autolab[main_key][sub_key] = input_widget
@@ -121,6 +127,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'image_background'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QLineEdit()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the plots background color (disabled if use dark theme)')
         input_widget.setText(str(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
@@ -129,6 +137,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'image_foreground'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QLineEdit()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the plots foreground color (disabled if use dark theme)')
         input_widget.setText(str(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
@@ -144,6 +154,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'precision'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QSpinBox()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the displayed precision for variables in the control panel')
         input_widget.setValue(int(float(saved_value)))
         self.inputs_autolab[main_key][sub_key] = input_widget
@@ -151,27 +163,33 @@ class PreferencesWindow(QtWidgets.QMainWindow):
 
         sub_key = 'print'
         saved_value = autolab_config[main_key][sub_key]
-        input_widget = QtWidgets.QCheckBox()
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select if print GUI information to console')
         input_widget.setChecked(boolean(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
-        group_layout.addRow(QtWidgets.QLabel(sub_key), input_widget)
+        group_layout.addRow(input_widget)
 
         sub_key = 'logger'
         saved_value = autolab_config[main_key][sub_key]
-        input_widget = QtWidgets.QCheckBox()
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Activate a logger to display GUI information')
         input_widget.setChecked(boolean(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
-        group_layout.addRow(QtWidgets.QLabel(sub_key), input_widget)
+        group_layout.addRow(input_widget)
 
         sub_key = 'console'
         saved_value = autolab_config[main_key][sub_key]
-        input_widget = QtWidgets.QCheckBox()
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Activate a console for debugging')
         input_widget.setChecked(boolean(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
-        group_layout.addRow(QtWidgets.QLabel(sub_key), input_widget)
+        group_layout.addRow(input_widget)
 
         ## monitor
         main_key = 'monitor'
@@ -183,6 +201,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'precision'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QSpinBox()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the displayed precision for variables in monitors')
         input_widget.setValue(int(float(saved_value)))
         self.inputs_autolab[main_key][sub_key] = input_widget
@@ -190,11 +210,13 @@ class PreferencesWindow(QtWidgets.QMainWindow):
 
         sub_key = 'save_figure'
         saved_value = autolab_config[main_key][sub_key]
-        input_widget = QtWidgets.QCheckBox()
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select if save figure image when saving monitor data')
         input_widget.setChecked(boolean(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
-        group_layout.addRow(QtWidgets.QLabel(sub_key), input_widget)
+        group_layout.addRow(input_widget)
 
         ## scanner
         main_key = 'scanner'
@@ -206,6 +228,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'precision'
         saved_value = autolab_config[main_key][sub_key]
         input_widget = QtWidgets.QSpinBox()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the displayed precision for variables in the scanner')
         input_widget.setValue(int(float(saved_value)))
         self.inputs_autolab[main_key][sub_key] = input_widget
@@ -213,27 +237,33 @@ class PreferencesWindow(QtWidgets.QMainWindow):
 
         sub_key = 'save_config'
         saved_value = autolab_config[main_key][sub_key]
-        input_widget = QtWidgets.QCheckBox()
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select if save config file when saving scanner data')
         input_widget.setChecked(boolean(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
-        group_layout.addRow(QtWidgets.QLabel(sub_key), input_widget)
+        group_layout.addRow(input_widget)
 
         sub_key = 'save_figure'
         saved_value = autolab_config[main_key][sub_key]
-        input_widget = QtWidgets.QCheckBox()
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select if save figure image when saving scanner data')
         input_widget.setChecked(boolean(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
-        group_layout.addRow(QtWidgets.QLabel(sub_key), input_widget)
+        group_layout.addRow(input_widget)
 
         sub_key = 'save_temp'
         saved_value = autolab_config[main_key][sub_key]
-        input_widget = QtWidgets.QCheckBox()
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select if save temporary data. Should not be disable!')
         input_widget.setChecked(boolean(saved_value))
         self.inputs_autolab[main_key][sub_key] = input_widget
-        group_layout.addRow(QtWidgets.QLabel(sub_key), input_widget)
+        group_layout.addRow(input_widget)
 
         ## directories
         main_key = 'directories'
@@ -263,7 +293,7 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         self.inputs_autolab[main_key] = {}
 
         addPluginButton = QtWidgets.QPushButton('Add driver folder')
-        addPluginButton.setIcon(QtGui.QIcon(icons['add']))
+        addPluginButton.setIcon(icons['add'])
         addPluginButton.clicked.connect(lambda: self.addOptionClicked(
             folder_layout, self.inputs_autolab, 'extra_driver_path',
             'onedrive',
@@ -287,7 +317,7 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         self.inputs_autolab[main_key] = {}
 
         addPluginButton = QtWidgets.QPushButton('Add driver url')
-        addPluginButton.setIcon(QtGui.QIcon(icons['add']))
+        addPluginButton.setIcon(icons['add'])
         addPluginButton.clicked.connect(lambda: self.addOptionClicked(
             url_layout, self.inputs_autolab, 'extra_driver_url_repo',
             r'C:\Users\username\OneDrive\my_drivers',
@@ -313,7 +343,7 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         self.inputs_plotter[main_key] = {}
 
         addPluginButton = QtWidgets.QPushButton('Add plugin')
-        addPluginButton.setIcon(QtGui.QIcon(icons['add']))
+        addPluginButton.setIcon(icons['add'])
         addPluginButton.clicked.connect(lambda: self.addOptionClicked(
             plugin_layout, self.inputs_plotter, 'plugin', 'plugin', 'plotter'))
         group_layout.addWidget(addPluginButton)
@@ -337,6 +367,8 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         sub_key = 'address'
         saved_value = plotter_config[main_key][sub_key]
         input_widget = QtWidgets.QLineEdit()
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_widget.setToolTip('Select the address of a device variable to be captured by the plotter.')
         input_widget.setText(str(saved_value))
         self.inputs_plotter[main_key][sub_key] = input_widget
@@ -371,13 +403,15 @@ class PreferencesWindow(QtWidgets.QMainWindow):
 
         layout = QtWidgets.QHBoxLayout()
         input_key_widget = QtWidgets.QLineEdit()
+        input_key_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         input_key_widget.setText(sub_key)
         layout.addWidget(input_key_widget)
         input_widget = QtWidgets.QLineEdit()
         input_widget.setText(val)
         layout.addWidget(input_widget)
         button_widget = QtWidgets.QPushButton()
-        button_widget.setIcon(QtGui.QIcon(icons['remove']))
+        button_widget.setIcon(icons['remove'])
         button_widget.clicked.connect(lambda: self.removeOptionClicked(
             layout, main_inputs, main_key, sub_key))
         layout.addWidget(button_widget)

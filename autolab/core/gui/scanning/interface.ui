@@ -145,12 +145,6 @@
            </item>
            <item>
             <widget class="QComboBox" name="selectRecipe_comboBox">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>21</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>Name of recipe that receive variables from Control Panel</string>
              </property>
@@ -161,12 +155,6 @@
            </item>
            <item>
             <widget class="QComboBox" name="selectParameter_comboBox">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>21</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>Name of parameter that receive variables from Control Panel</string>
              </property>
@@ -360,12 +348,6 @@
                 </item>
                 <item>
                  <widget class="QComboBox" name="variable_x_comboBox">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                    <horstretch>1</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
                   <property name="sizeAdjustPolicy">
                    <enum>QComboBox::AdjustToContents</enum>
                   </property>
@@ -781,12 +763,6 @@
            </item>
            <item>
             <widget class="QComboBox" name="data_comboBox">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>21</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>Select the scan to display</string>
              </property>
@@ -797,12 +773,6 @@
            </item>
            <item>
             <widget class="QComboBox" name="scan_recipe_comboBox">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>21</height>
-              </size>
-             </property>
              <property name="sizeAdjustPolicy">
               <enum>QComboBox::AdjustToContents</enum>
              </property>
@@ -810,12 +780,6 @@
            </item>
            <item>
             <widget class="QComboBox" name="dataframe_comboBox">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>21</height>
-              </size>
-             </property>
              <property name="sizeAdjustPolicy">
               <enum>QComboBox::AdjustToContents</enum>
              </property>

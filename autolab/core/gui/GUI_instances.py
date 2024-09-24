@@ -5,7 +5,7 @@ Created on Sat Aug  3 20:40:00 2024
 @author: jonathan
 """
 
-from typing import Union
+from typing import Union, Any
 
 import pandas as pd
 from qtpy import QtWidgets, QtCore
@@ -125,6 +125,7 @@ def openVariablesMenu(has_parent: bool = False):
             & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
         instances['variablesMenu'].activateWindow()
 
+
 def clearVariablesMenu():
     """ This clear the variables menu instance reference when quitted """
     instances['variablesMenu'] = None
@@ -138,9 +139,9 @@ def closeVariablesMenu():
 # =============================================================================
 # Plotter
 # =============================================================================
-def openPlotter(variable: Union[Variable, Variable_og, pd.DataFrame] = None,
+def openPlotter(variable: Union[Variable, Variable_og, pd.DataFrame, Any] = None,
                 has_parent: bool = False):
-    """ This function open the plotter. """
+    """ This function open the plotter. Can add variable. """
     from .plotting.main import Plotter  # Inside to avoid circular import
     # If the plotter is not already running, create one
     if instances['plotter'] is None:

@@ -206,6 +206,8 @@ class ScanManager:
             if self.thread is not None: self.thread.user_response = f"Unknown unit '{unit}'"
 
     def scanCompleted(self):
+        if not qt_object_exists(self.gui.progressBar):
+            return None
         self.gui.progressBar.setStyleSheet("")
 
         if self.thread.stopFlag.is_set():
@@ -255,6 +257,8 @@ class ScanManager:
         """ This function is called when the scan thread is finished.
         It restores the GUI in a ready mode, and start a new scan if in
         continuous mode """
+        if not qt_object_exists(self.gui.stop_pushButton):
+            return None
         self.gui.stop_pushButton.setEnabled(False)
         self.gui.pause_pushButton.setEnabled(False)
         self.gui.clear_pushButton.setEnabled(True)

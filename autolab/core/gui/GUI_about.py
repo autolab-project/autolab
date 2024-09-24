@@ -11,7 +11,7 @@ import platform
 import numpy as np
 import pandas as pd
 import qtpy
-from qtpy import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
 
 from .GUI_instances import clearAbout
@@ -51,7 +51,7 @@ class AboutWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.mainGui = parent
         self.setWindowTitle('AUTOLAB - About')
-        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
+        self.setWindowIcon(icons['autolab'])
 
         self.init_ui()
 
@@ -91,7 +91,7 @@ class AboutWindow(QtWidgets.QMainWindow):
         tab.addTab(frameLegal, 'Legal')
 
         label_pic = QtWidgets.QLabel()
-        label_pic.setPixmap(QtGui.QPixmap(icons['autolab']))
+        label_pic.setPixmap(icons['autolab-pixmap'])
 
         label_autolab = QtWidgets.QLabel(f"<h2>Autolab {versions['autolab']}</h2>")
         label_autolab.setAlignment(QtCore.Qt.AlignCenter)

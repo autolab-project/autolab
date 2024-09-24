@@ -192,9 +192,6 @@ def check_autolab_config():
     # Check and correct boolean, float and int
     for section_key, section_dic in autolab_dict.items():
         for key, value in section_dic.items():
-            # exception for default
-            if section_key == 'GUI' and key == 'font_size' and value == 'default':
-                continue
             try:
                 if isinstance(value, bool):
                     boolean(autolab_config[section_key][key])

@@ -490,18 +490,18 @@ class ConfigManager:
         """ Renames a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
             if newName != name:
-                pos = self.getRecipeStepPosition(recipe_name, name)
+                step_info = self.getRecipeStep(recipe_name, name)
                 newName = self.getUniqueName(recipe_name, newName)
-                self.stepList(recipe_name)[pos]['name'] = newName
+                step_info['name'] = newName
                 self.gui._refreshRecipe(recipe_name)
                 self.addNewConfig()
 
     def setRecipeStepValue(self, recipe_name: str, name: str, value: Any):
         """ Sets the value of a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
-            pos = self.getRecipeStepPosition(recipe_name, name)
-            if value is not self.stepList(recipe_name)[pos]['value']:
-                self.stepList(recipe_name)[pos]['value'] = value
+            step_info = self.getRecipeStep(recipe_name, name)
+            if value is not step_info['value']:
+                step_info['value'] = value
                 self.gui._refreshRecipe(recipe_name)
                 self.addNewConfig()
 
@@ -677,21 +677,26 @@ class ConfigManager:
         """ Returns the list of steps in the recipe """
         return self.config[recipe_name]['recipe']
 
+    def getRecipeStep(self, recipe_name: str, name: str) -> dict:
+        """ Returns a dictionnary with recipe step information """
+        pos = self.getRecipeStepPosition(recipe_name, name)
+        return self.stepList(recipe_name)[pos]
+
     def getRecipeStepElement(
             self, recipe_name: str, name: str) -> Union[Variable_og, Action]:
         """ Returns the element of a recipe step """
-        pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.stepList(recipe_name)[pos]['element']
+        step_info = self.getRecipeStep(recipe_name, name)
+        return step_info['element']
 
     def getRecipeStepType(self, recipe_name: str, name: str) -> str:
         """ Returns the type a recipe step """
-        pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.stepList(recipe_name)[pos]['stepType']
+        step_info = self.getRecipeStep(recipe_name, name)
+        return step_info['stepType']
 
     def getRecipeStepValue(self, recipe_name: str, name: str) -> Any:
         """ Returns the value of a recipe step """
-        pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.stepList(recipe_name)[pos]['value']
+        step_info = self.getRecipeStep(recipe_name, name)
+        return step_info['value']
 
     def getRecipeStepPosition(self, recipe_name: str, name: str) -> int:
         """ Returns the position of a recipe step in the recipe """
@@ -1165,6 +1170,7 @@ class ConfigManager:
 
         self.updateUndoRedoButtons()
         self.updateVariableConfig()
+        self.gui.setStatus('')
 
     def updateUndoRedoButtons(self):
         """ enables/disables undo/redo button depending on history """

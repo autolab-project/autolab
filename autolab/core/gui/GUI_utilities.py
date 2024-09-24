@@ -754,7 +754,7 @@ class CustomMenu(QtWidgets.QMenu):
         else:
             action = self.addAction(action_text)
             if icon_name != '':
-                action.setIcon(QtGui.QIcon(icons[icon_name]))
+                action.setIcon(icons[icon_name])
 
         return action
 
@@ -850,7 +850,7 @@ class CustomMenu(QtWidgets.QMenu):
         action_button.clicked.connect(close_menu)
         action_button.enterEvent = lambda event: handle_hover()
         if icon_name != '':
-            action_button.setIcon(QtGui.QIcon(icons[icon_name]))
+            action_button.setIcon(icons[icon_name])
 
         action_widget = QtWidgets.QWidgetAction(action_button)
         action_widget.setDefaultWidget(action_button)

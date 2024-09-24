@@ -11,8 +11,9 @@ import numpy as np
 from qtpy import QtCore, QtWidgets, QtGui
 
 from .display import DisplayValues
-from .customWidgets import parameterQFrame
-from ..GUI_utilities import get_font_size, setLineEditBackground, MyLineEdit, MyQComboBox
+from .customWidgets import ParameterQFrame
+from ..GUI_utilities import (get_font_size, setLineEditBackground, MyLineEdit,
+                             MyQComboBox, qt_object_exists)
 from ..icons import icons
 from ...utilities import clean_string, str_to_array, array_to_str, create_array
 from ...variables import has_eval, has_variable, eval_safely
@@ -39,7 +40,7 @@ class ParameterManager:
 
     def init_ui(self):
         # Parameter frame
-        self.mainFrame = parameterQFrame(
+        self.mainFrame = ParameterQFrame(
             self.gui, self.recipe_name, self.param_name)
         self.mainFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.mainFrame.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -93,9 +94,9 @@ class ParameterManager:
 
         ### displayParameter button
         self.displayParameter = DisplayValues("Parameter", size=(250, 400))
-        self.displayParameter.setWindowIcon(QtGui.QIcon(icons['ndarray']))
+        self.displayParameter.setWindowIcon(icons['ndarray'])
         self.displayParameter_pushButton = QtWidgets.QPushButton("Parameter")
-        self.displayParameter_pushButton.setIcon(QtGui.QIcon(icons['ndarray']))
+        self.displayParameter_pushButton.setIcon(icons['ndarray'])
         self.displayParameter_pushButton.clicked.connect(
             self.displayParameterButtonClicked)
 
@@ -597,10 +598,10 @@ class ParameterManager:
 
 
         addAction = menu.addAction("Add parameter")
-        addAction.setIcon(QtGui.QIcon(icons['add']))
+        addAction.setIcon(icons['add'])
 
         removeAction = menu.addAction(f"Remove {self.param_name}")
-        removeAction.setIcon(QtGui.QIcon(icons['remove']))
+        removeAction.setIcon(icons['remove'])
 
         choice = menu.exec_(self.mainFrame.mapToGlobal(position))
 
@@ -614,6 +615,8 @@ class ParameterManager:
 
     def setProcessingState(self, state: str):
         """ Sets the background color of the parameter address during the scan """
+        if not qt_object_exists(self.parameterAddress_label):
+            return None
         if state == 'idle':
             self.parameterAddress_label.setStyleSheet(
                 f"font-size: {self._font_size}pt;")

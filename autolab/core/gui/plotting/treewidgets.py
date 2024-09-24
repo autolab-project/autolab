@@ -177,7 +177,7 @@ class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):
         """ Only used for tuple """
         menu = QtWidgets.QMenu()
         modifyTuple = menu.addAction("Modify tuple")
-        modifyTuple.setIcon(QtGui.QIcon(icons['tuple']))
+        modifyTuple.setIcon(icons['tuple'])
 
         choice = menu.exec_(self.valueWidget.mapToGlobal(position))
 
@@ -484,7 +484,7 @@ class TreeWidgetItemVariable(QtWidgets.QTreeWidgetItem):
         """ Only used for tuple """
         menu = QtWidgets.QMenu()
         modifyTuple = menu.addAction("Modify tuple")
-        modifyTuple.setIcon(QtGui.QIcon(icons['tuple']))
+        modifyTuple.setIcon(icons['tuple'])
 
         choice = menu.exec_(self.valueWidget.mapToGlobal(position))
 

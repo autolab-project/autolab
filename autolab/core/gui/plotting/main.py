@@ -9,7 +9,7 @@ import sys
 import queue
 import time
 import uuid
-from typing import Type, Union
+from typing import Type, Union, Any
 
 import pandas as pd
 from qtpy import QtCore, QtWidgets, uic, QtGui
@@ -103,7 +103,7 @@ class Plotter(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
         self.setWindowTitle("AUTOLAB - Plotter")
-        self.setWindowIcon(QtGui.QIcon(icons['plotter']))
+        self.setWindowIcon(icons['plotter'])
 
         # Loading of the different centers
         self.figureManager = FigureManager(self)
@@ -474,7 +474,7 @@ class Plotter(QtWidgets.QMainWindow):
         # OPTIMIZE: timer should not call a heavy function, idealy just take data to plot
         self.refreshPlotData()
 
-    def refreshPlotData(self, variable: Union[Variable, Variable_og, pd.DataFrame] = None):
+    def refreshPlotData(self, variable: Union[Variable, Variable_og, pd.DataFrame, Any] = None):
         """ This function get the last dataset data and display it onto the Plotter GUI """
         try:
             if variable is None:
@@ -543,10 +543,12 @@ class Plotter(QtWidgets.QMainWindow):
 
         clearPlotter()
 
+        if not self.has_parent:
+            closePlotter()
+
         super().closeEvent(event)
 
         if not self.has_parent:
-            closePlotter()
             QtWidgets.QApplication.quit()  # close the plotter app
 
     def close(self):

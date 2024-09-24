@@ -9,7 +9,6 @@ Created on Wed Feb 14 18:01:42 2024
 import os
 import sys
 
-from .gui.icons import icons
 from .utilities import input_wrap
 
 
@@ -17,7 +16,9 @@ def create_shortcut(ask: bool = False):
     """ Create Autolab GUI shortcut on desktop. """
     # Works on Windows with winpython and with base or env conda
     try:
-        autolab_icon = icons['autolab']
+        autolab_icon = os.path.join(
+            os.path.dirname(__file__), 'gui',
+            'icons', 'autolab-icon.ico').replace("\\", "/")
         userprofile = os.path.expanduser('~')
         desktop = os.path.join(userprofile, 'Desktop')
         link = os.path.join(desktop, 'Autolab GUI.lnk')
@@ -25,7 +26,7 @@ def create_shortcut(ask: bool = False):
         python_env = sys.prefix
 
         if not os.path.exists(desktop):
-            return
+            return None
 
         is_conda = os.path.exists(os.path.join(sys.prefix, 'conda-meta'))
 
@@ -39,7 +40,7 @@ def create_shortcut(ask: bool = False):
         python_script = os.path.normpath(os.path.join(python, r'Scripts/activate.bat'))
 
         if not os.path.exists(python_script):
-            return
+            return None
 
         from comtypes.client import CreateObject
         from comtypes.persist import IPersistFile
@@ -51,7 +52,7 @@ def create_shortcut(ask: bool = False):
             ans = 'yes'
 
         if ans.strip().lower() == 'no':
-            return
+            return None
 
         s = CreateObject(ShellLink)
         s.SetPath('cmd.exe')
@@ -62,6 +63,9 @@ def create_shortcut(ask: bool = False):
 
         p = s.QueryInterface(IPersistFile)
         p.Save(link, True)
+
+        if not os.path.exists(os.path.join(python_env, r'Scripts/autolab.exe')):
+            print('Warning autolab has not been installed with pip, the shortcut will not work')
 
     except Exception as e:
         print(f'Cannot create Autolab shortcut: {e}')

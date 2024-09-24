@@ -21,7 +21,7 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="8.1589244"
-     inkscape:cx="21.203775"
+     inkscape:cx="21.142493"
      inkscape:cy="37.750074"
      inkscape:window-width="1419"
      inkscape:window-height="1038"
@@ -31,6 +31,13 @@
      inkscape:current-layer="svg50" />
   <defs
      id="defs1" />
+  <rect
+     style="fill:#ffffff;stroke:none;stroke-width:0.444;stroke-linecap:square;stroke-linejoin:round;paint-order:markers stroke fill"
+     id="rect1"
+     width="39.295429"
+     height="14.40243"
+     x="4.3516874"
+     y="16.277168" />
   <path
      id="rect4"
      style="fill:#000000;fill-rule:evenodd;stroke:none;stroke-width:0.106591;stroke-linecap:square;stroke-linejoin:miter;paint-order:stroke fill markers"

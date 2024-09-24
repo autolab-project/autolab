@@ -131,7 +131,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         # Window configuration
         self.setWindowTitle("AUTOLAB - Control Panel")
-        self.setWindowIcon(QtGui.QIcon(icons['autolab']))
+        self.setWindowIcon(icons['autolab'])
         self.setFocus()
         self.activateWindow()
         self.resize(700, 573)
@@ -221,11 +221,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.menuBar = self.menuBar()
         self.statusBar = self.statusBar()
 
-        style = QtWidgets.QApplication.style()
-        file_icon = style.standardIcon(QtWidgets.QStyle.SP_FileIcon)
-        folder_icon = style.standardIcon(QtWidgets.QStyle.SP_DirIcon)
-        reload_icon = style.standardIcon(QtWidgets.QStyle.SP_BrowserReload)
-
         # Menu
         scanAction = self.menuBar.addAction('Open Scanner')
         scanAction.triggered.connect(self.openScanner)
@@ -242,57 +237,57 @@ class ControlCenter(QtWidgets.QMainWindow):
         settingsMenu = self.menuBar.addMenu('Settings')
 
         Preferences = settingsMenu.addAction('Preferences')
-        Preferences.setIcon(QtGui.QIcon(icons['preference']))
+        Preferences.setIcon(icons['preference'])
         Preferences.triggered.connect(lambda: openPreferences(gui=self))
         Preferences.setStatusTip("Open the preferences window")
 
         userFolder = settingsMenu.addAction('User folder')
-        userFolder.setIcon(folder_icon)
+        userFolder.setIcon(icons['folder'])
         userFolder.triggered.connect(self.openUserFolder)
         userFolder.setStatusTip("Open the user folder")
 
         settingsMenu.addSeparator()
 
         devicesConfig = settingsMenu.addAction('Devices config')
-        devicesConfig.setIcon(file_icon)
+        devicesConfig.setIcon(icons['file'])
         devicesConfig.triggered.connect(self.openDevicesConfig)
         devicesConfig.setStatusTip("Open the devices configuration file")
 
         downloadDriverAction = settingsMenu.addAction('Download drivers')
-        downloadDriverAction.setIcon(QtGui.QIcon(icons['read-save']))
+        downloadDriverAction.setIcon(icons['read-save'])
         downloadDriverAction.triggered.connect(self.downloadDriver)
         downloadDriverAction.setStatusTip("Open the utility to download drivers")
 
         settingsMenu.addSeparator()
 
         refreshAction = settingsMenu.addAction('Refresh devices')
-        refreshAction.setIcon(reload_icon)
+        refreshAction.setIcon(icons['reload'])
         refreshAction.triggered.connect(self.initialize)
         refreshAction.setStatusTip('Reload devices setting')
 
         helpMenu = self.menuBar.addMenu('Help')
 
         reportAction = helpMenu.addAction('Report bugs / suggestions')
-        reportAction.setIcon(QtGui.QIcon(icons['github']))
+        reportAction.setIcon(icons['github'])
         reportAction.triggered.connect(report)
         reportAction.setStatusTip('Open the issue webpage of this project on GitHub')
 
         helpMenu.addSeparator()
 
         helpAction = helpMenu.addAction('Documentation')
-        helpAction.setIcon(QtGui.QIcon(icons['readthedocs']))
+        helpAction.setIcon(icons['readthedocs'])
         helpAction.triggered.connect(lambda: doc('default'))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
 
         helpActionOffline = helpMenu.addAction('Documentation (Offline)')
-        helpActionOffline.setIcon(QtGui.QIcon(icons['pdf']))
+        helpActionOffline.setIcon(icons['pdf'])
         helpActionOffline.triggered.connect(lambda: doc(False))
         helpActionOffline.setStatusTip('Open the pdf documentation form local file')
 
         helpMenu.addSeparator()
 
         aboutAction = helpMenu.addAction('About Autolab')
-        aboutAction.setIcon(QtGui.QIcon(icons['autolab']))
+        aboutAction.setIcon(icons['autolab'])
         aboutAction.triggered.connect(lambda: openAbout(self))
         aboutAction.setStatusTip('Information about Autolab')
         # / Menu
@@ -494,7 +489,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ Open menu to ask if want to add new device """
         menu = QtWidgets.QMenu()
         addDeviceChoice = menu.addAction('Add device')
-        addDeviceChoice.setIcon(QtGui.QIcon(icons['add']))
+        addDeviceChoice.setIcon(icons['add'])
 
         choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 
@@ -614,9 +609,8 @@ class ControlCenter(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
-        if self.scanner is not None:
+        if self.scanner:
             self.scanner.close()
-
         closePlotter()
         closeAbout()
         closeAddDevice()
@@ -628,10 +622,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         if self.close_device_on_exit:
             close()  # close all devices
 
-        QtWidgets.QApplication.quit()  # close the control center interface
-
         self.remove_logger()
         self.remove_console()
+
+        self.timerDevice.stop()
+        self.timerQueue.stop()
 
         try:
             # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
@@ -641,13 +636,12 @@ class ControlCenter(QtWidgets.QMainWindow):
             pg.ViewBox.quit()
         except: pass
 
-        self.timerDevice.stop()
-        self.timerQueue.stop()
-
         for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
 
         super().closeEvent(event)
+
+        QtWidgets.QApplication.quit()  # close the app
 
         # OPTIMIZE: don't know if should erase variables on exit or not.
         # Currently decided to only erase variables defined by scanner itself,

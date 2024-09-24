@@ -3,7 +3,7 @@
    version="1.2"
    viewBox="0 0 48 48"
    id="svg50"
-   sodipodi:docname="recipe-icon.svg"
+   sodipodi:docname="paste-icon.svg"
    width="48"
    height="48"
    inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
@@ -21,7 +21,7 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="11.313709"
-     inkscape:cx="39.332813"
+     inkscape:cx="39.377007"
      inkscape:cy="36.062444"
      inkscape:window-width="1419"
      inkscape:window-height="1038"
@@ -31,6 +31,13 @@
      inkscape:current-layer="svg50" />
   <defs
      id="defs1" />
+  <rect
+     style="fill:#ffffff;stroke-width:0.444;stroke-linecap:square;stroke-linejoin:round;paint-order:markers stroke fill;fill-opacity:1"
+     id="rect1"
+     width="32.248291"
+     height="41.133007"
+     x="7.761158"
+     y="3.4375451" />
   <path
      style="color:#000000;fill:#000000;fill-rule:evenodd;stroke:none;stroke-width:0.594403;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
      d="M 5.616611,0.594224 C 5.243368,0.594027 4.940745,0.896649 4.940944,1.269893 v 45.460214 c -1.99e-4,0.373244 0.302424,0.675866 0.675667,0.675669 H 42.18865 c 0.37324,2e-4 0.67587,-0.302424 0.67567,-0.675669 V 1.269893 c 2e-4,-0.373245 -0.30243,-0.675869 -0.67567,-0.675669 z m 2.144547,2.843321 32.248292,0.0081 v 41.124908 l -32.248292,-0.0081 z"

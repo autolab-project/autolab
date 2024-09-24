@@ -9,7 +9,7 @@ import os
 import sys
 import queue
 
-from qtpy import QtCore, QtWidgets, uic, QtGui
+from qtpy import QtCore, QtWidgets, uic
 
 from .data import DataManager
 from .figure import FigureManager
@@ -37,7 +37,7 @@ class Monitor(QtWidgets.QMainWindow):
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
         self.setWindowTitle(f"AUTOLAB - Monitor: {self.variable.address()}")
-        self.setWindowIcon(QtGui.QIcon(icons['monitor']))
+        self.setWindowIcon(icons['monitor'])
         # Queue
         self.queue = queue.Queue()
         self.timer = QtCore.QTimer(self)
@@ -233,10 +233,11 @@ class Monitor(QtWidgets.QMainWindow):
 
         for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
+
         super().closeEvent(event)
 
         if not self.has_parent:
-            QtWidgets.QApplication.quit()  # close the monitor app
+            QtWidgets.QApplication.quit()  # close the app
 
     def windowLengthChanged(self):
         """ This function start the update of the window length in the data manager

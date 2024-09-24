@@ -5,7 +5,7 @@ Created on Oct 2022
 @author: jonathan based on qchat
 """
 
-from typing import List, Union
+from typing import List, Union, Any
 import os
 import sys
 import csv
@@ -238,14 +238,17 @@ class DataManager:
         path = os.path.dirname(filename)
         PATHS['last_folder'] = path
 
-    def importDeviceData(self, variable: Union[Variable, Variable_og, pd.DataFrame]):
+    def importDeviceData(self, variable: Union[Variable, Variable_og, pd.DataFrame, Any]):
         """ This function open the data of the provided device """
         if isinstance(variable, pd.DataFrame):
             name = variable.name if hasattr(variable, 'name') else 'dataframe'
             data = variable
-        else:
+        elif isinstance(variable, (Variable, Variable_og)):
             name = variable.address()
             data = variable()  # read value
+        else:
+            name = 'data'
+            data = variable
         data = data_to_dataframe(data)  # format value
 
         if self.overwriteData:
