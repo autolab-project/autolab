@@ -3,11 +3,17 @@
 Plotting
 ========
 
-.. image:: plotting.png
+.. figure:: plotting.png
+	:figclass: align-center
 
-.. caution::
+	Plotting panel
 
-    The plotter still needs some work, feed-back is more than welcome (July 2024).
+.. note::
+
+    The plotter still needs some work, feed-back is more than welcome.
+
+The Plotter panel is accessible in the **Plotter** action of the **Panels** sub-menu of the control panel menubar, or by code with ``autolab.plotter()``.
+Data can directly be plotted by passing them as argument ``autolab.plotter(data)``.
 
 Import data
 -----------

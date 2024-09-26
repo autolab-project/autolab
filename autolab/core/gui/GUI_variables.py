@@ -36,8 +36,8 @@ class VariablesMenu(QtWidgets.QMainWindow):
 
         super().__init__()
         self.has_parent = has_parent  # Only for closeEvent
-        self.setWindowTitle('AUTOLAB - Variables manager')
-        self.setWindowIcon(icons['autolab'])
+        self.setWindowTitle('AUTOLAB - Variables Menu')
+        self.setWindowIcon(icons['variables'])
 
         self.statusBar = self.statusBar()
 

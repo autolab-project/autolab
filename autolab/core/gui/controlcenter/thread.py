@@ -87,6 +87,7 @@ class ThreadManager:
         item = self.threads[tid].item
         if qt_object_exists(item):
             item.setDisabled(False)
+            item.setValueKnownState(-1 if error else True)
 
         if hasattr(item, "execButton") and qt_object_exists(item.execButton):
             item.execButton.setEnabled(True)

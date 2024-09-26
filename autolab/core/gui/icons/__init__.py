@@ -59,6 +59,7 @@ icons: Dict[str, Union[QtGui.QIcon, QtGui.QPixmap, standardIcon]] = {
     'slider': create_icon('slider-icon.svg'),
     'undo': create_icon('undo-icon.svg'),
     'up': create_icon('up-icon.svg'),
+    'variables': create_icon('variables-icon.svg'),
     'write': create_icon('write-icon.svg'),
 }
 

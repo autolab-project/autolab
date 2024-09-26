@@ -40,6 +40,9 @@
       </widget>
       <widget class="QFrame" name="frame">
        <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">

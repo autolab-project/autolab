@@ -4,7 +4,7 @@ Release notes
 2.0
 ###
 
-Autolab 2.0 is the first major release since 2020.
+Autolab 2.0 released in 2024 is the first major release since 2020.
 
 General Features
 ----------------
@@ -57,6 +57,7 @@ GUI Enhancements
   - Added scan config history with the last 10 configurations.
   - Added variables to be used in the scan, allowing on-the-fly analysis inside a recipe.
   - Changed the scan configuration file format from ConfigParser to json to handle new scan features.
+  - Add shortcut for copy paste, undo redo, delete in scanner for recipe steps.
 
 - Plotter:
 
@@ -93,7 +94,7 @@ Miscellaneous Improvements
 
   - Numerous bug fixes to ensure stability and usability across different modules and functionalities.
   - Compatibility from Python 3.6 up to 3.12.
-  - Switched from PyQt5 to qtpy to enable extensive compatibility (Qt5, Qt6, PySide2, Pyside6).
+  - Switched from PyQt5 to qtpy to enable extensive compatibility (Qt5, Qt6, PySide2, PySide6).
   - Extensive code cleanup, PEP8 compliance, and added type hints.
 
 - Logger and Console Outputs:

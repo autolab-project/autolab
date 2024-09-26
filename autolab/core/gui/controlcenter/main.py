@@ -24,10 +24,15 @@ from pyqtgraph.console import ConsoleWidget
 from .thread import ThreadManager
 from .treewidgets import TreeWidgetItemModule
 from ..scanning.main import Scanner
-from ..GUI_instances import (closePlotter, closeAbout, closeAddDevice,
-                             closeMonitors, closeSliders, closeVariablesMenu,
-                             openPlotter, openAbout, openAddDevice, openVariablesMenu,
-                             openPreferences, closePreferences)
+from ..GUI_instances import (openPlotter, closePlotter,
+                             openAbout, closeAbout,
+                             openAddDevice, closeAddDevice,
+                             openVariablesMenu, closeVariablesMenu,
+                             openPreferences, closePreferences,
+                             openDriverInstaller, closeDriverInstaller,
+                             closeMonitors,
+                             closeSliders,
+                             )
 from ..icons import icons
 from ...paths import PATHS
 from ...devices import list_devices, list_loaded_devices, Device, close
@@ -35,7 +40,6 @@ from ...elements import Variable as Variable_og
 from ...elements import Action
 from ...config import get_control_center_config
 from ...utilities import boolean, open_file
-from ...repository import _install_drivers_custom
 from ...web import report, doc
 
 
@@ -134,7 +138,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.setWindowIcon(icons['autolab'])
         self.setFocus()
         self.activateWindow()
-        self.resize(700, 573)
+        self.resize(570, 700)
 
         self.close_device_on_exit = True
 
@@ -222,15 +226,20 @@ class ControlCenter(QtWidgets.QMainWindow):
         self.statusBar = self.statusBar()
 
         # Menu
-        scanAction = self.menuBar.addAction('Open Scanner')
+        guiMenu = self.menuBar.addMenu('Panels')
+
+        scanAction = guiMenu.addAction('Scanner')
+        scanAction.setIcon(icons['scanner'])
         scanAction.triggered.connect(self.openScanner)
         scanAction.setStatusTip('Open the scanner in another window')
 
-        plotAction = self.menuBar.addAction('Open Plotter')
+        plotAction = guiMenu.addAction('Plotter')
+        plotAction.setIcon(icons['plotter'])
         plotAction.triggered.connect(lambda: openPlotter(has_parent=True))
         plotAction.setStatusTip('Open the plotter in another window')
 
-        variablesMenuAction = self.menuBar.addAction('Variables')
+        variablesMenuAction = guiMenu.addAction('Variables')
+        variablesMenuAction.setIcon(icons['variables'])
         variablesMenuAction.triggered.connect(lambda: openVariablesMenu(True))
         variablesMenuAction.setStatusTip("Open the variable menu in another window")
 
@@ -255,7 +264,7 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         downloadDriverAction = settingsMenu.addAction('Download drivers')
         downloadDriverAction.setIcon(icons['read-save'])
-        downloadDriverAction.triggered.connect(self.downloadDriver)
+        downloadDriverAction.triggered.connect(lambda: openDriverInstaller(gui=self))
         downloadDriverAction.setStatusTip("Open the utility to download drivers")
 
         settingsMenu.addSeparator()
@@ -274,15 +283,17 @@ class ControlCenter(QtWidgets.QMainWindow):
 
         helpMenu.addSeparator()
 
-        helpAction = helpMenu.addAction('Documentation')
+        helpAction = helpMenu.addAction('Documentation (Online)')
         helpAction.setIcon(icons['readthedocs'])
-        helpAction.triggered.connect(lambda: doc('default'))
+        helpAction.triggered.connect(lambda: doc(True))
         helpAction.setStatusTip('Open the documentation on Read The Docs website')
 
         helpActionOffline = helpMenu.addAction('Documentation (Offline)')
         helpActionOffline.setIcon(icons['pdf'])
         helpActionOffline.triggered.connect(lambda: doc(False))
-        helpActionOffline.setStatusTip('Open the pdf documentation form local file')
+        helpActionOffline.setStatusTip(
+            'Open the pdf documentation form local file ' \
+            '(may no be up-to-day with online version)')
 
         helpMenu.addSeparator()
 
@@ -488,7 +499,7 @@ class ControlCenter(QtWidgets.QMainWindow):
     def addDeviceMenu(self, position: QtCore.QPoint):
         """ Open menu to ask if want to add new device """
         menu = QtWidgets.QMenu()
-        addDeviceChoice = menu.addAction('Add device')
+        addDeviceChoice = menu.addAction('Add Device')
         addDeviceChoice.setIcon(icons['add'])
 
         choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
@@ -502,6 +513,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         if (item.parent() is None and not item.loaded
                 and id(item) not in self.threadItemDict):
             self.threadItemDict[id(item)] = item  # needed before start of timer to avoid bad timing and to stop thread before loading is done
+            item.setValueKnownState(0.5)  # yellow color
             self.threadManager.start(item, 'load')  # load device and add it to queue for timer to associate it later (doesn't block gui while device is openning)
             self.timerDevice.start()
             self.timerQueue.start()
@@ -559,10 +571,6 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This clear the scanner instance reference when quitted """
         self.scanner = None
 
-    def downloadDriver(self):
-        """ This function open the download driver window. """
-        _install_drivers_custom(parent=self)
-
     @staticmethod
     def openDevicesConfig():
         """ Open the devices configuration file """
@@ -618,6 +626,7 @@ class ControlCenter(QtWidgets.QMainWindow):
         closeSliders()
         closeVariablesMenu()
         closePreferences()
+        closeDriverInstaller()
 
         if self.close_device_on_exit:
             close()  # close all devices

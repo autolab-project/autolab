@@ -8,7 +8,7 @@ Created on Tue Sep 17 22:56:32 2024
 from typing import Dict
 import sys
 
-from qtpy import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets
 
 from .icons import icons
 from .GUI_instances import clearPreferences
@@ -22,7 +22,7 @@ class PreferencesWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent: QtWidgets.QMainWindow = None):
 
-        super().__init__(parent)
+        super().__init__()
         self.mainGui = parent
         self.setWindowTitle('AUTOLAB - Preferences')
         self.setWindowIcon(icons['preference'])
@@ -36,13 +36,6 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         self.adjustSize()
 
         self.resize(500, 670)
-
-        if self.mainGui:
-            x = (self.parent().geometry().x()
-                 + (self.parent().geometry().width() // 2)
-                 - (self.geometry().width() // 2)
-                 )
-            self.move(x, self.parent().geometry().y())
 
     def init_ui(self):
         # Update config if needed

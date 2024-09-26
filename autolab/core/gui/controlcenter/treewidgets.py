@@ -38,6 +38,9 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
         if self.is_not_submodule:
             super().__init__(itemParent, [name, 'Device'])
+            self.indicator = QtWidgets.QLabel()
+            self.indicator.setToolTip('Device not instantiated yet')
+            self.gui.tree.setItemWidget(self, 4, self.indicator)
         else:
             super().__init__(itemParent, [name, 'Module'])
 
@@ -89,6 +92,7 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
                         self.removeChild(self.child(0))
 
                     self.loaded = False
+                    self.setValueKnownState(False)
 
                 if not list_loaded_devices():
                     self.gui._stop_timerQueue = True
@@ -111,6 +115,21 @@ class TreeWidgetItemModule(QtWidgets.QTreeWidgetItem):
 
                 if choice == modifyDeviceChoice:
                     openAddDevice(gui=self.gui, name=self.name)
+
+    def setValueKnownState(self, state: Union[bool, float]):
+        """ Turn the color of the indicator depending of the known state of the value """
+        if state == 0.5:
+            self.indicator.setStyleSheet("background-color:#FFFF00")  # yellow
+            self.indicator.setToolTip('Device is being instantiated')
+        elif state == -1:
+            self.indicator.setStyleSheet("background-color:#FF0000")  # red
+            self.indicator.setToolTip('Device connection error')
+        elif state:
+            self.indicator.setStyleSheet("background-color:#70db70")  # green
+            self.indicator.setToolTip('Device instantiated')
+        else:
+            self.indicator.setStyleSheet("background-color:none")  # none
+            self.indicator.setToolTip('Device closed')
 
 
 class TreeWidgetItemAction(QtWidgets.QTreeWidgetItem):

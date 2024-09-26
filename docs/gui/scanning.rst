@@ -3,9 +3,12 @@
 Scanning
 ========
 
-The Autolab GUI Scanning interface allows the user to sweep parameters over a certain range of values, and execute for each of them a custom recipe.
+The Scanner interface allows the user to sweep parameters over a certain range of values, and execute for each of them a custom recipe.
 
-.. image:: scanning.png
+.. figure:: scanning.png
+	:figclass: align-center
+
+	Scanning panel
 
 Scan configuration
 ##################
@@ -63,11 +66,10 @@ Alternatively, recently opened configuration files can be accessed via the **Imp
 Scan execution
 ##############
 
-	* **Start** button: start / stop the scan.
+	* **Start** button: start the scan.
 	* **Pause** button: pause / resume the scan.
+	* **Stop** button: stop the scan.
 	* **Continuous scan** check box: if checked, start automatically a new scan when the previous one is finished. The state of this check box can be changed at any time.
-	* **Clear data** button: delete any previous datapoint recorded.
-	* **Save** button: save the data of the last scan. The user will be prompted for a folder path, that will be used to save the data and a screenshot of the figure.
 
 .. note::
 
@@ -85,12 +87,27 @@ The user can interact with the figure at any time (during a scan or not).
 
 After the first loop of a recipe has been processed, the user can select the *Variable* displayed in x and y axes of the figure.
 
-The user can display the previous scan results using the combobox above the scanner figure containing the scan name.
-
-If the user has created several recipes in a scan, it is possible to display their results using the combobox above the scanner figure contaning the recipe names.
-
-It is possible to display arrays and images using the combobox above the scanner figure containing the dataframe name or 'Scan' for the main scan result.
-
 A data filtering option is available below the figure to select the desired data, allowing for example to plot a slice of a 2D scan.
 
-.. image:: multiple_recipes.png
+A 2D plot option allows to display scan data as a colormap with x, y as axies and z as values, usuful to represent ND-scan.
+
+Scan data can be clear or saved with the buttons bellow the figure.
+
+	* **Clear all** button: delete any previous datapoint recorded.
+	* **Save all** button: save all the data of all the executed scans. The user will be prompted for a folder path, that will be used to save the data of all the scans.
+	* **Save** button: save the data of the selected scan. The user will be prompted for a folder path, that will be used to save the data of the scan.
+
+The user can display the previous scan results using the combobox below the scanner figure containing the scan name (scan1, scan2, ...).
+
+If the user has created several recipes in a scan, a combobox below the scanner figure contaning the recipe names (recipe, recipe_1, ...) allows to change the displayed recipe results.
+
+A combobox below the scanner figure containing the dataframe name or 'Scan' for the main scan result allows to display arrays and images.
+
+The button **Scan data** display the scan data in a table.
+
+The button **Send to plotter** send the scan data of the selected recipe to the :ref:`plotting`.
+
+.. figure:: multiple_recipes.png
+	:figclass: align-center
+
+	Multiple recipe example

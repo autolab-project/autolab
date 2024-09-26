@@ -21,7 +21,7 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
 
         super().__init__(parent)
         self.mainGui = parent
-        self.setWindowTitle('AUTOLAB - Add device')
+        self.setWindowTitle('AUTOLAB - Add Device')
         self.setWindowIcon(icons['autolab'])
 
         self.statusBar = self.statusBar()
@@ -112,7 +112,7 @@ class AddDeviceWindow(QtWidgets.QMainWindow):
         layoutButton = QtWidgets.QHBoxLayout()
         layoutWindow.addLayout(layoutButton)
 
-        self.addButton = QtWidgets.QPushButton('Add device')
+        self.addButton = QtWidgets.QPushButton('Add Device')
         self.addButton.clicked.connect(self.addButtonClicked)
 
         layoutButton.addWidget(self.addButton)

@@ -33,6 +33,7 @@ instances = {
     'addDevice': None,
     'about': None,
     'preferences': None,
+    'driverInstaller': None,
     # 'scanner': None,
 }
 
@@ -42,7 +43,7 @@ instances = {
 # =============================================================================
 def openMonitor(variable: Union[Variable, Variable_og],
                 has_parent: bool = False):
-    """ This function open the monitor associated to this variable. """
+    """ Opens the monitor associated to the variable. """
     from .monitoring.main import Monitor  # Inside to avoid circular import
 
     assert isinstance(variable, (Variable, Variable_og)), (
@@ -63,7 +64,7 @@ def openMonitor(variable: Union[Variable, Variable_og],
 
 
 def clearMonitor(variable: Union[Variable, Variable_og]):
-    """ This clear monitor instances reference when quitted """
+    """ Clears monitor instances reference when quitted """
     if id(variable) in list(instances['monitors']):
         instances['monitors'].pop(id(variable))
 
@@ -79,7 +80,7 @@ def closeMonitors():
 def openSlider(variable: Union[Variable, Variable_og],
                gui: QtWidgets.QMainWindow = None,
                item: QtWidgets.QTreeWidgetItem = None):
-    """ This function open the slider associated to this variable. """
+    """ Opend the slider associated to this variable. """
     from .GUI_slider import Slider  # Inside to avoid circular import
 
     assert isinstance(variable, (Variable, Variable_og)), (
@@ -100,7 +101,7 @@ def openSlider(variable: Union[Variable, Variable_og],
 
 
 def clearSlider(variable: Union[Variable, Variable_og]):
-    """ This clear the slider instances reference when quitted """
+    """ Clears the slider instances reference when quitted """
     if id(variable) in instances['sliders'].keys():
         instances['sliders'].pop(id(variable))
 
@@ -114,6 +115,7 @@ def closeSliders():
 # VariableMenu
 # =============================================================================
 def openVariablesMenu(has_parent: bool = False):
+    """ Opens the variables menu. """
     from .GUI_variables import VariablesMenu  # Inside to avoid circular import
     if instances['variablesMenu'] is None:
         instances['variablesMenu'] = VariablesMenu(has_parent)
@@ -127,7 +129,7 @@ def openVariablesMenu(has_parent: bool = False):
 
 
 def clearVariablesMenu():
-    """ This clear the variables menu instance reference when quitted """
+    """ Clears the variables menu instance reference when quitted """
     instances['variablesMenu'] = None
 
 
@@ -141,7 +143,7 @@ def closeVariablesMenu():
 # =============================================================================
 def openPlotter(variable: Union[Variable, Variable_og, pd.DataFrame, Any] = None,
                 has_parent: bool = False):
-    """ This function open the plotter. Can add variable. """
+    """ Opens the plotter. Can add variable. """
     from .plotting.main import Plotter  # Inside to avoid circular import
     # If the plotter is not already running, create one
     if instances['plotter'] is None:
@@ -163,7 +165,7 @@ def openPlotter(variable: Union[Variable, Variable_og, pd.DataFrame, Any] = None
 
 
 def clearPlotter():
-    """ This deactivate the plotter when quitted but keep the instance in memory """
+    """ Deactivates the plotter when quitted but keep the instance in memory """
     if instances['plotter'] is not None:
         instances['plotter'].active = False  # don't want to close plotter because want to keep data
 
@@ -182,7 +184,7 @@ def closePlotter():
 # AddDevice
 # =============================================================================
 def openAddDevice(gui: QtWidgets.QMainWindow = None, name: str = ''):
-    """ This function open the add device window. """
+    """ Opens the add device window. """
     from .GUI_add_device import AddDeviceWindow  # Inside to avoid circular import
     # If the add device window is not already running, create one
     if instances['addDevice'] is None:
@@ -207,7 +209,7 @@ def openAddDevice(gui: QtWidgets.QMainWindow = None, name: str = ''):
 
 
 def clearAddDevice():
-    """ This clear the addDevice instance reference when quitted """
+    """ Clears the addDevice instance reference when quitted """
     instances['addDevice'] = None
 
 
@@ -220,7 +222,7 @@ def closeAddDevice():
 # About
 # =============================================================================
 def openAbout(gui: QtWidgets.QMainWindow = None):
-    """ This function open the about window. """
+    """ Opens the about window. """
     # If the about window is not already running, create one
     from .GUI_about import AboutWindow  # Inside to avoid circular import
     if instances['about'] is None:
@@ -236,7 +238,7 @@ def openAbout(gui: QtWidgets.QMainWindow = None):
 
 
 def clearAbout():
-    """ This clear the about instance reference when quitted """
+    """ Clears the about instance reference when quitted """
     instances['about'] = None
 
 
@@ -249,7 +251,7 @@ def closeAbout():
 # Preferences
 # =============================================================================
 def openPreferences(gui: QtWidgets.QMainWindow = None):
-    """ This function open the preferences window. """
+    """ Opens the preferences window. """
     # If the about window is not already running, create one
     from .GUI_preferences import PreferencesWindow  # Inside to avoid circular import
     if instances['preferences'] is None:
@@ -265,7 +267,7 @@ def openPreferences(gui: QtWidgets.QMainWindow = None):
 
 
 def clearPreferences():
-    """ This clear the preferences instance reference when quitted """
+    """ Clears the preferences instance reference when quitted """
     instances['preferences'] = None
 
 
@@ -274,11 +276,41 @@ def closePreferences():
         instances['preferences'].close()
 
 
+
+# =============================================================================
+# Driver installer
+# =============================================================================
+def openDriverInstaller(gui: QtWidgets.QMainWindow = None):
+    """ Opens the driver installer. """
+    # If the about window is not already running, create one
+    from .GUI_driver_installer import DriverInstaller  # Inside to avoid circular import
+    if instances['driverInstaller'] is None:
+        instances['driverInstaller'] = DriverInstaller(gui)
+        instances['driverInstaller'].show()
+        instances['driverInstaller'].activateWindow()
+    # If the about window is already running, just make as the front window
+    else:
+        instances['driverInstaller'].setWindowState(
+            instances['driverInstaller'].windowState()
+            & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+        instances['driverInstaller'].activateWindow()
+
+
+def clearDriverInstaller():
+    """ Clears the driver unstaller instance reference when quitted """
+    instances['driverInstaller'] = None
+
+
+def closeDriverInstaller():
+    if instances['driverInstaller'] is not None:
+        instances['driverInstaller'].close()
+
+
 # =============================================================================
 # Scanner
 # =============================================================================
 # def openScanner(gui: QtWidgets.QMainWindow, show=True):
-#     """ This function open the scanner. """
+#     """ Opens the scanner. """
 #     # If the scanner is not already running, create one
 #     from .scanning.main import Scanner  # Inside to avoid circular import
 #     if instances['scanner'] is None:
@@ -295,7 +327,7 @@ def closePreferences():
 
 
 # def clearScanner():
-#     """ This clear the scanner instance reference when quitted """
+#     """ Clears the scanner instance reference when quitted """
 #     instances['scanner'] = None
 
 

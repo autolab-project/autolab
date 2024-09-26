@@ -48,7 +48,7 @@ class AboutWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent: QtWidgets.QMainWindow = None):
 
-        super().__init__(parent)
+        super().__init__()
         self.mainGui = parent
         self.setWindowTitle('AUTOLAB - About')
         self.setWindowIcon(icons['autolab'])
@@ -57,12 +57,11 @@ class AboutWindow(QtWidgets.QMainWindow):
 
         self.adjustSize()
 
-        if self.mainGui:
-            x = (self.parent().geometry().x()
-                 + (self.parent().geometry().width() // 2)
-                 - (self.geometry().width() // 2)
-                 )
-            self.move(x, self.parent().geometry().y())
+        # Don't want to have about windows taking the full screen
+        self.setWindowFlags(QtCore.Qt.Window
+                            | QtCore.Qt.WindowMinimizeButtonHint
+                            | QtCore.Qt.WindowCloseButtonHint
+                            | QtCore.Qt.WindowTitleHint)
 
     def init_ui(self):
         versions = get_versions()

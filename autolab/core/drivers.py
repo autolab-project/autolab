@@ -26,7 +26,14 @@ def get_driver(driver_name: str, connection: str, **kwargs) -> Type:
     else:
         assert driver_name in list_drivers(), f"Driver {driver_name} not found in autolab's drivers"
         driver_lib = load_driver_lib(driver_name)
-        driver_instance = get_connection_class(driver_lib, connection)(**kwargs)
+        # Need to add the driver path to allow driver imports from its folder (and only his own, not other drivers)
+        driver_path = os.path.dirname(driver_lib.__file__)
+        if driver_path not in sys.path:
+            sys.path.append(driver_path)
+        try:
+            driver_instance = get_connection_class(driver_lib, connection)(**kwargs)
+        finally:
+            sys.path.remove(driver_path)
 
     return driver_instance
 

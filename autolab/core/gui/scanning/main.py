@@ -20,7 +20,7 @@ from .recipe import RecipeManager
 from .scan import ScanManager
 from .data import DataManager
 from ..icons import icons
-from ..GUI_instances import openVariablesMenu
+from ..GUI_instances import openVariablesMenu, openPlotter
 from ...paths import PATHS
 from ...utilities import boolean, SUPPORTED_EXTENSION
 from ...config import get_scanner_config
@@ -83,7 +83,15 @@ class Scanner(QtWidgets.QMainWindow):
         self.redo.setEnabled(False)
         self.redo.setStatusTip("Reapply recipe changes")
 
-        variablesMenuAction = self.menuBar.addAction('Variables')
+        guiMenu = self.menuBar.addMenu('Panels')
+
+        plotAction = guiMenu.addAction('Plotter')
+        plotAction.setIcon(icons['plotter'])
+        plotAction.triggered.connect(lambda: openPlotter(has_parent=True))
+        plotAction.setStatusTip('Open the plotter in another window')
+
+        variablesMenuAction = guiMenu.addAction('Variables')
+        variablesMenuAction.setIcon(icons['variables'])
         variablesMenuAction.triggered.connect(lambda: openVariablesMenu(True))
         variablesMenuAction.setStatusTip("Open the variable menu in another window")
 
@@ -131,6 +139,7 @@ class Scanner(QtWidgets.QMainWindow):
             for filename in reversed(filenames):
                 filename = filename.rstrip('\n')
                 action = QtWidgets.QAction(filename, self)
+                action.setIcon(icons['import'])
                 action.setEnabled(os.path.exists(filename))
                 action.triggered.connect(
                     partial(self.configManager.import_configPars, filename))
@@ -138,6 +147,7 @@ class Scanner(QtWidgets.QMainWindow):
 
         self.openRecentMenu.addSeparator()
         action = QtWidgets.QAction('Clear list', self)
+        action.setIcon(icons['remove'])
         action.triggered.connect(self.clearOpenRecent)
         self.openRecentMenu.addAction(action)
 
