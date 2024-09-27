@@ -65,15 +65,21 @@ class Device(Module):
 
 def get_element_by_address(address: str) -> Element:
     """ Returns the Element located at the provided address """
-    address = address.split('.')
-    device_name = address[0]
+    address_list = address.split('.')
+    device_name = address_list[0]
     if device_name in DEVICES:
         element = DEVICES[device_name]
     else:
         # This should not be used on autolab closing to avoid access violation due to config opening
         element = get_device(device_name)
-    for addressPart in address[1: ]:
-        element = getattr(element, addressPart.replace(" ", ""))
+
+    for i, address_part in enumerate(address_list[1: ]):
+        address_part = address_part.replace(' ', '')
+        if hasattr(element, address_part):
+            element = getattr(element, address_part)
+        else:
+            raise AttributeError(
+                f"'{address_part}' not found in '{'.'.join(address_list[: i+1])}'.")
     return element
 
 

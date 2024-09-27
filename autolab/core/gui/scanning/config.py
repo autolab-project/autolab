@@ -88,6 +88,34 @@ class ConfigManager:
 
         self._old_variables = []  # To update variable menu
 
+    def ask_get_element_by_address(self, device_name: str, address: str):
+        """ Wrap of :meth:`get_element_by_address` to ask user if want to
+        instantiate device if not already instantiated.
+        Returns the element at the given address. """
+        if device_name not in DEVICES:
+            msg_box = QtWidgets.QMessageBox(self.gui)
+            msg_box.setWindowTitle(f"Device {device_name}")
+            msg_box.setText(f"Instantiate device {device_name}?")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok
+                                       | QtWidgets.QMessageBox.Cancel)
+            msg_box.show()
+            if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
+                raise ValueError(f'Refused {device_name} instantiation')
+
+        element = get_element_by_address(address)
+
+        return element
+
+    def update_loaded_devices(self, already_loaded_devices: list):
+        """ Refresh GUI with the new loaded devices """
+        for device in (set(list_loaded_devices()) - set(already_loaded_devices)):
+            item_list = self.gui.mainGui.tree.findItems(
+                device, QtCore.Qt.MatchExactly, 0)
+
+            if len(item_list) == 1:
+                item = item_list[0]
+                self.gui.mainGui.itemClicked(item)
+
     # NAMES
     ###########################################################################
 
@@ -224,7 +252,7 @@ class ConfigManager:
             self.gui.selectParameter_comboBox.setCurrentIndex(prev_index_param)
 
     def checkConfig(self):
-        """ Checks validity of a config. Used before a scan start. """
+        """ Checks validity of a config. Used before a scan start or after a scan pause. """
         assert len(self.recipeNameList()) != 0, 'Need a recipe to start a scan!'
 
         one_recipe_active = False
@@ -257,15 +285,19 @@ class ConfigManager:
 
         assert one_recipe_active, "Need at least one active recipe!"
 
-        # Replace closed devices by reopened one
-        for recipe_name in self.recipeNameList():
-            for step in (self.stepList(recipe_name)
-                          + self.parameterList(recipe_name)):
-                if step['element']:
-                    device_name = step['element'].address().split('.')[0]
-                    assert device_name in DEVICES, (
-                        f"{device_name} device is closed")
-                    step['element'] = get_element_by_address(step['element'].address())
+        already_loaded_devices = list_loaded_devices()
+        try:
+            # Replace closed devices by reopened one
+            for recipe_name in self.recipeNameList():
+                for step in (self.stepList(recipe_name)
+                              + self.parameterList(recipe_name)):
+                    if step['element']:
+                        device_name = step['element'].address().split('.')[0]
+                        element = self.ask_get_element_by_address(
+                            device_name, step['element'].address())
+                        step['element'] = element
+        finally:
+            self.update_loaded_devices(already_loaded_devices)
 
     def lastRecipeName(self) -> str:
         """ Returns last recipe name """
@@ -978,20 +1010,7 @@ class ConfigManager:
                     if param_pars['address'] == "None": element = None
                     else:
                         device_name = param_pars['address'].split('.')[0]
-                        if device_name not in DEVICES:
-                            msg_box = QtWidgets.QMessageBox(self.gui)
-                            msg_box.setWindowTitle("Import AUTOLAB configuration file")
-                            msg_box.setText(f"Instantiate device {device_name}?")
-                            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok
-                                                       | QtWidgets.QMessageBox.Cancel)
-                            msg_box.show()
-                            if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
-                                raise ValueError('Cancel config import')
-
-                        try:
-                            element = get_element_by_address(param_pars['address'])
-                        except Exception:
-                            raise AttributeError(f"Parameter {param_pars['address']} not found.")
+                        element = self.ask_get_element_by_address(device_name, param_pars['address'])
 
                     param['element'] = element
 
@@ -1047,19 +1066,7 @@ class ConfigManager:
                             element = address
                         else:
                             device_name = address.split('.')[0]
-                            if device_name not in DEVICES:
-                                msg_box = QtWidgets.QMessageBox(self.gui)
-                                msg_box.setWindowTitle("Import AUTOLAB configuration file")
-                                msg_box.setText(f"Instantiate device {device_name}?")
-                                msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok
-                                                           | QtWidgets.QMessageBox.Cancel)
-                                msg_box.show()
-                                if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
-                                    raise ValueError('Cancel config import')
-                            try:
-                                element = get_element_by_address(address)
-                            except Exception:
-                                raise AttributeError(f"Address {address} not found for step {i} ({name}).")
+                            element = self.ask_get_element_by_address(device_name, address)
 
                         step['element'] = element
 
@@ -1137,16 +1144,9 @@ class ConfigManager:
         else:
             self.gui._resetRecipe()
             self.gui.setStatus("Configuration file loaded successfully", 5000)
-
-        self.configHistory.active = True
-
-        for device in (set(list_loaded_devices()) - set(already_loaded_devices)):
-            item_list = self.gui.mainGui.tree.findItems(
-                device, QtCore.Qt.MatchExactly, 0)
-
-            if len(item_list) == 1:
-                item = item_list[0]
-                self.gui.mainGui.itemClicked(item)
+        finally:
+            self.configHistory.active = True
+            self.update_loaded_devices(already_loaded_devices)
 
     # UNDO REDO ACTIONS
     ###########################################################################

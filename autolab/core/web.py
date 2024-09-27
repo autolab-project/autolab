@@ -10,6 +10,7 @@ import socket
 import os
 import inspect
 
+from .utilities import open_file
 
 project_url = 'https://github.com/autolab-project/autolab'
 drivers_url = 'https://github.com/autolab-project/autolab-drivers'
@@ -37,7 +38,7 @@ def doc(online: bool = "default"):
 def doc_offline():
     dirname = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     filename = os.path.join(dirname, "../autolab.pdf")
-    if os.path.exists(filename): os.startfile(filename)
+    if os.path.exists(filename): open_file(filename)
     else: print("No local pdf documentation found at {filename}")
 
 

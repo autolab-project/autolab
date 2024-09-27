@@ -315,6 +315,12 @@ class ScanManager:
 
     def resume(self):
         """ Resumes the scan """
+        try:
+            # One possible error is device closed while scan was paused
+            self.gui.configManager.checkConfig()  #  raise error if config not valid
+        except Exception as e:
+            self.gui.setStatus(f'WARNING The scan cannot resume: {str(e)}', 10000, False)
+            return None
         self.thread.pauseFlag.clear()
         self.gui.dataManager.timer.start()
         self.gui.pause_pushButton.setText('Pause')
@@ -437,12 +443,12 @@ class ScanThread(QtCore.QThread):
                     try:
                         from pyvisa import VisaIOError
                     except:
-                        e = f"In recipe '{recipe_name}' for element '{name}'{address}: {e}"
+                        e = f"In recipe '{recipe_name}' for step '{name}': {e}"
                     else:
                         if str(e) == str(VisaIOError(-1073807339)):
                             e = f"Timeout reached for device {address}. Acquisition time may be too long. If so, you can increase timeout delay in the driver to avoid this error."
                         else:
-                            e = f"In recipe '{recipe_name}' for element '{name}'{address}: {e}"
+                            e = f"In recipe '{recipe_name}' for step '{name}': {e}"
 
                     self.errorSignal.emit(e)
                     self.stopFlag.set()
