@@ -49,9 +49,9 @@ class DataManager:
 
         for i in range(selectedData, nbDataset+selectedData):
             if i < len(self.datasets):
-                datasets = self.datasets[-(i+1)]
-                if recipe_name not in datasets: continue
-                dataset = datasets[recipe_name]
+                scanset = self.datasets[-(i+1)]
+                if recipe_name not in scanset: continue
+                dataset = scanset[recipe_name]
                 data = None
 
                 if data_name == "Scan":
@@ -108,7 +108,7 @@ class DataManager:
     def newDataset(self, config: dict):
         """ Creates and returns a new empty dataset """
         maximum = 0
-        datasets = {}
+        scanset = ScanSet()
 
         if self.save_temp:
             FOLDER_TEMP = os.environ['TEMP']  # This variable can be changed at autolab start-up
@@ -126,7 +126,7 @@ class DataManager:
 
                 dataset = Dataset(sub_folder, recipe_name,
                                   config, save_temp=self.save_temp)
-                datasets[recipe_name] = dataset
+                scanset[recipe_name] = dataset
 
                 # bellow just to know maximum point
                 nbpts = 1
@@ -174,14 +174,14 @@ class DataManager:
 
                         list_recipe_nbpts_new.remove(recipe_nbpts)
 
-        self.datasets.append(datasets)
+        self.datasets.append(scanset)
         self.gui.progressBar.setMaximum(maximum)
 
     def sync(self):
         """ This function sync the last dataset with the data available in the queue """
         # Empty the queue
         count = 0
-        datasets = self.getLastDataset()
+        scanset = self.getLastDataset()
         lenQueue = self.queue.qsize()
 
         # Add scan data to dataset
@@ -190,7 +190,7 @@ class DataManager:
             except: break
 
             recipe_name = list(point.values())[0]
-            dataset = datasets[recipe_name]
+            dataset = scanset[recipe_name]
             dataset.addPoint(point)
             count += 1
 
@@ -200,7 +200,7 @@ class DataManager:
             progress = 0
 
             for dataset_name in self.gui.configManager.getRecipeActive():
-                progress += len(datasets[dataset_name])
+                progress += len(scanset[dataset_name])
 
             self.gui.progressBar.setValue(progress)
 
@@ -216,11 +216,11 @@ class DataManager:
         the results that can be plotted """
         data_name = self.gui.dataframe_comboBox.currentText()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        datasets = self.getLastSelectedDataset()
+        scanset = self.getLastSelectedDataset()
 
-        if datasets is None or recipe_name not in datasets: return None
+        if scanset is None or recipe_name not in scanset: return None
 
-        dataset = datasets[recipe_name]
+        dataset = scanset[recipe_name]
 
         data = None
         if data_name == "Scan": data = dataset.data
@@ -291,8 +291,7 @@ class DataManager:
 
 
 class Dataset():
-    """ Collection of data from a scan """
-
+    """ Collection of data from a recipe """
     def __init__(self, folder_dataset_temp: str, recipe_name: str, config: dict,
                  save_temp: bool = True):
         self._data_temp = []
@@ -493,3 +492,10 @@ class Dataset():
     def __len__(self):
         """ Returns the number of data point of this dataset """
         return len(self.data)
+
+
+class ScanSet(dict):
+    """ Collection of data from a scan """
+    # TODO: use this in scan plot
+    display = True
+    color = 'default'

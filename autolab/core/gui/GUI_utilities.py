@@ -76,8 +76,11 @@ def qt_object_exists(QtObject) -> bool:
 
     if not CHECK_ONCE: return True
     try:
-        if QT_API in ("pyqt5", "pyqt6"):
+        if QT_API == "pyqt5":
             import sip
+            return not sip.isdeleted(QtObject)
+        if QT_API == "pyqt6":
+            from PyQt6 import sip
             return not sip.isdeleted(QtObject)
         if QT_API == "pyside2":
             import shiboken2

@@ -177,9 +177,9 @@ class FigureManager:
 
     def refresh_filter_combobox(self, comboBox):
         items = []
-        for dataset in self.gui.dataManager.datasets:
-            for recipe in dataset.values():
-                for key in recipe.data.columns:
+        for scanset in self.gui.dataManager.datasets:
+            for dataset in scanset.values():
+                for key in dataset.data.columns:
                     if key not in items:
                         items.append(key)
 
@@ -276,10 +276,10 @@ class FigureManager:
         """ This function select a dataset """
         if len(self.gui.dataManager.datasets) != 0:
             self.gui.data_comboBox.show()
-            dataset = self.gui.dataManager.getLastSelectedDataset()
+            scanset = self.gui.dataManager.getLastSelectedDataset()
             index = self.gui.scan_recipe_comboBox.currentIndex()
 
-            result_names = list(dataset)
+            result_names = list(scanset)
             items = [self.gui.scan_recipe_comboBox.itemText(i) for i in range(
                 self.gui.scan_recipe_comboBox.count())]
 
@@ -323,14 +323,14 @@ class FigureManager:
         # Executed each time the queue is read
         index = self.gui.dataframe_comboBox.currentIndex()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        dataset = self.gui.dataManager.getLastSelectedDataset()
+        scanset = self.gui.dataManager.getLastSelectedDataset()
 
-        if dataset is None or recipe_name not in dataset: return None
+        if scanset is None or recipe_name not in scanset: return None
 
-        sub_dataset = dataset[recipe_name]
+        dataset = scanset[recipe_name]
 
         result_names = ["Scan"] + [
-            i for i, val in sub_dataset.data_arrays.items() if not isinstance(
+            i for i, val in dataset.data_arrays.items() if not isinstance(
                 val[0], (str, tuple))]  # Remove this condition if want to plot string or tuple: Tuple[List[str], int]
 
         items = [self.gui.dataframe_comboBox.itemText(i) for i in range(
@@ -589,6 +589,7 @@ class FigureManager:
 
                     # Plot
                     # careful, now that can filter data, need .values to avoid pyqtgraph bug
+                    # pyqtgraph 0.11.1 raise hover error if plot deleted
                     curve = self.ax.plot(x.values, y.values, symbol='x',
                                          symbolPen=color, symbolSize=10,
                                          pen=color, symbolBrush=color)
@@ -630,13 +631,13 @@ class FigureManager:
     ###########################################################################
     def refreshDisplayScanData(self):
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        datasets = self.gui.dataManager.getLastSelectedDataset()
-        if datasets is not None and recipe_name in datasets:
+        scanset = self.gui.dataManager.getLastSelectedDataset()
+        if scanset is not None and recipe_name in scanset:
             name = f"Scan{self.gui.data_comboBox.currentIndex()+1}"
             if self.gui.scan_recipe_comboBox.count() > 1:
                 name += f", {recipe_name}"
             self.displayScan.setWindowTitle(name)
-            self.displayScan.refresh(datasets[recipe_name].data)
+            self.displayScan.refresh(scanset[recipe_name].data)
 
     def displayScanDataButtonClicked(self):
         """ Opens a window showing the scan data for the displayed scan id """
@@ -646,12 +647,12 @@ class FigureManager:
     def sendScanDataButtonClicked(self):
         """ Sends the displayer scan data to plotter """
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        datasets = self.gui.dataManager.getLastSelectedDataset()
-        if datasets is not None and recipe_name in datasets:
-            data = datasets[recipe_name].data
+        scanset = self.gui.dataManager.getLastSelectedDataset()
+        if scanset is not None and recipe_name in scanset:
+            data = scanset[recipe_name].data
             scan_name = self.gui.data_comboBox.currentText()
             data.name = f"{scan_name}_{recipe_name}"
-            openPlotter(variable=datasets[recipe_name].data, has_parent=True)
+            openPlotter(variable=scanset[recipe_name].data, has_parent=True)
 
     # SAVE FIGURE
     ###########################################################################

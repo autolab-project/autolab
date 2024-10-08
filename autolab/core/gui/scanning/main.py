@@ -452,8 +452,8 @@ class Scanner(QtWidgets.QMainWindow):
             PATHS['last_folder'] = path
             self.setStatus('Saving data...', 5000)
 
-            for datasets in all_data:
-                i = self.dataManager.datasets.index(datasets)
+            for scanset in all_data:
+                i = self.dataManager.datasets.index(scanset)
                 scan_name = f'scan{i+1}'
 
                 if len(all_data) == 1:
@@ -463,10 +463,10 @@ class Scanner(QtWidgets.QMainWindow):
                     scan_filename = f'{save_folder}_{scan_name}'
                     new_configname = f'{save_folder}_{scan_name}.conf'
 
-                for recipe_name in datasets:
-                    dataset = datasets[recipe_name]
+                for recipe_name in scanset:
+                    dataset = scanset[recipe_name]
 
-                    if len(datasets) == 1:
+                    if len(scanset) == 1:
                         filename_recipe = f'{scan_filename}{extension}'
                     else:
                         filename_recipe = f'{scan_filename}_{recipe_name}{extension}'
@@ -482,7 +482,7 @@ class Scanner(QtWidgets.QMainWindow):
                     if os.path.exists(config_name):
                         shutil.copy(config_name, new_configname)
                     else:
-                        if datasets is not self.dataManager.getLastDataset():
+                        if scanset is not self.dataManager.getLastDataset():
                             print("Warning: Can't find config for this dataset, save latest config instead",
                                   file=sys.stderr)
                         self.configManager.export(new_configname)  # BUG: it saves latest config instead of dataset config because no record available of previous config. (I did try to put back self.config to dataset but config changes with new dataset (copy doesn't help and deepcopy not possible)

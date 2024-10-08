@@ -65,22 +65,11 @@ class Monitor(QtWidgets.QMainWindow):
             self.delay_lineEdit, 'edited', self._font_size))
         setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
-        # Pause
         self.pauseButton.clicked.connect(self.pauseButtonClicked)
-
-        # Save
         self.saveButton.clicked.connect(self.saveButtonClicked)
-
-        # Clear
         self.clearButton.clicked.connect(self.clearButtonClicked)
-
-        # Mean
         self.mean_checkBox.clicked.connect(self.mean_checkBoxClicked)
-
-        # Min
         self.min_checkBox.clicked.connect(self.min_checkBoxClicked)
-
-        # Max
         self.max_checkBox.clicked.connect(self.max_checkBoxClicked)
 
         # Managers
