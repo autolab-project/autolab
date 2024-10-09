@@ -587,6 +587,10 @@ class FigureManager:
                         color = pg.getConfigOption("foreground")
                         alpha = (true_nbtraces - (len(data) - 1 - i)) / true_nbtraces
 
+                    # TODO: no information about dataset nor scanset in this method! See what could be done
+                    # if scanset.color != 'default':
+                    #     color = scanset.color
+
                     # Plot
                     # careful, now that can filter data, need .values to avoid pyqtgraph bug
                     # pyqtgraph 0.11.1 raise hover error if plot deleted

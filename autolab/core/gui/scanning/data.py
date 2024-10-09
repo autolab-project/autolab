@@ -51,6 +51,7 @@ class DataManager:
             if i < len(self.datasets):
                 scanset = self.datasets[-(i+1)]
                 if recipe_name not in scanset: continue
+                if not scanset.display: continue
                 dataset = scanset[recipe_name]
                 data = None
 
@@ -499,3 +500,4 @@ class ScanSet(dict):
     # TODO: use this in scan plot
     display = True
     color = 'default'
+    saved = False

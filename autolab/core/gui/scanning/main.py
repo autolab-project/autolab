@@ -23,7 +23,7 @@ from ..icons import icons
 from ..GUI_instances import openVariablesMenu, openPlotter
 from ...paths import PATHS
 from ...utilities import boolean, SUPPORTED_EXTENSION
-from ...config import get_scanner_config
+from ...config import get_scanner_config, load_config, change_autolab_config
 
 
 class Scanner(QtWidgets.QMainWindow):
@@ -472,6 +472,7 @@ class Scanner(QtWidgets.QMainWindow):
                         filename_recipe = f'{scan_filename}_{recipe_name}{extension}'
                     dataset.save(filename_recipe)
 
+                scanset.saved = True
                 scanner_config = get_scanner_config()
                 save_config = boolean(scanner_config["save_config"])
 
@@ -535,6 +536,30 @@ class Scanner(QtWidgets.QMainWindow):
 
         # Stop datamanager timer
         self.dataManager.timer.stop()
+
+
+        scanner_config = get_scanner_config()
+        ask_close = boolean(scanner_config["ask_close"])
+        if ask_close and not all([scanset.saved for scanset in self.dataManager.datasets]):
+            msg_box = QtWidgets.QMessageBox(self)
+            msg_box.setWindowTitle("Scanner")
+            msg_box.setText("Some data hasn't been saved, close scanner anyway?")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Yes
+                                       | QtWidgets.QMessageBox.No)
+
+            checkbox = QtWidgets.QCheckBox("Don't ask again")
+            msg_box.setCheckBox(checkbox)
+
+            msg_box.show()
+            res = msg_box.exec_()
+
+            autolab_config = load_config('autolab_config')
+            autolab_config['scanner']['ask_close'] = str(not checkbox.isChecked())
+            change_autolab_config(autolab_config)
+
+            if res == QtWidgets.QMessageBox.No:
+                event.ignore()  # Prevent the window from closing
+                return None
 
         self.mainGui.clearScanner()
 

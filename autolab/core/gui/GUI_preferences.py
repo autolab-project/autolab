@@ -258,6 +258,16 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         self.inputs_autolab[main_key][sub_key] = input_widget
         group_layout.addRow(input_widget)
 
+        sub_key = 'ask_close'
+        saved_value = autolab_config[main_key][sub_key]
+        input_widget = QtWidgets.QCheckBox(sub_key)
+        input_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        input_widget.setToolTip('Set whether a warning message about unsaved data should be displayed when the scanner is closed.')
+        input_widget.setChecked(boolean(saved_value))
+        self.inputs_autolab[main_key][sub_key] = input_widget
+        group_layout.addRow(input_widget)
+
         ## directories
         main_key = 'directories'
         group_box = QtWidgets.QGroupBox(main_key)
