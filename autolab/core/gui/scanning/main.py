@@ -537,7 +537,6 @@ class Scanner(QtWidgets.QMainWindow):
         # Stop datamanager timer
         self.dataManager.timer.stop()
 
-
         scanner_config = get_scanner_config()
         ask_close = boolean(scanner_config["ask_close"])
         if ask_close and not all([scanset.saved for scanset in self.dataManager.datasets]):

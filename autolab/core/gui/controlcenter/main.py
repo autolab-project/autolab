@@ -619,6 +619,11 @@ class ControlCenter(QtWidgets.QMainWindow):
         """ This function does some steps before the window is really killed """
         if self.scanner:
             self.scanner.close()
+
+            if self.scanner is not None and self.scanner.isVisible():
+                event.ignore()
+                return None
+
         closePlotter()
         closeAbout()
         closeAddDevice()
