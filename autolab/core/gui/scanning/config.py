@@ -9,17 +9,23 @@ import json
 import datetime
 import os
 import math as m
-from typing import Any, Tuple, List, Dict
+from typing import Any, Tuple, List, Dict, Union
 from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
 from qtpy import QtWidgets, QtCore
 
-from .. import variables
-from ...utilities import (boolean, str_to_array, array_to_str,
-                          str_to_dataframe, dataframe_to_str, create_array)
-from ... import paths, devices, config
+from ...config import get_scanner_config
+from ...elements import Variable as Variable_og
+from ...elements import Action
+from ...devices import DEVICES, list_loaded_devices, get_element_by_address
+from ...utilities import (boolean, str_to_array, array_to_str, create_array,
+                          str_to_dataframe, dataframe_to_str, str_to_data,
+                          str_to_tuple)
+from ...variables import (get_variable, has_eval, is_Variable, eval_variable,
+                          remove_from_config, update_from_config, VARIABLES)
+from ...paths import PATHS
 from .... import __version__
 
 
@@ -71,7 +77,7 @@ class ConfigManager:
         self.gui = gui
 
         # Import Autolab config
-        scanner_config = config.get_scanner_config()
+        scanner_config = get_scanner_config()
         self.precision = scanner_config['precision']
 
         # Initializing configuration values
@@ -81,6 +87,34 @@ class ConfigManager:
         self.configHistory.active = True
 
         self._old_variables = []  # To update variable menu
+
+    def ask_get_element_by_address(self, device_name: str, address: str):
+        """ Wrap of :meth:`get_element_by_address` to ask user if want to
+        instantiate device if not already instantiated.
+        Returns the element at the given address. """
+        if device_name not in DEVICES:
+            msg_box = QtWidgets.QMessageBox(self.gui)
+            msg_box.setWindowTitle(f"Device {device_name}")
+            msg_box.setText(f"Instantiate device {device_name}?")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok
+                                       | QtWidgets.QMessageBox.Cancel)
+            msg_box.show()
+            if msg_box.exec_() == QtWidgets.QMessageBox.Cancel:
+                raise ValueError(f'Refused {device_name} instantiation')
+
+        element = get_element_by_address(address)
+
+        return element
+
+    def update_loaded_devices(self, already_loaded_devices: list):
+        """ Refresh GUI with the new loaded devices """
+        for device in (set(list_loaded_devices()) - set(already_loaded_devices)):
+            item_list = self.gui.mainGui.tree.findItems(
+                device, QtCore.Qt.MatchExactly, 0)
+
+            if len(item_list) == 1:
+                item = item_list[0]
+                self.gui.mainGui.itemClicked(item)
 
     # NAMES
     ###########################################################################
@@ -139,8 +173,8 @@ class ConfigManager:
         if new_variables is None:
             new_variables = self.getConfigVariables()
         remove_variables = list(set(self._old_variables) - set(new_variables))
-        variables.remove_from_config(remove_variables)
-        variables.update_from_config(new_variables)
+        remove_from_config(remove_variables)
+        update_from_config(new_variables)
         self._old_variables = new_variables
 
     def addNewConfig(self):
@@ -194,7 +228,9 @@ class ConfigManager:
             if new_recipe_name == existing_recipe_name:
                 return
             if existing_recipe_name not in self.recipeNameList():
-                raise ValueError(f'should not be possible to select a non existing recipe_name: {existing_recipe_name} not in {self.recipeNameList()}')
+                raise ValueError(
+                    'should not be possible to select a non existing recipe_name: ' \
+                        f'{existing_recipe_name} not in {self.recipeNameList()}')
 
             new_recipe_name = self.getUniqueNameRecipe(new_recipe_name)
             old_config = self.config
@@ -216,7 +252,7 @@ class ConfigManager:
             self.gui.selectParameter_comboBox.setCurrentIndex(prev_index_param)
 
     def checkConfig(self):
-        """ Checks validity of a config. Used before a scan start. """
+        """ Checks validity of a config. Used before a scan start or after a scan pause. """
         assert len(self.recipeNameList()) != 0, 'Need a recipe to start a scan!'
 
         one_recipe_active = False
@@ -238,26 +274,30 @@ class ConfigManager:
                     for step in recipe_i['recipe']:
                         if step['stepType'] == 'recipe':
                             has_sub_recipe = True
-                            assert step['element'] in self.config, f"Recipe {step['element']} doesn't exist in {recipe_name}!"
+                            assert step['element'] in self.config, (
+                                f"Recipe {step['element']} doesn't exist in {recipe_name}!")
                             other_recipe = self.config[step['element']]
-                            assert len(other_recipe['recipe']) > 0, f"Recipe {step['element']} is empty!"
+                            assert len(other_recipe['recipe']) > 0, (
+                                f"Recipe {step['element']} is empty!")
                             list_recipe_new.append(other_recipe)
 
                     list_recipe_new.remove(recipe_i)
 
         assert one_recipe_active, "Need at least one active recipe!"
 
-        # Replace closed devices by reopenned one
-        for recipe_name in self.recipeNameList():
-            for i, step in enumerate(self.config[recipe_name]['recipe']):
-                if (step['element']._parent.name in devices.DEVICES
-                        and not step['element']._parent in devices.DEVICES.values()):
-                    module_name = step['element']._parent.name
-                    module = self.gui.mainGui.tree.findItems(
-                        module_name, QtCore.Qt.MatchExactly)[0].module
-                    var = module.get_variable(
-                        self.config[recipe_name]['recipe'][i]['element'].name)
-                    self.config[recipe_name]['recipe'][i]['element'] = var
+        already_loaded_devices = list_loaded_devices()
+        try:
+            # Replace closed devices by reopened one
+            for recipe_name in self.recipeNameList():
+                for step in (self.stepList(recipe_name)
+                              + self.parameterList(recipe_name)):
+                    if step['element']:
+                        device_name = step['element'].address().split('.')[0]
+                        element = self.ask_get_element_by_address(
+                            device_name, step['element'].address())
+                        step['element'] = element
+        finally:
+            self.update_loaded_devices(already_loaded_devices)
 
     def lastRecipeName(self) -> str:
         """ Returns last recipe name """
@@ -305,7 +345,7 @@ class ConfigManager:
             self.addNewConfig()
 
     def setParameter(self, recipe_name: str, param_name: str,
-                     element: devices.Device, newName: str = None):
+                     element: Variable_og, newName: str = None):
         """ Sets the element provided as the new parameter of the scan.
         Add a parameter is no existing parameter """
         if not self.gui.scanManager.isStarted():
@@ -420,7 +460,7 @@ class ConfigManager:
         if not self.gui.scanManager.isStarted():
             param = self.getParameter(recipe_name, param_name)
 
-            if variables.has_eval(values) or np.ndim(values) == 1:
+            if has_eval(values) or np.ndim(values) == 1:
                 param['values'] = values
                 self.addNewConfig()
 
@@ -435,7 +475,8 @@ class ConfigManager:
             recipe_name = self.lastRecipeName()
 
         if not self.gui.scanManager.isStarted():
-            assert recipe_name in self.recipeNameList(), f'{recipe_name} not in {self.recipeNameList()}'
+            assert recipe_name in self.recipeNameList(), (
+                f'{recipe_name} not in {self.recipeNameList()}')
 
             if name is None:
                 name = self.getUniqueName(recipe_name, element.name)
@@ -450,16 +491,19 @@ class ConfigManager:
                 assert element != recipe_name, "Can't have a recipe in itself: {element}"  # safeguard but should be stopped before arriving here
             if stepType == 'set': setValue = True
             elif stepType == 'action' and element.type in [
-                    int, float, str, np.ndarray, pd.DataFrame]: setValue = True
+                    int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]:
+                setValue = True
             else: setValue = False
 
             if setValue:
                 if value is None:
                     if element.type in [int, float]: value = 0
                     elif element.type in [str]: value = ''
+                    elif element.type in [bytes]: value = b''
                     elif element.type in [pd.DataFrame]: value = pd.DataFrame()
                     elif element.type in [np.ndarray]: value = np.array([])
                     elif element.type in [bool]: value = False
+                    elif element.type in [tuple]: value = ([], -1)
                 step['value'] = value
 
             self.stepList(recipe_name).append(step)
@@ -478,18 +522,18 @@ class ConfigManager:
         """ Renames a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
             if newName != name:
-                pos = self.getRecipeStepPosition(recipe_name, name)
+                step_info = self.getRecipeStep(recipe_name, name)
                 newName = self.getUniqueName(recipe_name, newName)
-                self.stepList(recipe_name)[pos]['name'] = newName
+                step_info['name'] = newName
                 self.gui._refreshRecipe(recipe_name)
                 self.addNewConfig()
 
     def setRecipeStepValue(self, recipe_name: str, name: str, value: Any):
         """ Sets the value of a step in the scan recipe """
         if not self.gui.scanManager.isStarted():
-            pos = self.getRecipeStepPosition(recipe_name, name)
-            if value is not self.stepList(recipe_name)[pos]['value']:
-                self.stepList(recipe_name)[pos]['value'] = value
+            step_info = self.getRecipeStep(recipe_name, name)
+            if value is not step_info['value']:
+                step_info['value'] = value
                 self.gui._refreshRecipe(recipe_name)
                 self.addNewConfig()
 
@@ -598,7 +642,8 @@ class ConfigManager:
 
     def getParameterPosition(self, recipe_name: str, param_name: str) -> int:
         """ Returns the position of a parameter """
-        return [i for i, param in enumerate(self.parameterList(recipe_name)) if param['name'] == param_name][0]
+        return [i for i, param in enumerate(self.parameterList(recipe_name))
+                if param['name'] == param_name][0]
 
     def parameterList(self, recipe_name: str) -> List[dict]:
         """ Returns the list of parameters in the recipe """
@@ -606,12 +651,11 @@ class ConfigManager:
 
     def parameterNameList(self, recipe_name: str) -> List[str]:
         """ Returns the list of parameter names in the recipe """
-        if recipe_name in self.config:
-            return [param['name'] for param in self.parameterList(recipe_name)]
-        else:
-            return []
+        return [param['name'] for param in self.parameterList(recipe_name)] if (
+            recipe_name in self.config) else []
 
-    def getParameterElement(self, recipe_name: str, param_name: str) -> devices.Device:
+    def getParameterElement(
+            self, recipe_name: str, param_name: str) -> Union[None, Variable_og]:
         """ Returns the element of a parameter """
         param = self.getParameter(recipe_name, param_name)
         return param['element']
@@ -648,7 +692,8 @@ class ConfigManager:
 
             # Creates the array of values for the parameter
             if logScale:
-                paramValues = np.logspace(m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
+                paramValues = np.logspace(
+                    m.log10(startValue), m.log10(endValue), nbpts, endpoint=True)
             else:
                 paramValues = np.linspace(startValue, endValue, nbpts, endpoint=True)
 
@@ -664,20 +709,26 @@ class ConfigManager:
         """ Returns the list of steps in the recipe """
         return self.config[recipe_name]['recipe']
 
-    def getRecipeStepElement(self, recipe_name: str, name: str) -> devices.Device:
-        """ Returns the element of a recipe step """
+    def getRecipeStep(self, recipe_name: str, name: str) -> dict:
+        """ Returns a dictionnary with recipe step information """
         pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.stepList(recipe_name)[pos]['element']
+        return self.stepList(recipe_name)[pos]
+
+    def getRecipeStepElement(
+            self, recipe_name: str, name: str) -> Union[Variable_og, Action]:
+        """ Returns the element of a recipe step """
+        step_info = self.getRecipeStep(recipe_name, name)
+        return step_info['element']
 
     def getRecipeStepType(self, recipe_name: str, name: str) -> str:
         """ Returns the type a recipe step """
-        pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.stepList(recipe_name)[pos]['stepType']
+        step_info = self.getRecipeStep(recipe_name, name)
+        return step_info['stepType']
 
     def getRecipeStepValue(self, recipe_name: str, name: str) -> Any:
         """ Returns the value of a recipe step """
-        pos = self.getRecipeStepPosition(recipe_name, name)
-        return self.stepList(recipe_name)[pos]['value']
+        step_info = self.getRecipeStep(recipe_name, name)
+        return step_info['value']
 
     def getRecipeStepPosition(self, recipe_name: str, name: str) -> int:
         """ Returns the position of a recipe step in the recipe """
@@ -687,7 +738,7 @@ class ConfigManager:
         """ Returns a pd.DataFrame with 'id' and 'param_name'
         columns containing the parameter array """
         paramValues = self.getValues(recipe_name, param_name)
-        paramValues = variables.eval_variable(paramValues)
+        paramValues = eval_variable(paramValues)
         paramValues = create_array(paramValues)
         assert isinstance(paramValues, np.ndarray)
         data = pd.DataFrame()
@@ -704,7 +755,7 @@ class ConfigManager:
         for recipe_name in reversed(self.recipeNameList()):
             for param_name in self.parameterNameList(recipe_name):
                 values = self.getValues(recipe_name, param_name)
-                value = values if variables.has_eval(values) else float(values[0])
+                value = values if has_eval(values) else float(values[0])
                 listVariable.append((param_name, value))
             for step in self.stepList(recipe_name):
                 if step['stepType'] == 'measure':
@@ -749,7 +800,7 @@ class ConfigManager:
                     param_pars['address'] = "None"
 
                 if 'values' in param:
-                    if variables.has_eval(param['values']):
+                    if has_eval(param['values']):
                         param_pars['values'] = param['values']
                     else:
                         param_pars['values'] = array_to_str(
@@ -777,11 +828,11 @@ class ConfigManager:
 
                 if stepType == 'set' or (stepType == 'action'
                                          and config_step['element'].type in [
-                                             int, float, str,
+                                             int, float, bool, str, bytes, tuple,
                                              np.ndarray, pd.DataFrame]):
                     value = config_step['value']
 
-                    if variables.has_eval(value):
+                    if has_eval(value):
                         valueStr = value
                     else:
                         if config_step['element'].type in [np.ndarray]:
@@ -794,6 +845,10 @@ class ConfigManager:
                                 valueStr = f'{value:.{self.precision}g}'
                             except:
                                 valueStr = f'{value}'
+                        elif config_step['element'].type in [bytes]:
+                            valueStr = f'{value.decode()}'
+                        else:  # for tuple and safety
+                            valueStr = f'{value}'
 
                     pars_recipe_i['recipe'][f'{i+1}_value'] = valueStr
 
@@ -801,20 +856,21 @@ class ConfigManager:
 
         # Add variables to config
         name_var_config = [var[0] for var in self.getConfigVariables()]
-        names_var_user = list(variables.VARIABLES)
+        names_var_user = list(VARIABLES)
         names_var_to_save = list(set(names_var_user) - set(name_var_config))
 
         var_to_save = {}
         for var_name in names_var_to_save:
-            var = variables.get_variable(var_name)
+            var = get_variable(var_name)
 
             if var is not None:
-                assert variables.is_Variable(var)
+                assert is_Variable(var)
                 value_raw = var.raw
-                if isinstance(value_raw, np.ndarray): valueStr = array_to_str(
+                if isinstance(value_raw, np.ndarray):
+                    valueStr = array_to_str(
                         value_raw, threshold=1000000, max_line_width=9000000)
-                elif isinstance(value_raw, pd.DataFrame): valueStr = dataframe_to_str(
-                        value_raw, threshold=1000000)
+                elif isinstance(value_raw, pd.DataFrame):
+                    valueStr = dataframe_to_str(value_raw, threshold=1000000)
                 elif isinstance(value_raw, (int, float, str)):
                     try: valueStr = f'{value_raw:.{self.precision}g}'
                     except: valueStr = f'{value_raw}'
@@ -836,28 +892,33 @@ class ConfigManager:
                     try:
                         with open(filename, "r") as read_file:
                             configPars = json.load(read_file)
-                    except Exception as error:
-                        self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
+                    except Exception as e:
+                        self.gui.setStatus(
+                            f"Impossible to load configuration file: {e}",
+                            10000, False)
                         return None
                 else:
-                    print("ConfigParser depreciated, now use json. Will convert this config to json if save it.")
-                    configPars = {s: dict(legacy_configPars.items(s)) for s in legacy_configPars.sections()}
+                    print("ConfigParser depreciated, now use json. " \
+                          "Will convert this config to json if save it.")
+                    configPars = {s: dict(legacy_configPars.items(s))
+                                  for s in legacy_configPars.sections()}
 
                 path = os.path.dirname(filename)
-                paths.USER_LAST_CUSTOM_FOLDER = path
+                PATHS['last_folder'] = path
 
                 self.load_configPars(configPars, append=append)
 
                 if not self._got_error: self.addNewConfig()
             else:
-                self.gui.setStatus(f"Configuration file {filename} doesn't exists", 5000)
+                self.gui.setStatus(
+                    f"Configuration file {filename} doesn't exists", 5000)
 
     def load_configPars(self, configPars: dict, append: bool = False):
         """ Creates a config representing a scan form a configPars """
         self._got_error = False
         self.configHistory.active = False
         previous_config = self.config.copy()  # used to recover old config if error in loading new one
-        already_loaded_devices = devices.list_loaded_devices()
+        already_loaded_devices = list_loaded_devices()
 
         try:
             # LEGACY <= 1.2
@@ -899,7 +960,9 @@ class ConfigManager:
 
             # Config
             config = OrderedDict()
-            recipeNameList = [i for i in list(configPars) if i != 'autolab' and i != 'variables']  # to remove 'autolab' from recipe list
+            # to remove 'autolab' and 'variables' from recipe list
+            recipeNameList = [i for i in list(configPars)
+                              if i not in ('autolab', 'variables')]
 
             for recipe_num_name in recipeNameList:
 
@@ -920,38 +983,45 @@ class ConfigManager:
                 else:
                     recipe_i['active'] = True  # LEGACY <= 1.2.1
 
-                assert 'parameter' in pars_recipe_i, f'Missing parameter in {recipe_name}'
+                assert 'parameter' in pars_recipe_i, (
+                    f'Missing parameter in {recipe_name}')
 
                 param_list = recipe_i['parameter'] = []
 
                 # LEGACY <= 1.2.1
                 if len(pars_recipe_i['parameter']) != 0:
-                    if type(list(pars_recipe_i['parameter'].values())[0]) is not dict:
-                        pars_recipe_i['parameter'] = {'parameter_1': pars_recipe_i['parameter']}
+                    if not isinstance(
+                            list(pars_recipe_i['parameter'].values())[0],
+                            dict):
+                        pars_recipe_i['parameter'] = {
+                            'parameter_1': pars_recipe_i['parameter']}
 
                 for param_pars_name in pars_recipe_i['parameter']:
                     param_pars = pars_recipe_i['parameter'][param_pars_name]
 
                     param = {}
 
-                    assert 'name' in param_pars, f"Missing name to {param_pars}"
+                    assert 'name' in param_pars, (
+                        f"Missing name to {param_pars}")
                     param['name'] = param_pars['name']
 
-                    assert 'address' in param_pars, f"Missing address to {param_pars}"
+                    assert 'address' in param_pars, (
+                        f"Missing address to {param_pars}")
                     if param_pars['address'] == "None": element = None
                     else:
-                        element = devices.get_element_by_address(param_pars['address'])
-                        assert element is not None, f"Parameter {param_pars['address']} not found."
+                        device_name = param_pars['address'].split('.')[0]
+                        element = self.ask_get_element_by_address(device_name, param_pars['address'])
 
                     param['element'] = element
 
                     if 'values' in param_pars:
-                        if variables.has_eval(param_pars['values']):
+                        if has_eval(param_pars['values']):
                             values = param_pars['values']
                         else:
                             values = str_to_array(param_pars['values'])
-                        if not variables.has_eval(values):
-                            assert np.ndim(values) == 1, f"Values must be one dimension array in parameter: {param['name']}"
+                        if not has_eval(values):
+                            assert np.ndim(values) == 1, (
+                                f"Values must be one dimension array in parameter: {param['name']}")
                         param['values'] = values
                     else:
                         for key in ['nbpts', 'start_value', 'end_value', 'log']:
@@ -982,30 +1052,36 @@ class ConfigManager:
                         step['name'] = pars_recipe[f'{i}_name']
                         name = step['name']
 
-                        assert f'{i}_steptype' in pars_recipe, f"Missing stepType in step {i} ({name})."
+                        assert f'{i}_steptype' in pars_recipe, (
+                            f"Missing stepType in step {i} ({name}).")
                         step['stepType'] = pars_recipe[f'{i}_steptype']
 
-                        assert f'{i}_address' in pars_recipe, f"Missing address in step {i} ({name})."
+                        assert f'{i}_address' in pars_recipe, (
+                            f"Missing address in step {i} ({name}).")
                         address = pars_recipe[f'{i}_address']
 
                         if step['stepType'] == 'recipe':
-                            assert step['stepType'] != 'recipe', "Removed the recipe in recipe feature!"
+                            assert step['stepType'] != 'recipe', (
+                                "Removed the recipe in recipe feature!")
                             element = address
                         else:
-                            element = devices.get_element_by_address(address)
+                            device_name = address.split('.')[0]
+                            element = self.ask_get_element_by_address(device_name, address)
 
-                        assert element is not None, f"Address {address} not found for step {i} ({name})."
                         step['element'] = element
 
                         if (step['stepType'] == 'set') or (
                                 step['stepType'] == 'action' and element.type in [
-                                    int, float, str, np.ndarray, pd.DataFrame]):
-                            assert f'{i}_value' in pars_recipe, f"Missing value in step {i} ({name})."
+                                    int, float, bool, str, bytes, tuple,
+                                    np.ndarray, pd.DataFrame]):
+                            assert f'{i}_value' in pars_recipe, (
+                                f"Missing value in step {i} ({name}).")
                             value = pars_recipe[f'{i}_value']
 
                             try:
                                 try:
-                                    assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                                    assert has_eval(value), (
+                                        "Need $eval: to evaluate the given string")
                                 except:
                                     # Type conversions
                                     if element.type in [int]:
@@ -1014,14 +1090,19 @@ class ConfigManager:
                                         value = float(value)
                                     elif element.type in [str]:
                                         value = str(value)
+                                    elif element.type in [bytes]:
+                                        value = value.encode()
                                     elif element.type in [bool]:
                                         value = boolean(value)
+                                    elif element.type in [tuple]:
+                                        value = str_to_tuple(value)
                                     elif element.type in [np.ndarray]:
                                         value = str_to_array(value)
                                     elif element.type in [pd.DataFrame]:
                                         value = str_to_dataframe(value)
                                     else:
-                                        assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                                        assert has_eval(value), (
+                                            "Need $eval: to evaluate the given string")
                             except:
                                 raise ValueError(f"Error with {i}_value = {value}. Expect either {element.type} or device address. Check address or open device first.")
 
@@ -1032,7 +1113,6 @@ class ConfigManager:
                         recipe.append(step)
                     else:
                         break
-
             if append:
                 for conf in config.values():
                     recipe_name = conf['name']
@@ -1050,27 +1130,23 @@ class ConfigManager:
 
                 add_vars = []
                 for var_name, raw_value in var_dict.items():
-                    raw_value = variables.convert_str_to_data(raw_value)
+                    if not has_eval(raw_value):
+                        raw_value = str_to_data(raw_value)
                     add_vars.append((var_name, raw_value))
 
-                variables.update_from_config(add_vars)
+                update_from_config(add_vars)
 
         except Exception as error:
             self._got_error = True
-            self.gui.setStatus(f"Impossible to load configuration file: {error}", 10000, False)
+            self.gui.setStatus(
+                f"Impossible to load configuration file: {error}", 10000, False)
             self.config = previous_config
         else:
             self.gui._resetRecipe()
             self.gui.setStatus("Configuration file loaded successfully", 5000)
-
-            for device in (set(devices.list_loaded_devices()) - set(already_loaded_devices)):
-                item_list = self.gui.mainGui.tree.findItems(device, QtCore.Qt.MatchExactly, 0)
-
-                if len(item_list) == 1:
-                    item = item_list[0]
-                    self.gui.mainGui.itemClicked(item)
-
-        self.configHistory.active = True
+        finally:
+            self.configHistory.active = True
+            self.update_loaded_devices(already_loaded_devices)
 
     # UNDO REDO ACTIONS
     ###########################################################################
@@ -1094,6 +1170,7 @@ class ConfigManager:
 
         self.updateUndoRedoButtons()
         self.updateVariableConfig()
+        self.gui.setStatus('')
 
     def updateUndoRedoButtons(self):
         """ enables/disables undo/redo button depending on history """

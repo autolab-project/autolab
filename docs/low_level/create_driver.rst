@@ -3,7 +3,7 @@
 Write your own Driver
 =====================
 
-The goal of this tutorial is to present the general structure of the drivers of this package, in order for you to create simply your own drivers, and make them available to the community within this collaborative project. We notably provide a fairly understandable driver structure that can handle the highest degree of instruments complexity (including: single and multi-channels function generators, oscilloscopes, Electrical/Optical frames with associated interchangeable submodules, etc.). This provides reliable ways to add other types of connection to your driver (e.g. GPIB to Ethenet) or other functions (e.g. get_amplitude, set_frequency, etc.).
+The goal of this tutorial is to present the general structure of the drivers of this package, in order for you to simply create your own drivers and make them available to the community within this collaborative project. We notably provide a fairly understandable driver structure that can handle the highest degree of instruments complexity (including: single and multi-channels function generators, oscilloscopes, olectrical/optical frames with associated interchangeable submodules, etc.). This provides reliable ways to add other types of connection to your driver (e.g. GPIB to Ethenet) or other functions (e.g. get_amplitude, set_frequency, etc.).
 
 .. note::
 
@@ -22,7 +22,7 @@ Getting started: create a new driver
     Each driver name should be unique: do not define new drivers (in your local folders) with a name that already exists in the main package.
 
 
-In the local_drivers directory, as in the main package, each instrument has/should have its own directory organized and named as follow. The name of this folder take the form *\<manufacturer\>_\<MODEL\>*. The driver associated to this instrument is a python script taking the same name as the folder: *\<manufacturer\>_\<MODEL\>.py*. A second python script, allowing the parser to work properly, should be named *\<manufacturer\>_\<MODEL\>_utilities.py* (`find a minimal template here <https://github.com/autolab-project/autolab-drivers/tree/master/More/Templates>`_). Additional python scripts may be present in this folder (devices's modules, etc.). Please see the existing drivers of the autolab package for extensive examples.
+In the local_drivers directory, as in the main package, each instrument has/should have its own directory organized and named as follow. The name of this folder takes the form *\<manufacturer\>_\<MODEL\>*. The driver associated to this instrument is a python script taking the same name as the folder: *\<manufacturer\>_\<MODEL\>.py*. A second python script, allowing the parser to work properly, should be named *\<manufacturer\>_\<MODEL\>_utilities.py* (`find a minimal template here <https://github.com/autolab-project/autolab-drivers/tree/master/More/Templates>`_). Additional python scripts may be present in this folder (devices's modules, etc.). Please see the existing drivers of the autolab package for extensive examples.
 
 **For addition to the main package**: Once you tested your driver and it is ready to be used by others, you can send the appropriate directory to the contacts (:ref:`about`).
 
@@ -38,7 +38,7 @@ Driver structure (*\<manufacturer\>_\<MODEL\>.py* file)
 
 The Driver is organized in several `python class <https://docs.python.org/tutorial/classes.html>`_ with a structure as follow. The numbers represent the way sections appear from the top to the bottom of an actual driver file. We chose to present the sections in a different way:
 
-1 -  import modules (optionnal)
+1 -  import modules (optional)
 ###############################
 
     To import possible additional modules, e.g.:
@@ -53,10 +53,10 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     The class Driver_CONNECTION: **establish the connection with the instrument** and **define the communication functions**.
 
-    As a reminder, a communication with an instruments occurs in general with strings that are set by the manufacturer and instrument and model dependent. To receive and send strings from and to the instrument we first need to establish a connection. This will be done using dedicated python package such as `pyvisa`, `pyserial`, `socket` and physical connections such as Ethernet, GPIB, or USB. See below for an example help with using a VISA type of connection.
+    As a reminder, communication with instruments generally occurs with strings that are set by the manufacturer and specific to the instrument model. To receive and send strings from and to the instrument we first need to establish a connection. This will be done using dedicated python package such as `pyvisa`, `pyserial`, `socket` and physical connections such as Ethernet, GPIB, or USB. See below for an example help with using a VISA type of connection.
 
     .. caution::
-        The connection types are refered to with capital characters in the classes names, e.g.:
+        The connection types are referred to with capital letters in the classes names, e.g.:
 
         .. code-block:: python
 
@@ -145,7 +145,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
             Driver.__init__(self, **kwargs)
 
 
-        Please check out autolab existing drivers for more examples and/or to re-use existing connection classes (those would most likely need small adjustments to fit your instruments).
+        Please check out existing autolab drivers for more examples and/or to reuse existing connection classes (these would most likely need small adjustments to fit your instruments).
 
 
     .. note:: **Help for VISA addresses**
@@ -160,7 +160,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
         Just execute them before and after plugging in your instrument to see which address appears. For ethernet connections, you should know the IP address (set it to be part of your local network) and the port (instrument documentation) of your instrument.
 
-        Examples of visa addresses may be `find here online <https://pyvisa.readthedocs.io/en/latest/>`_ :
+        Examples of VISA addresses can be find online `here <https://pyvisa.readthedocs.io/en/latest/>`_ :
 
         .. code-block:: python
 
@@ -172,11 +172,11 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 2 -  class Driver
 #################
 
-    The class Driver: **establish the connection with internal modules or channels** (optionnal as dependant on the instrument, see next section) and **define instrument-related functions**.
+    The class Driver: **establishes the connection with internal modules or channels** (optional as dependent on the instrument, see next section) and **defines instrument-related functions**.
 
     After the communication with your instrument is established, we need to send commands or receive answers (to get the results of a query or a requested command). The communication part being manage by the class Driver_CONNECTION, any time we want to send a (instrument-specific) command to the instrument from the class Driver, we need to use the communication functions defined in the class Driver_CONNECTION.
 
-    The class Driver_CONNECTION inherits all the attributes of the class Driver. The function ``__init__`` of the class Driver is run by the class Driver_CONNECTION. The Driver class will act as your main instrument.
+    The class Driver_CONNECTION inherits all the attributes of the class Driver. The ``__init__`` function of the class Driver is run by the class Driver_CONNECTION. The Driver class will act as your main instrument.
 
     Here is a commented example of the class Driver, further explained below:
 
@@ -222,7 +222,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
         Several points are worth noting:
 
-            1) Favor python f strings (``f''``) that are more, especially when an argument has to be passed to the function, that are more robust to different types [5)].
+            1) Favor python f strings (``f''``) that are more robust, especially when an argument has to be passed to the function [5)].
 
             2) You should explicitely convert the string returned by Driver_CONNEXION.query() (or Driver_CONNEXION.read) to the expected `variable` type [7)].
 
@@ -261,12 +261,12 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
                 self.slot_names = {}
                 prefix = 'slot'
                 for key in kwargs.keys():
-                    if key.startswith(prefix) and not '_name' in key :
+                    if key.startswith(prefix) and not '_name' in key:
                         slot_num = key[len(prefix):]
                         module_name = kwargs[key].strip()
                         module_class = globals()[f'Module_{module_name}']
-                        if f'{key}_name' in kwargs.keys() : name = kwargs[f'{key}_name']
-                        else : name = f'{key}_{module_name}'
+                        if f'{key}_name' in kwargs.keys(): name = kwargs[f'{key}_name']
+                        else: name = f'{key}_{module_name}'
                         setattr(self,name,module_class(self,slot_num))
                         self.slot_names[slot_num] = name
 
@@ -274,7 +274,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
         .. note::
 
-            For the particular case of instruments that usually returns one dimensionnal traces (e.g. oscilloscope, spectrum annalyser, etc.), it is useful to add to the class Driver some user utilities such as procedure for channel acquisitions:
+            For the particular case of instruments that usually returns one-dimensionnal traces (e.g. oscilloscope, spectrum annalyzer, etc.), it is useful to add to the class Driver some user utilities such as procedure for channel acquisitions:
 
             .. code-block:: python
 
@@ -315,14 +315,14 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
 .. _additional_class:
 
-4 -  Additional class (optionnal)
+4 -  Additional class (optional)
 #################################
 
     .. Caution::
 
         **Additional classes namings**
 
-        The additional classes should be named **Module\_MODEL**. Exceptions do occur for some oscilloscopes (**Channel**), spectrum annalyser (**Trace**) or some multi-channel instruments (**Output**), in which case we stick to the way it is refered to as in the Programmer Manual of the associated instrument.
+        The additional classes should be named **Module\_MODEL**. Exceptions do occur for some oscilloscopes (**Channel**), spectrum annalyzer (**Trace**) or some multi-channel instruments (**Output**),  In such cases, we adhere to the terminology as specified in the Programmer Manual of the associated instrument.
 
     In the particular case of an **instrument with `slots`**, all the `channels` are not equivalent. They rely on different physical modules that may be disposed differently and in different numbers for different users. Then one class for each different module (that are inserted in a main frame) should be defined (**Module_MODEL**). The ``__init__`` function of the class **Driver** will deal with which class **Module_MODEL** to instantiate with which `slot` depending on the actual configuration of the user.
     Thus the class **Module_MODEL** (or **Channel**, etc.) have all a similar structure, structure that is similar to the one of the class Driver. In other words the class **Driver** deal with the `main` instruments while the additional classes deal with the sub-modules.
@@ -347,7 +347,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
     .. code-block:: python
 
-        class Module_TEST111() :
+        class Module_TEST111():
             def __init__(self, driver, slot):
                 self.driver = driver
                 self.slot = slot
@@ -357,7 +357,7 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
             def get_power(self):
                 return float(self.dev.query('POWER?'))
 
-        class Module_TEST222() :
+        class Module_TEST222():
             def __init__(self, driver, slot):
                 self.driver = driver
                 self.slot = slot
@@ -373,11 +373,11 @@ The Driver is organized in several `python class <https://docs.python.org/tutori
 
         2) The connection functions used are the one coming from the class **Driver**, thus one now call them ``self.dev.connection_function`` (for connection_function defined in the class **Driver_CONNECTION** in: write, read, query, etc.).
 
-        3) Finally there is a collection of functions that are `channel`/`slot`-dependant.
+        3) Finally there is a collection of functions that are `channel`/`slot`-dependent.
 
     .. note::
 
-        For the particular case of instruments that usually returns one dimensionnal traces (e.g. oscilloscope, spectrum annalyser, etc.), it is useful to define functions to get and save the data. See the following instrument dependant example:
+        For the particular case of instruments that usually returns one dimensionnal traces (e.g. oscilloscope, spectrum annalyzer, etc.), it is useful to define functions to get and save the data. See the following instrument dependent example:
 
         .. code-block:: python
 
@@ -426,23 +426,23 @@ Additional necessary functions/files
 Function get_driver_model (in each class but Driver_CONNECTION)
 ###############################################################
 
-The function ``get_driver_model`` should be present in each of the classes of the *\<manufacturer\>_\<MODEL\>.py* but the class **Driver_CONNECTION** (including the class Driver and any optionnal class **Module_MODEL**), in order for many features of the package to work properly. It simply consists in a list of predefined elements that will indicate to the package the structure of the driver and predefined variable and actions.
-There are three possible elements in the function ``get_driver_model``: *Module*, *Variable* and *Action*.
+The ``get_driver_model`` function should be present in each of the classes of the *\<manufacturer\>_\<MODEL\>.py* but the class **Driver_CONNECTION** (including the class Driver and any optional class **Module_MODEL**), in order for many features of the package to work properly. It simply consists in a list of predefined elements that will indicate to the package the structure of the driver and predefined variable and actions.
+There are three possible elements in the ``get_driver_model`` function: *Module*, *Variable* and *Action*.
 
 Shared by the three elements (*Module*, *Variable*, *Action*):
     - 'name': nickname for your element (argument type: string)
     - 'element': element type, exclusively in: 'module', 'variable', 'action' (argument type: string)
-    - 'help': quick help, optionnal (argument type: string)
+    - 'help': quick help, optional (argument type: string)
 
 *Module*:
-    - 'object' : attribute of the class (argument type: Instance)
+    - 'object': attribute of the class (argument type: Instance)
 
 *Variable*:
     - 'read': class attribute (argument type: function)
     - 'write': class attribute (argument type: function)
     - 'type': python type, exclusively in: int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame
-    - 'unit': unit of the variable, optionnal (argument type: string)
-    - 'read_init': bool to tell :ref:`control_panel` to read variable on instantiation, optionnal
+    - 'unit': unit of the variable, optional (argument type: string)
+    - 'read_init': bool to tell :ref:`control_panel` to read variable on instantiation, optional
 
     .. caution::
         Either 'read' or 'write' key, or both of them, must be provided.
@@ -450,7 +450,7 @@ Shared by the three elements (*Module*, *Variable*, *Action*):
 *Action*:
     - 'do': class attribute (argument type: function)
     - 'param_type': python type, exclusively in: int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame, optional
-    - 'param_unit': unit of the variable, optionnal (argument type: string. Use special param_unit 'open-file' to open a open file dialog, 'save-file' to open a save file dialog and 'user-input' to open an input dialog)
+    - 'param_unit': unit of the variable, optional (argument type: string. Use special param_unit 'open-file' to open a open file dialog, 'save-file' to open a save file dialog and 'user-input' to open an input dialog)
 
 
 

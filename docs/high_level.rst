@@ -6,15 +6,15 @@ Devices (High-level interface)
 What is a Device?
 -----------------
 
-The high-level interface of Autolab is an abstraction layer of its low-level interface, which allows to communicate easily and safely with laboratory instruments without knowing the structure of its associated **Driver**.
+The high-level interface of Autolab is an abstraction layer of its low-level interface, which allows easy and safe communication with laboratory instruments without knowing the structure of their associated **Driver**.
 
 In this approach, an instrument is fully described with a hierarchy of three particular **Elements**: the **Modules**, the **Variables** and the **Actions**.
 
 * A **Module** is an **Element** that consists in a group of **Variables**, **Actions**, and sub-**Modules**. The top-level **Module** of an instrument is called a **Device**.
 
-* A **Variable** is an **Element** that refers to a physical quantity, whose the value can be either set and/or read from an instrument (wavelength of an optical source, position of a linear stage, optical power measured with a power meter, spectrum measured with a spectrometer...). Depending on the nature of the physical quantity, it may have a unit.
+* A **Variable** is an **Element** that refers to a physical quantity, whose value can be either set and/or read from an instrument (wavelength of an optical source, position of a linear stage, optical power measured with a power meter, spectrum measured with a spectrometer...). Depending on the nature of the physical quantity, it may have a unit.
 
-* An **Action** is an **Element** that refers to a particular operation that can be performed by an instrument. (homing of a linear stage, the zeroing of a power meter, the acquisition of a spectrum with a spectrometer...). An **Action** may have a parameter.
+* An **Action** is an **Element** that refers to a particular operation that can be performed by an instrument. (homing of a linear stage, zeroing of a power meter, acquisition of a spectrum with a spectrometer, etc.). An **Action** may have a parameter.
 
 The **Device** of a simple instrument is usually represented by only one **Module**, and a few **Variables** and **Actions** attached to it.
 
@@ -24,7 +24,7 @@ The **Device** of a simple instrument is usually represented by only one **Modul
 		|-- Wavelength (Variable)
 		|-- Output state (Variable)
 
-Some instruments are a bit more complex, in the sense that they can host several different modules. Their representation in this interface generally consists in one top level **Module** (the frame) and several others sub-**Modules** containing the **Variables** and **Actions** of each associated modules.
+Some instruments are a bit more complex, in the sense that they can host several different modules. Their representation in this interface generally consists of one top level **Module** (the frame) and several others sub-**Modules** containing the **Variables** and **Actions** of each associated module.
 
 .. code-block:: python
 
@@ -37,12 +37,12 @@ Some instruments are a bit more complex, in the sense that they can host several
 			|-- Position (Variable)
 			|-- Homing (Action)
 
-This hierarchy of **Elements** is implemented for each instrument in its drivers files, and is thus ready to use.
+This hierarchy of **Elements** is implemented for each instrument in its driver files, and is thus ready to use.
 
 Load and close a Device
 -----------------------
 
-The procedure to load a **Device** is almost the same as for the **Driver**, but with the function ``get_device``. You need to provide the nickname of a driver defined in the ``devices_config.ini`` (see :ref:`localconfig`).
+The procedure to load a **Device** is almost the same as for the **Driver**, but with the ``get_device`` function. You need to provide the nickname of a driver defined in the ``devices_config.ini`` (see :ref:`localconfig`).
 
 .. code-block:: python
 
@@ -50,13 +50,13 @@ The procedure to load a **Device** is almost the same as for the **Driver**, but
 
 .. note::
 
-	You can overwrite temporarily some of the parameters values of a configuration by simply providing them as keywords arguments in the ``get_device`` function:
+	You can temporarily overwrite some of the parameters values of a configuration by simply providing them as keywords arguments in the ``get_device`` function:
 
 	.. code-block:: python
 
 		>>> laserSource = autolab.get_device('my_tunics', address='GPIB::9::INSTR')
 
-To close properly the connection to the instrument, simply call its the function ``close`` of the **Device**. This object will not be usable anymore.
+To properly close the connection to the instrument, simply call the ``close`` function of the **Device**. This object will no longer be usable.
 
 .. code-block:: python
 
@@ -71,7 +71,7 @@ To close the connection to all instruments (devices, not drivers) at once, you c
 Navigation and help in a Device
 -------------------------------
 
-The navigation in the hierarchy of **Elements** of a given **Device** is based on relative attributes. For instance, to access the **Variable** ``wavelength`` of the **Module** (**Device**) ``my_tunics``, simply execute the following command:
+Navigation in the hierarchy of **Elements** of a given **Device** is based on relative attributes. For instance, to access the **Variable** ``wavelength`` of the **Module** (**Device**) ``my_tunics``, simply execute the following command:
 
 .. code-block:: python
 
@@ -84,7 +84,7 @@ In the case of a more complex **Device**, for instance a power meter named ``my_
 	>>> powerMeter = autolab.get_device('my_power_meter')
 	>>> powerMeter.channel1.power
 
-Every **Element** in Autolab is provided with a function ``help`` that can be called to obtain some information about it, but also to know which further **Elements** can be accessed through it, in the case of a **Module**. For a **Variable**, it will display its read and/or write functions (from the driver), its python type, and its unit if provided in the driver. For an **Action**, il will display the associated function in the driver, and its parameter (python type and unit) if it has one. You can also ``print()`` the object to display this help.
+Every **Element** in Autolab is provided with a ``help`` function that can be called to obtain some information about it, but also to know which further **Elements** can be accessed through it, in the case of a **Module**. For a **Variable**, it will display its read and/or write functions (from the driver), its Python type, and its unit if provided in the driver. For an **Action**, il will display the associated function in the driver, and its parameter (Python type and unit) if it has one. You can also ``print()`` the object to display this help.
 
 .. code-block:: python
 
@@ -113,7 +113,7 @@ If a **Variable** is writable (write function provided in the driver), its curre
 	>>> lightSource.wavelength(1549)
 	>>> lightSource.output(True)
 
-To save locally the value of a readable **Variable**, use its function `save` with the path of the desired output directory (default filename), or file:
+To save the value of a readable **Variable** locally, use its `save` function with the path of the desired output directory (default filename), or file:
 
 .. code-block:: python
 
@@ -134,7 +134,7 @@ You can execute an **Action** simply by calling its attribute:
 Script example
 --------------
 
-With all these commands, you can now create your own Python script. Here is an example of a script that sweep the wavelength of a light source, and measure the power of a power meter:
+With all these commands, you can now create your own Python script. Here is an example of a script that sweeps the wavelength of a light source, and measures the power of a power meter:
 
 .. code-block:: python
 

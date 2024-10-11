@@ -3,16 +3,19 @@
 Scanning
 ========
 
-The Autolab GUI Scanning interface allows the user to sweep parameters over a certain range of values, and execute for each of them a custom recipe.
+The Scanner interface allows the user to sweep parameters over a certain range of values, and execute for each of them a custom recipe.
 
-.. image:: scanning.png
+.. figure:: scanning.png
+	:figclass: align-center
+
+	Scanning panel
 
 Scan configuration
 ##################
 
 A scan can be composed of several recipes. Click on **Add recipe** at the bottom of the scanner to add an extra recipe.
 
-A recipe represent a list of steps that are executed for each value of a or multiple parameter.
+A recipe represents a list of steps that are executed for each value of one or multiple parameters.
 
 
 Parameters
@@ -20,10 +23,10 @@ Parameters
 
 The first step to do is to configure a scan parameter. A parameter is a *Variable* which is writable (write function provided in the driver) and numerical (integer or float value). To set a *Variable* as scan parameter, right click on it on the control panel window, and select **Set as scan parameter**.
 
-The user can change the name of the parameter with the line edit widget. This name will be used is the data files.
-It it possible to add extra parameters to a recipe by right cliking on the top of a recipe and selecting **Add Parameter**
+The user can change the name of the parameter using the line edit widget. This name will be used in the data files.
+It is possible to add extra parameters to a recipe by right-clicking on the top of a recipe and selecting **Add Parameter**
 This feature allows to realize 2D scan or ND-scan.
-A parameter can be removed by right cliking on its frame and selecting **Remove <parameter>**.
+A parameter can be removed by right-clicking on its frame and selecting **Remove <parameter>**.
 A parameter is optional, a recipe is executed once if no parameter is given.
 
 Parameter range
@@ -31,7 +34,7 @@ Parameter range
 
 The second step is to configure the range of the values that will be applied to the parameter during the scan.
 The user can set the start value, the end value, the mean value, the range width, the number of points of the scan or the step between two values.
-The user can also space the points following a log scale by selecting the **Log** option.
+The user can also space the points following a logarithmic scale by selecting the **Log** option.
 It is also possible to use a custom array for the parameter using the **Custom** option.
 
 Steps
@@ -47,14 +50,14 @@ Each recipe step must have a unique name. To change the name of a recipe step, r
 
 Recipe steps can be dragged and dropped to modify their relative order inside a recipe, to move them between multiple recipes, or to add them from the control panel. They can also be removed from the recipe using the right click menu **Remove**.
 
-Right clicking on a recipe gives several options: **Disable**, **Rename**, **Remove**, **Add Parameter**, **Move up** and **Move down**.
+Right-clicking on a recipe gives several options: **Disable**, **Rename**, **Remove**, **Add Parameter**, **Move up** and **Move down**.
 
-All changes made to the scan configuration are kept in a history allowing changes to be undone or restored using buttons **Undo** and **Redo**. These buttons are accessible using the **Edit** button in the menu bar of the scanner window.
+All changes made to the scan configuration are kept in a history, allowing changes to be undone or restored using the **Undo** and **Redo** buttons. These buttons are accessible using the **Edit** button in the menu bar of the scanner window.
 
 Store the configuration
 -----------------------
 
-Once the configuration of a scan is finished, the user can save it locally in a file for future use, by opening the menu **Configuration** and selecting **Export current configuration**. The user will be prompted for a file path in which the current scan configuration (parameter, parameter range, recipe) will be saved.
+Once the configuration of a scan is finished, the user can save it locally in a file for future use by opening the **Configuration** menu and selecting **Export current configuration**. The user will be prompted for a file path in which the current scan configuration (parameter, parameter range, recipe) will be saved.
 
 To load a previously exported scan configuration, open the menu **Configuration** and select **Import configuration**. The user will be prompted for the path of the configuration file.
 Use the **Append** option to append the selected configuration as an extra recipe to the existing scan.
@@ -63,11 +66,10 @@ Alternatively, recently opened configuration files can be accessed via the **Imp
 Scan execution
 ##############
 
-	* **Start** button: start / stop the scan.
+	* **Start** button: start the scan.
 	* **Pause** button: pause / resume the scan.
+	* **Stop** button: stop the scan.
 	* **Continuous scan** check box: if checked, start automatically a new scan when the previous one is finished. The state of this check box can be changed at any time.
-	* **Clear data** button: delete any previous datapoint recorded.
-	* **Save** button: save the data of the last scan. The user will be prompted for a folder path, that will be used to save the data and a screenshot of the figure.
 
 .. note::
 
@@ -83,14 +85,29 @@ Figure
 
 The user can interact with the figure at any time (during a scan or not).
 
-After a first loop of a recipe has been processed, the user can select the *Variable* displayed in x and y axis of the figure.
-
-The user can display the previous scan results using the combobox above the scanner figure containing the scan name.
-
-If the user has created several recipes in a scan, it is possible to display its results using the combobox above the scanner figure contaning the recipe name.
-
-It is possible to display arrays and images using the combobox above the scanner figure containing the dataframe name or 'Scan' for the main scan result.
+After the first loop of a recipe has been processed, the user can select the *Variable* displayed in x and y axes of the figure.
 
 A data filtering option is available below the figure to select the desired data, allowing for example to plot a slice of a 2D scan.
 
-.. image:: multiple_recipes.png
+A 2D plot option allows to display scan data as a colormap with x, y as axies and z as values, usuful to represent ND-scan.
+
+Scan data can be clear or saved with the buttons bellow the figure.
+
+	* **Clear all** button: delete any previous datapoint recorded.
+	* **Save all** button: save all the data of all the executed scans. The user will be prompted for a folder path, that will be used to save the data of all the scans.
+	* **Save** button: save the data of the selected scan. The user will be prompted for a folder path, that will be used to save the data of the scan.
+
+The user can display the previous scan results using the combobox below the scanner figure containing the scan name (scan1, scan2, ...).
+
+If the user has created several recipes in a scan, a combobox below the scanner figure contaning the recipe names (recipe, recipe_1, ...) allows to change the displayed recipe results.
+
+A combobox below the scanner figure containing the dataframe name or 'Scan' for the main scan result allows to display arrays and images.
+
+The button **Scan data** display the scan data in a table.
+
+The button **Send to plotter** send the scan data of the selected recipe to the :ref:`plotting`.
+
+.. figure:: multiple_recipes.png
+	:figclass: align-center
+
+	Multiple recipe example

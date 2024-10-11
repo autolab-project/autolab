@@ -10,9 +10,11 @@ import inspect
 from typing import Any
 
 from qtpy import QtCore, QtWidgets
+
 from ..GUI_utilities import qt_object_exists
-from ... import devices
-from ... import drivers
+from ...devices import get_final_device_config, list_loaded_devices, DEVICES, Device
+from ...drivers import load_driver_lib, get_driver
+from ...variables import update_allowed_dict
 
 
 class ThreadManager:
@@ -29,20 +31,15 @@ class ThreadManager:
         # GUI disabling
         item.setDisabled(True)
 
-        if hasattr(item, "execButton"):
-            if qt_object_exists(item.execButton):
-                item.execButton.setEnabled(False)
-        if hasattr(item, "readButton"):
-            if qt_object_exists(item.readButton):
-                item.readButton.setEnabled(False)
-        if hasattr(item, "valueWidget"):
-            if qt_object_exists(item.valueWidget):
-                item.valueWidget.setEnabled(False)
+        if hasattr(item, "execButton") and qt_object_exists(item.execButton):
+            item.execButton.setEnabled(False)
+        if hasattr(item, "readButton") and qt_object_exists(item.readButton):
+            item.readButton.setEnabled(False)
+        if hasattr(item, "valueWidget") and qt_object_exists(item.valueWidget):
+            item.valueWidget.setEnabled(False)
 
         # disabling valueWidget deselect item and select next one, need to disable all items and reenable item
-        list_item = self.gui.tree.selectedItems()
-
-        for item_selected in list_item:
+        for item_selected in self.gui.tree.selectedItems():
             item_selected.setSelected(False)
 
         item.setSelected(True)
@@ -90,16 +87,17 @@ class ThreadManager:
         item = self.threads[tid].item
         if qt_object_exists(item):
             item.setDisabled(False)
+            item.setValueKnownState(-1 if error else True)
 
-        if hasattr(item, "execButton"):
-            if qt_object_exists(item.execButton):
-                item.execButton.setEnabled(True)
-        if hasattr(item, "readButton"):
-            if qt_object_exists(item.readButton):
-                item.readButton.setEnabled(True)
-        if hasattr(item, "valueWidget"):
-            if qt_object_exists(item.valueWidget):
-                item.valueWidget.setEnabled(True)
+        if hasattr(item, "execButton") and qt_object_exists(item.execButton):
+            item.execButton.setEnabled(True)
+        if hasattr(item, "readButton") and qt_object_exists(item.readButton):
+            item.readButton.setEnabled(True)
+        if hasattr(item, "valueWidget") and qt_object_exists(item.valueWidget):
+            item.valueWidget.setEnabled(True)
+            # Put back focus if item still selected (item.isSelected() doesn't work)
+            if item in self.gui.tree.selectedItems():
+                item.valueWidget.setFocus()
 
     def delete(self, tid: int):
         """ This function is called when a thread is about to be deleted.
@@ -142,24 +140,25 @@ class InteractionThread(QtCore.QThread):
             elif self.intType == 'load':  # OPTIMIZE: is very similar to get_device()
                 # Note that threadItemDict needs to be updated outside of thread to avoid timing error
                 device_name = self.item.name
-                device_config = devices.get_final_device_config(device_name)
+                device_config = get_final_device_config(device_name)
 
-                if device_name in devices.list_loaded_devices():
-                    assert device_config == devices.DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
+                if device_name in list_loaded_devices():
+                    assert device_config == DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
                 else:
                     driver_kwargs = {k: v for k, v in device_config.items() if k not in ['driver', 'connection']}
-                    driver_lib = drivers.load_driver_lib(device_config['driver'])
+                    driver_lib = load_driver_lib(device_config['driver'])
 
                     if hasattr(driver_lib, 'Driver') and 'gui' in [param.name for param in inspect.signature(driver_lib.Driver.__init__).parameters.values()]:
                             driver_kwargs['gui'] = self.item.gui
 
-                    instance = drivers.get_driver(device_config['driver'],
-                                                  device_config['connection'],
-                                                  **driver_kwargs)
-                    devices.DEVICES[device_name] = devices.Device(
+                    instance = get_driver(
+                        device_config['driver'], device_config['connection'],
+                        **driver_kwargs)
+                    DEVICES[device_name] = Device(
                         device_name, instance, device_config)
+                    update_allowed_dict()
 
-                self.item.gui.threadDeviceDict[id(self.item)] = devices.DEVICES[device_name]
+                self.item.gui.threadDeviceDict[id(self.item)] = DEVICES[device_name]
 
         except Exception as e:
             error = e

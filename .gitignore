@@ -10,5 +10,6 @@ build/
 *.egg-info/
 
 # Sphinx documentation
-docs/hmtl/
+docs/html/
 docs/latexpdf/
+*.stats

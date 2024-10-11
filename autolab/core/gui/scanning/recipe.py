@@ -9,12 +9,13 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
-from .customWidgets import MyQTreeWidget, MyQTabWidget
-from .. import variables
+from .customWidgets import MyQTreeWidget, MyQTabWidget, MyQTreeWidgetItem
 from ..icons import icons
-from ... import config
+from ..GUI_utilities import MyInputDialog, qt_object_exists
+from ...config import get_scanner_config
+from ...variables import has_eval
 from ...utilities import (clean_string, str_to_array, array_to_str,
-                          str_to_dataframe, dataframe_to_str)
+                          str_to_dataframe, dataframe_to_str, str_to_tuple)
 
 
 class RecipeManager:
@@ -22,32 +23,30 @@ class RecipeManager:
 
     def __init__(self, gui: QtWidgets.QMainWindow, recipe_name: str):
 
-        self.gui = gui
+        self.gui = gui  # gui is scanner
         self.recipe_name = recipe_name
 
         # Import Autolab config
-        scanner_config = config.get_scanner_config()
+        scanner_config = get_scanner_config()
         self.precision = scanner_config['precision']
 
         self.defaultItemBackground = None
 
         # Recipe frame
         frameRecipe = QtWidgets.QFrame()
-        # frameRecipe.setFrameShape(QtWidgets.QFrame.StyledPanel)
 
         # Tree configuration
         self.tree = MyQTreeWidget(frameRecipe, self.gui, self.recipe_name)
-        self.tree.setHeaderLabels(['Step name', 'Action', 'Element address', 'Type', 'Value', 'Unit'])
+        self.tree.setHeaderLabels(['Step name', 'Action', 'Element address',
+                                   'Type', 'Value', 'Unit'])
         header = self.tree.header()
         header.setMinimumSectionSize(20)
-        # header.resizeSections(QtWidgets.QHeaderView.ResizeToContents)
         header.setStretchLastSection(False)
         header.resizeSection(0, 95)
         header.resizeSection(1, 55)
         header.resizeSection(2, 115)
         header.resizeSection(3, 35)
         header.resizeSection(4, 110)
-        # header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
         header.resizeSection(5, 32)
         header.setMaximumSize(16777215, 16777215)
         self.tree.itemDoubleClicked.connect(self.itemDoubleClicked)
@@ -56,7 +55,8 @@ class RecipeManager:
         self.tree.setDropIndicatorShown(True)
         self.tree.setAlternatingRowColors(True)
         self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.tree.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+        self.tree.setSizePolicy(
+            QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.tree.customContextMenuRequested.connect(self.rightClick)
         self.tree.setMinimumSize(0, 200)
         self.tree.setMaximumSize(16777215, 16777215)
@@ -67,12 +67,11 @@ class RecipeManager:
 
         # Qframe and QTab for close+parameter+scanrange+recipe
         frameAll = QtWidgets.QFrame()
-        # frameAll.setFrameShape(QtWidgets.QFrame.StyledPanel)
         layoutAll = QtWidgets.QVBoxLayout(frameAll)
         layoutAll.setContentsMargins(0,0,0,0)
         layoutAll.setSpacing(0)
 
-        layoutAll.addWidget(frameRecipe)
+        layoutAll.addWidget(frameRecipe, stretch=1)
 
         frameAll2 = MyQTabWidget(frameAll, self.gui, self.recipe_name)
         self._frame = frameAll2
@@ -94,7 +93,8 @@ class RecipeManager:
         self._frame.setTabEnabled(0, bool(active))
 
     def orderChanged(self, event):
-        newOrder = [self.tree.topLevelItem(i).text(0) for i in range(self.tree.topLevelItemCount())]
+        newOrder = [self.tree.topLevelItem(i).text(0)
+                    for i in range(self.tree.topLevelItemCount())]
         self.gui.configManager.setRecipeStepOrder(self.recipe_name, newOrder)
 
     def refresh(self):
@@ -102,82 +102,11 @@ class RecipeManager:
         self.tree.clear()
 
         for step in self.gui.configManager.stepList(self.recipe_name):
-
             # Loading step informations
-            item = QtWidgets.QTreeWidgetItem()
-            item.setFlags(item.flags() ^ QtCore.Qt.ItemIsDropEnabled)
-            item.setToolTip(0, step['element']._help)
-
-            # Column 1 : Step name
-            item.setText(0, step['name'])
-
-            # OPTIMIZE: stepType is a bad name. Possible confusion with element type. stepType should be stepAction or just action
-            # Column 2 : Step type
-            if step['stepType'] == 'measure':
-                item.setText(1, 'Measure')
-                item.setIcon(0, QtGui.QIcon(icons['measure']))
-            elif step['stepType']  == 'set':
-                item.setText(1, 'Set')
-                item.setIcon(0, QtGui.QIcon(icons['write']))
-            elif step['stepType']  == 'action':
-                item.setText(1, 'Do')
-                item.setIcon(0, QtGui.QIcon(icons['action']))
-            elif step['stepType']  == 'recipe':
-                item.setText(1, 'Recipe')
-                item.setIcon(0, QtGui.QIcon(icons['recipe']))
-
-            # Column 3 : Element address
-            if step['stepType'] == 'recipe':
-                item.setText(2, step['element'])
-            else:
-                item.setText(2, step['element'].address())
-
-            # Column 4 : Icon of element type
-            etype = step['element'].type
-            if etype is int: item.setIcon(3, QtGui.QIcon(icons['int']))
-            elif etype is float: item.setIcon(3, QtGui.QIcon(icons['float']))
-            elif etype is bool: item.setIcon(3, QtGui.QIcon(icons['bool']))
-            elif etype is str: item.setIcon(3, QtGui.QIcon(icons['str']))
-            elif etype is bytes: item.setIcon(3, QtGui.QIcon(icons['bytes']))
-            elif etype is tuple: item.setIcon(3, QtGui.QIcon(icons['tuple']))
-            elif etype is np.ndarray: item.setIcon(3, QtGui.QIcon(icons['ndarray']))
-            elif etype is pd.DataFrame: item.setIcon(3, QtGui.QIcon(icons['DataFrame']))
-
-            # Column 5 : Value if stepType is 'set'
-            value = step['value']
-            if value is not None:
-                if variables.has_eval(value):
-                    item.setText(4, f'{value}')
-                else:
-                    try:
-                        if step['element'].type in [bool, str, tuple]:
-                            item.setText(4, f'{value}')
-                        elif step['element'].type in [np.ndarray]:
-                            value = array_to_str(
-                                value, threshold=1000000, max_line_width=100)
-                            item.setText(4, f'{value}')
-                        elif step['element'].type in [pd.DataFrame]:
-                            value = dataframe_to_str(value, threshold=1000000)
-                            item.setText(4, f'{value}')
-                        else:
-                           item.setText(4, f'{value:.{self.precision}g}')
-                    except ValueError:
-                        item.setText(4, f'{value}')
-
-            # Column 6 : Unit of element
-            unit = step['element'].unit
-            if unit is not None:
-                item.setText(5, str(unit))
-
-            # set AlignTop to all columns
-            for i in range(item.columnCount()):
-                item.setTextAlignment(i, QtCore.Qt.AlignTop)
-                # OPTIMIZE: icon are not aligned with text: https://www.xingyulei.com/post/qt-button-alignment/index.html
-
-            # Add item to the tree
-            self.tree.addTopLevelItem(item)
+            item = MyQTreeWidgetItem(self.tree, step, self)
             self.defaultItemBackground = item.background(0)
 
+        self.tree.setFocus()  # needed for ctrl+z ctrl+y on recipe
         # toggle recipe
         active = bool(self.gui.configManager.getActive(self.recipe_name))
         self.gui._activateRecipe(self.recipe_name, active)
@@ -196,26 +125,47 @@ class RecipeManager:
 
                 menuActions = {}
                 menu = QtWidgets.QMenu()
-                menuActions['rename'] = menu.addAction("Rename")
-                menuActions['rename'].setIcon(QtGui.QIcon(icons['rename']))
+                menuActions['copy'] = menu.addAction("Copy")
+                menuActions['copy'].setIcon(icons['copy'])
+                menuActions['copy'].setShortcut(QtGui.QKeySequence("Ctrl+C"))
+                menu.addSeparator()
 
                 if stepType == 'set' or (stepType == 'action' and element.type in [
-                        int, float, str, np.ndarray, pd.DataFrame]):
+                        int, float, bool, str, tuple, np.ndarray, pd.DataFrame]):
                     menuActions['setvalue'] = menu.addAction("Set value")
-                    menuActions['setvalue'].setIcon(QtGui.QIcon(icons['write']))
+                    menuActions['setvalue'].setIcon(icons['write'])
 
                 menuActions['remove'] = menu.addAction("Remove")
-                menuActions['remove'].setIcon(QtGui.QIcon(icons['remove']))
+                menuActions['remove'].setIcon(icons['remove'])
+                menuActions['remove'].setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Delete))
+
+                menuActions['rename'] = menu.addAction("Rename")
+                menuActions['rename'].setIcon(icons['rename'])
+                menuActions['rename'].setShortcut(QtGui.QKeySequence("Ctrl+R"))
 
                 choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
 
-                if 'rename' in menuActions and choice == menuActions['rename']:
+                if choice == menuActions['copy']:
+                    self.copyStep(name)
+                elif choice == menuActions['rename']:
                     self.renameStep(name)
-                elif 'remove' in menuActions and choice == menuActions['remove']:
-                    self.gui.configManager.delRecipeStep(self.recipe_name, name)
+                elif choice == menuActions['remove']:
+                    self.removeStep(name)
                 elif 'setvalue' in menuActions and choice == menuActions['setvalue']:
                     self.setStepValue(name)
-            # else:  # TODO: disabled this feature has it is not good in its current state
+            else:
+                menuActions = {}
+                menu = QtWidgets.QMenu()
+                menuActions['paste'] = menu.addAction("Paste")
+                menuActions['paste'].setIcon(icons['paste'])
+                menuActions['paste'].setShortcut(QtGui.QKeySequence("Ctrl+V"))
+                menuActions['paste'].setEnabled(self.gui._copy_step_info is not None)
+                choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
+
+                if choice == menuActions['paste']:
+                    self.pasteStep()
+
+            # TODO: disabled this feature has it is not good in its current state
             #     config = self.gui.configManager.config
             #     if len(config) > 1:
 
@@ -225,7 +175,7 @@ class RecipeManager:
             #         menu = QtWidgets.QMenu()
             #         for recipe_name in recipe_name_list:
             #             menuActions[recipe_name] = menu.addAction(f'Add {recipe_name}')
-            #             menuActions[recipe_name].setIcon(QtGui.QIcon(icons['recipe']))
+            #             menuActions[recipe_name].setIcon(icons['recipe'])
 
             #         if len(recipe_name_list) != 0:
             #             choice = menu.exec_(self.tree.viewport().mapToGlobal(position))
@@ -256,6 +206,20 @@ class RecipeManager:
 
             #                 break
 
+    def copyStep(self, name: str):
+        """ Copy step information """
+        self.gui._copy_step_info = self.gui.configManager.getRecipeStep(
+            self.recipe_name, name)
+
+    def pasteStep(self):
+        """ Paste step information """
+        step_info = self.gui._copy_step_info
+        if step_info is not None:
+            self.gui.configManager.addRecipeStep(
+                self.recipe_name, step_info['stepType'],
+                step_info['element'], step_info['name'],
+                value=step_info['value'])
+
     def renameStep(self, name: str):
         """ Prompts the user for a new step name and apply it to the selected step """
         newName, state = QtWidgets.QInputDialog.getText(
@@ -267,28 +231,34 @@ class RecipeManager:
             self.gui.configManager.renameRecipeStep(
                 self.recipe_name, name, newName)
 
+    def removeStep(self, name: str):
+        self.gui.configManager.delRecipeStep(self.recipe_name, name)
+
     def setStepValue(self, name: str):
         """ Prompts the user for a new step value and apply it to the selected step """
         element = self.gui.configManager.getRecipeStepElement(
             self.recipe_name, name)
         value = self.gui.configManager.getRecipeStepValue(
             self.recipe_name, name)
-
         # Default value displayed in the QInputDialog
-        if variables.has_eval(value):
+        if has_eval(value):
             defaultValue = f'{value}'
         else:
             if element.type in [np.ndarray]:
                 defaultValue = array_to_str(value, threshold=1000000, max_line_width=100)
             elif element.type in [pd.DataFrame]:
                 defaultValue = dataframe_to_str(value, threshold=1000000)
+            if element.type in [bytes] and isinstance(value, bytes):
+                defaultValue = f'{value.decode()}'
             else:
                 try:
                     defaultValue = f'{value:.{self.precision}g}'
                 except (ValueError, TypeError):
                     defaultValue = f'{value}'
 
-        main_dialog = variables.VariablesDialog(self.gui, name, defaultValue)
+        main_dialog = MyInputDialog(self.gui, name)
+        main_dialog.setWindowModality(QtCore.Qt.ApplicationModal)  # block GUI interaction
+        main_dialog.setTextValue(defaultValue)
         main_dialog.show()
 
         if main_dialog.exec_() == QtWidgets.QInputDialog.Accepted:
@@ -296,7 +266,7 @@ class RecipeManager:
 
             try:
                 try:
-                    assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                    assert has_eval(value), "Need $eval: to evaluate the given string"
                 except:
                     # Type conversions
                     if element.type in [int]:
@@ -305,21 +275,23 @@ class RecipeManager:
                         value = float(value)
                     elif element.type in [str]:
                         value = str(value)
+                    elif element.type in [bytes]:
+                        value = value.encode()
                     elif element.type in [bool]:
                         if value == "False": value = False
                         elif value == "True": value = True
                         value = int(value)
                         assert value in [0, 1]
                         value = bool(value)
-                    # elif element.type in [tuple]:
-                    #     pass  # OPTIMIZE: don't know what todo here, key or tuple? how tuple without reading driver, how key without knowing tuple! -> forbid setting tuple in scan
+                    elif element.type in [tuple]:
+                        value = str_to_tuple(value)
                     # OPTIMIZE: bad with large data (truncate), but nobody will use it for large data right?
                     elif element.type in [np.ndarray]:
                         value = str_to_array(value)
                     elif element.type in [pd.DataFrame]:
                         value = str_to_dataframe(value)
                     else:
-                        assert variables.has_eval(value), "Need $eval: to evaluate the given string"
+                        assert has_eval(value), "Need $eval: to evaluate the given string"
                 # Apply modification
                 self.gui.configManager.setRecipeStepValue(
                     self.recipe_name, name, value)
@@ -340,11 +312,13 @@ class RecipeManager:
                 self.renameStep(name)
             elif column == 4:
                 if stepType == 'set' or (stepType == 'action' and element.type in [
-                        int, float, str, np.ndarray, pd.DataFrame]):
+                        int, float, bool, str, bytes, tuple, np.ndarray, pd.DataFrame]):
                     self.setStepValue(name)
 
     def setStepProcessingState(self, name: str, state: str):
         """ Sets the background color of a recipe step during the scan """
+        if not qt_object_exists(self.tree):
+            return None
         item = self.tree.findItems(name, QtCore.Qt.MatchExactly, 0)[0]
 
         if state is None:

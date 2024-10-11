@@ -5,6 +5,7 @@ Created on Oct 2022
 @author: jonathan based on qchat
 """
 
+from typing import List, Union, Any
 import os
 import sys
 import csv
@@ -17,11 +18,14 @@ try:
 except:
     no_default = None
 
-from qtpy import QtCore, QtWidgets
+from qtpy import QtWidgets
 
-from ... import paths
-from ... import config
-from ... import utilities
+from ...paths import PATHS
+from ...config import load_config
+from ...utilities import data_to_dataframe, SUPPORTED_EXTENSION
+from ...devices import DEVICES, get_element_by_address, list_devices
+from ...elements import Variable as Variable_og
+from ...variables import list_variables, get_variable, Variable
 
 
 def find_delimiter(filename):
@@ -62,7 +66,8 @@ def find_header(filename, sep=no_default, skiprows=None):
     else:
         if skiprows == 1:
             try:
-                df_columns = pd.read_csv(filename, sep=sep, header="infer", skiprows=0, nrows=0)
+                df_columns = pd.read_csv(filename, sep=sep, header="infer",
+                                         skiprows=0, nrows=0)
             except Exception:
                 pass
             else:
@@ -74,13 +79,16 @@ def find_header(filename, sep=no_default, skiprows=None):
 
     try:
         first_row = df.iloc[0].values.astype("float")
-        return ("infer", skiprows, no_default) if tuple(first_row) == tuple([i for i in range(len(first_row))]) else (None, skiprows, no_default)
+        return (("infer", skiprows, no_default)
+                if tuple(first_row) == tuple([i for i in range(len(first_row))])
+                else (None, skiprows, no_default))
     except:
         pass
     df_header = pd.read_csv(filename, sep=sep, nrows=5, skiprows=skiprows)
 
-    return ("infer", skiprows, no_default) if tuple(df.dtypes) != tuple(df_header.dtypes) else (None, skiprows, no_default)
-
+    return (("infer", skiprows, no_default)
+            if tuple(df.dtypes) != tuple(df_header.dtypes)
+            else (None, skiprows, no_default))
 
 
 def importData(filename):
@@ -90,52 +98,52 @@ def importData(filename):
     sep = find_delimiter(filename)
     (header, skiprows, columns) = find_header(filename, sep, skiprows)
     try:
-        data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows, names=columns)
+        data = pd.read_csv(filename, sep=sep, header=header,
+                           skiprows=skiprows, names=columns)
     except TypeError:
-        data = pd.read_csv(filename, sep=sep, header=header, skiprows=skiprows, names=None)  # for pandas 1.2: names=None but sep=no_default
+        data = pd.read_csv(filename, sep=sep, header=header,
+                           skiprows=skiprows, names=None)  # for pandas 1.2: names=None but sep=no_default
     except:
-        data = pd.read_csv(filename, sep="\t", header=header, skiprows=skiprows, names=columns)
+        data = pd.read_csv(filename, sep="\t", header=header,
+                           skiprows=skiprows, names=columns)
 
     assert len(data) != 0, "Can't import empty DataFrame"
-    data = utilities.formatData(data)
+    data = data_to_dataframe(data)
     return data
 
 
+class DataManager:
 
-class DataManager :
-
-    def __init__(self,gui):
+    def __init__(self, gui: QtWidgets.QMainWindow):
 
         self.gui = gui
-
         self._clear()
-
         self.overwriteData = True
 
-        plotter_config = config.load_config("plotter")
-        if 'device' in plotter_config.sections() and 'address' in plotter_config['device']:
-            self.deviceValue = str(plotter_config['device']['address'])
+        plotter_config = load_config("plotter_config")
+        if ('device' in plotter_config.sections()
+                and 'address' in plotter_config['device']):
+            self.variable_address = str(plotter_config['device']['address'])
         else:
-            self.deviceValue = ''
+            self.variable_address = ''
 
     def _clear(self):
         self.datasets = []
         self.last_variables = []
 
-    def setOverwriteData(self, value):
+    def setOverwriteData(self, value: bool):
         self.overwriteData = bool(value)
 
-    def getDatasetsNames(self):
+    def getDatasetsNames(self) -> List[str]:
         names = []
         for dataset in self.datasets:
             names.append(dataset.name)
         return names
 
     @staticmethod
-    def getUniqueName(name, names_list):
-
-        """ This function adds a number next to basename in case this basename is already taken """
-
+    def getUniqueName(name: str, names_list: List[str]):
+        """ This function adds a number next to basename in case this basename
+        is already taken """
         raw_name, extension = os.path.splitext(name)
 
         if extension in (".txt", ".csv", ".dat"):
@@ -146,48 +154,51 @@ class DataManager :
             putext = False
 
         compt = 0
-        while True :
-            if name in names_list :
+        while True:
+            if name in names_list:
                 compt += 1
                 if putext:
-                    name = basename+'_'+str(compt)+extension
+                    name = basename+'_' + str(compt) + extension
                 else:
-                    name = basename+'_'+str(compt)
-            else :
+                    name = basename + '_' + str(compt)
+            else:
                 break
         return name
 
-    def setDeviceValue(self,value):
-        """ This function set the value of the target device value """
+    def set_variable_address(self, value: str):
+        """ This function set the address of the target variable """
+        # Can raise errors
+        self.getVariable(value)
+        # If no errors
+        self.variable_address = value
 
-        try:
-            self.getDeviceName(value)
-        except:
-            raise NameError(f"The given value '{value}' is not a device variable or the device is closed")
-        else:
-            self.deviceValue = value
-
-    def getDeviceValue(self):
+    def get_variable_address(self) -> str:
         """ This function returns the value of the target device value """
+        return self.variable_address
 
-        return self.deviceValue
-
-    def getDeviceName(self, name):
+    def getVariable(self, name: str) -> Union[Variable, Variable_og]:
         """ This function returns the name of the target device value """
+        assert name != '', 'Need to provide a variable name'
+        device = name.split(".")[0]
 
-        try:
-            module_name, *submodules_name, variable_name = name.split(".")
-            module = self.gui.mainGui.tree.findItems(module_name, QtCore.Qt.MatchExactly)[0].module
-            for submodule_name in submodules_name:
-                module = module.get_module(submodule_name)
-            variable = module.get_variable(variable_name)
-        except:
-            raise NameError(f"The given value '{name}' is not a device variable or the device is closed")
+        if device in list_variables():
+            assert device == name, f"Can only use '{device}' directly"
+            variable = get_variable(name)
+        elif device in list_devices():
+            assert device in DEVICES, f"Device '{device}' is closed"
+            variable = get_element_by_address(name)  # Can raise 'name' not found in module 'device'
+            assert isinstance(variable, Variable_og), (
+                f"Need a variable but '{name}' is a {str(type(variable).__name__)}")
+            assert variable.readable, f"Variable '{name}' is not readable"
+            var_type = str(variable.type).split("'")[1]
+            assert variable.type in (int, float, np.ndarray, pd.DataFrame), (
+                f"Datatype '{var_type}' of '{name}' is not supported")
+        else:
+            assert False, f"'{device}' is neither a device nor a variable"
+
         return variable
 
-
     def data_comboBoxClicked(self):
-
         """ This function select a dataset """
         if len(self.datasets) == 0:
             self.gui.save_pushButton.setEnabled(False)
@@ -197,58 +208,63 @@ class DataManager :
             self.updateDisplayableResults()
 
     def importActionClicked(self):
-
         """ This function prompts the user for a dataset filename,
         and import the dataset"""
-
         filenames = QtWidgets.QFileDialog.getOpenFileNames(
-            self.gui, "Import data file", paths.USER_LAST_CUSTOM_FOLDER,
-            filter=utilities.SUPPORTED_EXTENSION)[0]
+            self.gui, "Import data file", PATHS['last_folder'],
+            filter=SUPPORTED_EXTENSION)[0]
         if not filenames:
-            return
+            return None
         else:
             self.importAction(filenames)
 
-    def importAction(self, filenames):
+    def importAction(self, filenames: List[str]):
         dataset = None
         for i, filename in enumerate(filenames):
-
-            try :
+            try:
                 dataset = self.importData(filename)
-            except Exception as error:
-                self.gui.setStatus(f"Impossible to load data from {filename}: {error}",10000, False)
+            except Exception as e:
+                self.gui.setStatus(
+                    f"Impossible to load data from {filename}: {e}",
+                    10000, False)
                 if len(filenames) != 1:
-                    print(f"Impossible to load data from {filename}: {error}", file=sys.stderr)
+                    print(f"Impossible to load data from {filename}: {e}",
+                          file=sys.stderr)
             else:
-                self.gui.setStatus(f"File {filename} loaded successfully",5000)
+                self.gui.setStatus(f"File {filename} loaded successfully", 5000)
         if dataset is not None:
             self.gui.figureManager.start(dataset)
 
         path = os.path.dirname(filename)
-        paths.USER_LAST_CUSTOM_FOLDER = path
+        PATHS['last_folder'] = path
 
-    def importDeviceData(self, deviceVariable):
+    def importDeviceData(self, variable: Union[Variable, Variable_og, pd.DataFrame, Any]):
         """ This function open the data of the provided device """
-
-        data = deviceVariable()
-
-        data = utilities.formatData(data)
+        if isinstance(variable, pd.DataFrame):
+            name = variable.name if hasattr(variable, 'name') else 'dataframe'
+            data = variable
+        elif isinstance(variable, (Variable, Variable_og)):
+            name = variable.address()
+            data = variable()  # read value
+        else:
+            name = 'data'
+            data = variable
+        data = data_to_dataframe(data)  # format value
 
         if self.overwriteData:
-            data_name = self.deviceValue
+            data_name = name
         else:
             names_list = self.getDatasetsNames()
-            data_name = DataManager.getUniqueName(self.deviceValue, names_list)
+            data_name = DataManager.getUniqueName(
+                name, names_list)
 
         dataset = self.newDataset(data_name, data)
         return dataset
 
-    def importData(self, filename):
+    def importData(self, filename: str):
         """ This function open the data with the provided filename """
         # OPTIMIZE: could add option to choose in GUI all options
-
         data = importData(filename)
-
         name = os.path.basename(filename)
 
         if self.overwriteData:
@@ -273,20 +289,18 @@ class DataManager :
             # Prepare a new dataset in the plotter
             self.gui.dataManager.addDataset(new_dataset)
 
-    def getData(self,nbDataset,varList, selectedData=0):
+    def getData(self, nbDataset: int, var_list: List[str], selectedData: int = 0):
         """ This function returns to the figure manager the required data """
-
         dataList = []
-
-        for i in range(selectedData, nbDataset+selectedData) :
-            if i < len(self.datasets) :
+        for i in range(selectedData, nbDataset+selectedData):
+            if i < len(self.datasets):
                 dataset = self.datasets[-(i+1)]
                 try:
-                    data = dataset.getData(varList)
+                    data = dataset.getData(var_list)
                 except:
                     data = None
                 dataList.append(data)
-            else :
+            else:
                 break
         dataList.reverse()
 
@@ -295,24 +309,22 @@ class DataManager :
     def saveButtonClicked(self):
         """ This function is called when the save button is clicked.
         It asks a path and starts the procedure to save the data """
-
         dataset = self.getLastSelectedDataset()
-        if dataset is not None :
-
-            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                self.gui, caption="Save data",
-                directory=paths.USER_LAST_CUSTOM_FOLDER,
-                filter=utilities.SUPPORTED_EXTENSION)
+        if dataset is not None:
+            filename = QtWidgets.QFileDialog.getSaveFileName(
+                self.gui, caption="Save data", directory=PATHS['last_folder'],
+                filter=SUPPORTED_EXTENSION)[0]
             path = os.path.dirname(filename)
 
-            if path != '' :
-                paths.USER_LAST_CUSTOM_FOLDER = path
-                self.gui.setStatus('Saving data...',5000)
+            if path != '':
+                PATHS['last_folder'] = path
+                self.gui.setStatus('Saving data...', 5000)
 
                 dataset.save(filename)
                 self.gui.figureManager.save(filename)
 
-                self.gui.setStatus(f'Last dataset successfully saved in {filename}',5000)
+                self.gui.setStatus(
+                    f'Last dataset successfully saved in {filename}', 5000)
 
     def clear(self):
         """ Clear displayed dataset """
@@ -325,8 +337,8 @@ class DataManager :
             self.deleteData(dataset)
             self.gui.data_comboBox.removeItem(index)
             self.gui.setStatus(f"Removed {data_name}", 5000)
-        except Exception as error:
-            self.gui.setStatus(f"Can't delete: {error}", 10000, False)
+        except Exception as e:
+            self.gui.setStatus(f"Can't delete: {e}", 10000, False)
             pass
 
         if self.gui.data_comboBox.count() == 0:
@@ -334,7 +346,8 @@ class DataManager :
             return
 
         else:
-            if index == (nbr_data-1) and index != 0:  # if last point but exist other data takes previous data else keep index
+            # if last point but exist other data takes previous data else keep index
+            if index == (nbr_data-1) and index != 0:
                 index -= 1
 
             self.gui.data_comboBox.setCurrentIndex(index)
@@ -344,7 +357,6 @@ class DataManager :
 
     def clear_all(self):
         """ This reset any recorded data, and the GUI accordingly """
-
         self._clear()
 
         self.gui.figureManager.clearData()
@@ -357,70 +369,71 @@ class DataManager :
 
     def deleteData(self, dataset):
         """ This function remove dataset from the datasets"""
-
         self.datasets.remove(dataset)
 
     def getLastSelectedDataset(self):
         """ This return the current (last selected) dataset """
-
         if len(self.datasets) > 0:
             return self.datasets[self.gui.data_comboBox.currentIndex()]
 
     def addDataset(self, dataset):
         """ This function add the given dataset to datasets list """
-
         self.datasets.append(dataset)
 
-    def newDataset(self, name, data):
+    def newDataset(self, name: str, data: pd.DataFrame):
         """ This function creates a new dataset """
-
-        dataset = Dataset(self.gui, name, data)
+        dataset = Dataset(name, data)
         self._addData(dataset)
         return dataset
 
     def updateDisplayableResults(self):
-        """ This function update the combobox in the GUI that displays the names of
-        the results that can be plotted """
-
+        """ This function update the combobox in the GUI that displays the
+        names of the results that can be plotted """
         dataset = self.getLastSelectedDataset()
 
         variables_list = list(dataset.data.columns)
 
         if variables_list != self.last_variables:
             self.last_variables = variables_list
-            resultNamesList = []
+            result_names = []
 
-            for resultName in variables_list:
+            for result_name in variables_list:
                     try:
-                        float(dataset.data.iloc[0][resultName])
-                        resultNamesList.append(resultName)
-                    except Exception as er:
-                        self.gui.setStatus(f"Can't plot data: {er}", 10000, False)
-                        return
+                        float(dataset.data.iloc[0][result_name])
+                        result_names.append(result_name)
+                    except Exception as e:
+                        self.gui.setStatus(f"Can't plot data: {e}", 10000, False)
+                        return None
 
             variable_x = self.gui.variable_x_comboBox.currentText()
             variable_y = self.gui.variable_y_comboBox.currentText()
 
             # If can, put back previous x and y variable in combobox
-            is_id = variables_list[0] == "id" and len(variables_list) > 2
+            is_id = (len(variables_list) != 0
+                     and variables_list[0] == "id"
+                     and len(variables_list) > 2)
 
-            if is_id:  # move id form begin to end
-                name=resultNamesList.pop(0)
-                resultNamesList.append(name)
+            if is_id:
+                # move id form begin to end
+                name=result_names.pop(0)
+                result_names.append(name)
 
-            AllItems = [self.gui.variable_x_comboBox.itemText(i) for i in range(self.gui.variable_x_comboBox.count())]
+            AllItems = [self.gui.variable_x_comboBox.itemText(i)
+                        for i in range(self.gui.variable_x_comboBox.count())]
 
-            if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
-
+            # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+            if result_names != AllItems:
                 self.gui.variable_x_comboBox.clear()
                 self.gui.variable_y_comboBox.clear()
 
-                self.gui.variable_x_comboBox.addItems(resultNamesList)  # slow (0.25s)
+                self.gui.variable_x_comboBox.addItems(result_names)  # slow (0.25s)
 
-                # move first item to end (only for y axis)
-                name=resultNamesList.pop(0)
-                resultNamesList.append(name)
-                self.gui.variable_y_comboBox.addItems(resultNamesList)
+                if len(result_names) != 0:
+                    # move first item to end (only for y axis)
+                    name=result_names.pop(0)
+                    result_names.append(name)
+
+                self.gui.variable_y_comboBox.addItems(result_names)
 
                 if variable_x in variables_list:
                     index = self.gui.variable_x_comboBox.findText(variable_x)
@@ -437,34 +450,28 @@ class DataManager :
             self.gui.figureManager.reloadData()  # 0.1s
 
 
-
 class Dataset():
 
-    def __init__(self,gui,name, data):
+    def __init__(self, name: str, data: pd.DataFrame):
 
-        self.gui = gui
         self.name = name
         self.data = data
 
-    def getData(self,varList):
-        """ This function returns a dataframe with two columns : the parameter value,
-        and the requested result value """
-
-        if varList[0] == varList[1] : return self.data.loc[:,[varList[0]]]
-        else : return self.data.loc[:,varList]
+    def getData(self, var_list: List[str]):
+        """ This function returns a dataframe with two columns:
+        the parameter value, and the requested result value """
+        if var_list[0] == var_list[1]: return self.data.loc[:, [var_list[0]]]
+        else: return self.data.loc[:, var_list]
 
     def update(self, dataset):
         """ Change name and data of this dataset """
-
         self.name = dataset.name
         self.data = dataset.data
 
-    def save(self,filename):
+    def save(self,filename: str):
         """ This function saved the dataset in the provided path """
-
-        self.data.to_csv(filename,index=False)
+        self.data.to_csv(filename, index=False)
 
     def __len__(self):
         """ Returns the number of data point of this dataset """
-
         return len(self.data)

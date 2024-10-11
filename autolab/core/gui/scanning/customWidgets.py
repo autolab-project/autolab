@@ -5,13 +5,18 @@ Created on Mon Jan 15 14:42:16 2024
 @author: Jonathan
 """
 
-from typing import List
+from typing import List, Union
 
+import numpy as np
+import pandas as pd
 from qtpy import QtCore, QtWidgets, QtGui
 
 from ..icons import icons
-from ...devices import Device
-from ...utilities import clean_string
+from ...utilities import clean_string, array_to_str, dataframe_to_str
+from ...elements import Variable as Variable_og
+from ...elements import Action
+from ...variables import has_eval
+from ...config import get_scanner_config
 
 
 class MyQTreeWidget(QtWidgets.QTreeWidget):
@@ -23,7 +28,7 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                  gui: QtWidgets.QMainWindow, recipe_name: str):
 
         self.recipe_name = recipe_name
-        self.scanner = gui
+        self.scanner = gui  # gui is scanner
         super().__init__(parent)
         self.setAcceptDrops(True)
 
@@ -143,7 +148,9 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
                     elif variable.readable:
                         gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
                     elif variable.writable:
-                        gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+                        value = variable.value if variable.type in [tuple] else None
+                        gui.addStepToScanRecipe(
+                            self.recipe_name, 'set', variable, value=value)
                 elif variable._element_type == "action":
                     gui.addStepToScanRecipe(self.recipe_name, 'action', variable)
 
@@ -187,13 +194,13 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         self.setGraphicsEffect(None)
 
     def menu(self, gui: QtWidgets.QMainWindow,
-             variable: Device, position: QtCore.QPoint):
+             variable: Union[Variable_og, Action], position: QtCore.QPoint):
         """ Provides the menu when the user right click on an item """
         menu = QtWidgets.QMenu()
         scanMeasureStepAction = menu.addAction("Measure in scan recipe")
-        scanMeasureStepAction.setIcon(QtGui.QIcon(icons['measure']))
+        scanMeasureStepAction.setIcon(icons['measure'])
         scanSetStepAction = menu.addAction("Set value in scan recipe")
-        scanSetStepAction.setIcon(QtGui.QIcon(icons['write']))
+        scanSetStepAction.setIcon(icons['write'])
         scanMeasureStepAction.setEnabled(variable.readable)
         scanSetStepAction.setEnabled(variable.writable)
         choice = menu.exec_(self.viewport().mapToGlobal(position))
@@ -201,7 +208,142 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
             gui.addStepToScanRecipe(self.recipe_name, 'measure', variable)
 
         elif choice == scanSetStepAction:
-            gui.addStepToScanRecipe(self.recipe_name, 'set', variable)
+            value = variable.value if variable.type in [tuple] else None
+            gui.addStepToScanRecipe(
+                self.recipe_name, 'set', variable, value=value)
+
+    def keyPressEvent(self, event):
+        ctrl = QtCore.Qt.ControlModifier
+        shift = QtCore.Qt.ShiftModifier
+        mod = event.modifiers()
+        if event.key() == QtCore.Qt.Key_R and mod == ctrl:
+            self.rename_step(event)
+        elif event.key() == QtCore.Qt.Key_C and mod == ctrl:
+            self.copy_step(event)
+        elif event.key() == QtCore.Qt.Key_V and mod == ctrl:
+            self.paste_step(event)
+        elif event.key() == QtCore.Qt.Key_Z and mod == ctrl:
+            # Note: needed to add setFocus to tree on creation to allow multiple ctrl+z
+            self.scanner.configManager.undoClicked()
+        elif (
+            event.key() == QtCore.Qt.Key_Z and mod == (ctrl | shift)
+        ) or (
+            event.key() == QtCore.Qt.Key_Y and mod == ctrl
+        ):
+            self.scanner.configManager.redoClicked()
+        elif (event.key() == QtCore.Qt.Key_Delete):
+            self.remove_step(event)
+        else:
+            super().keyPressEvent(event)
+
+    def rename_step(self, event):
+        if len(self.selectedItems()) == 0:
+            super().keyPressEvent(event)
+            return None
+        item = self.selectedItems()[0]  # assume can select only one item
+        self.scanner.recipeDict[self.recipe_name]['recipeManager'].renameStep(item.text(0))
+
+    def copy_step(self, event):
+        if len(self.selectedItems()) == 0:
+            super().keyPressEvent(event)
+            return None
+        item = self.selectedItems()[0]  # assume can select only one item
+        self.scanner.recipeDict[self.recipe_name]['recipeManager'].copyStep(item.text(0))
+
+    def paste_step(self, event):
+        self.scanner.recipeDict[self.recipe_name]['recipeManager'].pasteStep()
+
+    def remove_step(self, event):
+        if len(self.selectedItems()) == 0:
+            super().keyPressEvent(event)
+            return None
+        item = self.selectedItems()[0]  # assume can select only one item
+        self.scanner.recipeDict[self.recipe_name]['recipeManager'].removeStep(item.text(0))
+
+
+class MyQTreeWidgetItem(QtWidgets.QTreeWidgetItem):
+
+    def __init__(self, itemParent: QtWidgets.QTreeWidget, step: dict,
+                 gui: QtWidgets.QMainWindow):
+
+        self.gui = gui
+
+        # Import Autolab config
+        scanner_config = get_scanner_config()
+        self.precision = scanner_config['precision']
+
+        super().__init__(itemParent)
+
+        self.setFlags(self.flags() ^ QtCore.Qt.ItemIsDropEnabled)
+        self.setToolTip(0, step['element']._help)
+
+        # Column 1 : Step name
+        self.setText(0, step['name'])
+
+        # OPTIMIZE: stepType is a bad name. Possible confusion with element type. stepType should be stepAction or just action
+        # Column 2 : Step type
+        if step['stepType'] == 'measure':
+            self.setText(1, 'Measure')
+            self.setIcon(0, icons['measure'])
+        elif step['stepType']  == 'set':
+            self.setText(1, 'Set')
+            self.setIcon(0, icons['write'])
+        elif step['stepType']  == 'action':
+            self.setText(1, 'Do')
+            self.setIcon(0, icons['action'])
+        elif step['stepType']  == 'recipe':
+            self.setText(1, 'Recipe')
+            self.setIcon(0, icons['recipe'])
+
+        # Column 3 : Element address
+        if step['stepType'] == 'recipe':
+            self.setText(2, step['element'])
+        else:
+            self.setText(2, step['element'].address())
+
+        # Column 4 : Icon of element type
+        etype = step['element'].type
+        if etype is int: self.setIcon(3, icons['int'])
+        elif etype is float: self.setIcon(3, icons['float'])
+        elif etype is bool: self.setIcon(3, icons['bool'])
+        elif etype is str: self.setIcon(3, icons['str'])
+        elif etype is bytes: self.setIcon(3, icons['bytes'])
+        elif etype is tuple: self.setIcon(3, icons['tuple'])
+        elif etype is np.ndarray: self.setIcon(3, icons['ndarray'])
+        elif etype is pd.DataFrame: self.setIcon(3, icons['DataFrame'])
+
+        # Column 5 : Value if stepType is 'set'
+        value = step['value']
+        if value is not None:
+            if has_eval(value):
+                self.setText(4, f'{value}')
+            else:
+                try:
+                    if step['element'].type in [bool, str, tuple]:
+                        self.setText(4, f'{value}')
+                    elif step['element'].type in [bytes]:
+                        self.setText(4, f"{value.decode()}")
+                    elif step['element'].type in [np.ndarray]:
+                        value = array_to_str(
+                            value, threshold=1000000, max_line_width=100)
+                        self.setText(4, f'{value}')
+                    elif step['element'].type in [pd.DataFrame]:
+                        value = dataframe_to_str(value, threshold=1000000)
+                        self.setText(4, f'{value}')
+                    else:
+                       self.setText(4, f'{value:.{self.precision}g}')
+                except ValueError:
+                    self.setText(4, f'{value}')
+
+        # Column 6 : Unit of element
+        unit = step['element'].unit
+        if unit is not None:
+            self.setText(5, str(unit))
+
+        # set AlignTop to all columns
+        for i in range(self.columnCount()):
+            self.setTextAlignment(i, QtCore.Qt.AlignTop)
+            # OPTIMIZE: icon are not aligned with text: https://www.xingyulei.com/post/qt-button-alignment/index.html
 
 
 class MyQTabWidget(QtWidgets.QTabWidget):
@@ -233,36 +375,36 @@ class MyQTabWidget(QtWidgets.QTabWidget):
 
             if IS_ACTIVE:
                 activateRecipeAction = menu.addAction("Disable recipe")
-                activateRecipeAction.setIcon(QtGui.QIcon(icons['is-enable']))
+                activateRecipeAction.setIcon(icons['is-enable'])
             else:
                 activateRecipeAction = menu.addAction("Enable recipe")
-                activateRecipeAction.setIcon(QtGui.QIcon(icons['is-disable']))
+                activateRecipeAction.setIcon(icons['is-disable'])
 
             menu.addSeparator()
 
             renameRecipeAction = menu.addAction("Rename recipe")
-            renameRecipeAction.setIcon(QtGui.QIcon(icons['rename']))
+            renameRecipeAction.setIcon(icons['rename'])
             removeRecipeAction = menu.addAction("Remove recipe")
-            removeRecipeAction.setIcon(QtGui.QIcon(icons['remove']))
+            removeRecipeAction.setIcon(icons['remove'])
 
             menu.addSeparator()
 
+            # OBSOLETE
             recipeLink = self.gui.configManager.getRecipeLink(self.recipe_name)
-
             if len(recipeLink) == 1:  # A bit too restrictive but do the work
                 renameRecipeAction.setEnabled(True)
             else:
                 renameRecipeAction.setEnabled(False)
 
             addParameterAction = menu.addAction("Add parameter")
-            addParameterAction.setIcon(QtGui.QIcon(icons['add']))
+            addParameterAction.setIcon(icons['add'])
 
             menu.addSeparator()
 
             moveUpRecipeAction = menu.addAction("Move recipe up")
-            moveUpRecipeAction.setIcon(QtGui.QIcon(icons['up']))
+            moveUpRecipeAction.setIcon(icons['up'])
             moveDownRecipeAction = menu.addAction("Move recipe down")
-            moveDownRecipeAction.setIcon(QtGui.QIcon(icons['down']))
+            moveDownRecipeAction.setIcon(icons['down'])
 
             config = self.gui.configManager.config
             keys = list(config)
@@ -302,7 +444,7 @@ class MyQTabWidget(QtWidgets.QTabWidget):
                     self.recipe_name, newName)
 
 
-class parameterQFrame(QtWidgets.QFrame):
+class ParameterQFrame(QtWidgets.QFrame):
     # customMimeType = "autolab/MyQTreeWidget-selectedItems"
 
     def __init__(self, parent: QtWidgets.QMainWindow, recipe_name: str, param_name: str):

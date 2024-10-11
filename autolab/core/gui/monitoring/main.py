@@ -4,36 +4,40 @@ Created on Fri Sep 20 22:08:29 2019
 
 @author: qchat
 """
+from typing import Union
 import os
 import sys
 import queue
 
-from qtpy import QtCore, QtWidgets, uic, QtGui
+from qtpy import QtCore, QtWidgets, uic
 
 from .data import DataManager
 from .figure import FigureManager
 from .monitor import MonitorManager
 from ..icons import icons
-from ... import paths
 from ..GUI_utilities import get_font_size, setLineEditBackground
+from ..GUI_instances import clearMonitor
+from ...paths import PATHS
 from ...utilities import SUPPORTED_EXTENSION
+from ...elements import Variable as Variable_og
+from ...variables import Variable
 
 
 class Monitor(QtWidgets.QMainWindow):
 
-    def __init__(self, item: QtWidgets.QTreeWidgetItem):
-        self.gui = item if isinstance(item, QtWidgets.QTreeWidgetItem) else None
-        self.item = item
-        self.variable = item.variable
-
-        self._font_size = get_font_size() + 1
+    def __init__(self,
+                 variable: Union[Variable, Variable_og],
+                 has_parent: bool = False):
+        self.has_parent = has_parent  # Only for closeEvent
+        self.variable = variable
+        self._font_size = get_font_size()
 
         # Configuration of the window
         super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
-        self.setWindowTitle(f"AUTOLAB - Monitor: Variable {self.variable.address()}")
-        self.setWindowIcon(QtGui.QIcon(icons['monitor']))
+        self.setWindowTitle(f"AUTOLAB - Monitor: {self.variable.address()}")
+        self.setWindowIcon(icons['monitor'])
         # Queue
         self.queue = queue.Queue()
         self.timer = QtCore.QTimer(self)
@@ -48,7 +52,7 @@ class Monitor(QtWidgets.QMainWindow):
         setLineEditBackground(
             self.windowLength_lineEdit, 'synced', self._font_size)
 
-        self.xlabel = ''  # defined in data according to data type
+        self.xlabel = 'Time(s)'  # Is changed to x if ndarray or dataframe
         self.ylabel = f'{self.variable.address()}'  # OPTIMIZE: could depend on 1D or 2D
 
         if self.variable.unit is not None:
@@ -61,22 +65,11 @@ class Monitor(QtWidgets.QMainWindow):
             self.delay_lineEdit, 'edited', self._font_size))
         setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
-        # Pause
         self.pauseButton.clicked.connect(self.pauseButtonClicked)
-
-        # Save
         self.saveButton.clicked.connect(self.saveButtonClicked)
-
-        # Clear
         self.clearButton.clicked.connect(self.clearButtonClicked)
-
-        # Mean
         self.mean_checkBox.clicked.connect(self.mean_checkBoxClicked)
-
-        # Min
         self.min_checkBox.clicked.connect(self.min_checkBoxClicked)
-
-        # Max
         self.max_checkBox.clicked.connect(self.max_checkBoxClicked)
 
         # Managers
@@ -89,6 +82,31 @@ class Monitor(QtWidgets.QMainWindow):
         self.delayChanged()
         self.monitorManager.start()
         self.timer.start()
+
+        # Use to pause monitor on scan start
+        self.pause_on_scan = False
+        self.start_on_scan = False
+        if self.has_parent:
+            self.pause_on_scan_checkBox.clicked.connect(
+                self.pause_on_scan_checkBoxClicked)
+            self.start_on_scan_checkBox.clicked.connect(
+                self.start_on_scan_checkBoxClicked)
+        else:
+            self.pause_on_scan_checkBox.hide()
+            self.start_on_scan_checkBox.hide()
+
+        for splitter in (self.splitter, ):
+            for i in range(splitter.count()):
+                handle = splitter.handle(i)
+                handle.setStyleSheet("background-color: #DDDDDD;")
+                handle.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Enter:
+            obj.setStyleSheet("background-color: #AAAAAA;")  # Hover color
+        elif event.type() == QtCore.QEvent.Leave:
+            obj.setStyleSheet("background-color: #DDDDDD;")  # Normal color
+        return super().eventFilter(obj, event)
 
     def sync(self):
         """ This function updates the data and then the figure.
@@ -126,14 +144,14 @@ class Monitor(QtWidgets.QMainWindow):
         # Ask the filename of the output data
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             self, caption="Save data", directory=os.path.join(
-                paths.USER_LAST_CUSTOM_FOLDER,
+                PATHS['last_folder'],
                 f'{self.variable.address()}_monitor.txt'),
             filter=SUPPORTED_EXTENSION)
 
         path = os.path.dirname(filename)
         # Save the given path for future, the data and the figure if the path provided is valid
         if path != '':
-            paths.USER_LAST_CUSTOM_FOLDER = path
+            PATHS['last_folder'] = path
             self.setStatus('Saving data...', 5000)
 
             try:
@@ -175,15 +193,24 @@ class Monitor(QtWidgets.QMainWindow):
 
         if len(xlist) > 0: self.figureManager.update(xlist, ylist)
 
+    def pause_on_scan_checkBoxClicked(self):
+        """ Change pause_on_scan variable """
+        self.pause_on_scan = self.pause_on_scan_checkBox.isChecked()
+
+    def start_on_scan_checkBoxClicked(self):
+        """ Change start_on_scan variable """
+        self.start_on_scan = self.start_on_scan_checkBox.isChecked()
+
     def closeEvent(self, event):
         """ This function does some steps before the window is really killed """
         self.monitorManager.close()
         self.timer.stop()
-        if hasattr(self.item, 'clearMonitor'): self.item.clearMonitor()
         self.figureManager.fig.deleteLater()  # maybe not useful for monitor but was source of crash in scanner if didn't close
         self.figureManager.figMap.deleteLater()
 
-        if self.gui is None:
+        clearMonitor(self.variable)
+
+        if not self.has_parent:
             import pyqtgraph as pg
             try:
                 # Prevent 'RuntimeError: wrapped C/C++ object of type ViewBox has been deleted' when reloading gui
@@ -195,10 +222,11 @@ class Monitor(QtWidgets.QMainWindow):
 
         for children in self.findChildren(QtWidgets.QWidget):
             children.deleteLater()
+
         super().closeEvent(event)
 
-        if self.gui is None:
-            QtWidgets.QApplication.quit()  # close the monitor app
+        if not self.has_parent:
+            QtWidgets.QApplication.quit()  # close the app
 
     def windowLengthChanged(self):
         """ This function start the update of the window length in the data manager
@@ -240,7 +268,7 @@ class Monitor(QtWidgets.QMainWindow):
         self.delay_lineEdit.setText(f'{value:g}')
         setLineEditBackground(self.delay_lineEdit, 'synced', self._font_size)
 
-    def setStatus(self, message: str, timeout: int  = 0, stdout: bool = True):
+    def setStatus(self, message: str, timeout: int = 0, stdout: bool = True):
         """ Modify the message displayed in the status bar and add error message to logger """
         self.statusBar.showMessage(message, timeout)
         if not stdout: print(message, file=sys.stderr)

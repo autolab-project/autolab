@@ -1,4 +1,7 @@
 [![PyPi](https://img.shields.io/pypi/v/autolab)](https://pypi.org/project/autolab/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/autolab)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/autolab.svg?label=PyPI%20downloads)](https://pypi.org/project/autolab/)
+
 [![Documentation Status](https://readthedocs.org/projects/autolab/badge/?version=latest)](https://autolab.readthedocs.io/en/latest/?badge=latest)
 
 # Autolab
@@ -17,10 +20,10 @@ Visit https://autolab.readthedocs.io/ for the full documentation of this package
 
 ## Overview
 
-![Autolab scheme](docs/scheme.png)
+<img src="https://raw.githubusercontent.com/autolab-project/autolab/master/docs/scheme.png">
 
 ## GUI example
 
-![Autolab Scanning GUI](docs/gui/scanning.png)
+<img src="https://raw.githubusercontent.com/autolab-project/autolab/master/docs/gui/scanning.png">
 
-![Autolab Control Panel GUI](docs/gui/control_panel.png)
+<img src="https://raw.githubusercontent.com/autolab-project/autolab/master/docs/gui/control_panel.png">

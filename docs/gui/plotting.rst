@@ -3,11 +3,17 @@
 Plotting
 ========
 
-.. image:: plotting.png
+.. figure:: plotting.png
+	:figclass: align-center
 
-.. caution::
+	Plotting panel
 
-    The plotter still need some work, feed-back are more than welcome (January 2024).
+.. note::
+
+    The plotter still needs some work, feed-back is more than welcome.
+
+The Plotter panel is accessible in the **Plotter** action of the **Panels** sub-menu of the control panel menubar, or by code with ``autolab.plotter()``.
+Data can directly be plotted by passing them as argument ``autolab.plotter(data)``.
 
 Import data
 -----------
@@ -35,13 +41,13 @@ The **Plugin** tree can be used to connect any device to the plotter, either by 
 	[plugin]
 	<PLUGIN_NAME> = <DEVICE_NAME>
 
-A plugin do not share the same instance as the original device in the controlcenter, meaning that variables of a device will not affect variables of a plugin and vis-versa.
+A plugin do not share the same instance as the original device in the controlcenter, meaning that variables of a device will not affect variables of a plugin and vice versa.
 Because a new instance is created for each plugin, you can add as many plugin from the same device as you want.
 
-If a device uses the the argument ``gui`` in its ``__init__`` method, it will be able to access the plotter instance to get its data ot to modify the plot itself.
+If a device uses the the argument ``gui`` in its ``__init__`` method, it will be able to access the plotter instance to get its data or to modify the plot itself.
 
-If a plugin has a method called ``refresh``, the plotter will call it with the argument ``data`` containing the plot data everytime the figure is updated, allowing for each plugin to get the lastest available data and do operations on it.
+If a plugin has a method called ``refresh``, the plotter will call it with the argument ``data`` containing the plot data everytime the figure is updated, allowing for each plugin to get the latest available data and do operations on it.
 
-The plugin ``plotter`` can be added to the Plotter, allowing to do basic analyzes on the plotted data.
+The plugin ``plotter`` can be added to the Plotter, allowing to do basic analyses on the plotted data.
 Among them, getting the min, max values, but also computing the bandwidth around a local extremum.
 Note that this plugin can be used as a device to process data in the control panel or directly in a scan recipe.

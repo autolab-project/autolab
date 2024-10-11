@@ -10,6 +10,7 @@ import socket
 import os
 import inspect
 
+from .utilities import open_file
 
 project_url = 'https://github.com/autolab-project/autolab'
 drivers_url = 'https://github.com/autolab-project/autolab-drivers'
@@ -26,7 +27,7 @@ def doc(online: bool = "default"):
     Can open online or offline documentation by using True or False."""
 
     if online == "default":
-        if has_internet(): webbrowser.open(doc_url)
+        if has_internet(False): webbrowser.open(doc_url)
         else:
             print("No internet connection found. Open local pdf documentation instead")
             doc_offline()
@@ -37,11 +38,11 @@ def doc(online: bool = "default"):
 def doc_offline():
     dirname = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
     filename = os.path.join(dirname, "../autolab.pdf")
-    if os.path.exists(filename): os.startfile(filename)
+    if os.path.exists(filename): open_file(filename)
     else: print("No local pdf documentation found at {filename}")
 
 
-def has_internet() -> bool:
+def has_internet(_print=True) -> bool:
     """ https://stackoverflow.com/questions/20913411/test-if-an-internet-connection-is-present-in-python#20913928 """
     try:
         # see if we can resolve the host name -- tells us if there is
@@ -53,5 +54,5 @@ def has_internet() -> bool:
         return True
     except Exception: pass # we ignore any errors, returning False
 
-    print("No internet connection found")
+    if _print: print("No internet connection found")
     return False

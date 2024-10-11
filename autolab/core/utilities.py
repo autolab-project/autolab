@@ -4,7 +4,7 @@ Created on Fri Oct 18 23:09:51 2019
 
 @author: qchat
 """
-from typing import Any, List
+from typing import Any, List, Tuple
 import re
 import ast
 from io import StringIO
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 
-SUPPORTED_EXTENSION = "Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; All Files (*)"
+SUPPORTED_EXTENSION = "Text Files (*.txt);; Supported text Files (*.txt;*.csv;*.dat);; Any Files (*)"
 
 
 def emphasize(txt: str, sign: str = '-') -> str:
@@ -81,12 +81,33 @@ def str_to_value(s: str) -> Any:
     return s
 
 
+def str_to_tuple(s: str) -> Tuple[List[str], int]:
+    ''' Convert string to Tuple[List[str], int] '''
+    e = "Input string does not match the required format Tuple[List[str], int]"
+    try:
+        result = ast.literal_eval(s)
+        e = f"{result} does not match the required format Tuple[List[str], int]"
+        assert (isinstance(result, (tuple, list))
+                and len(result) == 2
+                and isinstance(result[0], (list, tuple))
+                and isinstance(result[1], int)), e
+        result = ([str(res) for res in result[0]], result[1])
+        return result
+    except Exception:
+        raise Exception(e)
+
 def create_array(value: Any) -> np.ndarray:
-    ''' Format an int, float, list or numpy array to a numpy array with minimal one dimension '''
-    # ndim=1 to avoid having float if 0D
-    array = np.array(value, ndmin=1, dtype=float)  # check validity of array
-    array = np.array(value, ndmin=1, copy=False)  # keep original dtype
-    return array
+    ''' Format an int, float, list or numpy array to a numpy array with at least
+    one dimension '''
+    # check validity of array, raise error if dtype not int or float
+    np.array(value, ndmin=1, dtype=float)
+    # Convert to ndarray and keep original dtype
+    value = np.asarray(value)
+
+    # want ndim >= 1 to avoid having float if 0D
+    while value.ndim < 1:
+        value = np.expand_dims(value, axis=0)
+    return value
 
 
 def str_to_array(s: str) -> np.ndarray:
@@ -106,9 +127,11 @@ def array_to_str(value: Any, threshold: int = None, max_line_width: int = None) 
 
 def str_to_dataframe(s: str) -> pd.DataFrame:
     ''' Convert a string to a pandas DataFrame '''
-    value_io = StringIO(s)
-    # TODO: find sep (use \t to be compatible with excel but not nice to write by hand)
-    df = pd.read_csv(value_io, sep="\t")
+    if s == '\r\n':  # empty
+        df = pd.DataFrame()
+    else:
+        value_io = StringIO(s)
+        df = pd.read_csv(value_io, sep="\t")
     return df
 
 
@@ -118,7 +141,32 @@ def dataframe_to_str(value: pd.DataFrame, threshold=1000) -> str:
     return pd.DataFrame(value).head(threshold).to_csv(index=False, sep="\t")  # can't display full data to QLineEdit, need to truncate (numpy does the same)
 
 
-def openFile(filename: str):
+def str_to_data(s: str) -> Any:
+    """ Convert str to data with special format for ndarray and dataframe """
+    if '\t' in s and '\n' in s:
+        try: s = str_to_dataframe(s)
+        except: pass
+    elif '[' in s:
+        try: s = str_to_array(s)
+        except: pass
+    else:
+        try: s = str_to_value(s)
+        except: pass
+    return s
+
+
+def data_to_str(value: Any) -> str:
+    """ Convert data to str with special format for ndarray and dataframe """
+    if isinstance(value, np.ndarray):
+        raw_value_str = array_to_str(value, threshold=1000000, max_line_width=9000000)
+    elif isinstance(value, pd.DataFrame):
+        raw_value_str = dataframe_to_str(value, threshold=1000000)
+    else:
+        raw_value_str = str(value)
+    return raw_value_str
+
+
+def open_file(filename: str):
     ''' Opens a file using the platform specific command '''
     system = platform.system()
     if system == 'Windows': os.startfile(filename)
@@ -126,7 +174,7 @@ def openFile(filename: str):
     elif system == 'Darwin': os.system(f'open "{filename}"')
 
 
-def formatData(data: Any) -> pd.DataFrame:
+def data_to_dataframe(data: Any) -> pd.DataFrame:
     """ Format data to DataFrame """
     try: data = pd.DataFrame(data)
     except ValueError: data = pd.DataFrame([data])
@@ -140,12 +188,12 @@ def formatData(data: Any) -> pd.DataFrame:
         pass  # OPTIMIZE: This happens when there is identical column name
 
     if len(data) != 0:
-        assert not data.isnull().values.all(), f"Datatype '{data_type}' not supported"
+        assert not data.isnull().values.all(), f"Datatype '{data_type}' is not supported"
         if data.iloc[-1].isnull().values.all():  # if last line is full of nan, remove it
             data = data[:-1]
 
     if data.shape[1] == 1:
-        data.rename(columns = {'0':'1'}, inplace=True)
+        data.rename(columns = {'0': '1'}, inplace=True)
         data.insert(0, "0", range(data.shape[0]))
 
     return data

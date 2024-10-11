@@ -5,16 +5,24 @@ Created on Thu Apr 11 20:13:46 2024
 @author: jonathan
 """
 
-from typing import Tuple
+import re
 import os
 import sys
+from typing import Tuple, List, Union, Callable
+from collections import defaultdict
+import inspect
 
 import numpy as np
+import pandas as pd
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
+from .icons import icons
+from ..paths import PATHS
 from ..config import get_GUI_config
-
+from ..devices import DEVICES, get_element_by_address
+from ..variables import has_eval, EVAL, VARIABLES
+from ..utilities import SUPPORTED_EXTENSION
 
 # Fixes pyqtgraph/issues/3018 for pg<=0.13.7 (before pyqtgraph/pull/3070)
 from pyqtgraph.graphicsItems.PlotDataItem import PlotDataItem
@@ -35,11 +43,10 @@ ONCE = False
 
 def get_font_size() -> int:
     GUI_config = get_GUI_config()
-    if GUI_config['font_size'] != 'default':
-        font_size = int(GUI_config['font_size'])
-    else:
-        font_size = QtWidgets.QApplication.instance().font().pointSize()
-        return font_size
+
+    return (int(float(GUI_config['font_size']))
+                 if GUI_config['font_size'] != 'default'
+                 else QtWidgets.QApplication.instance().font().pointSize())
 
 
 def setLineEditBackground(obj, state: str, font_size: int = None):
@@ -48,13 +55,12 @@ def setLineEditBackground(obj, state: str, font_size: int = None):
     if state == 'edited': color='#FFE5AE' # orange
 
     if font_size is None:
-
         obj.setStyleSheet(
-            "QLineEdit:enabled {background-color: %s}" % (
+            "QLineEdit:enabled {background-color: %s; color: #000000;}" % (
                 color))
     else:
         obj.setStyleSheet(
-            "QLineEdit:enabled {background-color: %s; font-size: %ipt}" % (
+            "QLineEdit:enabled {background-color: %s; font-size: %ipt; color: #000000;}" % (
                 color, font_size))
 
 
@@ -70,8 +76,11 @@ def qt_object_exists(QtObject) -> bool:
 
     if not CHECK_ONCE: return True
     try:
-        if QT_API in ("pyqt5", "pyqt6"):
+        if QT_API == "pyqt5":
             import sip
+            return not sip.isdeleted(QtObject)
+        if QT_API == "pyqt6":
+            from PyQt6 import sip
             return not sip.isdeleted(QtObject)
         if QT_API == "pyside2":
             import shiboken2
@@ -98,8 +107,10 @@ class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         ax = self.addPlot()
         self.ax = ax
 
-        ax.setLabel("bottom", ' ', **{'color':0.4, 'font-size': '12pt'})
-        ax.setLabel("left", ' ', **{'color':0.4, 'font-size': '12pt'})
+        ax.setLabel("bottom", ' ', **{'color': pg.getConfigOption("foreground"),
+                                      'font-size': '12pt'})
+        ax.setLabel("left", ' ', **{'color': pg.getConfigOption("foreground"),
+                                    'font-size': '12pt'})
 
         # Set your custom font for both axes
         my_font = QtGui.QFont('Arial', 12)
@@ -109,14 +120,14 @@ class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         ax.getAxis("bottom").setTickFont(my_font_tick)
         ax.getAxis("left").setTickFont(my_font_tick)
         ax.showGrid(x=True, y=True)
-        ax.setContentsMargins(10., 10., 10., 10.)
 
         vb = ax.getViewBox()
         vb.enableAutoRange(enable=True)
-        vb.setBorder(pg.mkPen(color=0.4))
+        vb.setBorder(pg.mkPen(color=pg.getConfigOption("foreground")))
 
         ## Text label for the data coordinates of the mouse pointer
-        dataLabel = pg.LabelItem(color='k', parent=ax.getAxis('bottom'))
+        dataLabel = pg.LabelItem(color=pg.getConfigOption("foreground"),
+                                 parent=ax.getAxis('bottom'))
         dataLabel.anchor(itemPos=(1,1), parentPos=(1,1), offset=(0,0))
 
         def mouseMoved(point):
@@ -205,6 +216,13 @@ class MyGraphicsLayoutWidget(pg.GraphicsLayoutWidget):
         self.img = img
         self.ax.addItem(self.img)
 
+    def dragLeaveEvent(self, event):
+        # Pyside6 triggers a leave event resuling in error:
+        # QGraphicsView::dragLeaveEvent: drag leave received before drag enter
+        pass
+        # super().dragLeaveEvent(event)
+
+
 
 def pyqtgraph_fig_ax() -> Tuple[MyGraphicsLayoutWidget, pg.PlotItem]:
     """ Return a formated fig and ax pyqtgraph for a basic plot """
@@ -223,7 +241,7 @@ class myImageView(pg.ImageView):
 
         self.figLineROI, self.axLineROI = pyqtgraph_fig_ax()
         self.figLineROI.hide()
-        self.plot = self.axLineROI.plot([], [], pen='k')
+        self.plot = self.axLineROI.plot([], [], pen=pg.getConfigOption("foreground"))
 
         self.lineROI = pg.LineSegmentROI([[0, 100], [100, 100]], pen='r')
         self.lineROI.sigRegionChanged.connect(self.updateLineROI)
@@ -273,6 +291,19 @@ class myImageView(pg.ImageView):
         centralWidget = QtWidgets.QWidget()
         centralWidget.setLayout(verticalLayoutMain)
         self.centralWidget = centralWidget
+
+        for splitter in (splitter, ):
+            for i in range(splitter.count()):
+                handle = splitter.handle(i)
+                handle.setStyleSheet("background-color: #DDDDDD;")
+                handle.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Enter:
+            obj.setStyleSheet("background-color: #AAAAAA;")  # Hover color
+        elif event.type() == QtCore.QEvent.Leave:
+            obj.setStyleSheet("background-color: #DDDDDD;")  # Normal color
+        return super().eventFilter(obj, event)
 
     def update_ticks(self):
         for tick in self.ui.histogram.gradient.ticks:
@@ -326,3 +357,533 @@ def pyqtgraph_image() -> Tuple[myImageView, QtWidgets.QWidget]:
     """ Return a formated ImageView and pyqtgraph widget for image plotting """
     imageView = myImageView()
     return imageView, imageView.centralWidget
+
+
+class MyLineEdit(QtWidgets.QLineEdit):
+    """https://stackoverflow.com/questions/28956693/pyqt5-qtextedit-auto-completion"""
+
+    skip_has_eval = False
+    use_variables = True
+    use_devices = True
+    use_np_pd = True
+    completer: QtWidgets.QCompleter = None
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def create_keywords(self) -> List[str]:
+        """ Returns a list of all available keywords for completion """
+        list_keywords = []
+
+        if self.use_variables:
+            list_keywords += list(VARIABLES)
+            ## Could use this to see attributes of Variable like .raw .value
+            # list_keywords += [f'{name}.{item}'
+            #                     for name, var in VARIABLES.items()
+            #                     for item in dir(var)
+            #                     if not item.startswith('_') and not item.isupper()]
+        if self.use_devices:
+            list_keywords += [str(get_element_by_address(elements[0]).address())
+                          for device in DEVICES.values()
+                          if device.name not in list_keywords
+                          for elements in device.get_structure()]
+
+        if self.use_np_pd:
+            if 'np' not in list_keywords:
+                list_keywords += ['np']
+                list_keywords += [f'np.{item}'
+                                   for item in dir(np)
+                                   if not item.startswith('_') and not item.isupper()]
+
+            if 'pd' not in list_keywords:
+                list_keywords += ['pd']
+                list_keywords += [f'pd.{item}'
+                                   for item in dir(pd)
+                                   if not item.startswith('_') and not item.isupper()]
+        return list_keywords
+
+    def eventFilter(self, obj, event):
+        """ Used when installEventFilter active """
+        if (event.type() == QtCore.QEvent.KeyPress
+                and event.key() == QtCore.Qt.Key_Tab):
+            self.keyPressEvent(event)
+            return True
+        return super().eventFilter(obj, event)
+
+    def setCompleter(self, completer: QtWidgets.QCompleter):
+        """ Sets/removes completer """
+        if self.completer:
+            if self.completer.popup().isVisible(): return None
+            self.completer.popup().close()
+            try:
+                self.completer.disconnect()  # PyQT
+            except TypeError:
+                self.completer.disconnect(self) # Pyside
+
+        if not completer:
+            self.removeEventFilter(self)
+            self.completer = None
+            return None
+
+        self.installEventFilter(self)
+        completer.setWidget(self)
+        completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+        self.completer = completer
+        self.completer.activated.connect(self.insertCompletion)
+
+    def getCompletion(self) -> List[str]:
+        model = self.completer.model()
+        return model.stringList() if isinstance(
+            model, QtCore.QStringListModel) else []
+
+    def insertCompletion(self, completion: str, prefix: bool = True):
+        cursor_pos = self.cursorPosition()
+        text = self.text()
+
+        prefix_length = (len(self.completer.completionPrefix())
+                         if (prefix and self.completer) else 0)
+
+        # Replace the current word with the completion
+        new_text = (text[:cursor_pos - prefix_length]
+                    + completion
+                    + text[cursor_pos:])
+        self.setText(new_text)
+        self.setCursorPosition(cursor_pos - prefix_length + len(completion))
+
+    def textUnderCursor(self) -> str:
+        text = self.text()
+        cursor_pos = self.cursorPosition()
+        start = text.rfind(' ', 0, cursor_pos) + 1
+        return text[start:cursor_pos]
+
+    def focusInEvent(self, event):
+        if self.completer:
+            self.completer.setWidget(self)
+        super().focusInEvent(event)
+
+    def keyPressEvent(self, event):
+        controlPressed = event.modifiers() == QtCore.Qt.ControlModifier
+        tabPressed = event.key() == QtCore.Qt.Key_Tab
+        specialTabPressed = tabPressed and controlPressed
+        enterPressed = event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return)
+        specialEnterPressed = enterPressed and controlPressed
+
+        if specialTabPressed:
+            self.insertCompletion('\t', prefix=False)
+            return None
+
+        if specialEnterPressed:
+            self.insertCompletion('\n', prefix=False)
+            return None
+
+        # Fixe issue if press control after an eval (issue appears if do self.completer = None)
+        if self.completer and controlPressed:
+            super().keyPressEvent(event)
+            return None
+
+        if not self.completer or not tabPressed:
+            if (self.completer and enterPressed and self.completer.popup().isVisible()):
+                self.completer.activated.emit(
+                    self.completer.popup().currentIndex().data())
+            else:
+                super().keyPressEvent(event)
+
+        if self.skip_has_eval or has_eval(self.text()):
+            if not self.completer:
+                self.setCompleter(QtWidgets.QCompleter(self.create_keywords()))
+        else:
+            if self.completer:
+                self.setCompleter(None)
+
+        if self.completer and not tabPressed:
+            self.completer.popup().close()
+
+        if not self.completer or not tabPressed:
+            return None
+
+        completion_prefix = self.format_completion_prefix(self.textUnderCursor())
+
+        new_keywords = self.create_new_keywords(
+            self.create_keywords(), completion_prefix)
+        keywords = self.getCompletion()
+
+        if new_keywords != keywords:
+            keywords = new_keywords
+            self.setCompleter(QtWidgets.QCompleter(keywords))
+
+        if completion_prefix != self.completer.completionPrefix():
+            self.completer.setCompletionPrefix(completion_prefix)
+            self.completer.popup().setCurrentIndex(
+                self.completer.completionModel().index(0, 0))
+
+        if self.completer.completionModel().rowCount() == 1:
+            self.completer.setCompletionMode(
+                QtWidgets.QCompleter.InlineCompletion)
+            self.completer.complete()
+
+            self.completer.activated.emit(self.completer.currentCompletion())
+            self.completer.setCompletionMode(
+                QtWidgets.QCompleter.PopupCompletion)
+        else:
+            cr = self.cursorRect()
+            cr.setWidth(self.completer.popup().sizeHintForColumn(0)
+                        + self.completer.popup().verticalScrollBar().sizeHint().width())
+            self.completer.complete(cr)
+
+    @staticmethod
+    def format_completion_prefix(completion_prefix: str) -> str:
+        """ Returns a simplified prefix for completion """
+        if has_eval(completion_prefix):
+            completion_prefix = completion_prefix[len(EVAL):]
+
+        pattern = r'[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*'
+        temp = [var for var in re.findall(pattern, completion_prefix)]
+
+        if len(temp) > 0:
+            position = completion_prefix.rfind(temp[-1])
+            if position != -1:
+                completion_prefix = completion_prefix[position:]
+
+        special_char = ('(', '[', ',', ':', '-', '+', '^', '*', '/', '|')
+        if completion_prefix.endswith(special_char):
+            completion_prefix = ''
+
+        return completion_prefix
+
+    @staticmethod
+    def create_new_keywords(list_keywords: List[str],
+                            completion_prefix: str) -> List[str]:
+        """ Returns a list with all available keywords and possible decomposition """
+        # Create ordered list with all attributes and sub attributes
+        master_list = []
+        master_list.append(list_keywords)
+        list_temp = list_keywords
+        while len(list_temp) > 1:
+            list_temp = list(set(
+                [var[:-len(var.split('.')[-1])-1]
+                 for var in list_temp if len(var.split('.')) != 0]))
+            if '' in list_temp: list_temp.remove('')
+            master_list.append(list_temp)
+
+        # Filter attributes that contained completion_prefix and remove doublons
+        flat_list = list(set(item
+                             for sublist in master_list
+                             for item in sublist
+                             if item.startswith(completion_prefix)))
+
+        # Group items by the number of dots
+        dot_groups = defaultdict(list)
+        for item in flat_list:
+            dot_count = item.count('.')
+            dot_groups[dot_count].append(item)
+
+        # Sort the groups by the number of dots
+        sorted_groups = sorted(
+            dot_groups.items(), key=lambda x: x[0], reverse=True)
+
+        # Extract items from each group and return as a list with sorted sublist
+        sorted_list = [sorted(group) for _, group in sorted_groups]
+
+        # Create list of all available keywords and possible decomposition
+        new_keywords = []
+        good = False
+        for level in reversed(sorted_list):
+            for item in level:
+                if completion_prefix in item:
+                    new_keywords.append(item)
+                    good = True
+            if good: break
+
+        return new_keywords
+
+
+class MyInputDialog(QtWidgets.QDialog):
+
+    def __init__(self, parent: QtWidgets.QMainWindow, name: str):
+
+        super().__init__(parent)
+        self.setWindowTitle(name)
+
+        lineEdit = MyLineEdit()
+        lineEdit.setMaxLength(10000000)
+        self.lineEdit = lineEdit
+
+        # Add OK and Cancel buttons
+        button_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+            self)
+
+        # Connect buttons
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(QtWidgets.QLabel(f"Set {name} value"))
+        layout.addWidget(lineEdit)
+        layout.addWidget(button_box)
+        layout.addStretch()
+        layout.setContentsMargins(10, 5, 10, 10)
+
+        self.textValue = lineEdit.text
+        self.setTextValue = lineEdit.setText
+        self.resize(self.minimumSizeHint())
+
+    def showEvent(self, event):
+        """Focus and select the text in the lineEdit."""
+        super().showEvent(event)
+        self.lineEdit.setFocus()
+        self.lineEdit.selectAll()
+
+    def closeEvent(self, event):
+        for children in self.findChildren(QtWidgets.QWidget):
+            children.deleteLater()
+        super().closeEvent(event)
+
+
+class MyFileDialog(QtWidgets.QDialog):
+
+    def __init__(self, parent: QtWidgets.QMainWindow, name: str,
+                 mode: QtWidgets.QFileDialog):
+
+        super().__init__(parent)
+        if mode == QtWidgets.QFileDialog.AcceptOpen:
+            self.setWindowTitle(f"Open file - {name}")
+        elif mode == QtWidgets.QFileDialog.AcceptSave:
+            self.setWindowTitle(f"Save file - {name}")
+
+        file_dialog = QtWidgets.QFileDialog(self, QtCore.Qt.Widget)
+        file_dialog.setAcceptMode(mode)
+        file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+        file_dialog.setWindowFlags(file_dialog.windowFlags() & ~QtCore.Qt.Dialog)
+        file_dialog.setDirectory(PATHS['last_folder'])
+        file_dialog.setNameFilters(SUPPORTED_EXTENSION.split(";;"))
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(file_dialog)
+        layout.addStretch()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
+
+        self.exec_ = file_dialog.exec_
+        self.selectedFiles = file_dialog.selectedFiles
+
+    def closeEvent(self, event):
+        for children in self.findChildren(QtWidgets.QWidget):
+            children.deleteLater()
+
+        super().closeEvent(event)
+
+
+class MyQCheckBox(QtWidgets.QCheckBox):
+
+    def __init__(self, parent):
+        self.parent = parent
+        super().__init__()
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        self.parent.valueEdited()
+        try:
+            inspect.signature(self.parent.write)
+        except ValueError: pass  # For built-in method (occurs for boolean for action parameter)
+        else:
+            self.parent.write()
+
+
+class MyQComboBox(QtWidgets.QComboBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.readonly = False
+        self.wheel = True
+        self.key = True
+
+    def mousePressEvent(self, event):
+        if not self.readonly:
+            super().mousePressEvent(event)
+
+    def keyPressEvent(self, event):
+        if not self.readonly and self.key:
+            super().keyPressEvent(event)
+
+    def wheelEvent(self, event):
+        if not self.readonly and self.wheel:
+            super().wheelEvent(event)
+
+
+class CustomMenu(QtWidgets.QMenu):
+    """ Menu with action containing sub-menu for recipe and parameter selection """
+    def __init__(self,
+                 gui: QtWidgets.QMainWindow,
+                 main_combobox: QtWidgets.QComboBox = None,
+                 second_combobox: QtWidgets.QComboBox = None,
+                 update_gui: Callable[[None], None] = None):
+
+        super().__init__()
+        self.gui = gui  #  gui is scanner
+        self.main_combobox = main_combobox
+        self.second_combobox = second_combobox
+        self.update_gui = update_gui
+
+        self.current_menu = 1
+        self.selected_action = None
+
+        self.recipe_names = [self.main_combobox.itemText(i)
+                             for i in range(self.main_combobox.count())
+                             ] if self.main_combobox else []
+
+        self.HAS_RECIPE = len(self.recipe_names) > 1
+
+        self.HAS_PARAM = (self.second_combobox.count() > 1
+                          if self.second_combobox
+                          else False)
+
+        # To only show parameter if only one recipe
+        if not self.HAS_RECIPE and self.HAS_PARAM:
+            self.main_combobox = second_combobox
+            self.second_combobox = None
+
+            self.recipe_names = [self.main_combobox.itemText(i)
+                                 for i in range(self.main_combobox.count())
+                                 ] if self.main_combobox else []
+
+
+    def addAnyAction(self, action_text='', icon_name='',
+                     param_menu_active=False) -> Union[QtWidgets.QWidgetAction,
+                                                       QtWidgets.QAction]:
+
+        if self.HAS_RECIPE or (self.HAS_PARAM and param_menu_active):
+            action = self.addCustomAction(action_text, icon_name,
+                                          param_menu_active=param_menu_active)
+        else:
+            action = self.addAction(action_text)
+            if icon_name != '':
+                action.setIcon(icons[icon_name])
+
+        return action
+
+    def addCustomAction(self, action_text='', icon_name='',
+                        param_menu_active=False) -> QtWidgets.QWidgetAction:
+        """ Create an action with a sub menu for selecting a recipe and parameter """
+
+        def close_menu():
+            self.selected_action = action_widget
+            self.close()
+
+        def handle_hover():
+            """ Fixe bad hover behavior and refresh radio_button """
+            self.setActiveAction(action_widget)
+            recipe_name = self.main_combobox.currentText()
+            action = recipe_menu.actions()[self.recipe_names.index(recipe_name)]
+            radio_button = action.defaultWidget()
+
+            if not radio_button.isChecked():
+                radio_button.setChecked(True)
+
+        def handle_radio_click(name):
+            """ Update parameters available, open parameter menu if available
+            and close main menu to validate the action """
+            if self.current_menu == 1:
+                self.main_combobox.setCurrentIndex(self.recipe_names.index(name))
+                if self.update_gui:
+                    self.update_gui()
+                recipe_menu.close()
+
+                if param_menu_active:
+                    param_items = [self.second_combobox.itemText(i)
+                                   for i in range(self.second_combobox.count())
+                                   ] if self.second_combobox else []
+
+                    if len(param_items) > 1:
+                        self.current_menu = 2
+                        setup_menu_parameter(param_menu)
+                        return None
+            else:
+                update_parameter(name)
+                param_menu.close()
+                self.current_menu = 1
+                action_button.setMenu(recipe_menu)
+
+            close_menu()
+
+        def reset_menu(button: QtWidgets.QToolButton):
+            QtWidgets.QApplication.sendEvent(
+                button, QtCore.QEvent(QtCore.QEvent.Leave))
+            self.current_menu = 1
+            action_button.setMenu(recipe_menu)
+
+        def setup_menu_parameter(param_menu: QtWidgets.QMenu):
+            param_items = [self.second_combobox.itemText(i)
+                           for i in range(self.second_combobox.count())]
+            param_name = self.second_combobox.currentText()
+
+            param_menu.clear()
+            for param_name_i in param_items:
+                add_radio_button_to_menu(param_name_i, param_name, param_menu)
+
+            action_button.setMenu(param_menu)
+            action_button.showMenu()
+
+        def update_parameter(name: str):
+            param_items = [self.second_combobox.itemText(i)
+                           for i in range(self.second_combobox.count())]
+            self.second_combobox.setCurrentIndex(param_items.index(name))
+            if self.update_gui:
+                self.update_gui()
+
+        def add_radio_button_to_menu(item_name: str, current_name: str,
+                                     target_menu: QtWidgets.QMenu):
+            widget = QtWidgets.QFrame()
+            radio_button = QtWidgets.QRadioButton(item_name, widget)
+            action = QtWidgets.QWidgetAction(self.gui)
+            action.setDefaultWidget(radio_button)
+            target_menu.addAction(action)
+
+            if item_name == current_name:
+                radio_button.setChecked(True)
+
+            radio_button.clicked.connect(
+                lambda: handle_radio_click(item_name))
+
+        # Add custom action
+        action_button = QtWidgets.QToolButton()
+        action_button.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        action_button.setText(f"   {action_text}")
+        action_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        action_button.setAutoRaise(True)
+        action_button.clicked.connect(close_menu)
+        action_button.enterEvent = lambda event: handle_hover()
+        if icon_name != '':
+            action_button.setIcon(icons[icon_name])
+
+        action_widget = QtWidgets.QWidgetAction(action_button)
+        action_widget.setDefaultWidget(action_button)
+        self.addAction(action_widget)
+
+        recipe_menu = QtWidgets.QMenu()
+        # recipe_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+        recipe_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        if param_menu_active:
+            param_menu = QtWidgets.QMenu()
+            # param_menu.aboutToShow.connect(lambda: self.set_clickable(False))
+            param_menu.aboutToHide.connect(lambda: reset_menu(action_button))
+
+        recipe_name = self.main_combobox.currentText()
+
+        for recipe_name_i in self.recipe_names:
+            add_radio_button_to_menu(recipe_name_i, recipe_name, recipe_menu)
+
+        action_button.setMenu(recipe_menu)
+
+        return action_widget
+
+
+class RecipeMenu(CustomMenu):
+
+    def __init__(self, gui: QtWidgets.QMainWindow):  # gui is scanner
+
+        main_combobox = gui.selectRecipe_comboBox if gui else None
+        second_combobox = gui.selectParameter_comboBox if gui else None
+        update_gui = gui._updateSelectParameter if gui else None
+
+        super().__init__(gui, main_combobox, second_combobox, update_gui)

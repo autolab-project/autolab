@@ -3,9 +3,14 @@
 Monitoring
 ==========
 
-.. image:: monitoring.png
+The Monitor allows you to monitor a *Variable* in time.
 
-The Autolab GUI Monitoring allows you to monitor a *Variable* in time. To start a monitoring, right click on the desired *Variable* in the control panel, and click **Start monitoring**. This *Variable* has to be readable (read function provided in the driver) and numerical (integer, float value or 1 to 3D array).
+.. figure:: monitoring.png
+	:figclass: align-center
+
+	Monitoring panel
+
+To start a monitoring, right click on the desired *Variable* in the control panel, and click **Start monitoring**. This *Variable* has to be readable (read function provided in the driver) and numerical (integer, float value or 1 to 3D array).
 
 In the Monitoring window, you can set the **Window length** in seconds. Any points older than this value is removed. You can also set a **Delay** in seconds, which corresponds to a sleep delay between each measure.
 
@@ -17,6 +22,13 @@ You can display a bar showing the **Min** or **Max** value reached since the beg
 
 The **Mean** option display the mean value of the currently displayed data (not from the beginning).
 
+The **Pause on scan start** checkbox allows to pause a monitor during a scan to prevent multiple communication with an instrument (prevent bug and speed up execution).
+
+The **start on scan end** checkbox allows to start back the monitoring after a scan.
+
 Thanks to the pyqtgraph package, it is possible to monitor images.
 
-.. image:: monitoring_image.png
+.. figure:: monitoring_image.png
+	:figclass: align-center
+
+	Monitoring images

@@ -7,14 +7,16 @@ Created on Oct 2022
 import os
 
 import pyqtgraph as pg
-import pyqtgraph.exporters
+import pyqtgraph.exporters  # Needed for pg.exporters.ImageExporter
+
+from qtpy import QtWidgets
 
 from ..GUI_utilities import pyqtgraph_fig_ax
 
 
 class FigureManager:
 
-    def __init__(self, gui):
+    def __init__(self, gui: QtWidgets.QMainWindow):
 
         self.gui = gui
         self.curves = []
@@ -29,17 +31,17 @@ class FigureManager:
     def start(self, new_dataset=None):
         """ This function display data and ajust buttons """
         try:
-            resultNamesList = [dataset.name for dataset in self.gui.dataManager.datasets]
-            AllItems = [self.gui.data_comboBox.itemText(i) for i in range(self.gui.data_comboBox.count())]
+            result_names = [dataset.name for dataset in self.gui.dataManager.datasets]
+            all_items = [self.gui.data_comboBox.itemText(i) for i in range(self.gui.data_comboBox.count())]
 
             index = self.gui.data_comboBox.currentIndex()
 
-            if resultNamesList != AllItems:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
+            if result_names != all_items:  # only refresh if change labels, to avoid gui refresh that prevent user to click on combobox
                 self.gui.data_comboBox.clear()
-                self.gui.data_comboBox.addItems(resultNamesList)  # slow (0.25s)
+                self.gui.data_comboBox.addItems(result_names)  # slow (0.25s)
 
             if new_dataset is None:
-                if (index + 1) > len(resultNamesList) or index == -1: index = 0
+                if (index + 1) > len(result_names) or index == -1: index = 0
                 self.gui.data_comboBox.setCurrentIndex(index)
             else:
                 index = self.gui.data_comboBox.findText(new_dataset.name)
@@ -57,21 +59,19 @@ class FigureManager:
             self.gui.setStatus(f'Data {data_name} plotted!', 5000)
 
         except Exception as e:
-            self.gui.setStatus(f'ERROR The data cannot be plotted with the given dataset: {str(e)}',
-                               10000, False)
+            self.gui.setStatus(
+                f'ERROR The data cannot be plotted with the given dataset: {e}',
+                10000, False)
 
     # AXE LABEL
     ###########################################################################
 
-    def getLabel(self, axe: str):
-        """ This function get the label of the given axis """
-        return getattr(self.gui, f"variable_{axe}_comboBox").currentText()
-
     def setLabel(self, axe: str, value: str):
         """ This function changes the label of the given axis """
-        axes = {'x':'bottom', 'y':'left'}
+        axes = {'x': 'bottom', 'y': 'left'}
         if value == '': value = ' '
-        self.ax.setLabel(axes[axe], value, **{'color':0.4, 'font-size': '12pt'})
+        self.ax.setLabel(axes[axe], value, **{'color': pg.getConfigOption("foreground"),
+                                              'font-size': '12pt'})
 
 
     # PLOT DATA
@@ -79,7 +79,7 @@ class FigureManager:
 
     def clearData(self):
         """ This function removes any plotted curves """
-        for curve in self.curves :
+        for curve in self.curves:
             self.ax.removeItem(curve)
         self.curves = []
 
@@ -90,8 +90,8 @@ class FigureManager:
         self.clearData()
 
         # Get current displayed result
-        variable_x = self.getLabel("x")
-        variable_y = self.getLabel("y")
+        variable_x = self.gui.variable_x_comboBox.currentText()
+        variable_y = self.gui.variable_y_comboBox.currentText()
         data_id = int(self.gui.data_comboBox.currentIndex()) + 1
         data_len = len(self.gui.dataManager.datasets)
         selectedData = data_len - data_id
@@ -103,16 +103,17 @@ class FigureManager:
         try :
             # OPTIMIZE: currently load all data and plot more than self.nbtraces if in middle
             # Should change to only load nbtraces and plot nbtraces
-            data = self.gui.dataManager.getData(data_len, [variable_x,variable_y], selectedData=0)
+            data = self.gui.dataManager.getData(
+                data_len, [variable_x,variable_y], selectedData=0)
             # data = self.gui.dataManager.getData(self.nbtraces,[variable_x,variable_y], selectedData=selectedData)
-        except :
+        except:
             data = None
 
         # Plot them
-        if data is not None :
+        if data is not None:
 
-            for i in range(len(data)) :
-                if i != (data_id-1):
+            for i in range(len(data)):
+                if i != (data_id - 1):
                     # Data
                     subdata = data[i]
                     if subdata is None:
@@ -123,37 +124,44 @@ class FigureManager:
                     y = subdata.loc[:,variable_y]
 
                     # Apprearance:
-                    color = 'k'
-                    alpha = (self.nbtraces-abs(data_id-1-i))/self.nbtraces
+                    color = pg.getConfigOption("foreground")
+                    alpha = (self.nbtraces - abs(data_id - 1 - i)) / self.nbtraces
                     if alpha < 0: alpha = 0
 
                     # Plot
                     # OPTIMIZE: keep previous style to avoid overwriting it everytime
 
-                    if i < (data_id-1):
+                    if i < (data_id - 1):
                         if len(x) > 300:
                             curve = self.ax.plot(x, y, pen=color)
                             curve.setAlpha(alpha, False)
                         else:
-                            curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+                            curve = self.ax.plot(
+                                x, y, symbol='x', symbolPen=color,
+                                symbolSize=10, pen=color, symbolBrush=color)
                             curve.setAlpha(alpha, False)
-                    elif i > (data_id-1):
+                    elif i > (data_id - 1):
                         if len(x) > 300:
-                            curve = self.ax.plot(x, y, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine))
+                            curve = self.ax.plot(
+                                x, y, pen=pg.mkPen(color=color,
+                                                   style=pg.QtCore.Qt.DashLine))
                             curve.setAlpha(alpha, False)
                         else:
-                            curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine), symbolBrush=color)
+                            curve = self.ax.plot(
+                                x, y, symbol='x', symbolPen=color, symbolSize=10,
+                                pen=pg.mkPen(color=color, style=pg.QtCore.Qt.DashLine),
+                                symbolBrush=color)
                             curve.setAlpha(alpha, False)
                     self.curves.append(curve)
 
             # Data
-            i = (data_id-1)
+            i = (data_id - 1)
             subdata = data[i]
 
             if subdata is not None:
                 subdata = subdata.astype(float)
-                x = subdata.loc[:,variable_x]
-                y = subdata.loc[:,variable_y]
+                x = subdata.loc[:, variable_x]
+                y = subdata.loc[:, variable_y]
 
                 # Apprearance:
                 color = '#1f77b4'
@@ -164,7 +172,9 @@ class FigureManager:
                     curve = self.ax.plot(x, y, pen=color)
                     curve.setAlpha(alpha, False)
                 else:
-                    curve = self.ax.plot(x, y, symbol='x', symbolPen=color, symbolSize=10, pen=color, symbolBrush=color)
+                    curve = self.ax.plot(
+                        x, y, symbol='x', symbolPen=color, symbolSize=10,
+                        pen=color, symbolBrush=color)
                     curve.setAlpha(alpha, False)
                 self.curves.append(curve)
 
@@ -174,7 +184,7 @@ class FigureManager:
     # SAVE FIGURE
     ###########################################################################
 
-    def save(self,filename):
+    def save(self, filename: str):
         """ This function save the figure with the provided filename """
 
         raw_name, extension = os.path.splitext(filename)

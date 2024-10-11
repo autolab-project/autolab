@@ -4,7 +4,7 @@ Command driver
 ==============
 
 
-See :ref:`name_shell_connection` for more informations about the connection. Once your driver is instantiated you will be able to perform **pre-configured operations** (see :ref:`name_driver_utilities.py` for how to configure operations) as well as **raw operations** (-m option). We will discuss both of them here as well as a quick (bash) **scripting example**.
+See :ref:`name_shell_connection` for more information about the connection. Once your driver is instantiated you will be able to perform **pre-configured operations** (see :ref:`name_driver_utilities.py` for how to configure operations) as well as **raw operations** (-m option). We will discuss both of them here as well as a quick (bash) **scripting example**.
 In the rest of this sections we will assume that you have a driver (not device) named instrument that needs a connection named CONN.
 
 
@@ -17,7 +17,7 @@ You may access an extensive driver help, that will particularly **list the pre-d
 
     >>> autolab driver -D instrument -C CONN -h
 
-It includes the list of the implemented connections, the list of the available additional modules (classes **Channel**, **Trace**, **Module_MODEL**, etc.; see :ref:`create_driver`), the list of all the methods that are instantiated with the driver (for direct use with the command: autolab driver; see :ref:`os_driver`), and an extensive help for the usage of the pre-defined options. For instance if an option -a has been defined in the file driver_utilities.py (see :ref:`name_driver_utilities.py`), one may use it to perform the associated action, say to modify the amplitude, this way:
+It includes the list of the implemented connections, the list of the available additional modules (classes **Channel**, **Trace**, **Module_MODEL**, etc.; see :ref:`create_driver`), the list of all the methods that are instantiated with the driver (for direct use with the command: autolab driver; see :ref:`os_driver`), and an extensive help for the usage of the pre-defined options. For instance, if an option -a has been defined in the driver_utilities.py file (see :ref:`name_driver_utilities.py`), one may use it to perform the associated action, such as to modify the amplitude, this way:
 
 .. code-block:: none
 
@@ -35,7 +35,7 @@ In addition, if the instrument has several channels, an channel option is most l
 
     No space must be present within an argument or option (e.g. do not write ``- c`` or ``-c 4, 6``).
 
-Furthermore, several operations may be perform in a single and compact script line. One can modify the amplitude of channel 4 and 6 to 2 Volts and the frequencies (of the same channel) to 50 Hz using:
+Furthermore, several operations may be performed in a single and compact script line. One can modify the amplitude of channel 4 and 6 to 2 Volts and the frequencies (of the same channel) to 50 Hz using:
 
 .. code-block:: none
 
@@ -54,7 +54,7 @@ Furthermore, several operations may be perform in a single and compact script li
 Raw operations (-m option)
 ##########################
 
-Independently of the user definition of options in the file driver_utilities.py, you may access any methods that are instantiated with the driver using the -m option.
+Regardless of the user's definition of options in the driver_utilities.py file, you may access any methods that are instantiated with the driver using the -m option.
 
 .. important::
 
@@ -74,7 +74,7 @@ This allow you to simply copy and paste the method you want to use from the list
     >>> autolab driver -D instrument -C CONN -m get_amplitude()
     >>> autolab driver -D instrument -C CONN -m set_amplitude(value)
 
-One may also call several methods separated with a space after -m option:
+One may also call several methods separated by a space after the -m option:
 
 .. code-block:: none
 
@@ -89,7 +89,7 @@ Script example
 ##############
 
 
-One may stack in a single file several script line in order to perform custom measurement (modify several control parameters, etc.). This is a bash counterpart to the python scripting example provided there :ref:`name_pythonscript_example`.
+One may stack several script lines in a single file in order to perform custom measurements (modify several control parameters, etc.). This is a bash counterpart to the Python scripting example provided there :ref:`name_pythonscript_example`.
 
 .. code-block:: none
 

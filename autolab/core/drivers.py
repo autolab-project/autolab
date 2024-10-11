@@ -8,10 +8,10 @@ import os
 import sys
 import inspect
 import importlib
-from typing import Type, List
+from typing import Type, List, Tuple
 from types import ModuleType
 
-from . import paths, server
+from .paths import PATHS, DRIVERS_PATHS, DRIVER_SOURCES
 
 
 # =============================================================================
@@ -21,11 +21,19 @@ from . import paths, server
 def get_driver(driver_name: str, connection: str, **kwargs) -> Type:
     ''' Returns a driver instance using configuration provided in kwargs '''
     if driver_name == 'autolab_server':
-        driver_instance = server.Driver_REMOTE(**kwargs)
+        from .server import Driver_REMOTE  # avoid circular import
+        driver_instance = Driver_REMOTE(**kwargs)
     else:
         assert driver_name in list_drivers(), f"Driver {driver_name} not found in autolab's drivers"
         driver_lib = load_driver_lib(driver_name)
-        driver_instance = get_connection_class(driver_lib, connection)(**kwargs)
+        # Need to add the driver path to allow driver imports from its folder (and only his own, not other drivers)
+        driver_path = os.path.dirname(driver_lib.__file__)
+        if driver_path not in sys.path:
+            sys.path.append(driver_path)
+        try:
+            driver_instance = get_connection_class(driver_lib, connection)(**kwargs)
+        finally:
+            sys.path.remove(driver_path)
 
     return driver_instance
 
@@ -69,7 +77,7 @@ def load_driver_utilities_lib(driver_utilities_name: str) -> ModuleType:
     if os.path.exists(driver_utilities_name):
         driver_path = get_driver_path(driver_utilities_name.replace('_utilities', ''))
     else:
-        driver_path = os.path.join(paths.AUTOLAB_FOLDER, 'core', 'default_driver.py')
+        driver_path = os.path.join(PATHS['autolab_folder'], 'core', 'default_driver.py')
 
     # Load library
     driver_lib = load_utilities_lib(driver_path)
@@ -166,7 +174,7 @@ def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
 
     driver_instance = create_default_driver_conn(driver_lib, connection)
     if driver_instance is not None:
-        print(f'Warning, {connection} not find in {driver_lib.__name__} but will try to connect using default connection')
+        print(f'Warning, connection {connection} not find in driver {driver_lib.__name__} but will try to connect using default connection')
         return driver_instance
 
     assert connection in get_connection_names(driver_lib), f"Invalid connection type {connection} for driver {driver_lib.__name__}. Try using one of this connections: {get_connection_names(driver_lib)}"
@@ -175,7 +183,7 @@ def get_connection_class(driver_lib: ModuleType, connection: str) -> Type:
 def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
     """ Create a default connection class when not provided in Driver.
     Will be used to try to connect to an instrument. """
-    Driver = getattr(driver_lib, f'Driver')
+    Driver = getattr(driver_lib, 'Driver')
 
     if connection == 'DEFAULT':
         class Driver_DEFAULT(Driver):
@@ -186,7 +194,8 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
 
     if connection == 'VISA':
         class Driver_VISA(Driver):
-            def __init__(self, address='GPIB0::2::INSTR', **kwargs):
+            def __init__(self, address: str = 'GPIB0::2::INSTR',
+                         **kwargs):
                 import pyvisa as visa
 
                 self.TIMEOUT = 15000  # ms
@@ -201,105 +210,128 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
                 try: self.controller.close()
                 except: pass
 
-            def query(self, command):
+            def query(self, command: str) -> str:
                 result = self.controller.query(command)
                 result = result.strip('\n')
                 return result
 
-            def write(self, command):
+            def write(self, command: str):
                 self.controller.write(command)
 
-            def read(self):
+            def write_raw(self, command: bytes):
+                self.controller.write_raw(command)
+
+            def read(self) -> str:
                 return self.controller.read()
+
+            def read_raw(self, memory: int = 100000000) -> bytes:
+                return self.controller.read_raw(memory)
 
         return Driver_VISA
 
     if connection == 'GPIB':
         class Driver_GPIB(Driver):
-            def __init__(self, address=23, board_index=0, **kwargs):
+            def __init__(self, address: int = 23, board_index: int = 0,
+                         **kwargs):
                 import Gpib
 
-                self.inst = Gpib.Gpib(int(board_index), int(address))
+                self.controller = Gpib.Gpib(int(board_index), int(address))
                 Driver.__init__(self)
 
-            def query(self, query):
-                self.write(query)
+            def query(self, command: str) -> str:
+                self.write(command)
                 return self.read()
 
-            def write(self, query):
-                self.inst.write(query)
+            def write(self, command: str):
+                self.controller.write(command)
 
-            def read(self, length=1000000000):
-                return self.inst.read().decode().strip('\n')
+            def read(self, length=1000000000) -> str:
+                return self.controller.read(length).decode().strip('\n')
 
             def close(self):
                 """WARNING: GPIB closing is automatic at sys.exit() doing it twice results in a gpib error"""
-                #Gpib.gpib.close(self.inst.id)
+                #Gpib.gpib.close(self.controller.id)
                 pass
 
-        return Driver_USB
+        return Driver_GPIB
 
-    if connection == 'USB':
-        class Driver_USB(Driver):
-            def __init__(self, **kwargs):
-                import usb
-                import usb.core
-                import usb.util
+    # if connection == 'USB':
+    #     class Driver_USB(Driver):
+    #         def __init__(self, **kwargs):
+    #             import usb
+    #             import usb.core
+    #             import usb.util
 
-                dev = usb.core.find(idVendor=0x104d, idProduct=0x100a)
-                dev.reset()
-                dev.set_configuration()
-                interface = 0
-                if dev.is_kernel_driver_active(interface) is True:
-                    dev.detach_kernel_driver(interface)  # tell the kernel to detach
-                    usb.util.claim_interface(dev, interface)  # claim the device
+    #             dev = usb.core.find(idVendor=0x104d, idProduct=0x100a)
+    #             dev.reset()
+    #             dev.set_configuration()
+    #             interface = 0
+    #             if dev.is_kernel_driver_active(interface) is True:
+    #                 dev.detach_kernel_driver(interface)  # tell the kernel to detach
+    #                 usb.util.claim_interface(dev, interface)  # claim the device
 
-                cfg = dev.get_active_configuration()
-                intf = cfg[(0,0)]
-                self.ep_out = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
-                self.ep_in = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
+    #             cfg = dev.get_active_configuration()
+    #             intf = cfg[(0,0)]
+    #             self.ep_out = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+    #             self.ep_in = usb.util.find_descriptor(intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
 
-                assert self.ep_out is not None
-                assert self.ep_in is not None
+    #             assert self.ep_out is not None
+    #             assert self.ep_in is not None
 
-                Driver.__init__(self)
+    #             Driver.__init__(self)
 
-            def write(self, query):
-                self.string = query + '\r\n'
-                self.ep_out.write(self.string)
+    #         def write(self, query):
+    #             self.string = query + '\r\n'
+    #             self.ep_out.write(self.string)
 
-            def read(self):
-                rep = self.ep_in.read(64)
-                const = ''.join(chr(i) for i in rep)
-                const = const[:const.find('\r\n')]
-                return const
+    #         def read(self):
+    #             rep = self.ep_in.read(64)
+    #             const = ''.join(chr(i) for i in rep)
+    #             const = const[:const.find('\r\n')]
+    #             return const
 
-        return Driver_USB
+    #     return Driver_USB
 
     if connection == 'SOCKET':
         class Driver_SOCKET(Driver):
 
-            def __init__(self, address='192.168.0.8', **kwargs):
+            BUFFER_SIZE: int = 40000
+
+            def __init__(self, address: str = '192.168.0.8', port: int = 5005,
+                         **kwargs):
 
                 import socket
 
                 self.ADDRESS = address
-                self.PORT = 5005
-                self.BUFFER_SIZE = 40000
+                self.PORT = port
 
                 self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+                self.s.settimeout(5)
+
                 self.controller.connect((self.ADDRESS, int(self.PORT)))
 
-                Driver.__init__(self)
+                Driver.__init__(self, **kwargs)
 
-            def write(self, command):
+            def write(self, command: str):
                 self.controller.send(command.encode())
                 self.controller.recv(self.BUFFER_SIZE)
 
-            def query(self, command):
+            def write_raw(self, command: bytes):
+                self.controller.send(command)
+
+            def query(self, command: str) -> str:
                 self.controller.send(command.encode())
                 data = self.controller.recv(self.BUFFER_SIZE)
                 return data.decode()
+
+            def read(self, memory: int = BUFFER_SIZE) -> str:
+                rep = self.controller.recv(memory).decode()
+                return rep
+
+            def read_raw(self, memory: int = BUFFER_SIZE) -> bytes:
+                rep = self.controller.recv(memory)
+                return rep
 
             def close(self):
                 try: self.controller.close()
@@ -320,13 +352,15 @@ def create_default_driver_conn(driver_lib: ModuleType, connection: str) -> Type:
                 self.controller = Controller()
                 self.controller.timeout = 5000
 
-            def write(self, value):
+            def write(self, value: str):
                 pass
-            def read(self):
+            def write_raw(self, value: bytes):
+                pass
+            def read(self) -> str:
                 return '1'
-            def read_raw(self):
+            def read_raw(self) -> bytes:
                 return b'1'
-            def query(self, value):
+            def query(self, value: str) -> str:
                 self.write(value)
                 return self.read()
 
@@ -355,23 +389,24 @@ def explore_driver(instance: Type, _print: bool = True) -> str:
     return s
 
 
-def get_instance_methods(instance: Type) -> Type:
+def get_instance_methods(instance: Type) -> List[Tuple[str, Type]]:
     ''' Returns the list of all the methods (and their args) in that class '''
     methods = []
 
     # LEVEL 1
     for name, _ in inspect.getmembers(instance, inspect.ismethod):
-        if name != '__init__':
+        if not name.startswith('_'):
             attr = getattr(instance, name)
             args = list(inspect.signature(attr).parameters)
             methods.append([name, args])
 
     # LEVEL 2
     for key, val in vars(instance).items():
+        if key.startswith('_'): continue
         try:  # explicit to avoid visa and inspect.getmembers issue
             for name, _ in inspect.getmembers(val, inspect.ismethod):
-                if name != '__init__':
-                    attr = getattr(getattr(instance, key), name)
+                if not name.startswith('_'):
+                    attr = getattr(val, name)
                     args = list(inspect.signature(attr).parameters)
                     methods.append([f'{key}.{name}', args])
         except: pass
@@ -404,7 +439,7 @@ def load_drivers_paths() -> dict:
         - value: path of the driver python script
     '''
     drivers_paths = {}
-    for source_name, source_path in paths.DRIVER_SOURCES.items():
+    for source_name, source_path in DRIVER_SOURCES.items():
         if not os.path.isdir(source_path):
             print(f"Warning, can't found driver folder: {source_path}")
             continue
@@ -425,5 +460,5 @@ def load_drivers_paths() -> dict:
 
 def update_drivers_paths():
     ''' Update list of available driver '''
-    global DRIVERS_PATHS
-    DRIVERS_PATHS = load_drivers_paths()
+    DRIVERS_PATHS.clear()
+    DRIVERS_PATHS.update(load_drivers_paths())

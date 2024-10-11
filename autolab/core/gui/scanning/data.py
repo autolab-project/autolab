@@ -18,9 +18,9 @@ import numpy as np
 import pandas as pd
 from qtpy import QtCore, QtWidgets
 
-from .. import variables
-from ... import config as autolab_config
-from ... import utilities
+from ...config import get_scanner_config
+from ...utilities import boolean, create_array, data_to_dataframe
+from ...variables import has_eval, eval_safely
 
 
 class DataManager:
@@ -32,15 +32,15 @@ class DataManager:
         self.datasets = []
         self.queue = Queue()
 
-        scanner_config = autolab_config.get_scanner_config()
-        self.save_temp = utilities.boolean(scanner_config["save_temp"])
+        scanner_config = get_scanner_config()
+        self.save_temp = boolean(scanner_config["save_temp"])
 
         # Timer
         self.timer = QtCore.QTimer(self.gui)
         self.timer.setInterval(33) #30fps
         self.timer.timeout.connect(self.sync)
 
-    def getData(self, nbDataset: int, var_list: list,
+    def getData(self, nbDataset: int, var_list: List[str],
                 selectedData: int = 0, data_name: str = "Scan",
                 filter_condition: List[dict] = []) -> List[pd.DataFrame]:
         """ Returns the required data """
@@ -49,9 +49,10 @@ class DataManager:
 
         for i in range(selectedData, nbDataset+selectedData):
             if i < len(self.datasets):
-                datasets = self.datasets[-(i+1)]
-                if recipe_name not in datasets: continue
-                dataset = datasets[recipe_name]
+                scanset = self.datasets[-(i+1)]
+                if recipe_name not in scanset: continue
+                if not scanset.display: continue
+                dataset = scanset[recipe_name]
                 data = None
 
                 if data_name == "Scan":
@@ -108,7 +109,7 @@ class DataManager:
     def newDataset(self, config: dict):
         """ Creates and returns a new empty dataset """
         maximum = 0
-        datasets = {}
+        scanset = ScanSet()
 
         if self.save_temp:
             FOLDER_TEMP = os.environ['TEMP']  # This variable can be changed at autolab start-up
@@ -126,20 +127,20 @@ class DataManager:
 
                 dataset = Dataset(sub_folder, recipe_name,
                                   config, save_temp=self.save_temp)
-                datasets[recipe_name] = dataset
+                scanset[recipe_name] = dataset
 
                 # bellow just to know maximum point
                 nbpts = 1
                 for parameter in recipe['parameter']:
                     if 'values' in parameter:
-                        if variables.has_eval(parameter['values']):
-                            values = variables.eval_safely(parameter['values'])
+                        if has_eval(parameter['values']):
+                            values = eval_safely(parameter['values'])
                             if isinstance(values, str):
                                 nbpts *= 11  # OPTIMIZE: can't know length in this case without doing eval (should not do eval here because can imagine recipe_2 with param set at end of recipe_1)
                                 self.gui.progressBar.setStyleSheet(
                                     "QProgressBar::chunk {background-color: orange;}")
                             else:
-                                values = utilities.create_array(values)
+                                values = create_array(values)
                                 nbpts *= len(values)
                         else: nbpts *= len(parameter['values'])
                     else: nbpts *= parameter['nbpts']
@@ -174,14 +175,14 @@ class DataManager:
 
                         list_recipe_nbpts_new.remove(recipe_nbpts)
 
-        self.datasets.append(datasets)
+        self.datasets.append(scanset)
         self.gui.progressBar.setMaximum(maximum)
 
     def sync(self):
         """ This function sync the last dataset with the data available in the queue """
         # Empty the queue
         count = 0
-        datasets = self.getLastDataset()
+        scanset = self.getLastDataset()
         lenQueue = self.queue.qsize()
 
         # Add scan data to dataset
@@ -190,7 +191,7 @@ class DataManager:
             except: break
 
             recipe_name = list(point.values())[0]
-            dataset = datasets[recipe_name]
+            dataset = scanset[recipe_name]
             dataset.addPoint(point)
             count += 1
 
@@ -200,11 +201,13 @@ class DataManager:
             progress = 0
 
             for dataset_name in self.gui.configManager.getRecipeActive():
-                progress += len(datasets[dataset_name])
+                progress += len(scanset[dataset_name])
 
             self.gui.progressBar.setValue(progress)
 
             self.gui.save_pushButton.setEnabled(True)
+            if len(self.datasets) != 1:
+                self.gui.save_all_pushButton.setEnabled(True)
 
             # Update plot
             self.gui.figureManager.data_comboBoxClicked()
@@ -214,11 +217,11 @@ class DataManager:
         the results that can be plotted """
         data_name = self.gui.dataframe_comboBox.currentText()
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
-        datasets = self.getLastSelectedDataset()
+        scanset = self.getLastSelectedDataset()
 
-        if datasets is None or recipe_name not in datasets: return None
+        if scanset is None or recipe_name not in scanset: return None
 
-        dataset = datasets[recipe_name]
+        dataset = scanset[recipe_name]
 
         data = None
         if data_name == "Scan": data = dataset.data
@@ -237,7 +240,7 @@ class DataManager:
                 self.gui.variable_y_comboBox.clear()
                 return None
 
-            try: data = utilities.formatData(data)
+            try: data = data_to_dataframe(data)
             except AssertionError:  # if np.ndarray of string for example
                 self.gui.variable_x_comboBox.clear()
                 self.gui.variable_x2_comboBox.clear()
@@ -289,8 +292,7 @@ class DataManager:
 
 
 class Dataset():
-    """ Collection of data from a scan """
-
+    """ Collection of data from a recipe """
     def __init__(self, folder_dataset_temp: str, recipe_name: str, config: dict,
                  save_temp: bool = True):
         self._data_temp = []
@@ -334,7 +336,7 @@ class Dataset():
                        )
         self.data = pd.DataFrame(columns=self.header)
 
-    def getData(self, var_list: list, data_name: str = "Scan",
+    def getData(self, var_list: List[str], data_name: str = "Scan",
                 dataID: int = 0, filter_condition: List[dict] = []) -> pd.DataFrame:
         """ This function returns a dataframe with two columns : the parameter value,
         and the requested result value """
@@ -347,7 +349,7 @@ class Dataset():
                     and not isinstance(data, str)
                     and (len(data.T.shape) == 1 or (
                         len(data.T.shape) != 0 and data.T.shape[0] == 2))):
-                data = utilities.formatData(data)
+                data = data_to_dataframe(data)
             else:  # Image
                 return data
 
@@ -406,7 +408,13 @@ class Dataset():
                 dest_folder = os.path.join(dataset_folder, array_name)
 
                 if os.path.exists(tmp_folder):
-                    shutil.copytree(tmp_folder, dest_folder, dirs_exist_ok=True)
+                    try:
+                        shutil.copytree(tmp_folder, dest_folder,
+                                        dirs_exist_ok=True)  # python >=3.8 only
+                    except:
+                        if os.path.exists(dest_folder):
+                            shutil.rmtree(dest_folder, ignore_errors=True)
+                        shutil.copytree(tmp_folder, dest_folder)
                 else:
                     # This is only executed if no temp folder is set
                     if not os.path.exists(dest_folder): os.mkdir(dest_folder)
@@ -467,6 +475,12 @@ class Dataset():
         self.data = pd.DataFrame(self._data_temp, columns=self.header)
 
         if self.save_temp:
+            if not os.path.exists(self.folder_dataset_temp):
+                print(f'Warning: {self.folder_dataset_temp} has been created ' \
+                      'but should have been created earlier. ' \
+                      'Check that you have not lost any data',
+                      file=sys.stderr)
+                os.mkdir(self.folder_dataset_temp)
             if ID == 1:
                 self.data.tail(1).to_csv(
                     os.path.join(self.folder_dataset_temp, 'data.txt'),
@@ -479,3 +493,11 @@ class Dataset():
     def __len__(self):
         """ Returns the number of data point of this dataset """
         return len(self.data)
+
+
+class ScanSet(dict):
+    """ Collection of data from a scan """
+    # TODO: use this in scan plot
+    display = True
+    color = 'default'
+    saved = False
