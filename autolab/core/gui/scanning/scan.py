@@ -143,6 +143,7 @@ class ScanManager:
         self.gui.pause_pushButton.setEnabled(True)
         self.gui.clear_pushButton.setEnabled(False)
         self.gui.progressBar.setValue(0)
+        self.gui.progressBar.setStyleSheet("")
         self.gui.importAction.setEnabled(False)
         self.gui.openRecentMenu.setEnabled(False)
         self.gui.undo.setEnabled(False)
@@ -208,15 +209,16 @@ class ScanManager:
     def scanCompleted(self):
         if not qt_object_exists(self.gui.progressBar):
             return None
-        self.gui.progressBar.setStyleSheet("")
 
         if self.thread.stopFlag.is_set():
-            pass
+            self.gui.progressBar.setStyleSheet(
+                "QProgressBar::chunk {background-color: red;}")
             # self.gui.setStatus('Scan stopped!', 5000)  # not good because hide error message
         else:
             self.gui.setStatus('Scan finished!', 5000)
             self.gui.progressBar.setMaximum(1)
             self.gui.progressBar.setValue(1)
+            self.gui.progressBar.setStyleSheet("")
 
             # Start monitors if option selected in monitors
             for var_id in set([id(step['element'])
@@ -249,7 +251,6 @@ class ScanManager:
         if self.main_dialog and qt_object_exists(self.main_dialog):
             self.main_dialog.deleteLater()
         self.thread.wait()
-
     # SIGNALS
     #############################################################################
 

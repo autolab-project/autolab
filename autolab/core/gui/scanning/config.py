@@ -185,7 +185,6 @@ class ConfigManager:
             self.gui.undo.setEnabled(True)
             self.gui.redo.setEnabled(False)
 
-
     def addRecipe(self, recipe_name: str):
         """ Adds new recipe to config """
         if not self.gui.scanManager.isStarted():
@@ -364,8 +363,12 @@ class ConfigManager:
             param = self.getParameter(recipe_name, param_name)
 
             param['element'] = element
-            if newName is None: newName = self.getUniqueName(recipe_name,
-                                                             element.name)
+            if newName is None:
+                if param_name == element.name:
+                    newName = param_name
+                else:
+                    newName = self.getUniqueName(
+                        recipe_name, element.name)
             param['name'] = newName
             self.gui._refreshParameterRange(recipe_name, param_name, newName)
             self.addNewConfig()
@@ -1153,13 +1156,15 @@ class ConfigManager:
 
     def undoClicked(self):
         """ Undos an action from parameter, recipe or range """
-        self.configHistory.go_down()
-        self.changeConfig()
+        if not self.gui.scanManager.isStarted():
+            self.configHistory.go_down()
+            self.changeConfig()
 
     def redoClicked(self):
         """ Redos an action from parameter, recipe or range """
-        self.configHistory.go_up()
-        self.changeConfig()
+        if not self.gui.scanManager.isStarted():
+            self.configHistory.go_up()
+            self.changeConfig()
 
     def changeConfig(self):
         """ Gets config from history and enables/disables undo/redo button accordingly """

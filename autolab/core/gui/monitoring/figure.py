@@ -53,13 +53,14 @@ class FigureManager:
     def update(self, xlist: list, ylist: list) -> None:
         """ This function update the figure in the GUI """
         if xlist is None: # image
+            self.figMap.setImage(ylist, autoRange=False, autoLevels=False, autoHistogramRange=False)
             if self.fig.isVisible():
                 self.fig.hide()
                 self.gui.min_checkBox.hide()
                 self.gui.mean_checkBox.hide()
                 self.gui.max_checkBox.hide()
                 self.figMap.show()
-            self.figMap.setImage(ylist)
+                self.figMap.autoLevels()  # Only set levels for first acquisition (others are autoLevels disabled)
             return None
 
         if not self.fig.isVisible():

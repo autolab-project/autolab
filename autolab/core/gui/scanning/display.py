@@ -6,8 +6,7 @@ Created on Thu Nov  9 10:58:47 2023
 """
 import pandas as pd
 from qtpy import QtCore, QtWidgets
-# import pyqtgraph as pg
-# TODO: need to choose between fast (QTableView+TableModel) or fancy (pg.TableWidget)
+import pyqtgraph as pg
 
 
 class DisplayValues(QtWidgets.QWidget):
@@ -24,8 +23,10 @@ class DisplayValues(QtWidgets.QWidget):
 
         self.setWindowTitle(name)
         self.resize(size)
-        self.tableView = QtWidgets.QTableView()  # too basic (can't save/copy data)
-        # self.tableView = pg.TableWidget(sortable=False)  # too slow
+        # I choose pg.TableWidget to have more features at the cost of slower execution than QTableView+TableModel
+        # self.tableView = QtWidgets.QTableView()  # basic (can't save/copy data)
+        self.tableView = pg.TableWidget()  # slow
+        self.tableView.setFormat('%.16g')
 
         layoutWindow = QtWidgets.QVBoxLayout()
         layoutWindow.addWidget(self.tableView)
@@ -33,9 +34,9 @@ class DisplayValues(QtWidgets.QWidget):
 
     def refresh(self, data: pd.DataFrame):
         """ data is pd.DataFrame """
-        tableModel = TableModel(data)
-        self.tableView.setModel(tableModel)
-        # self.tableView.setData(data.to_dict('records'))
+        # tableModel = TableModel(data)
+        # self.tableView.setModel(tableModel)
+        self.tableView.setData(data.to_dict('records'))
 
     def show(self):
         if not self.active:
@@ -55,6 +56,7 @@ class DisplayValues(QtWidgets.QWidget):
         super().close()
 
 
+# OBSOLETE
 class TableModel(QtCore.QAbstractTableModel):
     "From https://www.pythonguis.com/tutorials/pyqt6-qtableview-modelviews-numpy-pandas/"
     def __init__(self, data: pd.DataFrame):
