@@ -243,7 +243,7 @@ class myImageView(pg.ImageView):
         self.figLineROI.hide()
 
         # update slice when change frame number in scanner
-        self.timeLine.sigPositionChanged.connect(self.updateLineROI)
+        self.timeLine.sigPositionChanged.connect(lambda: self.updateLineROI())
 
         # Create a checkbox for aspect ratio
         self.aspect_ratio_checkbox = QtWidgets.QCheckBox("Lock aspect ratio")
@@ -362,16 +362,19 @@ class myImageView(pg.ImageView):
         for shape in shapes_to_plot:
             if shape not in self.shapes_plot:
                 continue
-            d2 = shape.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
 
             # OPTIMIZE: This behavior might not be ideal in all case, some user would prefer to have the average over the full range instead of the x line.
             if isinstance(shape, pg.LineSegmentROI):
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
                 data = d2[0]
             elif isinstance(shape, pg.RectROI):
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(y+1, x+1))
                 data = np.mean(d2[0], axis=0)
             elif isinstance(shape, pg.EllipseROI):
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(y+1, x+1))
                 data = np.mean(d2[0], axis=0)
             else:
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
                 data = d2[0]
 
             shape.plot.setData(data)
@@ -379,10 +382,11 @@ class myImageView(pg.ImageView):
         self.figLineROI.setVisible(len(self.shapes_plot) != 0)
 
     def on_roi_clicked(self, roi: pg.ROI, ev: QtCore.QEvent):
-        if ev.button() == QtCore.Qt.MouseButton.RightButton:
-            roi.menu.actions['visible'].setChecked(roi.isVisible())
+        if ev.button() == QtCore.Qt.RightButton:
+            roi.menu.actions_list['visible'].setChecked(roi.isVisible())
             global_pos = self.mapToGlobal(roi.getSceneHandlePositions()[0][1].toPoint())
             _ = roi.menu.exec_(global_pos)
+            ev.accept()
 
     def toggle_all_plot(self, state: bool):
         for shape in self.shapes:
@@ -408,12 +412,14 @@ class myImageView(pg.ImageView):
     def show_plot(self, shape: pg.ROI):
         self.shapes_plot.append(shape)
         shape.plot.show()
-        shape.menu.actions['plot'].setChecked(True)
+        shape.menu.actions_list['plot'].setChecked(True)
+        self.updateLineROI(shape)
 
     def hide_plot(self, shape: pg.ROI):
         self.shapes_plot.remove(shape)
         shape.plot.hide()
-        shape.menu.actions['plot'].setChecked(False)
+        shape.menu.actions_list['plot'].setChecked(False)
+        self.figLineROI.setVisible(len(self.shapes_plot) != 0)
 
     def add_shape(self, shape: pg.ROI):
 
@@ -441,7 +447,7 @@ class myImageView(pg.ImageView):
         shape_menu.setTitle(name)
 
         shape_actions = {}
-        shape_menu.actions = shape_actions
+        shape_menu.actions_list = shape_actions
 
         visibility_action = shape_menu.addAction("Show")
         visibility_action.setCheckable(True)
@@ -461,7 +467,7 @@ class myImageView(pg.ImageView):
         # Add attributes to ROI
         shape.name = name
         shape.menu = shape_menu
-        shape.setAcceptedMouseButtons(QtCore.Qt.MouseButton.RightButton)
+        shape.setAcceptedMouseButtons(QtCore.Qt.RightButton)
         shape.sigClicked.connect(self.on_roi_clicked)  # Connect sigClicked to the handler
         shape.sigRegionChanged.connect(lambda: self.updateLineROI(shape))
         shape.plot = self.axLineROI.plot([], [], pen=shape.pen)
@@ -469,7 +475,7 @@ class myImageView(pg.ImageView):
 
         self.addItem(shape)
         self.shapes.append(shape)
-        self.add_visibility_checkbox(shape)
+        self.shape_properties_menu.addMenu(shape.menu)
 
     def add_line(self):
         position_point = ((10, 10), (50, 10))  # Start and end position
@@ -494,10 +500,6 @@ class myImageView(pg.ImageView):
 
         self.add_shape(ellipse)
 
-    def add_visibility_checkbox(self, shape: pg.ROI):
-        """Add a checkbox and delete button to toggle visibility and delete shapes."""
-        self.shape_properties_menu.addMenu(shape.menu)
-
     def delete_shape(self, shape: pg.ROI):
         """Delete a shape from the scene and update the shapes list and visibility menu."""
         self.shapes.remove(shape)
@@ -519,6 +521,7 @@ class myImageView(pg.ImageView):
         self.shape_properties_menu.clear()  # Clear old entries
 
         all_menu = self.shape_properties_menu.addMenu('All')
+
         all_show = all_menu.addAction('Show')
         all_show.setCheckable(True)
         all_show.setChecked(all([shape.isVisible() for shape in self.shapes])
@@ -539,7 +542,7 @@ class myImageView(pg.ImageView):
         self.shape_properties_menu.addSeparator()
 
         for shape in self.shapes:
-            self.add_visibility_checkbox(shape)
+            self.shape_properties_menu.addMenu(shape.menu)
 
     def close(self):
         self.figLineROI.deleteLater()
