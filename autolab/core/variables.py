@@ -146,7 +146,7 @@ def set_variable(name: str, value: Any) -> Variable:
 
 
 def get_variable(name: str) -> Variable:
-    ''' Return Variable with provided name if exists else None '''
+    ''' Return Variable with provided name '''
     assert name in VARIABLES, f"Variable name '{name}' not found in {list_variables()}"
     return VARIABLES[name]
 
