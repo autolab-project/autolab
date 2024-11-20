@@ -129,7 +129,8 @@ class ConfigManager:
 
         return names
 
-    def getUniqueName(self, recipe_name: str, basename: str) -> str:
+    def getUniqueName(self, recipe_name: str, basename: str,
+                      ignore: List[str] = []) -> str:
         """ Returns unique name: Adds a number next to basename in case this
         basename is already taken for the given recipe """
         name = basename
@@ -139,6 +140,7 @@ class ConfigManager:
             if recipe_name in self.recipeNameList():
                 names += self.getNames(recipe_name)
 
+        names = [name for name in names if name not in ignore]
         compt = 0
         while True:
             if name in names:
@@ -149,13 +151,14 @@ class ConfigManager:
 
         return name
 
-    def getUniqueNameRecipe(self, basename: str) -> str:
+    def getUniqueNameRecipe(self, basename: str, ignore: List[str] = []) -> str:
         """ Returns unique name for recipe: Adds a number next to basename in
         case this basename is already taken by a recipe """
         name = basename
         names = []
 
         names += self.recipeNameList()
+        names = [name for name in names if name not in ignore]
 
         compt = 0
         while True:
@@ -225,13 +228,17 @@ class ConfigManager:
         """ Renames recipe """
         if not self.gui.scanManager.isStarted():
             if new_recipe_name == existing_recipe_name:
-                return
+                return None
             if existing_recipe_name not in self.recipeNameList():
                 raise ValueError(
                     'should not be possible to select a non existing recipe_name: ' \
                         f'{existing_recipe_name} not in {self.recipeNameList()}')
 
-            new_recipe_name = self.getUniqueNameRecipe(new_recipe_name)
+            new_recipe_name = self.getUniqueNameRecipe(
+                new_recipe_name, ignore=[existing_recipe_name])
+
+            if new_recipe_name == existing_recipe_name:
+                return None
             old_config = self.config
             new_config = {}
 
@@ -379,9 +386,11 @@ class ConfigManager:
             if newName != param_name:
                 param = self.getParameter(recipe_name, param_name)
 
-                newName = self.getUniqueName(recipe_name, newName)
-                param['name'] = newName
-                self.addNewConfig()
+                newName = self.getUniqueName(
+                    recipe_name, newName, ignore=[param_name])
+                if newName != param_name:
+                    param['name'] = newName
+                    self.addNewConfig()
         else:
             newName = param_name
 

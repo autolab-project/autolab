@@ -254,7 +254,13 @@ class Scanner(QtWidgets.QMainWindow):
             self.label_selectRecipeParameter.show()
         else:
             self.selectRecipe_comboBox.hide()
-            self.label_selectRecipeParameter.hide()
+            # OPTIMIZE: seperate condition for label
+            recipe_name = self.selectRecipe_comboBox.currentText()
+            if (recipe_name != ""
+                    and len(self.configManager.parameterList(recipe_name)) > 1):
+                self.selectParameter_comboBox.show()
+            else:
+                self.label_selectRecipeParameter.hide()
 
     def _clearRecipe(self):
         """ Clears recipes from managers. Called by configManager """
@@ -300,7 +306,7 @@ class Scanner(QtWidgets.QMainWindow):
 
         #Shows parameter combobox if multi parameters else hide
         if (recipe_name != ""
-            and len(self.configManager.parameterList(recipe_name)) > 1):
+                and len(self.configManager.parameterList(recipe_name)) > 1):
             self.selectParameter_comboBox.show()
             self.label_selectRecipeParameter.show()
         else:

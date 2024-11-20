@@ -86,13 +86,17 @@ class MyQTreeWidget(QtWidgets.QTreeWidget):
         self.gui = gui
         super().__init__(parent)
 
-    def startDrag(self, event):
+    def startDrag(self, supportedActions):
+        dragged_item = self.currentItem()
+
+        if isinstance(dragged_item, TreeWidgetItemModule):
+            return None
 
         if self.gui.scanner is not None:
             self.gui.scanner.setWindowState(
                 self.gui.scanner.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.gui.scanner.activateWindow()
-        QtWidgets.QTreeWidget.startDrag(self, event)
+        super().startDrag(supportedActions)
 
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_C
