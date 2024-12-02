@@ -241,16 +241,9 @@ class myImageView(pg.ImageView):
 
         self.figLineROI, self.axLineROI = pyqtgraph_fig_ax()
         self.figLineROI.hide()
-        self.plot = self.axLineROI.plot([], [], pen=pg.getConfigOption("foreground"))
-
-        self.lineROI = pg.LineSegmentROI([[0, 100], [100, 100]], pen='r')
-        self.lineROI.sigRegionChanged.connect(self.updateLineROI)
-        self.lineROI.hide()
-
-        self.addItem(self.lineROI)
 
         # update slice when change frame number in scanner
-        self.timeLine.sigPositionChanged.connect(self.updateLineROI)
+        self.timeLine.sigPositionChanged.connect(lambda: self.updateLineROI())
 
         # Create a checkbox for aspect ratio
         self.aspect_ratio_checkbox = QtWidgets.QCheckBox("Lock aspect ratio")
@@ -259,13 +252,15 @@ class myImageView(pg.ImageView):
 
         # Store shapes in a list with visibility and remove information
         self.shapes = []
+        self.shapes_plot = []
 
         # Create menu bar
         shape_toolbutton = QtWidgets.QToolButton(self)
-        shape_toolbutton.setText("Shapes ")
+        shape_toolbutton.setText(" Custom ROI ")
         shape_toolbutton.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
         menu_bar = QtWidgets.QMenu(self)
+        menu_bar.aboutToShow.connect(self.update_shape_properties_menu)
         shape_toolbutton.setMenu(menu_bar)
 
         add_menu = menu_bar.addMenu("Add")
@@ -285,22 +280,12 @@ class myImageView(pg.ImageView):
         # Create a container for shape visibility toggles and delete buttons
         self.shape_properties_menu = menu_bar.addMenu("Properties")
 
-        self.update_shape_properties_menu()  # to create the 'All shapes' menu
-
-        slice_pushButton = QtWidgets.QPushButton('Slice')
-        slice_pushButton.state = False
-        slice_pushButton.setMinimumSize(0, 23)
-        slice_pushButton.setMaximumSize(75, 23)
-        slice_pushButton.clicked.connect(self.slice_pushButtonClicked)
-        self.slice_pushButton = slice_pushButton
-
         horizontalLayoutButton = QtWidgets.QHBoxLayout()
         horizontalLayoutButton.setSpacing(0)
         horizontalLayoutButton.setContentsMargins(0,0,0,0)
         horizontalLayoutButton.addWidget(self.aspect_ratio_checkbox)
-        horizontalLayoutButton.addWidget(shape_toolbutton)
         horizontalLayoutButton.addStretch()
-        horizontalLayoutButton.addWidget(self.slice_pushButton)
+        horizontalLayoutButton.addWidget(shape_toolbutton)
 
         widgetButton = QtWidgets.QWidget()
         widgetButton.setLayout(horizontalLayoutButton)
@@ -352,19 +337,6 @@ class myImageView(pg.ImageView):
         self.getView().setAspectLocked(
             self.aspect_ratio_checkbox.isChecked())
 
-    def slice_pushButtonClicked(self):
-        self.slice_pushButton.state = not self.slice_pushButton.state
-        self.display_line()
-
-    def display_line(self):
-        if self.slice_pushButton.state:
-            self.figLineROI.show()
-            self.lineROI.show()
-            self.updateLineROI()
-        else:
-            self.figLineROI.hide()
-            self.lineROI.hide()
-
     def show(self):
         self.centralWidget.show()
 
@@ -380,14 +352,130 @@ class myImageView(pg.ImageView):
         pg.ImageView.setImage(self, *args, **kwargs)
         self.updateLineROI()
 
-    def updateLineROI(self):
-        if self.slice_pushButton.state:
-            img = self.image if self.image.ndim == 2 else self.image[self.currentIndex]
-            img = np.array([img])
+    def updateLineROI(self, shape: pg.ROI = None):
+        shapes_to_plot = self.shapes_plot if shape is None else [shape]
 
-            x,y = (0, 1) if self.imageItem.axisOrder == 'col-major' else (1, 0)
-            d2 = self.lineROI.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
-            self.plot.setData(d2[0])
+        img = self.image if self.image.ndim == 2 else self.image[self.currentIndex]
+        img = np.array([img])
+        x,y = (0, 1) if self.imageItem.axisOrder == 'col-major' else (1, 0)
+
+        for shape in shapes_to_plot:
+            if shape not in self.shapes_plot:
+                continue
+
+            # OPTIMIZE: This behavior might not be ideal in all case, some user would prefer to have the average over the full range instead of the x line.
+            if isinstance(shape, pg.LineSegmentROI):
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
+                data = d2[0]
+            elif isinstance(shape, pg.RectROI):
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(y+1, x+1))
+                data = np.mean(d2[0], axis=0)
+            elif isinstance(shape, pg.EllipseROI):
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(y+1, x+1))
+                data = np.mean(d2[0], axis=0)
+            else:
+                d2 = shape.getArrayRegion(img, self.imageItem, axes=(x+1, y+1))
+                data = d2[0]
+
+            shape.plot.setData(data)
+
+        self.figLineROI.setVisible(len(self.shapes_plot) != 0)
+
+    def on_roi_clicked(self, roi: pg.ROI, ev: QtCore.QEvent):
+        if ev.button() == QtCore.Qt.RightButton:
+            roi.menu.actions_list['visible'].setChecked(roi.isVisible())
+            global_pos = self.mapToGlobal(roi.getSceneHandlePositions()[0][1].toPoint())
+            _ = roi.menu.exec_(global_pos)
+            ev.accept()
+
+    def toggle_all_plot(self, state: bool):
+        for shape in self.shapes:
+            if state:
+                self.show_plot(shape)
+            else:
+                self.hide_plot(shape)
+
+    def show_all_shapes(self):
+        for shape in self.shapes:
+            self.show_plot(shape)
+
+    def hide_all_shapes(self):
+        for shape in self.shapes:
+            self.hide_plot(shape)
+
+    def toggle_plot(self, shape: pg.ROI, state: bool):
+        if state:
+            self.show_plot(shape)
+        else:
+            self.hide_plot(shape)
+
+    def show_plot(self, shape: pg.ROI):
+        self.shapes_plot.append(shape)
+        shape.plot.show()
+        shape.menu.actions_list['plot'].setChecked(True)
+        self.updateLineROI(shape)
+
+    def hide_plot(self, shape: pg.ROI):
+        self.shapes_plot.remove(shape)
+        shape.plot.hide()
+        shape.menu.actions_list['plot'].setChecked(False)
+        self.figLineROI.setVisible(len(self.shapes_plot) != 0)
+
+    def add_shape(self, shape: pg.ROI):
+
+        if isinstance(shape, pg.LineSegmentROI):
+            basename = 'Line'
+        elif isinstance(shape, pg.RectROI):
+            basename = 'Rectangle'
+        elif isinstance(shape, pg.EllipseROI):
+            basename = 'Ellipse'
+        else:
+            basename = 'Unknown'
+
+        name = basename
+        names = [shape.name for shape in self.shapes]
+        compt = 0
+        while True:
+            if name in names:
+                compt += 1
+                name = basename + '_' + str(compt)
+            else:
+                break
+
+        # Define shape menu
+        shape_menu = QtWidgets.QMenu()
+        shape_menu.setTitle(name)
+
+        shape_actions = {}
+        shape_menu.actions_list = shape_actions
+
+        visibility_action = shape_menu.addAction("Show")
+        visibility_action.setCheckable(True)
+        visibility_action.setChecked(shape.isVisible())
+        visibility_action.triggered.connect(shape.setVisible)
+        shape_actions['visible'] = visibility_action
+
+        plot_action = shape_menu.addAction("Plot")
+        plot_action.setCheckable(True)
+        plot_action.triggered.connect(lambda state: self.toggle_plot(shape, state))
+        shape_actions['plot'] = plot_action
+
+        delete_action = shape_menu.addAction("Remove")
+        delete_action.triggered.connect(lambda: self.delete_shape(shape))
+        shape_actions['delete'] = delete_action
+
+        # Add attributes to ROI
+        shape.name = name
+        shape.menu = shape_menu
+        shape.setAcceptedMouseButtons(QtCore.Qt.RightButton)
+        shape.sigClicked.connect(self.on_roi_clicked)  # Connect sigClicked to the handler
+        shape.sigRegionChanged.connect(lambda: self.updateLineROI(shape))
+        shape.plot = self.axLineROI.plot([], [], pen=shape.pen)
+        shape.plot.hide()
+
+        self.addItem(shape)
+        self.shapes.append(shape)
+        self.shape_properties_menu.addMenu(shape.menu)
 
     def add_line(self):
         position_point = ((10, 10), (50, 10))  # Start and end position
@@ -396,11 +484,7 @@ class myImageView(pg.ImageView):
         line = pg.LineSegmentROI(position_point, center_point)
         line.setPen(pg.mkPen(QtGui.QColor(0, 255, 0), width=2))  # green
 
-        self.addItem(line)
-        shape_info = {'shape': line, 'name': 'Line', 'visible': True}
-        self.shapes.append(shape_info)
-
-        self.add_visibility_checkbox(shape_info)
+        self.add_shape(line)
 
     def add_rectangle(self):
         rect = pg.RectROI([10, 20], [30, 20])  # Position (x, y), size (width, height)
@@ -408,71 +492,57 @@ class myImageView(pg.ImageView):
 
         rect.addRotateHandle([0, 0], [0.5, 0.5])  # position at top-left corner, center at center of ROI
 
-        self.addItem(rect)
-        shape_info = {'shape': rect, 'name': 'Rectangle', 'visible': True}
-        self.shapes.append(shape_info)
-
-        self.add_visibility_checkbox(shape_info)
+        self.add_shape(rect)
 
     def add_ellipse(self):
         ellipse = pg.EllipseROI([10, 50], [20, 20])  # Position (x, y), size (width, height)
         ellipse.setPen(pg.mkPen(QtGui.QColor(0, 0, 255), width=2))  # blue
 
-        self.addItem(ellipse)
-        shape_info = {'shape': ellipse, 'name': 'Ellipse', 'visible': True}
-        self.shapes.append(shape_info)
+        self.add_shape(ellipse)
 
-        self.add_visibility_checkbox(shape_info)
-
-    def add_visibility_checkbox(self, shape_info: dict):
-        """Add a checkbox and delete button to toggle visibility and delete shapes."""
-        def toggle_visibility(checked: bool):
-            shape_info['shape'].setVisible(checked)
-
-        shape_menu = QtWidgets.QMenu(shape_info['name'], self)
-
-        visibility_action = shape_menu.addAction(f"Show {shape_info['name']}")
-        visibility_action.setCheckable(True)
-        visibility_action.setChecked(shape_info['visible'])
-        visibility_action.triggered.connect(toggle_visibility)
-
-        delete_action = shape_menu.addAction(f"Delete {shape_info['name']}")
-        delete_action.triggered.connect(lambda: self.delete_shape(shape_info))
-
-        self.shape_properties_menu.addMenu(shape_menu)
-
-    def delete_shape(self, shape_info: dict):
+    def delete_shape(self, shape: pg.ROI):
         """Delete a shape from the scene and update the shapes list and visibility menu."""
-        self.getView().scene().removeItem(shape_info['shape'])
-        self.shapes = [s for s in self.shapes if s != shape_info]  # Update the shapes list to remove the shape
-
-        self.update_shape_properties_menu()
+        self.shapes.remove(shape)
+        self.getView().scene().removeItem(shape)
+        if shape in self.shapes_plot:
+            self.hide_plot(shape)
+            self.axLineROI.removeItem(shape.plot)
 
     def delete_all_shapes(self):
-        for shape_info in self.shapes:
-            self.delete_shape(shape_info)
+        for shape in self.shapes.copy():
+            self.delete_shape(shape)
 
     def toggle_all_visibility(self, checked: bool):
-        for shape_info in self.shapes:
-            shape_info['shape'].setVisible(checked)
+        for shape in self.shapes:
+            shape.setVisible(checked)
 
     def update_shape_properties_menu(self):
         """Update the visibility menu to show only existing shapes."""
         self.shape_properties_menu.clear()  # Clear old entries
 
         all_menu = self.shape_properties_menu.addMenu('All')
+
         all_show = all_menu.addAction('Show')
         all_show.setCheckable(True)
-        all_show.setChecked(True)
+        all_show.setChecked(all([shape.isVisible() for shape in self.shapes])
+                                and len(self.shapes) != 0)
         all_show.triggered.connect(
             lambda: self.toggle_all_visibility(all_show.isChecked()))
-        all_delete = all_menu.addAction('Delete')
+
+        all_plot = all_menu.addAction('Plot')
+        all_plot.setCheckable(True)
+        all_plot.setChecked(len(self.shapes_plot) == len(self.shapes)
+                                and len(self.shapes) != 0)
+        all_plot.triggered.connect(
+            lambda: self.toggle_all_plot(all_plot.isChecked()))
+
+        all_delete = all_menu.addAction('Remove')
         all_delete.triggered.connect(self.delete_all_shapes)
 
         self.shape_properties_menu.addSeparator()
 
-        for shape_info in self.shapes:
-            self.add_visibility_checkbox(shape_info)
+        for shape in self.shapes:
+            self.shape_properties_menu.addMenu(shape.menu)
 
     def close(self):
         self.figLineROI.deleteLater()
