@@ -351,7 +351,7 @@ class FigureManager:
     ###########################################################################
 
     def setLabel(self, axe: str, value: str):
-        """ This function changes the label of the given axis """
+        """ Changes the label of the given axis """
         axes = {'x':'bottom', 'y':'left'}
         if value == '': value = ' '
         self.ax.setLabel(axes[axe], value, **{'color': pg.getConfigOption("foreground"),
@@ -361,7 +361,7 @@ class FigureManager:
     ###########################################################################
 
     def clearData(self):
-        """ This function removes any plotted curves """
+        """ Removes any plotted curves """
         for curve in self.curves:
             try: self.ax.removeItem(curve)  # try because curve=None if close before end of scan
             except: pass
@@ -373,7 +373,7 @@ class FigureManager:
                 self.fig.img.hide() # OPTIMIZE: would be better to erase data
 
     def reloadData(self):
-        ''' This function removes any plotted curves and reload all required
+        ''' Removes any plotted curves and reload all required
         curves from data available in the data manager'''
         # Remove all curves
         self.clearData()
@@ -601,7 +601,7 @@ class FigureManager:
                     self.curves.append(curve)
 
     def axisChanged(self, index):
-        """ This function is called when the displayed result has been changed
+        """ Called when the displayed result has been changed
         in the combo box. It proceeds to the change. """
         if (self.gui.variable_x_comboBox.currentIndex() != -1
                 and self.gui.variable_y_comboBox.currentIndex() != -1):
@@ -613,7 +613,7 @@ class FigureManager:
     ###########################################################################
 
     def nbTracesChanged(self):
-        """ This function is called when the number of traces displayed has been changed
+        """ Called when the number of traces displayed has been changed
         in the GUI. It proceeds to the change and update the plot. """
         value = self.gui.nbTraces_lineEdit.text()
         check = False
@@ -649,7 +649,7 @@ class FigureManager:
         self.displayScan.show()
 
     def sendScanDataButtonClicked(self):
-        """ Sends the displayer scan data to plotter """
+        """ Sends the displayed scan data to plotter """
         recipe_name = self.gui.scan_recipe_comboBox.currentText()
         scanset = self.gui.dataManager.getLastSelectedDataset()
         if scanset is not None and recipe_name in scanset:
@@ -662,7 +662,7 @@ class FigureManager:
     ###########################################################################
 
     def save(self, filename: str):
-        """ This function save the figure with the provided filename """
+        """ Saves the figure with the provided filename """
         raw_name, extension = os.path.splitext(filename)
         new_filename = raw_name + ".png"
         exporter = pg.exporters.ImageExporter(self.ax)
