@@ -50,7 +50,7 @@ def load_driver_lib(driver_name: str) -> ModuleType:
 
 
 def load_lib(lib_path: str) -> ModuleType:
-    ''' Return an instance of the python script located at lib_path '''
+    ''' Returns an instance of the python script located at lib_path '''
     lib_name = os.path.basename(lib_path).split('.')[0]
 
     # Save current working directory path
@@ -59,14 +59,14 @@ def load_lib(lib_path: str) -> ModuleType:
     # Go to the driver's directory (in case it contains absolute imports)
     os.chdir(os.path.dirname(lib_path))
 
-    # Load the module
-    spec = importlib.util.spec_from_file_location(lib_name, lib_path)
-    lib = importlib.util.module_from_spec(spec)
-
-    # Come back to previous working directory
-    os.chdir(curr_dir)
-
-    spec.loader.exec_module(lib)
+    try:
+        # Load the module
+        spec = importlib.util.spec_from_file_location(lib_name, lib_path)
+        lib = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(lib)
+    finally:
+        # Come back to previous working directory
+        os.chdir(curr_dir)
 
     return lib
 
@@ -86,7 +86,7 @@ def load_driver_utilities_lib(driver_utilities_name: str) -> ModuleType:
 
 
 def load_utilities_lib(lib_path: str) -> ModuleType:
-    ''' Return an instance of the python script located at lib_path '''
+    ''' Returns an instance of the python script located at lib_path '''
     lib_name = os.path.basename(lib_path).split('.')[0]
 
     # Save current working directory path
