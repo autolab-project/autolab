@@ -42,9 +42,15 @@ def load_driver_lib(driver_name: str) -> ModuleType:
     ''' Returns a driver library that contains Driver, Driver_XXX, Module_XXX '''
     # Loading preparation
     driver_path = get_driver_path(driver_name)
+    driver_directory = os.path.dirname(driver_path)
 
-    # Laod library
-    driver_lib = load_lib(driver_path)
+    if driver_directory not in sys.path:
+        sys.path.append(driver_directory)
+    try:
+        # Load library
+        driver_lib = load_lib(driver_path)
+    finally:
+        sys.path.remove(driver_directory)
 
     return driver_lib
 
