@@ -15,7 +15,9 @@ from .GUI_instances import clearPreferences
 from ..utilities import boolean
 from ..config import (check_autolab_config, change_autolab_config,
                       check_plotter_config, change_plotter_config,
-                      load_config, modify_config, set_temp_folder)
+                      load_config, modify_config, set_temp_folder,
+                      add_extra_driver_path)
+from ..drivers import update_drivers_paths
 
 
 class PreferencesWindow(QtWidgets.QMainWindow):
@@ -489,6 +491,11 @@ class PreferencesWindow(QtWidgets.QMainWindow):
         if (new_autolab_config['directories']['temp_folder']
                 != autolab_config['directories']['temp_folder']):
             set_temp_folder()
+
+        if (new_autolab_config['extra_driver_path']
+                != autolab_config['extra_driver_path']):
+            add_extra_driver_path()
+            update_drivers_paths()
 
         if (new_autolab_config['control_center']['logger'] != autolab_config['control_center']['logger']
                 and hasattr(self.mainGui, 'activate_logger')):
