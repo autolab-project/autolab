@@ -42,7 +42,7 @@ instances = {
 # Monitor
 # =============================================================================
 def openMonitor(variable: Union[Variable, Variable_og],
-                has_parent: bool = False):
+                has_parent: bool = False, **kwargs):
     """ Opens the monitor associated to the variable. """
     from .monitoring.main import Monitor  # Inside to avoid circular import
 
@@ -52,7 +52,7 @@ def openMonitor(variable: Union[Variable, Variable_og],
 
     # If the monitor is not already running, create one
     if id(variable) not in instances['monitors'].keys():
-        instances['monitors'][id(variable)] = Monitor(variable, has_parent)
+        instances['monitors'][id(variable)] = Monitor(variable, has_parent, **kwargs)
         instances['monitors'][id(variable)].show()
     # If the monitor is already running, just make as the front window
     else:

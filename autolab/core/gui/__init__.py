@@ -30,9 +30,10 @@ def plotter(var = None):
     _start('plotter', var=var)
 
 
-def monitor(var):
-    """ Open the Autolab Monitor for variable var """
-    _start('monitor', var=var)
+def monitor(var, **kwargs):
+    """ Open the Autolab Monitor for variable var. Optional arguments are
+        mean: bool, min: bool, max: bool, delay: float, length: float """
+    _start('monitor', var=var, **kwargs)
 
 
 def slider(var):
@@ -126,7 +127,7 @@ conda install -c conda-forge pyside6
             font.setPointSize(int(float(GUI_config['font_size'])))
             app.setFont(font)
 
-        var = kwargs.get('var')
+        var = kwargs.pop('var', None)
 
         if gui == 'gui':
             from .controlcenter.main import ControlCenter
@@ -138,7 +139,7 @@ conda install -c conda-forge pyside6
             openPlotter(variable=var)
         elif gui == 'monitor':
             from .GUI_instances import openMonitor
-            openMonitor(var)
+            openMonitor(var, **kwargs)
         elif gui == 'slider':
             from .GUI_instances import openSlider
             openSlider(var)

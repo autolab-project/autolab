@@ -27,7 +27,7 @@ class Monitor(QtWidgets.QMainWindow):
 
     def __init__(self,
                  variable: Union[Variable, Variable_og],
-                 has_parent: bool = False):
+                 has_parent: bool = False, **kwargs):
         self.has_parent = has_parent  # Only for closeEvent
         self.variable = variable
         self._font_size = get_font_size()
@@ -101,6 +101,32 @@ class Monitor(QtWidgets.QMainWindow):
                 handle.setStyleSheet("background-color: #DDDDDD;")
                 handle.installEventFilter(self)
 
+        # Handle kwargs at init
+        try:
+            mean = kwargs.pop('mean', False)
+            if mean:
+                self.mean_checkBox.setChecked(True)
+                self.mean_checkBoxClicked()
+            min = kwargs.pop('min', False)
+            if min:
+                self.min_checkBox.setChecked(True)
+                self.min_checkBoxClicked()
+            max = kwargs.pop('max', False)
+            if max:
+                self.max_checkBox.setChecked(True)
+                self.max_checkBoxClicked()
+            delay = kwargs.pop('delay', None)
+            if delay is not None:
+                self.delay_lineEdit.setText(f'{delay:g}')
+                self.delayChanged()
+            length = kwargs.pop('length', None)
+            if length is not None:
+                self.windowLength_lineEdit.setText(f'{length:g}')
+                self.windowLengthChanged()
+        except: pass
+        if len(kwargs) != 0:
+            self.setStatus(f"These kwargs argument doesn't exists: {list(kwargs)}", 10000, False)
+
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.Enter:
             obj.setStyleSheet("background-color: #AAAAAA;")  # Hover color
@@ -167,7 +193,7 @@ class Monitor(QtWidgets.QMainWindow):
         self.figureManager.clear()
 
     def mean_checkBoxClicked(self):
-        """ This function clear the mean plot """
+        """ This function toggle the mean plot """
         if not self.mean_checkBox.isChecked():
             self.figureManager.plot_mean.setData([], [])
 
@@ -176,18 +202,20 @@ class Monitor(QtWidgets.QMainWindow):
         if len(xlist) > 0: self.figureManager.update(xlist,ylist)
 
     def min_checkBoxClicked(self):
-        """ This function clear the min plot """
+        """ This function toggle the min plot """
         if not self.min_checkBox.isChecked():
             self.figureManager.plot_min.setData([], [])
+            self.figureManager.ymin = None
 
         xlist, ylist = self.dataManager.getData()
 
         if len(xlist) > 0: self.figureManager.update(xlist, ylist)
 
     def max_checkBoxClicked(self):
-        """ This function clear the max plot """
+        """ This function toggle the max plot """
         if not self.max_checkBox.isChecked():
             self.figureManager.plot_max.setData([], [])
+            self.figureManager.ymax = None
 
         xlist, ylist = self.dataManager.getData()
 
