@@ -32,11 +32,18 @@ class Monitor(QtWidgets.QMainWindow):
         self.variable = variable
         self._font_size = get_font_size()
 
+        if isinstance(self.variable, (Variable, Variable_og)):
+            self.address = self.variable.address()
+            self.unit = self.variable.unit
+        else:
+            self.address = ''
+            self.unit = None
+
         # Configuration of the window
         super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), 'interface.ui')
         uic.loadUi(ui_path, self)
-        self.setWindowTitle(f"AUTOLAB - Monitor: {self.variable.address()}")
+        self.setWindowTitle(f"AUTOLAB - Monitor: {self.address}")
         self.setWindowIcon(icons['monitor'])
         # Queue
         self.queue = queue.Queue()
@@ -53,10 +60,10 @@ class Monitor(QtWidgets.QMainWindow):
             self.windowLength_lineEdit, 'synced', self._font_size)
 
         self.xlabel = 'Time(s)'  # Is changed to x if ndarray or dataframe
-        self.ylabel = f'{self.variable.address()}'  # OPTIMIZE: could depend on 1D or 2D
+        self.ylabel = f'{self.address}'  # OPTIMIZE: could depend on 1D or 2D
 
-        if self.variable.unit is not None:
-            self.ylabel += f'({self.variable.unit})'
+        if self.unit is not None:
+            self.ylabel += f'({self.unit})'
 
         # Delay
         self.delay_lineEdit.setText('0.01')
@@ -171,7 +178,7 @@ class Monitor(QtWidgets.QMainWindow):
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             self, caption="Save data", directory=os.path.join(
                 PATHS['last_folder'],
-                f'{self.variable.address()}_monitor.txt'),
+                f'{self.address}_monitor.txt'),
             filter=SUPPORTED_EXTENSION)
 
         path = os.path.dirname(filename)

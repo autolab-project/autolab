@@ -5,7 +5,7 @@ Created on Sat Aug  3 20:40:00 2024
 @author: jonathan
 """
 
-from typing import Union, Any
+from typing import Union, Any, List
 
 import pandas as pd
 from qtpy import QtWidgets, QtCore
@@ -46,9 +46,10 @@ def openMonitor(variable: Union[Variable, Variable_og],
     """ Opens the monitor associated to the variable. """
     from .monitoring.main import Monitor  # Inside to avoid circular import
 
-    assert isinstance(variable, (Variable, Variable_og)), (
-        f'Need type {Variable} or {Variable_og}, but given type is {type(variable)}')
-    assert variable.readable, f"The variable {variable.address()} is not readable"
+    if isinstance(variable, (Variable, Variable_og)):
+        assert variable.readable, f"The variable {variable.address()} is not readable"
+    else:
+        assert callable(variable), f'Custom variable "{variable}" needs to be callable'
 
     # If the monitor is not already running, create one
     if id(variable) not in instances['monitors'].keys():
@@ -141,9 +142,9 @@ def closeVariablesMenu():
 # =============================================================================
 # Plotter
 # =============================================================================
-def openPlotter(variable: Union[Variable, Variable_og, pd.DataFrame, Any] = None,
+def openPlotter(variable: Union[str, List[str], Variable, Variable_og, pd.DataFrame, Any] = None,
                 has_parent: bool = False):
-    """ Opens the plotter. Can add variable. """
+    """ Opens the plotter. Can add variable, open multiple files. """
     from .plotting.main import Plotter  # Inside to avoid circular import
     # If the plotter is not already running, create one
     if instances['plotter'] is None:
@@ -161,7 +162,18 @@ def openPlotter(variable: Union[Variable, Variable_og, pd.DataFrame, Any] = None
         instances['plotter'].activateWindow()
 
     if variable is not None:
-            instances['plotter'].refreshPlotData(variable)
+        if (isinstance(variable, str)
+                or (isinstance(variable, list)
+                        and len(variable) != 0
+                        and isinstance(variable[0], str)
+                        and all([isinstance(val, str) for val in variable])
+                    )
+            ):
+            if isinstance(variable, str):
+                variable = [variable]
+            instances['plotter'].dataManager.importAction(variable)
+        else:
+            instances['plotter'].dataManager.importDeviceData(variable)
 
 
 def clearPlotter():

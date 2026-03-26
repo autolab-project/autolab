@@ -28,12 +28,13 @@ from ...elements import Variable as Variable_og
 from ...variables import list_variables, get_variable, Variable
 
 
-def find_delimiter(filename):
+def find_delimiter(filename, skiprows=None):
     sniffer = csv.Sniffer()
     with open(filename) as fp:
         try:
             text = fp.read(5000)
-            if text.startswith("#"):
+            text = '\n'.join(text.split("\n")[skiprows:])  # remove comments
+            if text.startswith("#") or text.startswith("!"):
                 text = text[len(text.split("\n")[0])+len("\n"):]
             delimiter = sniffer.sniff(text).delimiter
         except:
@@ -47,7 +48,16 @@ def find_delimiter(filename):
 def _skiprows(filename):
     with open(filename) as fp:
         if fp.read(1) not in ("#", "!", "\n"):
-            skiprows = None
+            fp.readline()
+            if fp.read(1) not in ("#", "!", "\n"):
+                skiprows = None
+            else:
+                # allows to skip the first line if not ! or # but the next one has ! or # (Useful for some s2p)
+                skiprows = 2
+                fp.readline()
+                while fp.read(1) in ("#", "!", "\n"):
+                    skiprows += 1
+                    fp.readline()
         else:
             skiprows = 1
             fp.readline()
@@ -61,7 +71,7 @@ def find_header(filename, sep=no_default, skiprows=None):
     try:
         df = pd.read_csv(filename, sep=sep, header=None, nrows=5, skiprows=skiprows)
     except Exception:
-        if type(skiprows) is not None: skiprows += 1
+        if type(skiprows) is not type(None): skiprows += 1
         df = pd.read_csv(filename, sep=sep, header=None, nrows=5, skiprows=skiprows)
     else:
         if skiprows == 1:
@@ -95,7 +105,7 @@ def importData(filename):
     """ This function open the data with the provided filename """
 
     skiprows = _skiprows(filename)
-    sep = find_delimiter(filename)
+    sep = find_delimiter(filename, skiprows)
     (header, skiprows, columns) = find_header(filename, sep, skiprows)
     try:
         data = pd.read_csv(filename, sep=sep, header=header,
@@ -246,6 +256,9 @@ class DataManager:
         elif isinstance(variable, (Variable, Variable_og)):
             name = variable.address()
             data = variable()  # read value
+        elif callable(variable):
+            name = 'custom variable'
+            data = variable()
         else:
             name = 'data'
             data = variable
@@ -255,10 +268,10 @@ class DataManager:
             data_name = name
         else:
             names_list = self.getDatasetsNames()
-            data_name = DataManager.getUniqueName(
-                name, names_list)
+            data_name = DataManager.getUniqueName(name, names_list)
 
         dataset = self.newDataset(data_name, data)
+        self.gui.figureManager.start(dataset)
         return dataset
 
     def importData(self, filename: str):

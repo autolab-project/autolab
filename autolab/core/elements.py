@@ -55,7 +55,7 @@ class Variable(Element):
         self.read_init = False
         # if config['type'] in [tuple]: assert 'read' in config, f"Variable {self.address()} configuration: Must provide a read function"
         if 'read' in config:
-            assert inspect.ismethod(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
+            assert inspect.ismethod(config['read']) or inspect.isfunction(config['read']), f"Variable {self.address()} configuration: Read parameter must be a function"
             self.read_function = config['read']
             if 'read_init' in config:
                 assert isinstance(config['read_init'], bool), f"Variable {self.address()} configuration: read_init parameter must be a boolean"
@@ -64,7 +64,7 @@ class Variable(Element):
         # Write function
         self.write_function = None
         if 'write' in config:
-            assert inspect.ismethod(config['write']), f"Variable {self.address()} configuration: Write parameter must be a function"
+            assert inspect.ismethod(config['write']) or inspect.isfunction(config['write']), f"Variable {self.address()} configuration: Write parameter must be a function"
             self.write_function = config['write']
 
         # Unit

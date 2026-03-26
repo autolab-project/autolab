@@ -481,7 +481,6 @@ class Plotter(QtWidgets.QMainWindow):
                 variable_address = self.dataManager.get_variable_address()
                 variable = self.dataManager.getVariable(variable_address)
             dataset = self.dataManager.importDeviceData(variable)
-            self.figureManager.start(dataset)
             self.setStatus(f"Display the data: '{dataset.name}'", 5000)
         except Exception as e:
             self.setStatus(f"Can't refresh data: {e}", 10000, False)

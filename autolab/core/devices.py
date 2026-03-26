@@ -107,10 +107,13 @@ def get_final_device_config(device_name: str, **kwargs) -> dict:
 
 def get_device(device_name: str, **kwargs) -> Device:
     ''' Returns the Device associated to device_name. Load it if not already done.'''
+    assert isinstance(device_name, str), f'{device_name} must be a string'
+
     device_config = get_final_device_config(device_name, **kwargs)
 
     if device_name in list_loaded_devices():
-        assert device_config == DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
+        # if kwargs:  # OPTIMIZE: If don't provide argument, assume want to get an existing device or new device without argument, so should not raise error if existing device had arguments. Drawback, now could get an existing device with argument when thinking to get a new device without argument
+            assert device_config == DEVICES[device_name].device_config, 'You cannot change the configuration of an existing Device. Close it first & retry, or remove the provided configuration.'
 
     else:
         instance = get_driver(
