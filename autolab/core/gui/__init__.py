@@ -36,9 +36,9 @@ def monitor(var, **kwargs):
     _start('monitor', var=var, **kwargs)
 
 
-def slider(var):
+def slider(var, **kwargs):
     """ Open a slider for variable var """
-    _start('slider', var=var)
+    _start('slider', var=var, **kwargs)
 
 
 def add_device(name: str = ''):
@@ -142,7 +142,7 @@ conda install -c conda-forge pyside6
             openMonitor(var, **kwargs)
         elif gui == 'slider':
             from .GUI_instances import openSlider
-            openSlider(var)
+            openSlider(var, **kwargs)
         elif gui == 'add_device':
             from .GUI_instances import openAddDevice
             openAddDevice(name=var)

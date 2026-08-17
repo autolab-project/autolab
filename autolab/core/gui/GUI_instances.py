@@ -6,6 +6,7 @@ Created on Sat Aug  3 20:40:00 2024
 """
 
 from typing import Union, Any, List
+import inspect
 
 import pandas as pd
 from qtpy import QtWidgets, QtCore
@@ -80,17 +81,19 @@ def closeMonitors():
 # =============================================================================
 def openSlider(variable: Union[Variable, Variable_og],
                gui: QtWidgets.QMainWindow = None,
-               item: QtWidgets.QTreeWidgetItem = None):
+               item: QtWidgets.QTreeWidgetItem = None,
+               **kwargs):
     """ Opend the slider associated to this variable. """
     from .GUI_slider import Slider  # Inside to avoid circular import
 
-    assert isinstance(variable, (Variable, Variable_og)), (
-        f'Need type {Variable} or {Variable_og}, but given type is {type(variable)}')
-    assert variable.writable, f"The variable {variable.address()} is not writable"
+    if isinstance(variable, (Variable, Variable_og)):
+        assert variable.writable, f"The variable {variable.address()} is not writable"
+    else:
+        assert len(inspect.getfullargspec(variable).args) == 1, f'Custom variable "{variable}" needs to have one argument'
 
     # If the slider is not already running, create one
     if id(variable) not in instances['sliders'].keys():
-        instances['sliders'][id(variable)] = Slider(variable, gui=gui, item=item)
+        instances['sliders'][id(variable)] = Slider(variable, gui=gui, item=item, **kwargs)
         instances['sliders'][id(variable)].show()
     # If the slider is already running, just make as the front window
     else:
