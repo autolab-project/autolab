@@ -78,6 +78,22 @@ class Variable(Element):
             assert isinstance(config['help'], str), f"Variable {self.address()} configuration: Info parameter must be a string"
             self._help = config['help']
 
+        # For slider default setting
+        if 'min' in config:
+            self.min = config['min']
+
+        if 'max' in config:
+            self.max = config['max']
+
+        if 'step' in config:
+            self.step = config['step']
+
+        if 'init' in config:
+            self.init = config['init']
+
+        if 'instant' in config:
+            self.instant = config['instant']
+
         # Properties
         self.writable = self.write_function is not None
         self.readable = self.read_function is not None

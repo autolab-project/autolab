@@ -32,12 +32,85 @@ def plotter(var = None):
 
 def monitor(var, **kwargs):
     """ Open the Autolab Monitor for variable var. Optional arguments are
-        mean: bool, min: bool, max: bool, delay: float, length: float """
+    mean: bool, min: bool, max: bool, delay: float, length: float
+
+    Example to use a monitor on an variable::
+
+        import autolab
+
+    ::
+
+        # Monitor on a device variable
+        device = autolab.get_device('dummy')
+        variable = device.amplitude
+        autolab.monitor(variable)
+        # Using monitor options
+        autolab.monitor(variable, mean=True, min=True, max=True, delay=0.1, length=100)
+
+    ::
+
+        # Monitor on a build-in variable
+        custom_variable = autolab.add_variable('custom variable', '$eval:np.random.random()')
+        autolab.monitor(custom_variable)
+
+    ::
+
+        # Monitor on a user custom variable
+        import numpy as np
+
+        def custom_variable():
+            return np.random.random()
+
+        autolab.monitor(custom_variable)
+
+        """
     _start('monitor', var=var, **kwargs)
 
 
 def slider(var, **kwargs):
-    """ Open a slider for variable var """
+    """ Open a slider for variable var. Optional arguments are name: str,
+    min: float, max: float, step: float, init: float, instant: bool
+
+    Example to use a slider on an variable::
+
+        import autolab
+
+    ::
+
+        # Variable from a device
+        device = autolab.get_device('dummy')
+        variable = device.amplitude
+        autolab.slider(variable)
+        # Using slider options
+        autolab.slider(variable, min=1, max=2, step=0.1, init=1.5, instant=False)
+
+    ::
+
+        # Built-in variable
+        custom_variable = autolab.add_variable('custom variable', 0)
+        autolab.slider(custom_variable, min=0, max=10, step=1, init=0,
+                       instant=False, name='Custom Variable')
+
+    ::
+
+        # User custom variable
+        class CustomVariable:
+            name='Custom Variable'
+            min=1
+            max=2
+            step=0.1
+            init=1.5
+            instant=False
+            def __call__(self, value=None):
+                if value:
+                    self.value = value
+                return self.value
+
+        custom_variable = CustomVariable()
+        import autolab
+        autolab.slider(custom_variable)
+
+    """
     _start('slider', var=var, **kwargs)
 
 

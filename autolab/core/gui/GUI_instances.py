@@ -89,7 +89,11 @@ def openSlider(variable: Union[Variable, Variable_og],
     if isinstance(variable, (Variable, Variable_og)):
         assert variable.writable, f"The variable {variable.address()} is not writable"
     else:
-        assert len(inspect.getfullargspec(variable).args) == 1, f'Custom variable "{variable}" needs to have one argument'
+        assert (
+            len(inspect.getfullargspec(variable).args) == 1
+                or ('self' in inspect.getfullargspec(variable).args
+                        and len(inspect.getfullargspec(variable).args) == 2)
+            ), f'Custom variable "{variable}" needs to have one argument'
 
     # If the slider is not already running, create one
     if id(variable) not in instances['sliders'].keys():

@@ -54,6 +54,20 @@ class Slider(QtWidgets.QMainWindow):
         else:
             self._is_variable = False
 
+        def get_default_from_kwargs_or_variable(var_name: str, default_value: Any) -> Any:
+            return kwargs.pop(var_name, getattr(self.variable, var_name) if hasattr(self.variable, var_name) else default_value)
+
+        # Handle kwargs at init
+        self.name = get_default_from_kwargs_or_variable('name', '')
+        self.true_min = get_default_from_kwargs_or_variable('min', 0)
+        self.true_max = get_default_from_kwargs_or_variable('max', 10)
+        self.true_step = get_default_from_kwargs_or_variable('step', 1)
+        self.init = get_default_from_kwargs_or_variable('init', 0)
+        self.instant = get_default_from_kwargs_or_variable('instant', True)
+
+        if len(kwargs) != 0:
+            self.setStatus(f"These kwargs argument doesn't exists: {list(kwargs)}", 10000, False)
+
         self.address = self.get_address()
 
         self.setWindowTitle(self.address)
@@ -65,17 +79,8 @@ class Slider(QtWidgets.QMainWindow):
         self._font_size = get_font_size()
 
         # Slider
-        self.slider_instantaneous = True
+        self.slider_instantaneous = self.instant
         self._last_moved = False  # Prevent double setting/readding after a slider has been moved with the slider_instantaneous=True
-
-        # Handle kwargs at init
-        self.true_min = kwargs.pop('min', 0)
-        self.true_max = kwargs.pop('max', 10)
-        self.true_step = kwargs.pop('step', 1)
-        self.init = kwargs.pop('init', 0)
-
-        if len(kwargs) != 0:
-            self.setStatus(f"These kwargs argument doesn't exists: {list(kwargs)}", 10000, False)
 
         if self.is_writable():
             self.true_min = self.apply_type(self.true_min)
@@ -98,7 +103,8 @@ class Slider(QtWidgets.QMainWindow):
         self.instantCheckBox.setToolTip(
             "True: Changes instantaneously the value.\n" \
             "False: Changes the value when click released.")
-        self.instantCheckBox.setCheckState(QtCore.Qt.Checked)
+        if self.instant:
+            self.instantCheckBox.setCheckState(QtCore.Qt.Checked)
         self.instantCheckBox.stateChanged.connect(self.instantChanged)
 
         layoutTopValue.addWidget(QtWidgets.QLabel("Instant"))
@@ -174,7 +180,7 @@ class Slider(QtWidgets.QMainWindow):
     def get_address(self) -> str:
         if self._is_variable:
             return self.variable.address()
-        return ''
+        return self.name
 
     def apply_type(self, value: Any) -> Any:
         if self._is_variable:
